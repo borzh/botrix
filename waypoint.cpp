@@ -413,7 +413,8 @@ void CWaypoints::RemoveLocation( TWaypointId id )
 
 
 //----------------------------------------------------------------------------------------------------------------
-TWaypointId CWaypoints::GetNearestWaypoint(Vector const& vOrigin, bool bNeedVisible, float fMaxDistance, TWaypointFlags iFlags)
+TWaypointId CWaypoints::GetNearestWaypoint(Vector const& vOrigin, const good::bitset* aOmit, 
+                                           bool bNeedVisible, float fMaxDistance, TWaypointFlags iFlags)
 {
 	TWaypointId result = -1;
 
@@ -433,7 +434,10 @@ TWaypointId CWaypoints::GetNearestWaypoint(Vector const& vOrigin, bool bNeedVisi
 				Bucket& bucket = m_cBuckets[x][y][z];
 				for (Bucket::iterator it=bucket.begin(); it != bucket.end(); ++it)
 				{
-					WaypointNode& node = m_cGraph[*it];
+					TWaypointId iWaypoint = *it;
+					if (aOmit && aOmit->test(iWaypoint)) continue;
+
+					WaypointNode& node = m_cGraph[iWaypoint];
 					if ( FLAG_SOME_SET(iFlags, node.vertex.iFlags) )
 					{
 						float distTo = vOrigin.DistToSqr(node.vertex.vOrigin);
@@ -441,7 +445,7 @@ TWaypointId CWaypoints::GetNearestWaypoint(Vector const& vOrigin, bool bNeedVisi
 						{
 							if ( !bNeedVisible || CUtil::IsVisible(vOrigin, node.vertex.vOrigin) )
 							{
-								result = *it;
+								result = iWaypoint;
 								sqMinDistance = distTo;
 							}
 						}

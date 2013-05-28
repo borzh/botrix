@@ -104,6 +104,13 @@ class CItems
 {
 
 public:
+	///
+	static const CEntityClass* GetRandomItemClass( TEntityType iEntityType )
+	{
+		DebugAssert( !m_aItemClasses[iEntityType].empty() );
+		return &m_aItemClasses[iEntityType][ rand() % m_aItemClasses[iEntityType].size() ];
+	}
+
 	/// Get array of items of needed type.
 	static const good::vector<CEntity>& GetItems( TEntityType iEntityType ) { return m_aItems[iEntityType]; }
 
@@ -163,6 +170,7 @@ public:
 	/// Draw items for a given client.
 	static void Draw( CClient* pClient );
 
+
 protected:
 	static TEntityType GetEntityType( const char* szClassName, CEntityClass* & pEntityClass,
 	                                  TEntityType iFrom, TEntityType iTo, bool bFastCmp = false );
@@ -176,7 +184,7 @@ protected:
 
 	static good::vector<CEntity> m_aItems[EEntityTypeTotal];            // Array of items.
 	static good::vector<CEntityClass> m_aItemClasses[EEntityTypeTotal]; // Array of item classes.
-	static TEntityIndex m_iFreeIndex[EEntityTypeTotal];                      // First free weapon index.
+	static TEntityIndex m_iFreeIndex[EEntityTypeTotal];                 // First free weapon index.
 
 	static good::vector<edict_t*> m_aOthers;                            // Array of other entities.
 
@@ -191,7 +199,7 @@ protected:
 	static bool m_bMapLoaded; // Will be set to true at MapLoaded() and to false at Clear().
 	
 #ifndef SOURCE_ENGINE_2006
-	static good::vector<edict_t*> m_aNewEntities; // At the time Allocated() is called, new entity still has no IServerEntity.
+	static good::vector<edict_t*> m_aNewEntities; // When Allocated() is called, new entity still has no IServerEntity, check at next frame.
 #endif
 };
 

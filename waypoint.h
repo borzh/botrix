@@ -233,7 +233,8 @@ public: // Methods.
 	static void CreateAutoPaths( TWaypointId id, bool bIsCrouched );
 
 	/// Get nearest waypoint to given position.
-	static TWaypointId GetNearestWaypoint( Vector const& vOrigin, bool bNeedVisible = true, float fMaxDistance = CWaypoint::MAX_RANGE, TWaypointFlags iFlags = FWaypointNone );
+	static TWaypointId GetNearestWaypoint( Vector const& vOrigin, const good::bitset* aOmit = NULL, bool bNeedVisible = true, 
+	                                       float fMaxDistance = CWaypoint::MAX_RANGE, TWaypointFlags iFlags = FWaypointNone );
 
 	/// Get any waypoint with some of the given flags set.
 	static TWaypointId GetAnyWaypoint( Vector const& vOrigin, TWaypointFlags iFlags = FWaypointNone );

@@ -62,7 +62,7 @@ protected:
 	// Mark task as finished.
 	void TaskFinished();
 
-	good::bitset m_aWaypoints;                           // TODO: Waypoints, that bot can use.
+	good::bitset m_aWaypoints;                           // Waypoints, that bot can't use.
 
 	TBotTask m_iCurrentTask;                             // Current task.
 	TWaypointId m_iTaskDestination;                      // Waypoint for task destination.

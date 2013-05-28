@@ -5,7 +5,7 @@
 
 //----------------------------------------------------------------------------------------------------------------
 CBot_HL2DM::CBot_HL2DM( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence iIntelligence ):
-	CBot(pEdict, iIndex, iIntelligence), m_cItemToSearch(-1, -1)
+	CBot(pEdict, iIndex, iIntelligence), m_cItemToSearch(-1, -1), m_aWaypoints(CWaypoints::Size())
 {
 	CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(pEdict, "cl_autowepswitch", "0");	
 	CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(pEdict, "cl_defaultweapon", "weapon_smg1");	
@@ -16,6 +16,7 @@ CBot_HL2DM::CBot_HL2DM( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence i
 void CBot_HL2DM::Respawned()
 {
 	CBot::Respawned();
+	m_aWaypoints.clear();
 	m_iFailWaypoint = EInvalidWaypointId;
 	
 	m_iCurrentTask = EBotTaskInvalid;
@@ -176,10 +177,10 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 			iNewTask = EBotTaskFindEnemy;
 	}
 
-	// Get weapon entity class to search for.
-	if ( iNewTask == EBotTaskFindWeapon )
+	switch(iNewTask)
 	{
-		// Search for better weapons.
+	case EBotTaskFindWeapon:
+		// Get weapon entity class to search for. Search for better weapons that actually have.
 		for ( TBotIntelligence iPreference = iWeaponPreference; iPreference < EBotIntelligenceTotal; ++iPreference )
 		{
 			iWeapon = CWeapons::GetRandomWeapon(iPreference);
@@ -203,11 +204,10 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 			}
 		}
 		DebugAssert( pEntityClass != NULL ); // No weapons/ammo on this map ??? Should not enter here.
-	}
+		break;
 
-	// Get ammo entity class to search for.
-	if ( iNewTask == EBotTaskFindAmmo )
-	{
+	case EBotTaskFindAmmo:
+		// Get ammo entity class to search for.
 		iWeapon = m_iBestWeapon;
 	
 		// Randomly search for weapon instead, as it gives same primary bullets.
@@ -224,9 +224,15 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 		
 		if ( !CItems::ExistsOnMap(pEntityClass) ) // There are no such weapon/ammo on the map.
 		{
-			iNewTask = EBotTaskFindEnemy; // Just find ANY weapon.
+			iNewTask = EBotTaskFindEnemy; // Just find enemy.
 			pEntityClass = NULL;
 		}
+		break;
+
+	case EBotTaskFindHealth:
+	case EBotTaskFindArmor:
+		pEntityClass = CItems::GetRandomItemClass(EEntityTypeHealth + (iNewTask - EBotTaskFindHealth));
+		break;
 	}
 	
 	DebugAssert( iNewTask != EBotTaskInvalid );
@@ -235,26 +241,19 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 	if ( bForce || (m_iCurrentTask != iNewTask) )
 	{
 		m_iCurrentTask = iNewTask;
-		m_iTaskDestination = -1;
 
-		if ( iNewTask == EBotTaskFindEnemy ) // Just go to some random waypoint.
-		{
-			if ( CWaypoints::Size() >= 2 )
-			{
-				do {
-					m_iTaskDestination = rand() % CWaypoints::Size();
-				} while ( m_iTaskDestination == iCurrentWaypoint );
-			}
-		}
-		else if ( pEntityClass ) // Health, armor, weapon, ammo.
+		if ( pEntityClass ) // Health, armor, weapon, ammo.
 		{
 			TEntityType iType = EEntityTypeHealth + (iNewTask - EBotTaskFindHealth);
 			TEntityIndex iItemToSearch = CItems::GetNearestItem( iType, GetHead(), m_aPickedItems, pEntityClass );
 
 			if ( iItemToSearch == -1 )
 			{
-				// Try to get to waypoint with flags. TODO: bitset of waypoints to omit.
-				m_iTaskDestination = CWaypoints::GetNearestWaypoint( m_vHead, false, CUtil::MAX_MAP_SIZE, CWaypoint::GetFlagsFor(iType));
+				m_aWaypoints.clear();
+				m_aWaypoints.set(iCurrentWaypoint);
+
+				// Try to get to waypoint with flags.
+				m_iTaskDestination = CWaypoints::GetNearestWaypoint( m_vHead, &m_aWaypoints, false, CUtil::MAX_MAP_SIZE, CWaypoint::GetFlagsFor(iType));
 				m_cItemToSearch.iType = -1;
 				m_cItemToSearch.iIndex = m_iTaskDestination;
 			}
@@ -265,11 +264,23 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 				m_cItemToSearch.iIndex = iItemToSearch;
 			}
 		}
+		else if (m_iCurrentTask == EBotTaskFindEnemy)
+		{
+			// Just go to some random waypoint.
+			m_iTaskDestination = -1;
+			if ( CWaypoints::Size() >= 2 )
+			{
+				do {
+					m_iTaskDestination = rand() % CWaypoints::Size();
+				} while ( m_iTaskDestination == iCurrentWaypoint );
+			}
+		}
 
 		// Check if waypoint to go to is valid.
 		if ( (m_iTaskDestination == -1) || (m_iTaskDestination == iCurrentWaypoint) )
 		{
-			BotMessage( "%s -> invalid task waypoint %d (current %d), recalculate task.", GetName(), m_iTaskDestination, iCurrentWaypoint );
+			BotMessage( "%s -> task %s, invalid waypoint %d (current %d), recalculate task.", GetName(), 
+			            CTypeToString::BotTaskToString(m_iCurrentTask).c_str(), m_iTaskDestination, iCurrentWaypoint );
 			m_iCurrentTask = -1;
 			m_bNeedTaskCheck = true; // Check new task in next frame.
 			m_bNeedMove = m_bUseNavigatorToMove = m_bDestinationChanged = false;
@@ -279,10 +290,9 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 		}
 		else
 		{
-			BotMessage( "%s -> new task: %s %s, waypoint %d.", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
-						  pEntityClass ? pEntityClass->sClassName.c_str() : "", m_iTaskDestination );
+			BotMessage( "%s -> new task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
+			            pEntityClass ? pEntityClass->sClassName.c_str() : "", m_iTaskDestination, iCurrentWaypoint );
 
-			//CBotrixPlugin::pServerPluginHelpers->ClientCommand(m_pEdict, "say Hello");
 			m_iDestinationWaypoint = m_iTaskDestination;
 			m_bNeedMove = m_bUseNavigatorToMove = m_bDestinationChanged = true;
 		}

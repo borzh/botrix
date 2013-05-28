@@ -1928,8 +1928,6 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
 	// Start holding attack after m_fStartActionTime.
 	if ( m_bNeedAttack )
 	{
-		DebugAssert( m_bTest || !m_bUnderAttack );
-
 		// Set manual weapon.
 		if ( (m_iWeapon != m_iManualWeapon) && CWeapon::IsValid(m_iManualWeapon) )
 		{

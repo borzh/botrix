@@ -60,7 +60,7 @@ inline int GetEntityHealth( IServerEntity* pServerEntity )
 inline bool IsEntityOnMap( IServerEntity* pServerEntity )
 {
 	 // EF_BONEMERGE is set for weapon, when picked up. Now appears that you don't need it.
-	return !FLAG_SOME_SET( EF_NODRAW, GetEntityFlags(pServerEntity) );
+	return !FLAG_SOME_SET( EF_NODRAW | EF_BONEMERGE, GetEntityFlags(pServerEntity) );
 }
 
 inline bool IsEntityTaken( IServerEntity* pServerEntity )
@@ -242,9 +242,9 @@ void CItems::Update()
 			m_iFreeIndex[EEntityTypeWeapon] = i;
 			m_aUsedItems.clear( CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict) );
 		}
-		else if ( IsTaken(pServerEntity) ) // Weapon still belongs to some player.
+		else if ( IsEntityTaken(pServerEntity) ) // Weapon still belongs to some player.
 			FLAG_SET(FTaken, cEntity.iFlags);
-		else if ( FLAG_ALL_SET(FTaken, cEntity.iFlags) && IsOnMap(pServerEntity) )
+		else if ( FLAG_ALL_SET(FTaken, cEntity.iFlags) && IsEntityOnMap(pServerEntity) )
 		{
 			FLAG_CLEAR(FTaken, cEntity.iFlags);
 			cEntity.vOrigin = cEntity.CurrentPosition();
@@ -340,11 +340,12 @@ void CItems::CheckNewEntity( edict_t* pEdict )
 	else
 	{
 		CEntity* pItem = AddItem( iEntityType, pEdict, pItemClass, pServerEntity );
+		CUtil::Message(NULL, "Added new item on map: %s.", pEdict->GetClassName());
 
 		if ( pItem && !m_bMapLoaded && !CWaypoint::IsValid(pItem->iWaypoint) && FLAG_CLEARED(FTaken, pItem->iFlags) ) // Item should have waypoint near.
 		{
 			CUtil::Message(NULL, "Warning: entity %s doesn't have waypoint close.", pEdict->GetClassName());
-			int iWaypoint = CWaypoints::GetNearestWaypoint( pItem->vOrigin, true );
+			int iWaypoint = CWaypoints::GetNearestWaypoint( pItem->vOrigin, NULL, true );
 			if ( CWaypoint::IsValid(iWaypoint) )
 				CUtil::Message(NULL, "\tNearest waypoint %d.", iWaypoint);
 		}
@@ -386,10 +387,10 @@ CEntity* CItems::AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityClass
 	int iFlags = pItemClass->iFlags;
 	TWaypointId iWaypoint = -1;
 
-	if ( IsEntityTaken(pServerEntity) )
+	if ( !IsEntityOnMap(pServerEntity) || IsEntityTaken(pServerEntity) )
 		FLAG_SET(FTaken, iFlags);
 	else
-		iWaypoint = CWaypoints::GetNearestWaypoint( vItemOrigin, true, CEntity::iMaxDistToWaypoint );
+		iWaypoint = CWaypoints::GetNearestWaypoint( vItemOrigin, NULL, true, CEntity::iMaxDistToWaypoint );
 
 	CEntity cItem( pEdict, iFlags, fRadiusSqr, pItemClass, vItemOrigin, iWaypoint );
 

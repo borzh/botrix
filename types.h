@@ -290,7 +290,7 @@ enum TEntityTypeFlag
 };
 typedef int TEntityTypeFlags;                    ///< Item type flags (used to define which items to draw).
 
-typedef int TClassIndex;                         ///< Index of entity class in CItems::GetClass().
+typedef int TEntityClassIndex;                   ///< Index of entity class in CItems::GetClass().
 typedef int TEntityIndex;                        ///< Index of entity in CItems::GetItems().
 
 

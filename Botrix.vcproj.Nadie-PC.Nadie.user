@@ -11,7 +11,7 @@
 			<DebugSettings
 				Command="\Games\Steam\steamapps\borzh62\source sdk base 2007\hl2.exe"
 				WorkingDirectory=""
-				CommandArguments="-allowdebug -novid -console -game borzhmod"
+				CommandArguments="-insecure -allowdebug -novid -console -game borzhmod"
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"
@@ -39,7 +39,7 @@
 			<DebugSettings
 				Command="\Games\Steam\steamapps\borzh62\source sdk base 2007\hl2.exe"
 				WorkingDirectory=""
-				CommandArguments="-allowdebug -novid -console -game borzhmod"
+				CommandArguments="-insecure -allowdebug -novid -console -game borzhmod"
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"
@@ -67,7 +67,7 @@
 			<DebugSettings
 				Command="\Games\Steam\steamapps\borzh62\source sdk base\hl2.exe"
 				WorkingDirectory=""
-				CommandArguments="-dev -allowdebug -novid -console -game borzhmod"
+				CommandArguments="-insecure -dev -allowdebug -novid -console -game borzhmod"
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"

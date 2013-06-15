@@ -169,7 +169,7 @@ typedef int TCommandAccessFlags;
 //****************************************************************************************************************
 enum TWaypointFlag
 {
-	FWaypointNone              = 0,              ///< Reachable position.
+	FWaypointNone              = 0,              ///< Just reachable position.
 
 	// First byte.
 	FWaypointStop              = 1<<0,           ///< You need to stop totally to use waypoint
@@ -183,10 +183,11 @@ enum TWaypointFlag
 
 	// Second byte.
 	FWaypointArmorMachine      = 1<<8,           ///< Armor machine is there. Arguments are 1 angle (low word) and health amount (3rd byte).
-	//FWaypointTotem             = 1<<9,           ///< Flag to make ladder of living corpses. Argument is count of players needed.
+	FWaypointButton            = 1<<9,           ///< A button is there. Argument is 1 angle (low word).
+	FWaypointSeeButton         = 1<<10,          ///< Button(s) are visible from there. Arguments bytes with button indexes (starting from 1).
 
-	FWaypointTotal             = 9,              ///< Amount of waypoint flags.
-	FWaypointAll               = (1<<9) - 1      ///< All flags.
+	FWaypointTotal             = 11,             ///< Amount of waypoint flags.
+	FWaypointAll               = (1<<11) - 1     ///< All flags set.
 };
 typedef unsigned short TWaypointFlags;           ///< Set of waypoint flags.
 
@@ -207,8 +208,10 @@ enum TPathFlag
 	FPathDamage                = 1<<6,           ///< Need to take damage to get to adjacent waypoint.
 	FPathFlashlight            = 1<<7,           ///< Need to turn on flashlight.
 
-	FPathTotal                 = 8,              ///< Amount of path flags. Note that FPathDemo not counts.
-	FPathAll                   = (1<<8)-1,       ///< All path flags.
+	FPathTotem                 = 1<<8,           ///< Need to make ladder of living corpses. Argument is count of players needed (1..).
+
+	FPathTotal                 = 9,              ///< Amount of path flags. Note that FPathDemo not counts.
+	FPathAll                   = (1<<9)-1,       ///< All path flags.
 
 	FPathDemo                  = 0x8000,         ///< Flag for use demo to reach adjacent waypoints. Demo number is at lower bits.
 };
@@ -261,8 +264,8 @@ typedef int TPathDrawFlags;                      ///< Set of draw types for path
 //****************************************************************************************************************
 enum TEventType
 {
-	EEventTypeKeyValues,                         ///< Event is of type KeyValues, receiver IGameEventListener.
-	EEventTypeIGameEvent                         ///< Event is of type IGameEvent, receiver IGameEventListener2.
+	EEventTypeKeyValues,                         ///< Event is of type KeyValues for receiver IGameEventListener.
+	EEventTypeIGameEvent                         ///< Event is of type IGameEvent for receiver IGameEventListener2.
 };
 typedef enum TEventType TEventType;
 
@@ -347,7 +350,7 @@ enum TWeaponTypes
 	EWeaponPistol,                               ///< Desert eagle, usp, etc.
 	EWeaponShotgun,                              ///< Shotgun, reload one by one.
 	EWeaponRifle,                                ///< Automatic, just press once.
-	EWeaponSniper,                               ///< Have zoom. Can also be rifle, automatic.
+	EWeaponSniper,                               ///< Has zoom. Can also be rifle, automatic.
 	EWeaponRpg,                                  ///< Rpg.
 
 	EWeaponTotal                                 ///< Amount of weapon flags.

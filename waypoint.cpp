@@ -93,6 +93,10 @@ void CWaypoint::GetColor(unsigned char& r, unsigned char& g, unsigned char& b) c
 	{
 		r = 0x00; g = 0x33; b = 0x00;  // Dark green effect, armor machine.
 	}
+	else if ( FLAG_SOME_SET(FWaypointButton, iFlags) )
+	{
+		r = 0x8A; g = 0x2B; b = 0xE2;  // Violet effect, button.
+	}
 	else
 	{
 		r = 0x00; g = 0xFF; b = 0xFF;  // Cyan effect, other flags.

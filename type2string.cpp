@@ -162,6 +162,7 @@ good::string aWaypointFlags[FWaypointTotal] =
 	"armor",
 	"health_machine",
 	"armor_machine",
+	"button",
 };
 
 int CTypeToString::WaypointFlagsFromString( const good::string& sFlags )
@@ -188,12 +189,13 @@ good::string aPathFlags[FPathTotal] =
 	"stop",
 	"damage",
 	"flashlight",
+	"totem",
 };
 
 
 int CTypeToString::PathFlagsFromString( const good::string& sFlags )
 {
-	return FlagsFromString( sFlags, FPathTotal, aPathFlags ); 
+	return FlagsFromString( sFlags, FPathTotal, aPathFlags );
 }
 
 const good::string& CTypeToString::PathFlagsToString( TPathFlags iFlags )

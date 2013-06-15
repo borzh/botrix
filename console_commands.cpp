@@ -437,7 +437,7 @@ TCommandResult CWaypointAddTypeCommand::Execute( CClient* pClient, int argc, con
 	{
 		CWaypoint& w = CWaypoints::Get(pClient->iCurrentWaypoint);
 
-		bool bAngle1 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper | FWaypointArmorMachine | FWaypointHealthMachine, w.iFlags);
+		bool bAngle1 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper | FWaypointArmorMachine | FWaypointHealthMachine | FWaypointButton, w.iFlags);
 		bool bAngle2 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper, w.iFlags);
 
 		bool bWeapon = FLAG_SOME_SET(FWaypointAmmo | FWaypointWeapon, w.iFlags);
@@ -496,7 +496,7 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
 
 	CWaypoint& w = CWaypoints::Get(pClient->iCurrentWaypoint);
 
-	bool bAngle1 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper | FWaypointArmorMachine | FWaypointHealthMachine, w.iFlags);
+	bool bAngle1 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper | FWaypointArmorMachine | FWaypointHealthMachine | FWaypointButton, w.iFlags);
 	bool bAngle2 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper, w.iFlags);
 
 	bool bWeapon = FLAG_SOME_SET(FWaypointAmmo | FWaypointWeapon, w.iFlags);

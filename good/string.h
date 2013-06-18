@@ -27,13 +27,13 @@ namespace good
 {
 
 
-	enum asdasd {
+	/*enum asdasd {
 		EStringCopy,      ///<
 		EStringMove,      ///<
 		EStringForceCopy, ///<
 		EStringForceMove, ///<
 	};
-	typedef int TStringasdasd;
+	typedef int TStringasdasd;*/
 
 	//************************************************************************************************************
 	/// Class that holds a string of characters.
@@ -291,7 +291,7 @@ namespace good
 		//--------------------------------------------------------------------------------------------------------
 		bool ends_with( const base_string& sStr ) const
 		{
-			DebugAssert( sStr.m_iSize <= m_iSize );
+			if (sStr.m_iSize > m_iSize) return false;
 			return strncmp( &m_pBuffer[m_iSize - sStr.m_iSize], sStr.c_str(), sStr.m_iSize ) == 0;
 		}
 		

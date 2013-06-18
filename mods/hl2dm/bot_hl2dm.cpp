@@ -110,7 +110,7 @@ bool CBot_HL2DM::DoWaypointAction()
 //----------------------------------------------------------------------------------------------------------------
 void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 {
-	TBotTask iNewTask = EBotTaskInvalid;
+	TBotTaskHL2DM iNewTask = EBotTaskInvalid;
 	bool bForce = bForceTaskChange || (m_iCurrentTask == EBotTaskInvalid);
 
 	const CWeapon* pWeapon = m_aWeapons[m_iBestWeapon].GetBaseWeapon();

@@ -684,7 +684,8 @@ void CBot::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex
 		CPickedItem cPickedItem( iEntityType, iIndex, CBotrixPlugin::fTime );
 
 		// If item is not respawnable (or just bad configuration), force to not to search for it again right away, but in 1 minute at least.
-		cPickedItem.fRemoveTime += FLAG_ALL_SET(FEntityRespawnable, cItem.iFlags) ? cItem.pItemClass->GetArgument() : 60.0f;
+		// TODO: check if item is respawnable.
+		cPickedItem.fRemoveTime += /*FLAG_ALL_SET(FEntityRespawnable, cItem.iFlags) ? cItem.pItemClass->GetArgument() : */60.0f;
 		m_aPickedItems.push_back( cPickedItem );
 	}
 }

@@ -212,6 +212,7 @@ good::string aDrawTypeFlags[FWaypointDrawTotal] =
 	"line",
 	"beam",
 	"box",
+	"text",
 };
 
 int CTypeToString::WaypointDrawFlagsFromString( const good::string& sFlags )
@@ -244,6 +245,8 @@ good::string aItemTypes[EEntityTypeTotal+1] =
 	"armor",
 	"weapon",
 	"ammo",
+	"button",
+	"door",
 	"object",
 	"other",
 };
@@ -279,6 +282,7 @@ good::string aEntityClassFlags[FEntityTotal] =
 	"respawnable",
 	"explosive",
 	"heavy",
+	"box",
 };
 const good::string sNone("none");
 
@@ -402,7 +406,7 @@ good::string aBotTasks[EBotTasksTotal] =
 	"find enemy",
 };
 
-const good::string& CTypeToString::BotTaskToString( TBotTask iBotTask )
+const good::string& CTypeToString::BotTaskToString( TBotTaskHL2DM iBotTask )
 {
 	return EnumToString( iBotTask, EBotTasksTotal, aBotTasks, sUnknown );
 }

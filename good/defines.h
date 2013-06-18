@@ -3,8 +3,13 @@
 // Copyright (c) 2011 Borzh.
 //----------------------------------------------------------------------------------------------------------------
 
-#ifndef __GOOD_PLATFORM_H__
-#define __GOOD_PLATFORM_H__
+#ifndef __GOOD_DEFINES_H__
+#define __GOOD_DEFINES_H__
+
+
+#ifndef abstract
+#	define abstract
+#endif
 
 
 #ifndef NULL
@@ -180,4 +185,4 @@
 #endif
 
 
-#endif // __GOOD_PLATFORM_H__
+#endif // __GOOD_DEFINES_H__

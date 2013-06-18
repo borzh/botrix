@@ -6,6 +6,9 @@
 #include "server_plugin.h"
 
 
+typedef int TBotTaskBorzh;
+
+
 //****************************************************************************************************************
 /// Class representing a bot for BorzhMod.
 //****************************************************************************************************************
@@ -55,7 +58,7 @@ protected:
 
 	good::bitset m_aWaypoints;                           // Discovered waypoints (1 = free, 0 = discovered).
 
-	TBotTask m_iCurrentTask;                             // Current task.
+	TBotTaskBorzh m_iCurrentTask;                        // Current task.
 	TWaypointId m_iDestination;                          // Destination waypoint.
 
 	TWaypointId m_iFailWaypoint;                         // Waypoint id where bot stucks.

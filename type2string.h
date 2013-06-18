@@ -2,7 +2,7 @@
 #define __BOTRIX_TYPE_TO_STRING_H__
 
 
-#include "types.h"
+#include "mods/hl2dm/types_hl2dm.h"
 
 
 //****************************************************************************************************************
@@ -91,7 +91,7 @@ public:
 
 
 	//------------------------------------------------------------------------------------------------------------
-	/// Get item type flag from string.
+	/// Get item type flag from string. Used to draw entities on map.
 	//------------------------------------------------------------------------------------------------------------
 	static int EntityTypeFlagsFromString( const good::string& sFlag );
 
@@ -100,7 +100,7 @@ public:
 
 
 	//------------------------------------------------------------------------------------------------------------
-	/// Get item flags from string.
+	/// Get item flags from string. Used to draw entities on map.
 	//------------------------------------------------------------------------------------------------------------
 	static int EntityClassFlagsFromString( const good::string& sFlags );
 
@@ -144,7 +144,7 @@ public:
 	//------------------------------------------------------------------------------------------------------------
 	/// Get bot task name.
 	//------------------------------------------------------------------------------------------------------------
-	static const good::string& BotTaskToString( TBotTask iBotTask );
+	static const good::string& BotTaskToString( TBotTaskHL2DM iBotTask );
 
 	//------------------------------------------------------------------------------------------------------------
 	/// Get bot command from string.

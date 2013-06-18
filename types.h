@@ -19,10 +19,10 @@
 //****************************************************************************************************************
 enum TModIds
 {
-	EModId_Invalid = -1,                         ///< Half Life 2 Deathmatch. Unknown mods will be using this one.
+	EModId_Invalid = -1,                         ///< Unknown mods will be using HL2DM mod.
 	EModId_HL2DM = 0,                            ///< Half Life 2 Deathmatch. Unknown mods will be using this one.
 	EModId_CSS,                                  ///< Counter Strike Source.
-	EModId_BORZH,                                ///< BorzhMod.
+	EModId_Borzh,                                ///< BorzhMod.
 
 	EModId_Total                                 ///< Total amount of supported mods.
 };
@@ -63,23 +63,6 @@ typedef int TObjective;                          ///< Bot's objectives.
 
 
 //****************************************************************************************************************
-/// Bot task for hl2dm.	Note that objective has more priority than task.
-//****************************************************************************************************************
-enum TBotTasks
-{
-	EBotTaskInvalid = -1,                        ///< Bot has no tasks.
-	EBotTaskFindHealth = 0,                      ///< Find health.
-	EBotTaskFindArmor,                           ///< Find armor.
-	EBotTaskFindWeapon,                          ///< Find weapon.
-	EBotTaskFindAmmo,                            ///< Find ammo for weapon.
-	EBotTaskChaseEnemy,                          ///< Run after fleeing enemy (if health is bigger than enemy health).
-	EBotTaskFindEnemy,                           ///< Run randomly around and check if can see an enemy.
-	EBotTasksTotal,                              ///< This should be first task number of enums of mod tasks.
-};
-typedef int TBotTask;                            ///< Bot task.
-
-
-//****************************************************************************************************************
 /// Bot sentencies that bot can say.
 //****************************************************************************************************************
 enum TBotChats
@@ -116,21 +99,6 @@ enum TBotChats
 };
 typedef int TBotChat;                            ///< Bot sentence.
 
-
-
-//****************************************************************************************************************
-/// Bot task for Counter Strike: Source mod.
-//****************************************************************************************************************
-enum TBotTasksCSS
-{
-	EBotTaskGuardBomb = EBotTasksTotal,          ///< Guard C4 (ct, counter-strike mod).
-	EBotTaskFindBomb,                            ///< Find C4 (tt, counter-strike mod).
-	EBotTaskDefuseBomb,                          ///< Defuse C4 (ct, counter-strike mod).
-	EBotTaskPlantBomb,                           ///< Plant C4 (tt, counter-strike mod).
-	EBotTaskHelpTeammate,                        ///< Help teammate in sight, even if low armor or no weapon.
-	EBotTaskCamping,                             ///< Go to camping waypoint and stay there.
-	EBotTaskSniping,                             ///< Go to sniping waypoint and shoot enemies.
-};
 
 
 //****************************************************************************************************************
@@ -217,14 +185,17 @@ enum TPathFlag
 };
 typedef short TPathFlags;                        ///< Set of waypoint path flags.
 
-typedef unsigned char TAreaId;                   ///< Waypoints are grouped in areas. This is a type for area id.
-
 enum TInvalidWaypoint
 {
 	EInvalidWaypointId         = -1              ///< Constant to indicate that waypoint is invalid.
 };
 typedef int TWaypointId;                         ///< Waypoint ID is index of waypoint in array of waypoints.
 
+enum TInvalidArea
+{
+	EInvalidAreaId             = 255             ///< Constant to indicate that waypoint's area is invalid.
+};
+typedef unsigned char TAreaId;                   ///< Waypoints are grouped in areas. This is a type for area id.
 
 //****************************************************************************************************************
 /// Flags for draw type of waypoints.
@@ -235,10 +206,10 @@ enum TWaypointDrawFlag
 	FWaypointDrawLine          = 1<<0,           ///< Draw line.
 	FWaypointDrawBeam          = 1<<1,           ///< Draw beam.
 	FWaypointDrawBox           = 1<<2,           ///< Draw box.
+	FWaypointDrawText          = 1<<3,           ///< Draw text (id, area, etc.).
 
-	FWaypointDrawTotal         = 3,              ///< Amount of draw type flags.
-
-	FWaypointDrawAll           = (1<<3)-1,       ///< Draw box, beams and lines.
+	FWaypointDrawTotal         = 4,              ///< Amount of draw type flags.
+	FWaypointDrawAll           = (1<<4)-1,       ///< Draw all.
 };
 typedef int TWaypointDrawFlags;                  ///< Set of waypoint draw types.
 
@@ -275,10 +246,12 @@ typedef enum TEventType TEventType;
 //****************************************************************************************************************
 enum TEntityTypes
 {
-	EEntityTypeHealth = 0,                       ///< Item that restores players health.
-	EEntityTypeArmor,                            ///< Item that restores players armor.
+	EEntityTypeHealth = 0,                       ///< Item that restores players health. Can be health machine also.
+	EEntityTypeArmor,                            ///< Item that restores players armor. Can be armor machine also.
 	EEntityTypeWeapon,                           ///< Weapon.
 	EEntityTypeAmmo,                             ///< Ammo for weapon.
+	EEntityTypeButton,                           ///< Button.
+	EEntityTypeDoor,                             ///< Door.
 
 	EEntityTypeObject,                           ///< Object that can stuck player (or optionally be moved).
 	EEntityTypeTotal,                            ///< Amount of item types. Object and other doens't count as bot can't pick them up.
@@ -303,7 +276,7 @@ typedef int TEntityIndex;                        ///< Index of entity in CItems:
 enum TItemDrawFlag
 {
 	EItemDontDraw              = 0,              ///< Don't draw item.
-	EItemDrawClassName         = 1<<0,           ///< Draw item class name.
+	EItemDrawStats             = 1<<0,           ///< Draw item class name, stats, model.
 	EItemDrawBoundBox          = 1<<1,           ///< Draw bound box around item.
 	EItemDrawWaypoint          = 1<<2,           ///< Draw line to nearest waypoint.
 
@@ -323,9 +296,10 @@ enum TEntityFlag
 	FEntityRespawnable         = 1<<1,           ///< Entity is respawnable.
 	FObjectExplosive           = 1<<2,           ///< Entity is explosive.
 	FObjectHeavy               = 1<<3,           ///< Can't use physcannon on this object.
+	FObjectBox                 = 1<<4,           ///< Can use this entity to jump on.
 
-	FEntityTotal               = 4,              ///< Amount of entity flags.
-	FEntityAll                 = (1<<4)-1,       ///< All entity flags (that are configurable at config.ini).
+	FEntityTotal               = 5,              ///< Amount of entity flags.
+	FEntityAll                 = (1<<5)-1,       ///< All entity flags (that are configurable at config.ini).
 
 	FTaken                     = 1<<4,           ///< This flag is set for all weapons that belong to some player.
 };
@@ -351,7 +325,7 @@ enum TWeaponTypes
 	EWeaponShotgun,                              ///< Shotgun, reload one by one.
 	EWeaponRifle,                                ///< Automatic, just press once.
 	EWeaponSniper,                               ///< Has zoom. Can also be rifle, automatic.
-	EWeaponRpg,                                  ///< Rpg.
+	EWeaponRpg,                                  ///< Rpg, need to aim while rocket is being propulsed.
 
 	EWeaponTotal                                 ///< Amount of weapon flags.
 
@@ -380,13 +354,13 @@ enum TBotAtomicActions
 	EActionJump,                                 ///< Jump once.
 	EActionJumpWithDuck,                         ///< Jump once with duck.
 
-	EActionSetWeapon,                            ///< Save current weapon and set new weapon.
+	EActionSetWeapon,                            ///< Set new given weapon.
 	EActionSetBestWeapon,                        ///< Set best weapon.
 
 	EActionAttack,                               ///< Press attack button for given time.
 	EActionAttack2,                              ///< Press secondary attack button for given time.
 	
-	EActionUse,                                  ///< Press USE button (to use ).
+	EActionUse,                                  ///< Press USE button (to use buttons, machines).
 	EActionFlashlightOn,                         ///< Turn on flashlight.
 	EActionFlashlightOff,                        ///< Turn off flashlight.
 

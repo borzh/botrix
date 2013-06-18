@@ -159,7 +159,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 #ifdef SOURCE_ENGINE_2006
 	MathLib_Init(1.0, 1.0, 1.0, 1.0, false, true, false, true);
 #else
-	MathLib_Init(); // 1.0, 1.0, 1.0, 1.0, false, true, false, true);
+	MathLib_Init();
 #endif
 	srand( time(NULL) );
 

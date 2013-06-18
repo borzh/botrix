@@ -1,4 +1,4 @@
-#include "event_css.h"
+#include "mods/css/event_css.h"
 #include "mod.h"
 #include "server_plugin.h"
 #include "type2string.h"
@@ -27,6 +27,7 @@ void CMod::Load( TModId iModId )
 	m_iModId = iModId;
 	switch ( iModId )
 	{
+	case EModId_Borzh:
 	case EModId_HL2DM:
 		AddEvent(new CPlayerActivateEvent());
 		AddEvent(new CPlayerTeamEvent());

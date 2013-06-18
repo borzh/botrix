@@ -1,4 +1,4 @@
-#include "bot_hl2dm.h"
+#include "mods/hl2dm/bot_hl2dm.h"
 #include "chat.h"
 #include "client.h"
 #include "mod.h"

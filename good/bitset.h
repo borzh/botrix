@@ -5,8 +5,6 @@
 #include "good/vector.h"
 #include "good/utility.h"
 
-#include <bitset>
-
 
 namespace good
 {
@@ -19,8 +17,18 @@ namespace good
 	class base_bitset
 	{
 	public:
+		typedef good::vector< char, Alloc > container_t;
+
 		/// Constructor with optional size of set.
 		base_bitset( int iSize = 0 ): m_iSize(iSize) { m_cContainer.resize(BIT_ARRAY_SIZE(iSize)); }
+
+		/// Constructor with data.
+		base_bitset( const char* data, int iSize ): m_iSize(iSize)
+		{
+			int iCharSize = BIT_ARRAY_SIZE(iSize);
+			m_cContainer.resize(iCharSize);
+			memcpy(m_cContainer.data(), data, iCharSize);
+		}
 
 		/// Get size of bitset.
 		int size() const { return m_cContainer.size(); }
@@ -66,7 +74,7 @@ namespace good
 		void clear( int iIndex ) { set(iIndex, false); }
 
 	protected:
-		good::vector< char, Alloc > m_cContainer;
+		container_t m_cContainer;
 		int m_iSize;
 	};
 

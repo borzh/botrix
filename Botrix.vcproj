@@ -455,6 +455,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\good\bitmatrix.h"
+				>
+			</File>
+			<File
 				RelativePath=".\good\bitset.h"
 				>
 			</File>
@@ -519,28 +523,60 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="mods"
+			>
+			<Filter
+				Name="borzh"
+				>
+				<File
+					RelativePath=".\mods\borzh\bot_borzhmod.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\mods\borzh\bot_borzhmod.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="hl2dm"
+				>
+				<File
+					RelativePath=".\mods\hl2dm\bot_hl2dm.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\mods\hl2dm\bot_hl2dm.h"
+					>
+				</File>
+				<File
+					RelativePath=".\mods\hl2dm\types_hl2dm.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="css"
+				>
+				<File
+					RelativePath=".\mods\css\event_css.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\mods\css\event_css.h"
+					>
+				</File>
+				<File
+					RelativePath=".\mods\css\types_css.h"
+					>
+				</File>
+			</Filter>
+		</Filter>
 		<File
 			RelativePath=".\bot.cpp"
 			>
 		</File>
 		<File
 			RelativePath=".\bot.h"
-			>
-		</File>
-		<File
-			RelativePath=".\bot_borzhmod.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\bot_borzhmod.h"
-			>
-		</File>
-		<File
-			RelativePath=".\bot_hl2dm.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\bot_hl2dm.h"
 			>
 		</File>
 		<File
@@ -581,14 +617,6 @@
 		</File>
 		<File
 			RelativePath=".\event.h"
-			>
-		</File>
-		<File
-			RelativePath=".\event_css.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\event_css.h"
 			>
 		</File>
 		<File

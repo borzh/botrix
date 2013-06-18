@@ -436,7 +436,7 @@ void CItems::AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServ
 	{
 		good::string sModel = STRING( pServerEntity->GetModelName() );
 		for ( int i = 0; i < m_aObjectFlagsForModels.size(); ++i )
-			if ( sModel.ends_with( m_aObjectFlagsForModels[i].first ) )
+			if ( sModel.find( m_aObjectFlagsForModels[i].first ) != good::string::npos )
 			{
 				FLAG_SET(m_aObjectFlagsForModels[i].second, iFlags);
 				break;
@@ -504,15 +504,18 @@ void CItems::Draw( CClient* pClient )
 			if ( CBotrixPlugin::pEngineServer->CheckOriginInPVS( vOrigin, pvs, sizeof(pvs) ) &&
 			     CUtil::IsVisible(pClient->GetHead(), vOrigin) )
 			{
-				if ( FLAG_SOME_SET(EItemDrawClassName, pClient->iItemDrawFlags) )
+				if ( FLAG_SOME_SET(EItemDrawStats, pClient->iItemDrawFlags) )
 				{
-					CUtil::DrawText( vOrigin, 0, 1.0f, 0xFF, 0xFF, 0xFF, pEdict->GetClassName() );
-					CUtil::DrawText( vOrigin, 1, 1.0f, 0xFF, 0xFF, 0xFF, CTypeToString::EntityTypeToString(iEntityType).c_str() );
-					CUtil::DrawText( vOrigin, 2, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityOnMap(pServerEntity) ? "alive" : "dead" );
-					CUtil::DrawText( vOrigin, 3, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityTaken(pServerEntity) ? "taken" : "not taken" );
-					CUtil::DrawText( vOrigin, 4, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityBreakable(pServerEntity) ? "breakable" : "non breakable" );
+					int pos = 0;
+					CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, CTypeToString::EntityTypeToString(iEntityType).c_str() );
+					CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, pEdict->GetClassName() );
+					CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityOnMap(pServerEntity) ? "alive" : "dead" );
+					//CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityTaken(pServerEntity) ? "taken" : "not taken" );
+					CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityBreakable(pServerEntity) ? "breakable" : "non breakable" );
+					if ( iEntityType == EEntityTypeObject )
+						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, CTypeToString::EntityClassFlagsToString(m_aItems[iEntityType][i].iFlags).c_str() );
 					if ( iEntityType >= EEntityTypeObject )
-						CUtil::DrawText( vOrigin, 5, 1.0f, 0xFF, 0xFF, 0xFF, STRING( pEdict->GetIServerEntity()->GetModelName() ) );
+						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, STRING( pEdict->GetIServerEntity()->GetModelName() ) );
 				}
 
 				if ( FLAG_SOME_SET(EItemDrawBoundBox, pClient->iItemDrawFlags) )

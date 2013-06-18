@@ -9,6 +9,58 @@
 
 
 //****************************************************************************************************************
+/// Mod interface.
+/**
+ * Used to get strings, colors from types or flags. TODO:
+ */
+//****************************************************************************************************************
+abstract class IMod
+{
+public: // Methods.
+
+	///
+	virtual void LoadConfig(const good::string& iModName) = 0;
+	// ProcessUnknownSection(const good::inifile::inisection...);
+
+
+	/// Get waypoint type count.
+	virtual int GetWaypointTypeCount() = 0;
+
+	/// Get waypoint type names.
+	virtual const good::string* GetWaypointTypeNames() = 0;
+
+	/// Get waypoint type colors.
+	virtual const int* GetWaypointTypeColors() = 0;
+
+
+	/// Get waypoint path count.
+	virtual int GetWaypointPathCount() = 0;
+
+	/// Get waypoints path names.
+	virtual const good::string* GetWaypointPathNames() = 0;
+
+	/// Get waypoints path colors.
+	virtual const good::string* GetWaypointPathColors() = 0;
+
+
+	/// Get bot's objective count.
+	virtual int GetObjectivesCount() = 0;
+
+	/// Get bot's objective names.
+	virtual const good::string* GetObjectiveNames() = 0;
+
+
+	/// Get chat count.
+	virtual int GetChatCount() = 0;
+
+	/// Get chat names.
+	virtual const good::string* GetChatNames() = 0;
+
+
+};
+
+
+//****************************************************************************************************************
 /// Class for Half Life 2 mod types. By default loads all needed stuff for Half-life 2 deathmatch mod.
 //****************************************************************************************************************
 class CMod

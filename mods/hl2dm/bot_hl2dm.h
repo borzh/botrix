@@ -2,6 +2,7 @@
 #define __BOTRIX_BOT_HL2DM_H__
 
 
+#include "mods/hl2dm/types_hl2dm.h"
 #include "bot.h"
 #include "server_plugin.h"
 
@@ -64,7 +65,7 @@ protected:
 
 	good::bitset m_aWaypoints;                           // Waypoints, that bot can't use.
 
-	TBotTask m_iCurrentTask;                             // Current task.
+	TBotTaskHL2DM m_iCurrentTask;                        // Current task.
 	TWaypointId m_iTaskDestination;                      // Waypoint for task destination.
 	CPickedItem m_cItemToSearch;                         // Item, we are searching right now. If iType is -1 then iIndex
 	                                                     // is waypoint (found no items, so heading to waypoint of that type).

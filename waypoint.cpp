@@ -1,12 +1,18 @@
 #include "client.h"
 #include "item.h"
 #include "server_plugin.h"
+#include "type2string.h"
 #include "waypoint.h"
 
 #include "good/string_buffer.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+
+//----------------------------------------------------------------------------------------------------------------
+extern char* szMainBuffer;
+extern int iMainBufferSize;
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -28,6 +34,7 @@ struct waypoint_header
 static const char WAYPOINT_FILE_HEADER_ID[4] = {'B','t','x','W'}; // Botrix's Waypoints.
 static const int WAYPOINT_VERSION = 1;                            // Waypoints file version.
 static const int WAYPOINT_FILE_FLAG_VISIBILITY = 1<<0;            // Flag for waypoint visibility table.
+static const int WAYPOINT_FILE_FLAG_AREAS = 2<<0;                 // Flag for area names.
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -44,14 +51,10 @@ const TWaypointFlags CWaypoint::m_aFlagsForEntityType[EEntityTypeTotal-1] =
 	
 
 // CWaypoints static members.
+StringVector CWaypoints::m_cAreaNames;
 CWaypoints::WaypointGraph CWaypoints::m_cGraph;
 float CWaypoints::m_fNextDrawWaypointsTime = 0.0f;
 CWaypoints::Bucket CWaypoints::m_cBuckets[CWaypoints::BUCKETS_SIZE_X][CWaypoints::BUCKETS_SIZE_Y][CWaypoints::BUCKETS_SIZE_Z];
-
-//----------------------------------------------------------------------------------------------------------------
-// TWaypointFlag names.
-//----------------------------------------------------------------------------------------------------------------
-static const int TotalFlags = 7;
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -113,7 +116,7 @@ void CWaypoint::Draw( TWaypointDrawFlags iDrawType, float fDrawTime ) const
 	Vector vEnd = Vector(vOrigin.x, vOrigin.y, vOrigin.z - CUtil::iPlayerEyeLevel);
 
 	if ( FLAG_ALL_SET(FWaypointDrawBeam, iDrawType) )
-		CUtil::DrawBeam( vOrigin, vEnd, WIDTH, fDrawTime, r, g, b);
+		CUtil::DrawBeam(vOrigin, vEnd, WIDTH, fDrawTime, r, g, b);
 	
 	if ( FLAG_ALL_SET(FWaypointDrawLine, iDrawType) )
 		CUtil::DrawLine(vOrigin, vEnd, fDrawTime, r, g, b);
@@ -124,6 +127,17 @@ void CWaypoint::Draw( TWaypointDrawFlags iDrawType, float fDrawTime ) const
 		CUtil::DrawBox(vBoxOrigin, CUtil::vZero, CUtil::vPlayerCollisionHull, fDrawTime, r, g, b);
 	}
 
+	if ( FLAG_ALL_SET(FWaypointDrawText, iDrawType) )
+	{
+		static char szId[32];
+		sprintf(szId, "%d", CWaypoints::GetId(*this));
+		Vector v = vOrigin;
+		v.z -= 20.0f;
+		int i=0;
+		CUtil::DrawText(v, i++, fDrawTime, 0xFF, 0xFF, 0xFF, szId);
+		CUtil::DrawText(v, i++, fDrawTime, 0xFF, 0xFF, 0xFF, CWaypoints::GetAreaName(iAreaId).c_str());
+		CUtil::DrawText(v, i++, fDrawTime, 0xFF, 0xFF, 0xFF, CTypeToString::WaypointFlagsToString(iFlags).c_str());
+	}
 }
 
 
@@ -138,6 +152,8 @@ bool CWaypoints::Save()
 
 	waypoint_header header;
 	header.iFlags = 0;
+	if ( m_cAreaNames.size() > 1 )
+		FLAG_SET(WAYPOINT_FILE_FLAG_AREAS, header.iFlags);
 	//if ( bVisiblityMade )
 	//	FLAG_SET(WAYPOINT_FILE_FLAG_VISIBILITY, header.iFlags);
 	header.iNumWaypoints = m_cGraph.size();
@@ -170,6 +186,18 @@ bool CWaypoints::Save()
 			fwrite(&arcIt->edge.iArgument, sizeof(unsigned short), 1, f);  // Save path arguments.
 		}
 	}
+
+	DebugAssert( m_cAreaNames.size() > 0 );
+	int iAreaNamesSize = m_cAreaNames.size() - 1;
+	fwrite(&iAreaNamesSize, sizeof(int), 1, f); // Save area names size.
+
+	for ( int i=1; i < iAreaNamesSize+1; i++ ) // First area name is always empty, for new waypoints.
+	{
+		int iSize = m_cAreaNames[i].size();
+		fwrite(&iSize, sizeof(int), 1, f); // Save string size.
+		fwrite(m_cAreaNames[i].c_str(), sizeof(char), iSize+1, f); // Write string & trailing 0.
+	}
+
 	fclose(f);
 
 	return true;
@@ -250,15 +278,41 @@ bool CWaypoints::Load()
 		}
 	}
 
-	//bool bHasVisibility = header.iFlags & WAYPOINT_FILE_FLAG_VISIBILITY;
-	//if (bHasVisibility)
-	//{
-	//	bHasVisibility = m_pVisibilityTable->ReadFromFile();
-	//}
-	//else
-	//	Msg("Error: no waypoint visibility file, working out waypoint visibility information\n");
+	if (header.iFlags & WAYPOINT_FILE_FLAG_AREAS)
+	{
+		// Read area names.
+		int iAreaNamesSize = 0;
+		fread(&iAreaNamesSize, sizeof(int), 1, f);
+		DebugAssert(iAreaNamesSize >= 0);
 
+		m_cAreaNames.reserve(iAreaNamesSize + 1);
+		m_cAreaNames.push_back("default"); // New waypoints without area id will be put under this empty area id.
+
+		for ( int i=0; i < iAreaNamesSize; i++ )
+		{
+			int iSize;
+			fread(&iSize, sizeof(int), 1, f);
+
+			DebugAssert(0 < iSize && iSize < iMainBufferSize);
+			if (iSize > 0)
+			{
+				fread(szMainBuffer, sizeof(char), iSize+1, f); // Read also trailing 0.
+				good::string sArea(szMainBuffer, true, true, iSize);
+				m_cAreaNames.push_back(sArea);
+			}
+		}
+	}
+/*
+	bool bHasVisibility = header.iFlags & WAYPOINT_FILE_FLAG_VISIBILITY;
+	if (bHasVisibility)
+	{
+		bHasVisibility = m_pVisibilityTable->ReadFromFile();
+	}
+	else
+		CUtil::Message("No waypoint visibility in file");
+*/
 	fclose(f);
+
 	return true;
 }
 
@@ -535,7 +589,7 @@ void CWaypoints::Draw( CClient* pClient )
 		{
 			CWaypoint& w = CWaypoints::Get( pClient->iDestinationWaypoint );
 			Vector v(w.vOrigin);
-			v.z -= 20.0f;
+			v.z -= 10.0f;
 			CUtil::DrawText(v, 0, fDrawTime, 0xFF, 0xFF, 0xFF, "Destination");
 		}
 	}

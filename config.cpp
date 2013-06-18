@@ -236,7 +236,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 					else 
 					{
 						FLAG_SET(iFlag, cEntityClass.iFlags);
-						if ( iFlag == FEntityRespawnable ) // Check respawn time.
+						/*if ( iFlag == FEntityRespawnable ) // Check respawn time.
 						{
 							if ( aCurrent.size() == 2 )
 							{
@@ -249,7 +249,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 							}
 							else if ( aCurrent.size() > 2 )
 								ConfigError("File %s, section [%s], invalid arguments count for: %s.",  m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str());
-						}
+						}*/
 					}
 				}
 				
@@ -274,7 +274,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 			else
 			{
 				ConfigError("File %s, section [%s], invalid object model flag: %s.",  m_iniFile.name.c_str(), it->name.c_str(), itemIt->value.c_str());
-				ConfigError("Can be one of: %s", CTypeToString::EntityClassFlagsToString(FEntityAll));
+				ConfigError("Can be one of: %s", CTypeToString::EntityClassFlagsToString(FEntityAll).c_str());
 			}
 		}
 	}

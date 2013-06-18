@@ -36,12 +36,14 @@ public:
 	virtual void PrintCommand( edict_t* pPrintTo, int indent = 0);
 
 protected:
-	CConsoleCommand() : m_iAccessLevel(0) {}
+	CConsoleCommand() : m_iAccessLevel(0), m_bAutoCompleteOnlyOneArgument(false) {}
 
 	int m_iAccessLevel;
 	good::string m_sCommand;
 	good::string m_sHelp;
 	good::string m_sDescription;
+	StringVector m_cAutoCompleteArguments;
+	bool m_bAutoCompleteOnlyOneArgument;
 };
 
 
@@ -70,14 +72,7 @@ protected:
 class CWaypointDrawFlagCommand: public CConsoleCommand
 {
 public:
-	CWaypointDrawFlagCommand()
-	{
-		m_sCommand = "drawtype";
-		m_sHelp = "defines how to draw waypoint";
-		m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::WaypointDrawFlagsToString(FWaypointDrawAll);
-		m_iAccessLevel = FCommandAccessWaypoint;
-	}
-
+	CWaypointDrawFlagCommand();
 	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
@@ -244,6 +239,32 @@ public:
 		m_sCommand = "argument";
 		m_sHelp = "set waypoint arguments (angles, ammo count, weapon index/subindex, armor count, health count)";
 		m_iAccessLevel = FCommandAccessWaypoint;		
+	}
+
+	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CWaypointArea: public CConsoleCommand
+{
+public:
+	CWaypointArea()
+	{
+		m_sCommand = "area";
+		m_sHelp = "set waypoint area";
+		m_iAccessLevel = FCommandAccessWaypoint;
+	}
+
+	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CWaypointAreas: public CConsoleCommand
+{
+public:
+	CWaypointAreas()
+	{
+		m_sCommand = "areas";
+		m_sHelp = "print all waypoint areas";
+		m_iAccessLevel = FCommandAccessWaypoint;
 	}
 
 	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -614,20 +635,22 @@ public:
 	CWaypointCommand()
 	{
 		m_sCommand = "waypoint";
-		Add(new CWaypointDrawFlagCommand());
-		Add(new CWaypointResetCommand());
-		Add(new CWaypointCreateCommand());
-		Add(new CWaypointRemoveCommand());
-		Add(new CWaypointMoveCommand());		
-		Add(new CWaypointAutoCreateCommand());
 		Add(new CWaypointAddTypeCommand());
-		Add(new CWaypointRemoveTypeCommand());
+		Add(new CWaypointArea());
+		Add(new CWaypointAreas());
 		Add(new CWaypointArgumentCommand());
-		Add(new CWaypointInfoCommand());
-		Add(new CWaypointDestinationCommand());
+		Add(new CWaypointAutoCreateCommand());
 		Add(new CWaypointClearCommand());
-		Add(new CWaypointSaveCommand());
+		Add(new CWaypointCreateCommand());
+		Add(new CWaypointDestinationCommand()); // Todo: change waypoint by look.
+		Add(new CWaypointDrawFlagCommand());
+		Add(new CWaypointInfoCommand());
 		Add(new CWaypointLoadCommand());
+		Add(new CWaypointMoveCommand());		
+		Add(new CWaypointRemoveCommand());
+		Add(new CWaypointRemoveTypeCommand());
+		Add(new CWaypointResetCommand());
+		Add(new CWaypointSaveCommand());
 	}
 };
 
@@ -641,15 +664,15 @@ public:
 	CPathCommand()
 	{
 		m_sCommand = "path";
-		Add(new CPathDrawCommand());
-		//Add(new CPathSwapCommand());
-		Add(new CPathCreateCommand());
-		Add(new CPathRemoveCommand());
 		Add(new CPathAutoCreateCommand());
 		Add(new CPathAddTypeCommand());
-		Add(new CPathRemoveTypeCommand());
 		Add(new CPathArgumentCommand());
+		Add(new CPathCreateCommand());
+		Add(new CPathDrawCommand());
 		Add(new CPathInfoCommand());
+		//Add(new CPathSwapCommand());
+		Add(new CPathRemoveCommand());
+		Add(new CPathRemoveTypeCommand());
 	}
 };
 
@@ -680,9 +703,9 @@ public:
 	{
 		m_sCommand = "bot";
 		Add(new CBotAddCommand());
-		Add(new CBotKickCommand());
 		Add(new CBotDebugCommand());
 		Add(new CBotDrawPathCommand());
+		Add(new CBotKickCommand());
 		Add(new CBotTestPathCommand());
 		Add(new CBotWeaponCommand());
 	}

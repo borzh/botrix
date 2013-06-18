@@ -3,6 +3,8 @@
 #include "console_commands.h"
 #include "waypoint.h"
 
+#include "good/string_buffer.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -43,13 +45,62 @@ extern int iMainBufferSize;
 //----------------------------------------------------------------------------------------------------------------
 int CConsoleCommand::AutoComplete( const char* partial, int partialLength, char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ], int strIndex, int charIndex )
 {
+	if (charIndex + partialLength >= COMMAND_COMPLETION_ITEM_LENGTH ||
+		strIndex >= COMMAND_COMPLETION_ITEM_LENGTH-1)
+		return 0; // Check bounds.
+
 	int result = 0;
-	if ( m_sCommand.size() >= partialLength )
+	int maxLength = COMMAND_COMPLETION_ITEM_LENGTH - charIndex - 1; // Save one space for trailing 0.
+
+	if ( partialLength <= m_sCommand.size() )
 	{
 		if ( strncmp( m_sCommand.c_str(), partial, partialLength ) == 0 )
 		{
-			strcpy( &commands[strIndex][charIndex], m_sCommand.c_str() );
+			// Autocomplete only command name.
+			strncpy( &commands[strIndex][charIndex], m_sCommand.c_str(), MIN2(maxLength, m_sCommand.size()+1) );
+			commands[strIndex+result][COMMAND_COMPLETION_ITEM_LENGTH-1] = 0;
 			result++;
+		}
+	}
+	else
+	{
+		if ( m_cAutoCompleteArguments.size() > 0 &&
+		     strncmp( m_sCommand.c_str(), partial, m_sCommand.size() ) == 0 )
+		{
+			// Autocomplete command name with arguments.
+			good::string part(partial, false, false, partialLength);
+
+			int start = m_sCommand.size();
+			if (part[start] == ' ')
+			{
+				int lastSpace = part.rfind(' ');
+				if (lastSpace != good::string::npos)
+				{
+					if (!m_bAutoCompleteOnlyOneArgument || lastSpace == start)
+					{
+						lastSpace++;
+						good::string partArg(&partial[lastSpace], false, false, partialLength - lastSpace);
+
+						maxLength = COMMAND_COMPLETION_ITEM_LENGTH - (charIndex + lastSpace) - 1; // Save one space for trailing 0.
+						if (maxLength > 0) // There is still space in autocomplete field.
+						{
+							for (int i = 0; i < m_cAutoCompleteArguments.size(); ++i)
+							{
+								const good::string& arg = m_cAutoCompleteArguments[i];
+								if (arg.starts_with(partArg))
+								{
+									strncpy( &commands[strIndex+result][charIndex], partial, lastSpace );
+									strncpy( &commands[strIndex+result][charIndex+lastSpace], arg.c_str(), MIN2(maxLength, arg.size()+1) );
+									commands[strIndex+result][COMMAND_COMPLETION_ITEM_LENGTH-1] = 0;
+									result++;
+									if (strIndex+result >= COMMAND_COMPLETION_ITEM_LENGTH-1)
+										return result; // Bound check.
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 	return result;
@@ -178,6 +229,19 @@ void CConsoleCommandContainer::PrintCommand( edict_t* pPrintTo, int indent )
 //----------------------------------------------------------------------------------------------------------------
 // Waypoints commands.
 //----------------------------------------------------------------------------------------------------------------
+CWaypointDrawFlagCommand::CWaypointDrawFlagCommand()
+{
+	m_sCommand = "drawtype";
+	m_sHelp = "defines how to draw waypoint";
+	m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::WaypointDrawFlagsToString(FWaypointDrawAll);
+	m_iAccessLevel = FCommandAccessWaypoint;
+
+	m_cAutoCompleteArguments.push_back(sNone);
+	for (int i=0; i < FWaypointDrawTotal; ++i)
+		m_cAutoCompleteArguments.push_back( CTypeToString::WaypointDrawFlagsToString(1<<i).duplicate() );
+	m_cAutoCompleteArguments.push_back(sAll);
+}
+
 TCommandResult CWaypointDrawFlagCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( pClient == NULL )
@@ -813,6 +877,73 @@ TCommandResult CWaypointLoadCommand::Execute( CClient* pClient, int argc, const 
 	}
 }
 
+
+TCommandResult CWaypointArea::Execute( CClient* pClient, int argc, const char** argv )
+{
+	if ( pClient == NULL )
+		return ECommandError;
+
+	TWaypointId iWaypoint = pClient->iCurrentWaypoint;
+	int index = 0;
+
+	if (argc > 0) // Check if first argument is a waypoint number.
+	{
+		char c = argv[0][0];
+		bool isNumber = '0' <= c && c <= '9';
+
+		if (isNumber)
+			iWaypoint = atoi(argv[index++]);
+	}
+
+	if (index == argc)
+	{
+		const CWaypoint& w = CWaypoints::Get(iWaypoint);
+		CUtil::Message(pClient->GetEdict(), "Waypoint %d is at area %s (%d)", iWaypoint, CWaypoints::GetAreaName(w.iAreaId), w.iAreaId);
+		return ECommandPerformed;
+	}
+
+	if ( !CWaypoints::IsValid(iWaypoint) )
+	{
+		CUtil::Message(pClient->GetEdict(), "Error, invalid waypoint: %d", iWaypoint);
+		return ECommandError;
+	}
+
+	// Concatenate all arguments.
+	good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false); // Don't deallocate after use.
+	for (; index < argc; ++index)
+	{
+		sbBuffer.append(argv[index]);
+		sbBuffer.append(' ');
+	}
+	sbBuffer.trim();
+
+	// Check if that area id already exists.
+	TAreaId iAreaId = CWaypoints::GetAreaId(sbBuffer);
+	if (iAreaId == EInvalidAreaId) // If not, add it.
+		iAreaId = CWaypoints::AddAreaName(sbBuffer.duplicate());
+
+	CWaypoints::Get(iWaypoint).iAreaId = iAreaId;
+
+	return ECommandPerformed;
+}
+
+TCommandResult CWaypointAreas::Execute( CClient* pClient, int argc, const char** argv )
+{
+	if ( pClient == NULL )
+		return ECommandError;
+
+	good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false); // Don't deallocate after use.
+
+	for (int i=0; i < CWaypoints::GetAreaIdsSize(); ++i)
+	{
+		sbBuffer.append("\t - ");
+		sbBuffer.append( CWaypoints::GetAreaName(i) );
+		sbBuffer.append('\n');
+	}
+
+	CUtil::Message(pClient->GetEdict(), "Area names:\n%s", sbBuffer.c_str());
+	return ECommandPerformed;
+}
 
 //----------------------------------------------------------------------------------------------------------------
 // Paths commands.

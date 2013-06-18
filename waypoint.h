@@ -128,7 +128,7 @@ public: // Members and constants.
 
 	Vector vOrigin;                          ///< Coordinates of waypoint (x, y, z).
 	TWaypointFlags iFlags;                   ///< Waypoint flags.
-	TAreaId iAreaId;                         ///< Area id where waypoint belongs to (like "A bombsite" / "CT Base" in counter strike).
+	TAreaId iAreaId;                         ///< Area id where waypoint belongs to (like "Bombsite A" / "Base CT" in counter-strike).
 	int iArgument;                           ///< Waypoint argument.
 	
 	unsigned char iPlayersCount;             ///< Count of players that reached this waypoint.
@@ -190,6 +190,7 @@ public: // Methods.
 		if (m_cGraph.size() > 0)
 			ClearLocations();
 		m_cGraph.clear();
+		m_cAreaNames.clear();
 	}
 
 	/// Save waypoints to a file.
@@ -198,8 +199,12 @@ public: // Methods.
 	/// Load waypoints from file (but you must clear them first).
 	static bool Load();
 
+
 	/// Get waypoint.
 	static CWaypoint& Get( TWaypointId id ) { return m_cGraph[id].vertex; }
+
+	/// Get Id of given waypoint.
+	static TWaypointId GetId( const CWaypoint& w ) { return &w - &(m_cGraph.begin()->vertex); }
 
 	// Return true if there is a path from waypoint source to waypoint dest.
 	static bool HasPath(TWaypointId source, TWaypointId dest)
@@ -232,12 +237,34 @@ public: // Methods.
 	/// Create waypoint paths to nearests waypoints.
 	static void CreateAutoPaths( TWaypointId id, bool bIsCrouched );
 
+
 	/// Get nearest waypoint to given position.
 	static TWaypointId GetNearestWaypoint( Vector const& vOrigin, const good::bitset* aOmit = NULL, bool bNeedVisible = true, 
 	                                       float fMaxDistance = CWaypoint::MAX_RANGE, TWaypointFlags iFlags = FWaypointNone );
 
 	/// Get any waypoint with some of the given flags set.
 	static TWaypointId GetAnyWaypoint( Vector const& vOrigin, TWaypointFlags iFlags = FWaypointNone );
+
+
+	/// Get total amount of areas in this map.
+	static int GetAreaIdsSize() { return m_cAreaNames.size(); }
+
+	/// Get area name of area id.
+	static const good::string& GetAreaName( TAreaId id ) { return m_cAreaNames[id]; }
+
+	/// Get area id from name.
+	static TAreaId GetAreaId( const good::string& sName )
+	{
+		StringVector::const_iterator it = good::find(m_cAreaNames.begin(), m_cAreaNames.end(), sName);
+		if ( it == m_cAreaNames.end() )
+			return EInvalidAreaId;
+		else
+			return it - m_cAreaNames.begin();
+	}
+
+	/// Add new area name.
+	static TAreaId AddAreaName( const good::string& sName ) { m_cAreaNames.push_back(sName); return m_cAreaNames.size()-1; }
+
 
 	/// Draw nearest waypoints around player.
 	static void Draw( CClient* pClient );
@@ -254,8 +281,8 @@ protected:
 	static void DrawWaypointPaths( TWaypointId id, TPathDrawFlags iPathDrawFlags );
 
 	// Buckets are 3D areas that we will use to optimize nearest waypoints finding.
-	static const int BUCKETS_SIZE_X = 128;
-	static const int BUCKETS_SIZE_Y = 128;
+	static const int BUCKETS_SIZE_X = 64;
+	static const int BUCKETS_SIZE_Y = 64;
 	static const int BUCKETS_SIZE_Z = 32;
 
 	static const int BUCKETS_SPACE_X = CUtil::MAX_MAP_SIZE/BUCKETS_SIZE_X;
@@ -299,6 +326,8 @@ protected:
 
 	typedef good::vector<TWaypointId> Bucket;
 	static Bucket m_cBuckets[BUCKETS_SIZE_X][BUCKETS_SIZE_Y][BUCKETS_SIZE_Z]; // 3D hash table of arrays of waypoint IDs.
+
+	static StringVector m_cAreaNames;      // Areas names.
 
 	static WaypointGraph m_cGraph;         // Waypoints graph.
 	static float m_fNextDrawWaypointsTime; // Next draw time of waypoints (draw once per second).

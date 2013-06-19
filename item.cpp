@@ -92,6 +92,7 @@ bool CEntity::IsBreakable() const
 good::vector<CEntity> CItems::m_aItems[EEntityTypeTotal];            // Array of items.
 good::vector<CEntityClass> CItems::m_aItemClasses[EEntityTypeTotal]; // Array of item classes.
 TEntityIndex CItems::m_iFreeIndex[EEntityTypeTotal];                 // First free weapon index.
+int CItems::m_iFreeEntityCount[EEntityTypeTotal];                    // Count of unused entities.
 
 good::vector<edict_t*> CItems::m_aOthers(1024);                      // Array of other entities.
 
@@ -168,6 +169,7 @@ void CItems::Freed( const edict_t* pEdict )
 			m_iFreeIndex[EEntityTypeWeapon] = i;
 			return;
 		}
+	DebugAssert(false); // Only weapons are allocated/deallocated while map is running.
 }
 #endif // SOURCE_ENGINE_2006
 
@@ -394,6 +396,17 @@ CEntity* CItems::AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityClass
 
 	CEntity cItem( pEdict, iFlags, fRadiusSqr, pItemClass, vItemOrigin, iWaypoint );
 
+	if ( iEntityType == EEntityTypeDoor )
+	{
+		if (iWaypoint != -1)
+		{
+			good::bitset cOmitWaypoints(CWaypoints::Size());
+			cOmitWaypoints.set(iWaypoint);
+			iWaypoint = CWaypoints::GetNearestWaypoint( vItemOrigin, &cOmitWaypoints, true, CEntity::iMaxDistToWaypoint );
+		}
+		cItem.pArguments = (void*)iWaypoint;
+	}
+
 	good::vector<CEntity>& aItems = m_aItems[iEntityType];
 	if ( m_bMapLoaded ) // Check if there are free space in items array.
 	{
@@ -504,6 +517,8 @@ void CItems::Draw( CClient* pClient )
 			if ( CBotrixPlugin::pEngineServer->CheckOriginInPVS( vOrigin, pvs, sizeof(pvs) ) &&
 			     CUtil::IsVisible(pClient->GetHead(), vOrigin) )
 			{
+				const CEntity* pEntity = (iEntityType == EOtherEntityType) ? NULL : &m_aItems[iEntityType][i];
+
 				if ( FLAG_SOME_SET(EItemDrawStats, pClient->iItemDrawFlags) )
 				{
 					int pos = 0;
@@ -513,7 +528,7 @@ void CItems::Draw( CClient* pClient )
 					//CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityTaken(pServerEntity) ? "taken" : "not taken" );
 					CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityBreakable(pServerEntity) ? "breakable" : "non breakable" );
 					if ( iEntityType == EEntityTypeObject )
-						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, CTypeToString::EntityClassFlagsToString(m_aItems[iEntityType][i].iFlags).c_str() );
+						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, CTypeToString::EntityClassFlagsToString(pEntity->iFlags).c_str() );
 					if ( iEntityType >= EEntityTypeObject )
 						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, STRING( pEdict->GetIServerEntity()->GetModelName() ) );
 				}
@@ -521,8 +536,14 @@ void CItems::Draw( CClient* pClient )
 				if ( FLAG_SOME_SET(EItemDrawBoundBox, pClient->iItemDrawFlags) )
 					CUtil::DrawBox(vOrigin, pCollide->OBBMins(), pCollide->OBBMaxs(), 1.0f, 0xFF, 0xFF, 0xFF, pCollide->GetCollisionAngles());
 
-				if ( (iEntityType < EEntityTypeObject) && FLAG_SOME_SET(EItemDrawWaypoint, pClient->iItemDrawFlags) && CWaypoint::IsValid(m_aItems[iEntityType][i].iWaypoint) )
-					CUtil::DrawLine(CWaypoints::Get(m_aItems[iEntityType][i].iWaypoint).vOrigin, vOrigin, 1.0f, 0xFF, 0xFF, 0);
+				if ( FLAG_SOME_SET(EItemDrawWaypoint, pClient->iItemDrawFlags) && (iEntityType < EEntityTypeObject) )
+				{
+					if (CWaypoint::IsValid(pEntity->iWaypoint) )
+						CUtil::DrawLine(CWaypoints::Get(pEntity->iWaypoint).vOrigin, vOrigin, 1.0f, 0xFF, 0xFF, 0);
+
+					if ( (iEntityType == EEntityTypeDoor) && CWaypoint::IsValid((int)pEntity->pArguments) )
+						CUtil::DrawLine(CWaypoints::Get((int)pEntity->pArguments).vOrigin, vOrigin, 1.0f, 0xFF, 0xFF, 0);
+				}
 			}
 		}
 	}

@@ -43,7 +43,7 @@ public:
 
 	/// Constructor with parameters.
 	CEntity( edict_t* pEdict, TEntityFlags iFlags, float fRadiusSqr, const CEntityClass* pItemClass, const Vector& vOrigin, TWaypointId iWaypoint ):
-		pEdict(pEdict), iFlags(iFlags), fRadiusSqr(fRadiusSqr), pItemClass(pItemClass), vOrigin(vOrigin), iWaypoint(iWaypoint) {}
+		pEdict(pEdict), iFlags(iFlags), fRadiusSqr(fRadiusSqr), pItemClass(pItemClass), vOrigin(vOrigin), iWaypoint(iWaypoint), pArguments(NULL) {}
 
 	/// Return true if item was freed, (for example broken, but not respawnable).
 	bool IsFree() const { return (pEdict == NULL) || pEdict->IsFree(); }
@@ -75,6 +75,7 @@ public:
 	TWaypointId iWaypoint;              ///< Entity's nearest waypoint.
 	Vector vOrigin;                     ///< Entity's respawn position on map (bots will be looking there).
 	const CEntityClass* pItemClass;     ///< Entity's class.
+	void* pArguments;                   ///< Entity's arguments. For example for door we have 2 waypoints.
 };
 
 
@@ -84,7 +85,7 @@ public:
 class CPickedItem
 {
 public:
-	/// Constructor with entity. Will calculate fRemoveTime.
+	/// Constructor with entity.
 	CPickedItem( TEntityType iType, TEntityIndex iIndex, float fRemoveTime = 0.0f ):
 		iType(iType), iIndex(iIndex), fRemoveTime(fRemoveTime) {}
 
@@ -184,7 +185,8 @@ protected:
 
 	static good::vector<CEntity> m_aItems[EEntityTypeTotal];            // Array of items.
 	static good::vector<CEntityClass> m_aItemClasses[EEntityTypeTotal]; // Array of item classes.
-	static TEntityIndex m_iFreeIndex[EEntityTypeTotal];                 // First free weapon index.
+	static TEntityIndex m_iFreeIndex[EEntityTypeTotal];                 // First free entity index.
+	static int m_iFreeEntityCount[EEntityTypeTotal];                    // Free entities count. TODO:
 
 	static good::vector<edict_t*> m_aOthers;                            // Array of other entities.
 

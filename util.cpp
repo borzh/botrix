@@ -135,10 +135,18 @@ trace_t CUtil::m_TraceResult;
 
 
 //----------------------------------------------------------------------------------------------------------------
-bool CUtil::IsVisible( Vector const& vSrc, Vector const& vDest )
+bool CUtil::IsVisible( Vector const& vSrc, Vector const& vDest, bool bWorld )
 {
-	CTraceFilterWorldAndPropsOnly filter;
-	TraceLine(vSrc, vDest, MASK_SOLID_BRUSHONLY, &filter);
+	if (bWorld)
+	{
+		CTraceFilterWorldAndPropsOnly filter;
+		TraceLine(vSrc, vDest, MASK_SOLID_BRUSHONLY, &filter);
+	}
+	else
+	{
+		CTraceFilterHitAll filter;
+		TraceLine(vSrc, vDest, MASK_OPAQUE, &filter);
+	}
 	return !IsTraceHitSomething();
 }
 

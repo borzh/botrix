@@ -537,6 +537,10 @@
 					RelativePath=".\mods\borzh\bot_borzhmod.h"
 					>
 				</File>
+				<File
+					RelativePath=".\mods\borzh\types_borzh.h"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="hl2dm"

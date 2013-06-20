@@ -9,6 +9,7 @@
 
 #include "types.h"
 
+#include "chat.h"
 #include "item.h"
 #include "mod.h"
 #include "player.h"

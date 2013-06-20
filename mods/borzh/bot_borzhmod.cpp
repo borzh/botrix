@@ -20,11 +20,8 @@ void CBot_BorzhMod::Respawned()
 	
 	m_bDontAttack = true;
 
-	m_iFailWaypoint = EInvalidWaypointId;
-	
 	m_iCurrentTask = EBotTaskInvalid;
 	m_bNeedTaskCheck = true;
-	m_bCheckWeapon = CMod::HasMapItems(EEntityTypeWeapon);
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -49,11 +46,20 @@ void CBot_BorzhMod::Move()
 		m_cCmd.buttons = rand() & IN_ATTACK; // Force bot to respawn by hitting randomly attack button.
 		return;
 	}
+	if ( m_bNeedTaskCheck )
+		CheckNewTasks();
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot_BorzhMod::ReceiveChat( int iPlayerIndex, CPlayer* pPlayer, bool bTeamOnly, const char* szText )
+void CBot_BorzhMod::ReceiveChatRequest( const CBotChat& cRequest )
 {
+	switch (cRequest.iBotRequest)
+	{
+	case EBorzhBotChatFoundDoor:
+	case EBorzhBotChatFoundButton:
+	case EBorzhBotChatFoundNewArea:
+		break;
+	}
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -63,10 +69,7 @@ bool CBot_BorzhMod::DoWaypointAction()
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot_BorzhMod::CheckNewTasks( bool bForceTaskChange )
+void CBot_BorzhMod::CheckNewTasks()
 {
-}
 
-void CBot_BorzhMod::TaskFinished()
-{
 }

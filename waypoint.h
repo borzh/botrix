@@ -23,11 +23,11 @@ public: // Methods.
 
 public: // Methods.
 	/// Default constructor.
-	CWaypoint(): vOrigin(), iArgument(0), iFlags(0), iPlayersCount(0), iAreaId(0) {}
+	CWaypoint(): vOrigin(), iArgument(0), iFlags(0), iAreaId(0) {}
 
 	/// Constructor with parameters.
 	CWaypoint( Vector const& vOrigin, int iFlags = FWaypointNone, int iArgument = 0, TAreaId iAreaId = 0 ):
-		iArgument(iArgument), iAreaId(iAreaId), vOrigin(vOrigin), iFlags(iFlags), iPlayersCount(0) {}
+		iArgument(iArgument), iAreaId(iAreaId), vOrigin(vOrigin), iFlags(iFlags) {}
 
 	/// Get waypoint flags for needed entity type (health, armor, weapon, ammo).
 	static TWaypointFlags GetFlagsFor( TEntityType iEntityType ) { return m_aFlagsForEntityType[iEntityType]; }
@@ -131,7 +131,7 @@ public: // Members and constants.
 	TAreaId iAreaId;                         ///< Area id where waypoint belongs to (like "Bombsite A" / "Base CT" in counter-strike).
 	int iArgument;                           ///< Waypoint argument.
 	
-	unsigned char iPlayersCount;             ///< Count of players that reached this waypoint.
+	//unsigned char iPlayersCount;             ///< Count of players that reached this waypoint.
 
 protected:
 	static const TWaypointFlags m_aFlagsForEntityType[EEntityTypeTotal-1];
@@ -151,7 +151,7 @@ public:
 	int DemoNumber() { return iFlags & (FPathDemo-1); }
 	
 	float fLength;                           ///< Path length.
-	TPathFlags iFlags;               ///< Path flags.
+	TPathFlags iFlags;                       ///< Path flags.
 
 	/// Path argument. At 1rst byte there is time to wait before action (in deciseconds). 2nd byte is action duration.
 	unsigned short iArgument;

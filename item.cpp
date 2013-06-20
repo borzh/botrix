@@ -479,6 +479,24 @@ void CItems::AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServ
 }
 
 //----------------------------------------------------------------------------------------------------------------
+bool CItems::IsDoorOpened( TEntityIndex iDoor )
+{
+	const CEntity& cDoor = m_aItems[EEntityTypeDoor][iDoor];
+	TWaypointId w1 = cDoor.iWaypoint, w2 = (int)cDoor.pArguments;
+	if ( CWaypoints::IsValid(w1) && CWaypoints::IsValid(w2) )
+	{
+		const Vector& v1 = CWaypoints::Get(w1).vOrigin;
+		const Vector& v2 = CWaypoints::Get(w2).vOrigin;
+		return CUtil::IsVisible(v1, v2, false);
+	}
+	else
+	{
+		//DebugAssert(false); // Door should have two waypoints from each side.
+		return false;
+	}
+}
+
+//----------------------------------------------------------------------------------------------------------------
 void CItems::Draw( CClient* pClient )
 {
 	static float fNextDrawTime = 0.0f;
@@ -524,23 +542,30 @@ void CItems::Draw( CClient* pClient )
 					int pos = 0;
 					CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, CTypeToString::EntityTypeToString(iEntityType).c_str() );
 					CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, pEdict->GetClassName() );
-					CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityOnMap(pServerEntity) ? "alive" : "dead" );
-					//CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityTaken(pServerEntity) ? "taken" : "not taken" );
-					CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityBreakable(pServerEntity) ? "breakable" : "non breakable" );
-					if ( iEntityType == EEntityTypeObject )
+					if ( iEntityType == EEntityTypeDoor )
+						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsDoorOpened(i) ? "opened" : "closed" );
+					else if ( iEntityType == EEntityTypeObject )
+					{
+						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityOnMap(pServerEntity) ? "alive" : "dead" );
+						//CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityTaken(pServerEntity) ? "taken" : "not taken" ); // Taken not shown.
+						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityBreakable(pServerEntity) ? "breakable" : "non breakable" );
 						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, CTypeToString::EntityClassFlagsToString(pEntity->iFlags).c_str() );
-					if ( iEntityType >= EEntityTypeObject )
+					}
+					if ( iEntityType >= EEntityTypeObject ) // Draw object model.
 						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, STRING( pEdict->GetIServerEntity()->GetModelName() ) );
 				}
 
+				// Draw box around item.
 				if ( FLAG_SOME_SET(EItemDrawBoundBox, pClient->iItemDrawFlags) )
 					CUtil::DrawBox(vOrigin, pCollide->OBBMins(), pCollide->OBBMaxs(), 1.0f, 0xFF, 0xFF, 0xFF, pCollide->GetCollisionAngles());
 
 				if ( FLAG_SOME_SET(EItemDrawWaypoint, pClient->iItemDrawFlags) && (iEntityType < EEntityTypeObject) )
 				{
+					// Draw nearest waypoint from item.
 					if (CWaypoint::IsValid(pEntity->iWaypoint) )
 						CUtil::DrawLine(CWaypoints::Get(pEntity->iWaypoint).vOrigin, vOrigin, 1.0f, 0xFF, 0xFF, 0);
 
+					// Draw second waypoint for door.
 					if ( (iEntityType == EEntityTypeDoor) && CWaypoint::IsValid((int)pEntity->pArguments) )
 						CUtil::DrawLine(CWaypoints::Get((int)pEntity->pArguments).vOrigin, vOrigin, 1.0f, 0xFF, 0xFF, 0);
 				}

@@ -105,7 +105,7 @@ class CItems
 {
 
 public:
-	///
+	/// Get random item clas for given entity type.
 	static const CEntityClass* GetRandomItemClass( TEntityType iEntityType )
 	{
 		DebugAssert( !m_aItemClasses[iEntityType].empty() );
@@ -168,6 +168,9 @@ public:
 	/// Update items. Called when player is connected or picks up weapon (new one will be created to respawn later).
 	static void Update();
 	
+	/// Check if given door is opened.
+	static bool IsDoorOpened( TEntityIndex iDoor );
+
 	/// Draw items for a given client.
 	static void Draw( CClient* pClient );
 
@@ -190,7 +193,7 @@ protected:
 
 	static good::vector<edict_t*> m_aOthers;                            // Array of other entities.
 
-	static TEntityIndex m_iCurrentEntity;
+	static TEntityIndex m_iCurrentEntity;                               // Current entity index to check.
 	static const int m_iCheckEntitiesPerFrame = 32;
 
 	// This one is to have models specific flags (for example car model with 'heavy' flag, or barrel model with 'explosive' flag).

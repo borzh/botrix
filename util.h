@@ -53,8 +53,8 @@ public:
 	/// Get player's entity by user ID.
 	static edict_t* GetEntityByUserId( int iUserId );
 
-	/// Return true if vDest is visible from vSrc.
-	static bool IsVisible( Vector const& vSrc, Vector const& vDest );
+	/// Return true if vDest is visible from vSrc. If bWorld is false, will only check entities.
+	static bool IsVisible( Vector const& vSrc, Vector const& vDest, bool bWorld = true );
 	/// Return true if entity is visible from vSrc.
 	static bool IsVisible( Vector const& vSrc, edict_t* pDest );
 	/// Return true if can get from vSrc to vDest walking or jumping.

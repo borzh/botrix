@@ -35,7 +35,10 @@ public:
 	virtual void Move();
 
 	/// Called when chat arrives from other player.
-	virtual void ReceiveChat( int iPlayerIndex, CPlayer* pPlayer, bool bTeamOnly, const char* szText );
+	virtual void ReceiveChat( int iPlayerIndex, CPlayer* pPlayer , bool bTeamOnly, const char* szText ) {}
+
+	/// Called when chat request arrives from other player.
+	virtual void ReceiveChatRequest( const CBotChat& cRequest );
 
 
 protected:
@@ -50,22 +53,21 @@ protected:
 		ConsoleCommand("say Hey, I just found %s.", cItem.pItemClass->sClassName.c_str());
 	}
 
-	// Check if new tasks are needed.
-	void CheckNewTasks( bool bForceTaskChange );
+	// Check if there is something to do.
+	void CheckNewTasks();
 
-	// Mark task as finished.
-	void TaskFinished();
-
-	good::bitset m_aWaypoints;                           // Discovered waypoints (1 = free, 0 = discovered).
+	good::bitset m_aUnknownWaypoints;                    // Not visited waypoints (1 = unknown, 0 = visited).
+	good::bitset m_aUnknownAreas;                        // Not visited areas (1 = unknown, 0 = visited).
 
 	TBotTaskBorzh m_iCurrentTask;                        // Current task.
+	int m_iTaskArgument;                                 // Task argument.
+
 	TWaypointId m_iDestination;                          // Destination waypoint.
 
-	TWaypointId m_iFailWaypoint;                         // Waypoint id where bot stucks.
-	int m_iFailsCount;                                   // Times bot stucks at m_iFailWaypoint (at 3 times will change destination).
+protected: // Flags.
 
 	bool m_bNeedTaskCheck:1;                             // True if there is need to check for new tasks.
-	bool m_bCheckWeapon:1;                               // Check if need weapon.
+
 };
 
 

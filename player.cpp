@@ -1,4 +1,3 @@
-#include "mods/hl2dm/bot_hl2dm.h"
 #include "chat.h"
 #include "client.h"
 #include "mod.h"
@@ -6,6 +5,8 @@
 #include "server_plugin.h"
 #include "type2string.h"
 #include "waypoint.h"
+#include "mods/borzh/bot_borzhmod.h"
+#include "mods/hl2dm/bot_hl2dm.h"
 
 #include "good/string_buffer.h"
 
@@ -153,7 +154,6 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
 		return NULL;
 
 	TModId iModId = CMod::GetModId();
-	DebugAssert( iModId == EModId_HL2DM );
 
 	const good::string& sName = CMod::GetRandomBotName();
 	const char* szName;
@@ -184,6 +184,9 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
 	{
 		case EModId_HL2DM: 
 			pPlayer = new CBot_HL2DM(pEdict, idx, iIntelligence);
+			break;
+		case EModId_Borzh: 
+			pPlayer = new CBot_BorzhMod(pEdict, idx, iIntelligence);
 			break;
 		default:
 			DebugAssert(false);
@@ -395,7 +398,7 @@ void CPlayers::DeliverChat( edict_t* pFrom, bool bTeamOnly, const char* szText )
 			CPlayer* pReceiver = CPlayers::Get(cChat.iDirectedTo);
 			if ( pReceiver && pReceiver->IsBot() ) // Deliver chat only for bots.
 			{
-				// Should be on same team.
+				// Should be on same team if chat is for team only.
 				if ( !bTeamOnly || ( pSpeaker->GetTeam() == pReceiver->GetTeam() ) )
 				{
 					DebugAssert(pSpeaker != pReceiver);

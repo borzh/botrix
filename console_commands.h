@@ -696,10 +696,10 @@ public:
 //****************************************************************************************************************
 // Container of all commands starting with "bot".
 //****************************************************************************************************************
-class CBotChat: public CConsoleCommandContainer
+class CBotChatCommand: public CConsoleCommandContainer
 {
 public:
-	CBotChat()
+	CBotChatCommand()
 	{
 		m_sCommand = "bot";
 		Add(new CBotAddCommand());

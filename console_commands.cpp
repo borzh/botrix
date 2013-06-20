@@ -1822,7 +1822,7 @@ CMainCommand::CMainCommand()
 	Add(new CWaypointCommand);
 	Add(new CPathCommand);
 	Add(new CItemCommand);
-	Add(new CBotChat);
+	Add(new CBotChatCommand);
 	Add(new CConfigCommand);
 
 #ifdef SOURCE_ENGINE_2006

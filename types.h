@@ -94,6 +94,10 @@ enum TBotChats
 	EBotChatStandUp,                             ///< Stop crouching.
 	EBotChatJump,                                ///< Jump.
 	EBotChatLeave,                               ///< Continue playing, stop helping (you can leave now).
+
+	EBorzhBotChatFoundDoor,                      ///< Chat when bot founds a door.
+	EBorzhBotChatFoundButton,                    ///< Chat when bot founds a button.
+	EBorzhBotChatFoundNewArea,                   ///< Chat when bot enters new area.
 	
 	EBotChatTotal                                ///< Amount of bot sentences.
 };
@@ -176,10 +180,11 @@ enum TPathFlag
 	FPathDamage                = 1<<6,           ///< Need to take damage to get to adjacent waypoint.
 	FPathFlashlight            = 1<<7,           ///< Need to turn on flashlight.
 
-	FPathTotem                 = 1<<8,           ///< Need to make ladder of living corpses. Argument is count of players needed (1..).
+	FPathDoor                  = 1<<8,           ///< There is a door on the way. Argument is door number.
+	FPathTotem                 = 1<<9,           ///< Need to make ladder of living corpses. Argument is count of players needed (1..).
 
-	FPathTotal                 = 9,              ///< Amount of path flags. Note that FPathDemo not counts.
-	FPathAll                   = (1<<9)-1,       ///< All path flags.
+	FPathTotal                 = 10,             ///< Amount of path flags. Note that FPathDemo not counts.
+	FPathAll                   = (1<<10)-1,      ///< All path flags.
 
 	FPathDemo                  = 0x8000,         ///< Flag for use demo to reach adjacent waypoints. Demo number is at lower bits.
 };

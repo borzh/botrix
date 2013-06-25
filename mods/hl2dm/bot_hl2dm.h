@@ -31,7 +31,7 @@ public:
 	virtual void HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow );
 
 	/// Set move and aim variables. You can also set shooting/crouching/jumping buttons in m_cCmd.buttons.
-	virtual void Move();
+	virtual void Think();
 
 	/// Called when chat arrives from other player.
 	virtual void ReceiveChat( int iPlayerIndex, CPlayer* pPlayer, bool bTeamOnly, const char* szText );

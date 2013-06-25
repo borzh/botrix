@@ -17,7 +17,7 @@ namespace good
 	class base_bitset
 	{
 	public:
-		typedef good::vector< char, Alloc > container_t;
+		typedef good::vector< unsigned char, Alloc > container_t;
 
 		/// Constructor with optional size of set.
 		base_bitset( int iSize = 0 ): m_iSize(iSize) { m_cContainer.resize(BIT_ARRAY_SIZE(iSize)); }
@@ -73,13 +73,28 @@ namespace good
 		/// Clear bit at given position.
 		void clear( int iIndex ) { set(iIndex, false); }
 
+		/// Get count of set bits.
+		int count()
+		{
+			                            // 0000 0001 0010 0011 0100 0101 0110 0111 1000 1001 1010 1011 1100 1101 1110 1111
+			static int char_counts[16] = { 0,   1,   1,   2,   1,   2,   2,   3,   1,   2,   2,   3,   2,   2,   3,   4 };
+			int count = 0;
+			for ( int i=0; i < m_cContainer.size(); ++i )
+			{
+				unsigned char c = m_cContainer[i];
+				count += char_counts[c & 0x0F];
+				count += char_counts[(c >> 4 ) & 0x0F];
+			}
+			return count;
+		}
+
 	protected:
 		container_t m_cContainer;
 		int m_iSize;
 	};
 
 
-	typedef base_bitset< good::allocator<char> > bitset;
+	typedef base_bitset< good::allocator<unsigned char> > bitset; ///< Typedef for default bitset.
 
 
 } // namespace good

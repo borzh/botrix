@@ -11,7 +11,7 @@
 #include "event.h"
 #include "icvar.h"
 #include "server_plugin.h"
-#include "util.h"
+#include "source_engine.h"
 #include "mod.h"
 #include "waypoint.h"
 
@@ -236,8 +236,8 @@ void CBotrixPlugin::ServerActivate( edict_t* pEdictList, int edictCount, int cli
 	CItems::MapLoaded();
 	CMod::MapLoaded();
 
-	CUtil::Message(NULL, "Level \"%s\" has been loaded\n", sMapName.c_str());
-	CUtil::Message(NULL, "Max clients: %d", clientMax);
+	CUtil::Message(NULL, "Level \"%s\" has been loaded", sMapName.c_str());
+	CUtil::Message(NULL, "Max clients: %d\n", clientMax);
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -258,7 +258,7 @@ void CBotrixPlugin::GameFrame( bool simulating )
 	if ( bMapRunning )
 	{
 		CItems::Update();
-		CPlayers::Think();
+		CPlayers::PreThink();
 		//CUtil::Message(NULL, "Players think time: %.5f", pEngineServer->Time() - fTime);
 
 		//if ( CWaypoints::NeedToWorkVisibility() )

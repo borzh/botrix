@@ -1,4 +1,5 @@
 #include "mods/css/event_css.h"
+#include "mods/borzh/mod_borzh.h"
 #include "mod.h"
 #include "server_plugin.h"
 #include "type2string.h"
@@ -8,6 +9,7 @@
 //----------------------------------------------------------------------------------------------------------------
 TModId CMod::m_iModId;
 good::string CMod::sModName;
+IMod* CMod::pCurrentMod = NULL;
 
 StringVector CMod::m_aBotNames;
 good::vector<StringVector> CMod::m_aModels;
@@ -25,10 +27,16 @@ bool CMod::bIntelligenceInBotName = true;
 void CMod::Load( TModId iModId )
 {
 	m_iModId = iModId;
+	m_aEvents.clear();
+
 	switch ( iModId )
 	{
 	case EModId_Borzh:
+		pCurrentMod = new Mod_Borzh();
+		break;
+
 	case EModId_HL2DM:
+		// TODO: move to hl2dm mod.
 		AddEvent(new CPlayerActivateEvent());
 		AddEvent(new CPlayerTeamEvent());
 		AddEvent(new CPlayerSpawnEvent());
@@ -51,8 +59,19 @@ void CMod::Load( TModId iModId )
 }
 
 //----------------------------------------------------------------------------------------------------------------
+void CMod::AddEvent( CEvent* pEvent )
+{
+	if (CBotrixPlugin::pGameEventManager)
+		CBotrixPlugin::pGameEventManager->AddListener( CBotrixPlugin::instance, pEvent->GetName().c_str(), true );
+	if (CBotrixPlugin::pGameEventManager2)
+		CBotrixPlugin::pGameEventManager2->AddListener( CBotrixPlugin::instance, pEvent->GetName().c_str(), true );
+	m_aEvents.push_back(pEvent);
+}
+
+//----------------------------------------------------------------------------------------------------------------
 void CMod::MapLoaded()
 {
+	// TODO: move this to items.
 	for ( TEntityType iType=0; iType < EEntityTypeTotal-1; ++iType )
 	{
 		m_bMapHas[iType] = false;
@@ -72,16 +91,9 @@ void CMod::MapLoaded()
 				}
 		}
 	}
-}
 
-//----------------------------------------------------------------------------------------------------------------
-void CMod::AddEvent( CEvent* pEvent )
-{
-	if (CBotrixPlugin::pGameEventManager)
-		CBotrixPlugin::pGameEventManager->AddListener( CBotrixPlugin::instance, pEvent->GetName().c_str(), true );
-	if (CBotrixPlugin::pGameEventManager2)
-		CBotrixPlugin::pGameEventManager2->AddListener( CBotrixPlugin::instance, pEvent->GetName().c_str(), true );
-	m_aEvents.push_back(pEvent);
+	DebugAssert(pCurrentMod);
+	pCurrentMod->MapLoaded();
 }
 
 //----------------------------------------------------------------------------------------------------------------

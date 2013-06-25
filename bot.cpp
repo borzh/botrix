@@ -362,7 +362,7 @@ void CBot::EndPerformingChatRequest( bool bSayGoodbye )
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot::Think()
+void CBot::PreThink()
 {
 	if ( m_bFirstRespawn )
 	{
@@ -373,7 +373,7 @@ void CBot::Think()
 	Vector vPrevOrigin = m_vHead;
 	int iPrevCurrWaypoint = iCurrentWaypoint;
 
-	CPlayer::Think();
+	CPlayer::PreThink();
 
 	if ( m_pPlayerInfo->IsDead() ) // CBasePlayer::IsDead() returns true only when player became dead,  but when 
 		m_bAlive = false;          // player is respawnable (but still dead) it returns false.
@@ -389,7 +389,7 @@ void CBot::Think()
 		UpdateWorld();
 
 	if ( !m_bTest )
-		Move(); // Mod's think.
+		Think(); // Mod's think.
 
 	if ( m_bAlive )
 	{

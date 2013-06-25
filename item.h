@@ -180,7 +180,9 @@ protected:
 	                                  TEntityType iFrom, TEntityType iTo, bool bFastCmp = false );
 
 	static void CheckNewEntity( edict_t* pEdict );
-	static CEntity* AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityClass* pItemClass, IServerEntity* pServerEntity );
+	static TEntityIndex InsertEntity( int iEntityType, const CEntity& cEntity );
+	static void AutoWaypointPathFlagsForEntity( TEntityType iEntityType, TEntityIndex iIndex, CEntity& cEntity );
+	static TEntityIndex AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityClass* pItemClass, IServerEntity* pServerEntity );
 	static void AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServerEntity* pServerEntity );
 
 	friend class CWaypoints; // Give access to WaypointDeleted().

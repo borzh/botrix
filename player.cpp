@@ -52,7 +52,7 @@ void CPlayer::Respawned()
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CPlayer::Think()
+void CPlayer::PreThink()
 {
 	if ( !m_bAlive && m_bBot ) // Don't update current waypoint for dead bots.
 		return;
@@ -328,11 +328,11 @@ void CPlayers::PlayerDisconnected( edict_t* pEdict )
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CPlayers::Think()
+void CPlayers::PreThink()
 {
 	for (PlayersArray::iterator it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it)
 		if ( it->get() )
-			it->get()->Think();
+			it->get()->PreThink();
 }
 
 

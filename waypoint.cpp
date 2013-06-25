@@ -51,7 +51,7 @@ const TWaypointFlags CWaypoint::m_aFlagsForEntityType[EEntityTypeTotal-1] =
 	
 
 // CWaypoints static members.
-StringVector CWaypoints::m_cAreaNames;
+StringVector CWaypoints::m_cAreas;
 CWaypoints::WaypointGraph CWaypoints::m_cGraph;
 float CWaypoints::m_fNextDrawWaypointsTime = 0.0f;
 CWaypoints::Bucket CWaypoints::m_cBuckets[CWaypoints::BUCKETS_SIZE_X][CWaypoints::BUCKETS_SIZE_Y][CWaypoints::BUCKETS_SIZE_Z];
@@ -96,7 +96,7 @@ void CWaypoint::GetColor(unsigned char& r, unsigned char& g, unsigned char& b) c
 	{
 		r = 0x00; g = 0x33; b = 0x00;  // Dark green effect, armor machine.
 	}
-	else if ( FLAG_SOME_SET(FWaypointButton, iFlags) )
+	else if ( FLAG_SOME_SET(FWaypointButton | FWaypointSeeButton, iFlags) )
 	{
 		r = 0x8A; g = 0x2B; b = 0xE2;  // Violet effect, button.
 	}
@@ -108,7 +108,7 @@ void CWaypoint::GetColor(unsigned char& r, unsigned char& g, unsigned char& b) c
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CWaypoint::Draw( TWaypointDrawFlags iDrawType, float fDrawTime ) const
+void CWaypoint::Draw( TWaypointId iWaypointId, TWaypointDrawFlags iDrawType, float fDrawTime ) const
 {
 	unsigned char r, g, b; // Red, green, blue.
 	GetColor(r, g, b);
@@ -129,13 +129,13 @@ void CWaypoint::Draw( TWaypointDrawFlags iDrawType, float fDrawTime ) const
 
 	if ( FLAG_ALL_SET(FWaypointDrawText, iDrawType) )
 	{
-		static char szId[32];
-		sprintf(szId, "%d", CWaypoints::GetId(*this));
+		static char szId[16];
+		sprintf(szId, "%d", iWaypointId);
 		Vector v = vOrigin;
 		v.z -= 20.0f;
-		int i=0;
+		int i = 0;
 		CUtil::DrawText(v, i++, fDrawTime, 0xFF, 0xFF, 0xFF, szId);
-		CUtil::DrawText(v, i++, fDrawTime, 0xFF, 0xFF, 0xFF, CWaypoints::GetAreaName(iAreaId).c_str());
+		CUtil::DrawText(v, i++, fDrawTime, 0xFF, 0xFF, 0xFF, CWaypoints::GetAreas()[iAreaId].c_str());
 		CUtil::DrawText(v, i++, fDrawTime, 0xFF, 0xFF, 0xFF, CTypeToString::WaypointFlagsToString(iFlags).c_str());
 	}
 }
@@ -152,7 +152,7 @@ bool CWaypoints::Save()
 
 	waypoint_header header;
 	header.iFlags = 0;
-	if ( m_cAreaNames.size() > 1 )
+	if ( m_cAreas.size() > 1 )
 		FLAG_SET(WAYPOINT_FILE_FLAG_AREAS, header.iFlags);
 	//if ( bVisiblityMade )
 	//	FLAG_SET(WAYPOINT_FILE_FLAG_VISIBILITY, header.iFlags);
@@ -179,7 +179,7 @@ bool CWaypoints::Save()
 		int iNumPaths = it->neighbours.size();
 		fwrite(&iNumPaths, sizeof(int), 1, f);
 
-		for ( WaypointPathIt arcIt = it->neighbours.begin(); arcIt != it->neighbours.end(); ++arcIt)
+		for ( WaypointArcIt arcIt = it->neighbours.begin(); arcIt != it->neighbours.end(); ++arcIt)
 		{			
 			fwrite(&arcIt->target, sizeof(TWaypointId), 1, f);             // Save waypoint id.
 			fwrite(&arcIt->edge.iFlags, sizeof(TPathFlags), 1, f); // Save path flags.
@@ -187,15 +187,15 @@ bool CWaypoints::Save()
 		}
 	}
 
-	DebugAssert( m_cAreaNames.size() > 0 );
-	int iAreaNamesSize = m_cAreaNames.size() - 1;
+	DebugAssert( m_cAreas.size() > 0 );
+	int iAreaNamesSize = m_cAreas.size() - 1;
 	fwrite(&iAreaNamesSize, sizeof(int), 1, f); // Save area names size.
 
 	for ( int i=1; i < iAreaNamesSize+1; i++ ) // First area name is always empty, for new waypoints.
 	{
-		int iSize = m_cAreaNames[i].size();
+		int iSize = m_cAreas[i].size();
 		fwrite(&iSize, sizeof(int), 1, f); // Save string size.
-		fwrite(m_cAreaNames[i].c_str(), sizeof(char), iSize+1, f); // Write string & trailing 0.
+		fwrite(m_cAreas[i].c_str(), sizeof(char), iSize+1, f); // Write string & trailing 0.
 	}
 
 	fclose(f);
@@ -285,8 +285,8 @@ bool CWaypoints::Load()
 		fread(&iAreaNamesSize, sizeof(int), 1, f);
 		DebugAssert(iAreaNamesSize >= 0);
 
-		m_cAreaNames.reserve(iAreaNamesSize + 1);
-		m_cAreaNames.push_back("default"); // New waypoints without area id will be put under this empty area id.
+		m_cAreas.reserve(iAreaNamesSize + 1);
+		m_cAreas.push_back("default"); // New waypoints without area id will be put under this empty area id.
 
 		for ( int i=0; i < iAreaNamesSize; i++ )
 		{
@@ -298,7 +298,7 @@ bool CWaypoints::Load()
 			{
 				fread(szMainBuffer, sizeof(char), iSize+1, f); // Read also trailing 0.
 				good::string sArea(szMainBuffer, true, true, iSize);
-				m_cAreaNames.push_back(sArea);
+				m_cAreas.push_back(sArea);
 			}
 		}
 	}
@@ -549,14 +549,12 @@ void CWaypoints::Draw( CClient* pClient )
 		int y = GetBucketY(vOrigin.y);
 		int z = GetBucketZ(vOrigin.z);
 
-		// Draw nearest bucket waypoints.
+		// Draw only waypoints from nearest buckets.
 		int minX, minY, minZ, maxX, maxY, maxZ;
 		GetBuckets(x, y, z, minX, minY, minZ, maxX, maxY, maxZ);
 
 		// Get visible clusters from player's position.
-		static unsigned char pvs[MAX_MAP_CLUSTERS/8];
-		int clusterIndex = CBotrixPlugin::pEngineServer->GetClusterForOrigin( vOrigin );
-		CBotrixPlugin::pEngineServer->GetPVSForCluster( clusterIndex, sizeof(pvs), pvs );							
+		CUtil::SetPVSForVector(vOrigin);
 
 		for (x = minX; x <= maxX; ++x)
 			for (y = minY; y <= maxY; ++y)
@@ -567,9 +565,9 @@ void CWaypoints::Draw( CClient* pClient )
 					{
 						WaypointNode& node = m_cGraph[*it];
 
-						// Check if waypoint is visible from player's position.
-						if ( CBotrixPlugin::pEngineServer->CheckOriginInPVS( node.vertex.vOrigin, pvs, sizeof(pvs) ) )
-							node.vertex.Draw(pClient->iWaypointDrawFlags, fDrawTime);
+						// Check if waypoint is in pvs from player's position.
+						if ( CUtil::IsVisiblePVS(node.vertex.vOrigin) )
+							node.vertex.Draw(*it, pClient->iWaypointDrawFlags, fDrawTime);
 					}
 				}
 	}
@@ -631,6 +629,14 @@ void CWaypoints::GetPathColor( TPathFlags iFlags, unsigned char& r, unsigned cha
 	{
 		r = 0x00; g = 0xFF; b = 0x00; // Green effect, crouch.
 	}
+	else if ( FLAG_ALL_SET(FPathDoor, iFlags) )
+	{
+		r = 0x8A; g = 0x2B; b = 0xE2;  // Violet effect, door.
+	}
+	else if ( FLAG_ALL_SET(FPathTotem, iFlags) )
+	{
+		r = 0x48; g = 0x24; b = 0x00;  // Brown effect, totem.
+	}
 	else
 	{
 		r = 0x00; g = 0x7F; b = 0x7F; // Cyan effect, other flags.
@@ -649,7 +655,7 @@ void CWaypoints::DrawWaypointPaths( TWaypointId id, TPathDrawFlags iPathDrawFlag
 	Vector diff(0, 0, -CUtil::iPlayerEyeLevel/4);
 	float fDrawTime = CWaypoint::DRAW_INTERVAL + (2.0f / CBotrixPlugin::iFPS); // Add two frames to not flick.
 
-	for (WaypointPathIt it = w.neighbours.begin(); it != w.neighbours.end(); ++it)
+	for (WaypointArcIt it = w.neighbours.begin(); it != w.neighbours.end(); ++it)
 	{
 		WaypointNode& n = m_cGraph[it->target];
 		GetPathColor(it->edge.iFlags, r, g, b);

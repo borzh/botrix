@@ -95,10 +95,12 @@ enum TBotChats
 	EBotChatJump,                                ///< Jump.
 	EBotChatLeave,                               ///< Continue playing, stop helping (you can leave now).
 
-	EBorzhBotChatFoundDoor,                      ///< Chat when bot founds a door.
+	EBorzhChatDoorFound,                         ///< Chat when bot founds a door.
+	EBorzhChatDoorChange,                        ///< Chat when bot sees a change in door status.
+
 	EBorzhBotChatFoundButton,                    ///< Chat when bot founds a button.
 	EBorzhBotChatFoundNewArea,                   ///< Chat when bot enters new area.
-	
+
 	EBotChatTotal                                ///< Amount of bot sentences.
 };
 typedef int TBotChat;                            ///< Bot sentence.
@@ -155,8 +157,8 @@ enum TWaypointFlag
 
 	// Second byte.
 	FWaypointArmorMachine      = 1<<8,           ///< Armor machine is there. Arguments are 1 angle (low word) and health amount (3rd byte).
-	FWaypointButton            = 1<<9,           ///< A button is there. Argument is 1 angle (low word).
-	FWaypointSeeButton         = 1<<10,          ///< Button(s) are visible from there. Arguments bytes with button indexes (starting from 1).
+	FWaypointButton            = 1<<9,           ///< A button is there. Arguments are angle (low word)  button index+1 (3rd byte), door index+1 (4th byte).
+	FWaypointSeeButton         = 1<<10,          ///< Button is visible. Arguments are angle (low word), button index+1 (3rd byte), door index+1 (4th byte).
 
 	FWaypointTotal             = 11,             ///< Amount of waypoint flags.
 	FWaypointAll               = (1<<11) - 1     ///< All flags set.
@@ -177,10 +179,10 @@ enum TPathFlag
 	FPathSprint                = 1<<3,           ///< Need to sprint to get to adjacent waypoint. Usefull for long jump.
 	FPathLadder                = 1<<4,           ///< Need to use ladder move (IN_FORWARD & IN_BACK) to get to adjacent waypoint.
 	FPathStop                  = 1<<5,           ///< Stop at current waypoint to go in straight line to next one. Usefull when risk of falling.
-	FPathDamage                = 1<<6,           ///< Need to take damage to get to adjacent waypoint.
+	FPathDamage                = 1<<6,           ///< Need to take damage to get to adjacent waypoint. Argument is damage count.
 	FPathFlashlight            = 1<<7,           ///< Need to turn on flashlight.
 
-	FPathDoor                  = 1<<8,           ///< There is a door on the way. Argument is door number.
+	FPathDoor                  = 1<<8,           ///< There is a door on the way. Argument is door number (start from 1, 0 - invalid).
 	FPathTotem                 = 1<<9,           ///< Need to make ladder of living corpses. Argument is count of players needed (1..).
 
 	FPathTotal                 = 10,             ///< Amount of path flags. Note that FPathDemo not counts.

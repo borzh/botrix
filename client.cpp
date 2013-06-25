@@ -43,10 +43,10 @@ void CClient::Activated()
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CClient::Think()
+void CClient::PreThink()
 {
 	int iLastWaypoint = iCurrentWaypoint;
-	CPlayer::Think();
+	CPlayer::PreThink();
 
 	// Check if lost waypoint, in that case add new one.
 	if ( bAutoCreateWaypoints && m_bAlive && !CWaypoint::IsValid(iCurrentWaypoint) )

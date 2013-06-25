@@ -19,8 +19,12 @@ abstract class IMod
 public: // Methods.
 
 	///
-	virtual void LoadConfig(const good::string& iModName) = 0;
+	virtual void LoadConfig(const good::string& sModName) = 0;
 	// ProcessUnknownSection(const good::inifile::inisection...);
+
+
+	/// Called when map is loaded, after waypoints and items has been loaded.
+	virtual void MapLoaded() = 0;
 
 
 	/// Get waypoint type count.
@@ -68,11 +72,16 @@ class CMod
 
 public: // Methods.
 
+	static IMod* pCurrentMod;
+
 	/// Get mod id for this game mod.
 	static TModId GetModId() { return m_iModId; }
 
 	/// Load all needed staff for mod.
 	static void Load( TModId iModId );
+
+	// Add event and start listening to it.
+	static void AddEvent( CEvent* pEvent );
 
 	/// Unload mod.
 	static void UnLoad()
@@ -141,9 +150,6 @@ protected: // Methods.
 			m_aModels.resize(iTeam+1);
 		m_aModels[iTeam] = aModels;
 	}
-
-	// Add event and start listening to it.
-	static void AddEvent( CEvent* pEvent );
 
 
 protected: // Members.

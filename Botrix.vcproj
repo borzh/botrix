@@ -538,6 +538,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\mods\borzh\mod_borzh.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\mods\borzh\mod_borzh.h"
+					>
+				</File>
+				<File
 					RelativePath=".\mods\borzh\types_borzh.h"
 					>
 				</File>
@@ -656,6 +664,14 @@
 			>
 		</File>
 		<File
+			RelativePath=".\source_engine.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\source_engine.h"
+			>
+		</File>
+		<File
 			RelativePath=".\type2string.cpp"
 			>
 		</File>
@@ -665,14 +681,6 @@
 		</File>
 		<File
 			RelativePath=".\types.h"
-			>
-		</File>
-		<File
-			RelativePath=".\util.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\util.h"
 			>
 		</File>
 		<File

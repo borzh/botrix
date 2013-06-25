@@ -21,6 +21,7 @@ const good::string sWeapon = "weapon";
 const good::string sAmmo = "ammo";
 const good::string sHealth = "health";
 const good::string sArmor = "armor";
+const good::string sButton = "button";
 const good::string sFirstAngle = "first_angle";
 const good::string sSecondAngle = "second_angle";
 
@@ -560,13 +561,15 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
 
 	CWaypoint& w = CWaypoints::Get(pClient->iCurrentWaypoint);
 
-	bool bAngle1 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper | FWaypointArmorMachine | FWaypointHealthMachine | FWaypointButton, w.iFlags);
+	bool bAngle1 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper | FWaypointArmorMachine | FWaypointHealthMachine | FWaypointButton | FWaypointSeeButton, w.iFlags);
 	bool bAngle2 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper, w.iFlags);
 
 	bool bWeapon = FLAG_SOME_SET(FWaypointAmmo | FWaypointWeapon, w.iFlags);
 
 	bool bArmor = FLAG_SOME_SET(FWaypointArmor, w.iFlags);
 	bool bHealth = FLAG_SOME_SET(FWaypointHealth, w.iFlags);
+
+	bool bButton = FLAG_SOME_SET(FWaypointButton | FWaypointSeeButton, w.iFlags);
 
 	if ( argc == 0 )
 	{
@@ -580,7 +583,9 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
 		if ( bHealth )
 			CUtil::Message(pClient->GetEdict(), "Health %d.", CWaypoint::GetHealth(w.iArgument));
 		if ( bArmor )
-			CUtil::Message(pClient->GetEdict(), "Armor %d.", w.GetArmor(w.iArgument));
+			CUtil::Message(pClient->GetEdict(), "Armor %d.", CWaypoint::GetArmor(w.iArgument));
+		if ( bButton )
+			CUtil::Message(pClient->GetEdict(), "Button %d.", CWaypoint::GetButton(w.iArgument));
 		if ( bAngle1 )
 		{
 			QAngle a1; CWaypoint::GetFirstAngle(a1, w.iArgument);
@@ -732,6 +737,36 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
 			CWaypoint::SetArmor(i1, iArgument);
 		}
 
+		else if ( sButton == argv[i] )
+		{
+			if ( i+1 >= argc )
+			{
+				CUtil::Message(pClient->GetEdict(), "Error, you must provide 1 argument to button (button index).");
+				return ECommandError;
+			}
+			if ( bAngle2 )
+			{
+				CUtil::Message(pClient->GetEdict(), "Error, you can't mix button with 2 angles.");
+				return ECommandError;
+			}
+			if ( !bButton )
+			{
+				CUtil::Message(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (button/see_button).");
+				return ECommandError;
+			}
+
+			int i1 = -1;
+			sscanf(argv[++i], "%d", &i1);
+
+			int iButtonsCount = CItems::GetItems(EEntityTypeButton).size();
+			if ( (i1 <= 0) || (i1 > iButtonsCount) )
+			{
+				CUtil::Message(pClient->GetEdict(), "Error, invalid button argument (must be from 1 to %d).", iButtonsCount);
+				return ECommandError;
+			}
+			CWaypoint::SetButton(i1, iArgument);
+		}
+
 		else if ( sFirstAngle == argv[i] )
 		{
 			if ( bWeapon )
@@ -878,7 +913,55 @@ TCommandResult CWaypointLoadCommand::Execute( CClient* pClient, int argc, const 
 }
 
 
-TCommandResult CWaypointArea::Execute( CClient* pClient, int argc, const char** argv )
+//----------------------------------------------------------------------------------------------------------------
+// Waypoint area commands.
+//----------------------------------------------------------------------------------------------------------------
+TCommandResult CWaypointAreaRenameCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+	if ( pClient == NULL )
+		return ECommandError;
+
+	good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false); // Don't deallocate after use.
+
+	if ( argc < 2 )
+	{
+		CUtil::Message(pClient->GetEdict(), "Error, 2 arguments needed.");
+		return ECommandError;
+	}
+
+	for ( int i=0; i < argc; ++i )
+	{
+		sbBuffer.append(argv[i]);
+		sbBuffer.append(' ');
+	}
+	sbBuffer.erase( sbBuffer.size()-1, 1 ); // Erase last space.
+
+	StringVector& cAreas = CWaypoints::GetAreas();
+	for ( int i=1; i < cAreas.size(); ++i ) // Do not take default area in account.
+	{
+		if ( sbBuffer.starts_with(cAreas[i]) )
+		{
+			sbBuffer.erase(0, cAreas[i].size());
+			sbBuffer.trim();
+			if ( sbBuffer.size() > 0 )
+			{
+				CUtil::Message( pClient->GetEdict(), "Renamed '%s' to '%s'", cAreas[i].c_str(), sbBuffer.c_str() );
+				cAreas[i] = sbBuffer.duplicate();
+				return ECommandPerformed;
+			}
+			else
+			{
+				CUtil::Message( pClient->GetEdict(), "Error, can't rename '%s' to '%s'", cAreas[i].c_str(), sbBuffer.c_str() );
+				return ECommandError;
+			}
+		}
+	}
+
+	CUtil::Message(pClient->GetEdict(), "Error, no area with such name.");
+	return ECommandError;
+}
+
+TCommandResult CWaypointAreaSetCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( pClient == NULL )
 		return ECommandError;
@@ -886,7 +969,7 @@ TCommandResult CWaypointArea::Execute( CClient* pClient, int argc, const char** 
 	TWaypointId iWaypoint = pClient->iCurrentWaypoint;
 	int index = 0;
 
-	if (argc > 0) // Check if first argument is a waypoint number.
+	if ( argc > 0 ) // Check if first argument is a waypoint number.
 	{
 		char c = argv[0][0];
 		bool isNumber = '0' <= c && c <= '9';
@@ -895,10 +978,10 @@ TCommandResult CWaypointArea::Execute( CClient* pClient, int argc, const char** 
 			iWaypoint = atoi(argv[index++]);
 	}
 
-	if (index == argc)
+	if ( index == argc ) // Only waypoint given, show waypoint area.
 	{
 		const CWaypoint& w = CWaypoints::Get(iWaypoint);
-		CUtil::Message(pClient->GetEdict(), "Waypoint %d is at area %s (%d)", iWaypoint, CWaypoints::GetAreaName(w.iAreaId), w.iAreaId);
+		CUtil::Message(pClient->GetEdict(), "Waypoint %d is at area %s (%d)", iWaypoint, CWaypoints::GetAreas()[w.iAreaId].c_str(), w.iAreaId);
 		return ECommandPerformed;
 	}
 
@@ -910,7 +993,7 @@ TCommandResult CWaypointArea::Execute( CClient* pClient, int argc, const char** 
 
 	// Concatenate all arguments.
 	good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false); // Don't deallocate after use.
-	for (; index < argc; ++index)
+	for ( ; index < argc; ++index )
 	{
 		sbBuffer.append(argv[index]);
 		sbBuffer.append(' ');
@@ -919,7 +1002,7 @@ TCommandResult CWaypointArea::Execute( CClient* pClient, int argc, const char** 
 
 	// Check if that area id already exists.
 	TAreaId iAreaId = CWaypoints::GetAreaId(sbBuffer);
-	if (iAreaId == EInvalidAreaId) // If not, add it.
+	if ( iAreaId == EInvalidAreaId ) // If not, add it.
 		iAreaId = CWaypoints::AddAreaName(sbBuffer.duplicate());
 
 	CWaypoints::Get(iWaypoint).iAreaId = iAreaId;
@@ -927,19 +1010,20 @@ TCommandResult CWaypointArea::Execute( CClient* pClient, int argc, const char** 
 	return ECommandPerformed;
 }
 
-TCommandResult CWaypointAreas::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CWaypointAreaShowCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( pClient == NULL )
 		return ECommandError;
 
 	good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false); // Don't deallocate after use.
 
-	for (int i=0; i < CWaypoints::GetAreaIdsSize(); ++i)
+	for ( int i=0; i < CWaypoints::GetAreas().size(); ++i )
 	{
 		sbBuffer.append("\t - ");
-		sbBuffer.append( CWaypoints::GetAreaName(i) );
+		sbBuffer.append( CWaypoints::GetAreas()[i] );
 		sbBuffer.append('\n');
 	}
+	sbBuffer.erase( sbBuffer.size()-1, 1 ); // Erase last \n.
 
 	CUtil::Message(pClient->GetEdict(), "Area names:\n%s", sbBuffer.c_str());
 	return ECommandPerformed;
@@ -1340,7 +1424,15 @@ TCommandResult CPathInfoCommand::Execute( CClient* pClient, int argc, const char
 			const good::string& sFlags = CTypeToString::PathFlagsToString(pPath->iFlags);
 			CUtil::Message( pClient->GetEdict(), "Path (from %d to %d) has flags: %s.", iPathFrom, iPathTo, 
 			                (sFlags.size() > 0) ? sFlags.c_str() : sNone.c_str() );
-			CUtil::Message( pClient->GetEdict(), "Path action time %d, action duration %d. Time in deciseconds.", GET_1ST_BYTE(pPath->iArgument), GET_2ND_BYTE(pPath->iArgument) );
+			if ( FLAG_SOME_SET(FPathDoor, pPath->iFlags) )
+			{
+				if ( pPath->iArgument )
+					CUtil::Message( pClient->GetEdict(), "Door %d.", pPath->iArgument );
+				else
+					CUtil::Message( pClient->GetEdict(), "Door not set." );
+			}
+			else if ( FLAG_SOME_SET(FPathJump | FPathCrouch | FPathBreak, pPath->iFlags) )
+				CUtil::Message( pClient->GetEdict(), "Path action time %d, action duration %d. Time in deciseconds.", GET_1ST_BYTE(pPath->iArgument), GET_2ND_BYTE(pPath->iArgument) );
 		}
 		return ECommandPerformed;
 	}

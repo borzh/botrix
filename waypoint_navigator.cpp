@@ -1,5 +1,5 @@
 #include "server_plugin.h"
-#include "util.h"
+#include "source_engine.h"
 #include "waypoint_navigator.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

@@ -163,6 +163,7 @@ good::string aWaypointFlags[FWaypointTotal] =
 	"health_machine",
 	"armor_machine",
 	"button",
+	"see_button",
 };
 
 int CTypeToString::WaypointFlagsFromString( const good::string& sFlags )
@@ -189,6 +190,7 @@ good::string aPathFlags[FPathTotal] =
 	"stop",
 	"damage",
 	"flashlight",
+	"door",
 	"totem",
 };
 

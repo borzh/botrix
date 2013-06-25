@@ -1,7 +1,7 @@
 #include "client.h"
 #include "console_commands.h"
 #include "server_plugin.h"
-#include "util.h"
+#include "source_engine.h"
 #include "waypoint.h"
 
 #include "good/file.h"
@@ -134,20 +134,53 @@ bool CUtil::m_bMessageUseTag = true;
 trace_t CUtil::m_TraceResult;
 
 
-//----------------------------------------------------------------------------------------------------------------
-bool CUtil::IsVisible( Vector const& vSrc, Vector const& vDest, bool bWorld )
+class CVisibilityTraceFilter: public ITraceFilter
 {
-	if (bWorld)
+public:
+	CVisibilityTraceFilter( TVisibilityFlags iFlags ): m_iFlags(iFlags)
 	{
-		CTraceFilterWorldAndPropsOnly filter;
-		TraceLine(vSrc, vDest, MASK_SOLID_BRUSHONLY, &filter);
+		m_bShouldHitEntity = FLAG_SOME_SET(FVisibilityEntity | FVisibilityProps, iFlags); // Props are entities.
+		switch (iFlags)
+		{
+		case FVisibilityWorld:
+			m_TraceType = TRACE_WORLD_ONLY;
+			iTraceFlags = MASK_OPAQUE;
+			break;
+		case FVisibilityProps:
+			m_TraceType = TRACE_EVERYTHING_FILTER_PROPS;
+			iTraceFlags = MASK_OPAQUE;
+			break;
+		case FVisibilityEntity:
+			m_TraceType = TRACE_ENTITIES_ONLY;
+			iTraceFlags = MASK_NPCSOLID | MASK_PLAYERSOLID;
+			break;
+		default:
+			m_TraceType = TRACE_EVERYTHING;
+			if ( FLAG_SOME_SET(FVisibilityEntity, iFlags) )
+				iTraceFlags = MASK_NPCSOLID | MASK_PLAYERSOLID;
+			else
+				iTraceFlags = MASK_SOLID_BRUSHONLY;
+			break;
+		}
 	}
-	else
-	{
-		CTraceFilterHitAll filter;
-		TraceLine(vSrc, vDest, MASK_OPAQUE, &filter);
-	}
-	return !IsTraceHitSomething();
+
+	virtual TraceType_t	GetTraceType() const { return m_TraceType; }
+	virtual bool ShouldHitEntity( IHandleEntity *pEntity, int contentsMask ) { return m_bShouldHitEntity; }
+
+	int iTraceFlags;
+
+protected:
+	TVisibilityFlags m_iFlags;
+	TraceType_t m_TraceType;
+	bool m_bShouldHitEntity;
+};
+
+//----------------------------------------------------------------------------------------------------------------
+bool CUtil::IsVisible( Vector const& vSrc, Vector const& vDest, TVisibilityFlags iFlags )
+{
+	CVisibilityTraceFilter filter(iFlags);
+	TraceLine(vSrc, vDest, filter.iTraceFlags, &filter);
+	return m_TraceResult.fraction == 1.0f;
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -323,6 +356,21 @@ edict_t* CUtil::GetEntityByUserId( int iUserId )
 }
 
 //----------------------------------------------------------------------------------------------------------------
+unsigned char pvs[MAX_MAP_CLUSTERS/8];
+
+void CUtil::SetPVSForVector( const Vector& v )
+{
+	// Get visible clusters from player's position.
+	int iClusterIndex = CBotrixPlugin::pEngineServer->GetClusterForOrigin( v );
+	CBotrixPlugin::pEngineServer->GetPVSForCluster( iClusterIndex, sizeof(pvs), pvs );							
+}
+
+bool CUtil::IsVisiblePVS( const Vector& v )
+{
+	return CBotrixPlugin::pEngineServer->CheckOriginInPVS( v, pvs, sizeof(pvs) );
+}
+
+//----------------------------------------------------------------------------------------------------------------
 bool CUtil::IsNetworkable( edict_t* pEntity )
 {
 	IServerEntity* pServerEnt = pEntity->GetIServerEntity();
@@ -409,27 +457,30 @@ void CUtil::Message( edict_t* pEntity, const char* fmt, ... )
 	vsprintf(string, fmt, argptr); 
 	va_end(argptr); 
 
+	static char sTime[24];
 	if ( pEntity )
 	{
 		if ( m_bMessageUseTag )
+		{
 			CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, "[Botrix] ");
 #if defined(DEBUG) || defined(_DEBUG)
-		char sTime[24];
-		sprintf(sTime, "%.5f: ", CBotrixPlugin::fTime);
-		CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, sTime);
+			sprintf(sTime, "%.5f: ", CBotrixPlugin::fTime);
+			CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, sTime);
 #endif
+		}
 		CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, string);
 		CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, "\n");
 	}
 	else
 	{
 		if ( m_bMessageUseTag )
+		{
 			Msg("[Botrix] ");
 #if defined(DEBUG) || defined(_DEBUG)
-		char sTime[24];
-		sprintf(sTime, "%.5f: ", CBotrixPlugin::fTime);
-		Msg(sTime);
+			sprintf(sTime, "%.5f: ", CBotrixPlugin::fTime);
+			Msg(sTime);
 #endif
+		}
 		Msg(string);
 		Msg("\n");
 	}

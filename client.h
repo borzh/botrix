@@ -28,7 +28,7 @@ public: // Methods.
 	virtual void Activated();
 
 	/// Called each frame. Will draw waypoints for this player.
-	virtual void Think();
+	virtual void PreThink();
 
 
 public: // Members and constants.

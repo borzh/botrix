@@ -14,7 +14,7 @@
 #include "mod.h"
 #include "player.h"
 #include "server_plugin.h"
-#include "util.h"
+#include "source_engine.h"
 #include "waypoint_navigator.h"
 #include "weapon.h"
 
@@ -108,8 +108,8 @@ public: // Methods.
 
 
 private:
-	/// Called every frame to evaluate next move. Note that this method is private, use Move() method in subclasses.
-	virtual void Think();
+	// Called every frame to evaluate next move. Note that this method is private, use Move() method in subclasses.
+	virtual void PreThink();
 
 
 protected: // Mod dependend protected functions.
@@ -117,7 +117,7 @@ protected: // Mod dependend protected functions.
 	// Next functions are mod dependent.
 	//------------------------------------------------------------------------------------------------------------
 	// Called each frame. Set move and look variables. You can also set shooting/crouching/jumping buttons in m_cCmd.buttons.
-	virtual void Move() = 0;
+	virtual void Think() = 0;
 
 	// This function get's called when next waypoint in path becomes closer than current one. By default sets new
 	// look forward to next waypoint in path (after current one).

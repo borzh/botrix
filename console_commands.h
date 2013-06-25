@@ -244,12 +244,28 @@ public:
 	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CWaypointArea: public CConsoleCommand
+//****************************************************************************************************************
+// Area waypoint commands.
+//****************************************************************************************************************
+class CWaypointAreaRenameCommand: public CConsoleCommand
 {
 public:
-	CWaypointArea()
+	CWaypointAreaRenameCommand()
 	{
-		m_sCommand = "area";
+		m_sCommand = "rename";
+		m_sHelp = "rename waypoint area";
+		m_iAccessLevel = FCommandAccessWaypoint;
+	}
+
+	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CWaypointAreaSetCommand: public CConsoleCommand
+{
+public:
+	CWaypointAreaSetCommand()
+	{
+		m_sCommand = "set";
 		m_sHelp = "set waypoint area";
 		m_iAccessLevel = FCommandAccessWaypoint;
 	}
@@ -257,12 +273,12 @@ public:
 	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CWaypointAreas: public CConsoleCommand
+class CWaypointAreaShowCommand: public CConsoleCommand
 {
 public:
-	CWaypointAreas()
+	CWaypointAreaShowCommand()
 	{
-		m_sCommand = "areas";
+		m_sCommand = "show";
 		m_sHelp = "print all waypoint areas";
 		m_iAccessLevel = FCommandAccessWaypoint;
 	}
@@ -627,6 +643,22 @@ public:
 
 
 //****************************************************************************************************************
+// Waypoint areas: show/set/rename waypoint area.
+//****************************************************************************************************************
+class CWaypointAreaCommand: public CConsoleCommandContainer
+{
+public:
+	CWaypointAreaCommand()
+	{
+		m_sCommand = "area";
+		Add(new CWaypointAreaRenameCommand());
+		Add(new CWaypointAreaSetCommand());
+		Add(new CWaypointAreaShowCommand());
+	}
+};
+
+
+//****************************************************************************************************************
 // Container of all commands starting with "waypoint".
 //****************************************************************************************************************
 class CWaypointCommand: public CConsoleCommandContainer
@@ -636,8 +668,7 @@ public:
 	{
 		m_sCommand = "waypoint";
 		Add(new CWaypointAddTypeCommand());
-		Add(new CWaypointArea());
-		Add(new CWaypointAreas());
+		Add(new CWaypointAreaCommand());
 		Add(new CWaypointArgumentCommand());
 		Add(new CWaypointAutoCreateCommand());
 		Add(new CWaypointClearCommand());

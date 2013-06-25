@@ -14,14 +14,28 @@
 /// Useful enum to know if one map position can be reached from another one.
 enum TReachs
 {
-	EReachNotReachable = 0, ///< Something blocks our way.
-	EReachReachable,        ///< Path free.
-	EReachNeedJump,         ///< Need to jump to get there.
-	//EReachNeedCrouchJump, ///< Not used, will always jump crouched.
-	//EReachNeedCrouch,     ///< Not used, will check player's height instead.
-	EReachFallDamage,       ///< Need to take fall damage to reach destination.
+	EReachNotReachable = 0,                 ///< Something blocks our way.
+	EReachReachable,                        ///< Path free.
+	EReachNeedJump,                         ///< Need to jump to get there.
+	//EReachNeedCrouchJump,                   ///< Not used, will always jump crouched.
+	//EReachNeedCrouch,                       ///< Not used, will check player's height instead.
+	EReachFallDamage,                       ///< Need to take fall damage to reach destination.
 };
 typedef int TReach;
+
+
+/// Enum for flags used in CUtil::IsVisible() function.
+enum TVisibilityFlag
+{
+	FVisibilityWorld    = 1<<0,             ///< Visibility includes world.
+	FVisibilityProps    = 1<<1,             ///< Visibility includes props.
+	FVisibilitySolid    = (1<<2)-1,         ///< Visibility includes world and props.
+
+	FVisibilityEntity   = 1<<2,             ///< Visibility includes entities.
+	FVisibilityAll      = (1<<3)-1,         ///< Visibility includes world, props and entities.
+};
+typedef int TVisibilityFlags;               ///< Flags for CUtil::IsVisible() function.
+
 
 //****************************************************************************************************************
 /// Usefull class to ease engine interraction.
@@ -53,8 +67,13 @@ public:
 	/// Get player's entity by user ID.
 	static edict_t* GetEntityByUserId( int iUserId );
 
-	/// Return true if vDest is visible from vSrc. If bWorld is false, will only check entities.
-	static bool IsVisible( Vector const& vSrc, Vector const& vDest, bool bWorld = true );
+	/// Set internal PVS (potentially visible set of clusters) for given vector vFrom.
+	static void SetPVSForVector( const Vector& vFrom );
+	/// Check if point v is in potentially visible set.
+	static bool IsVisiblePVS( const Vector& v );
+
+	/// Return true if vDest is visible from vSrc.
+	static bool IsVisible( Vector const& vSrc, Vector const& vDest, TVisibilityFlags iFlags = FVisibilityWorld );
 	/// Return true if entity is visible from vSrc.
 	static bool IsVisible( Vector const& vSrc, edict_t* pDest );
 	/// Return true if can get from vSrc to vDest walking or jumping.
@@ -65,7 +84,7 @@ public:
 	/// Return result of TraceLine().
 	static trace_t const& TraceResult() { return m_TraceResult; }
 	/// Return true if TraceLine() hit something.
-	static bool IsTraceHitSomething() { return m_TraceResult.fraction < 1.0; }
+	static bool IsTraceHitSomething() { return m_TraceResult.fraction < 1.0f; }
 
 	/// Util function to set angle to be [0..+360).
 	static void NormalizeAngle( float& fAngle )

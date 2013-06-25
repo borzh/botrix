@@ -5,9 +5,8 @@
 #include "edict.h"
 #include "iplayerinfo.h"
 
+#include "source_engine.h"
 #include "types.h"
-
-#include "util.h"
 
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -92,7 +91,7 @@ public:
 	virtual void Dead() { m_bAlive = false; }
 
 	/// Called each frame. Update current waypoint and head position.
-	virtual void Think();
+	virtual void PreThink();
 
 
 public:
@@ -202,7 +201,7 @@ public:
 
 
 	/// Called each frame. Will make players and bots 'think'.
-	static void Think();
+	static void PreThink();
 
 
 	//------------------------------------------------------------------------------------------------------------

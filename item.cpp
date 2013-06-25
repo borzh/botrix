@@ -5,8 +5,8 @@
 #include "item.h"
 #include "player.h"
 #include "server_plugin.h"
+#include "source_engine.h"
 #include "type2string.h"
-#include "util.h"
 #include "waypoint.h"
 
 //#if !defined(DEBUG) && !defined(_DEBUG)
@@ -32,7 +32,11 @@
 
 extern IVDebugOverlay* pVDebugOverlay;
 
+extern char* szMainBuffer;
+extern int iMainBufferSize;
+
 char szValueBuffer[16];
+
 
 //================================================================================================================
 inline int GetEntityFlags( IServerEntity* pServerEntity )
@@ -72,6 +76,12 @@ inline bool IsEntityTaken( IServerEntity* pServerEntity )
 inline bool IsEntityBreakable( IServerEntity* pServerEntity )
 {
 	return GetEntityHealth(pServerEntity) != 0;
+}
+
+inline string_t GetEntityName( IServerEntity* pServerEntity )
+{
+	CBaseEntity* pEntity = pServerEntity->GetBaseEntity();
+	return pEntity->GetEntityName();
 }
 
 
@@ -341,15 +351,24 @@ void CItems::CheckNewEntity( edict_t* pEdict )
 		AddObject( pEdict, pItemClass, pServerEntity );
 	else
 	{
-		CEntity* pItem = AddItem( iEntityType, pEdict, pItemClass, pServerEntity );
-		CUtil::Message(NULL, "Added new item on map: %s.", pEdict->GetClassName());
+		TEntityIndex iIndex = AddItem( iEntityType, pEdict, pItemClass, pServerEntity );
+		CEntity& cItem = m_aItems[iEntityType][iIndex];
 
-		if ( pItem && !m_bMapLoaded && !CWaypoint::IsValid(pItem->iWaypoint) && FLAG_CLEARED(FTaken, pItem->iFlags) ) // Item should have waypoint near.
+		const char* szWaypointFlags = CWaypoints::IsValid(cItem.iWaypoint) ? CTypeToString::WaypointFlagsToString( CWaypoints::Get(cItem.iWaypoint).iFlags ).c_str() : "";
+		CUtil::Message(NULL, "New item: %s %d (%s), waypoint %d (%s).", CTypeToString::EntityTypeToString(iEntityType).c_str(), iIndex,
+		               pEdict->GetClassName(), cItem.iWaypoint, szWaypointFlags);
+
+		if (  !m_bMapLoaded && FLAG_CLEARED(FTaken, cItem.iFlags) ) // Item should have waypoint near.
 		{
-			CUtil::Message(NULL, "Warning: entity %s doesn't have waypoint close.", pEdict->GetClassName());
-			int iWaypoint = CWaypoints::GetNearestWaypoint( pItem->vOrigin, NULL, true );
-			if ( CWaypoint::IsValid(iWaypoint) )
-				CUtil::Message(NULL, "\tNearest waypoint %d.", iWaypoint);
+			if ( !CWaypoint::IsValid(cItem.iWaypoint) )
+			{
+				CUtil::Message(NULL, "Warning: entity %s %d doesn't have waypoint close.", pEdict->GetClassName(), iIndex+1);
+				TWaypointId iWaypoint = CWaypoints::GetNearestWaypoint( cItem.vOrigin );
+				if ( CWaypoint::IsValid(iWaypoint) )
+					CUtil::Message(NULL, "\tNearest waypoint %d.", iWaypoint);
+			}
+			else if ( iEntityType == EEntityTypeDoor && !CWaypoint::IsValid((TWaypointId)cItem.pArguments) )
+				CUtil::Message(NULL, "Door %d doesn't have 2 waypoints near.", iIndex);
 		}
 
 #ifdef SOURCE_ENGINE_2006
@@ -366,7 +385,77 @@ void CItems::CheckNewEntity( edict_t* pEdict )
 
 
 //----------------------------------------------------------------------------------------------------------------
-CEntity* CItems::AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityClass* pItemClass, IServerEntity* pServerEntity )
+TEntityIndex CItems::InsertEntity( int iEntityType, const CEntity& cEntity )
+{
+	good::vector<CEntity>& aItems = m_aItems[iEntityType];
+
+	if ( m_bMapLoaded ) // Check if there are free space in items array.
+	{
+		if ( m_iFreeIndex[iEntityType] != -1 )
+		{
+			int iIndex = m_iFreeIndex[iEntityType];
+			m_iFreeIndex[iEntityType] = -1;
+			aItems[iIndex] = cEntity;
+			return iIndex;
+		}
+
+		for ( TEntityIndex i=0; i < aItems.size(); ++i ) // TODO: add free count.
+			if ( aItems[i].pEdict == NULL )
+			{
+				aItems[i] = cEntity;
+				return i;
+			}
+	}
+
+	aItems.push_back( cEntity );
+	return aItems.size() - 1;
+}
+
+//----------------------------------------------------------------------------------------------------------------
+void CItems::AutoWaypointPathFlagsForEntity( TEntityType iEntityType, TEntityIndex iIndex, CEntity& cEntity )
+{
+	TWaypointId iWaypoint = cEntity.iWaypoint;
+	if ( (iEntityType == EEntityTypeButton) && (iWaypoint != EInvalidWaypointId) )
+	{
+		// Set waypoint argument to button.
+		CWaypoint& cWaypoint = CWaypoints::Get(iWaypoint);
+		FLAG_SET(FWaypointButton, cWaypoint.iFlags);
+		CWaypoint::SetButton( iIndex+1, cWaypoint.iArgument );
+	}
+
+	// Check 2nd nearest waypoint for door.
+	if ( iEntityType == EEntityTypeDoor )
+	{
+		if ( iWaypoint != EInvalidWaypointId )
+		{
+			good::bitset cOmitWaypoints(CWaypoints::Size());
+			cOmitWaypoints.set(iWaypoint);
+			iWaypoint = CWaypoints::GetNearestWaypoint( cEntity.vOrigin, &cOmitWaypoints, true, CEntity::iMaxDistToWaypoint );
+		}
+		cEntity.pArguments = (void*)iWaypoint;
+
+		// Set door for paths between these two waypoints.
+		if ( iWaypoint != EInvalidWaypointId )
+		{
+			CWaypointPath* pPath = CWaypoints::GetPath(iWaypoint, cEntity.iWaypoint); // From -> To.
+			if ( pPath )
+			{
+				FLAG_SET(FPathDoor, pPath->iFlags);
+				pPath->iArgument = iIndex+1;
+			}
+
+			pPath = CWaypoints::GetPath(cEntity.iWaypoint, iWaypoint); // To -> From.
+			if ( pPath )
+			{
+				FLAG_SET(FPathDoor, pPath->iFlags);
+				pPath->iArgument = iIndex+1;
+			}
+		}
+	}
+}
+
+//----------------------------------------------------------------------------------------------------------------
+TEntityIndex CItems::AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityClass* pItemClass, IServerEntity* pServerEntity )
 {
 	ICollideable* pCollidable = pServerEntity->GetCollideable();
 	DebugAssert( pCollidable );
@@ -394,41 +483,14 @@ CEntity* CItems::AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityClass
 	else
 		iWaypoint = CWaypoints::GetNearestWaypoint( vItemOrigin, NULL, true, CEntity::iMaxDistToWaypoint );
 
-	CEntity cItem( pEdict, iFlags, fRadiusSqr, pItemClass, vItemOrigin, iWaypoint );
+	TEntityIndex iIndex = InsertEntity( iEntityType, CEntity(pEdict, iFlags, fRadiusSqr, pItemClass, vItemOrigin, iWaypoint) );
 
-	if ( iEntityType == EEntityTypeDoor )
-	{
-		if (iWaypoint != -1)
-		{
-			good::bitset cOmitWaypoints(CWaypoints::Size());
-			cOmitWaypoints.set(iWaypoint);
-			iWaypoint = CWaypoints::GetNearestWaypoint( vItemOrigin, &cOmitWaypoints, true, CEntity::iMaxDistToWaypoint );
-		}
-		cItem.pArguments = (void*)iWaypoint;
-	}
+	CEntity& cEntity = m_aItems[iEntityType][iIndex];
+	AutoWaypointPathFlagsForEntity( iEntityType, iIndex, cEntity );
 
-	good::vector<CEntity>& aItems = m_aItems[iEntityType];
-	if ( m_bMapLoaded ) // Check if there are free space in items array.
-	{
-		if ( m_iFreeIndex[iEntityType] != -1 )
-		{
-			CEntity& cResult = aItems[m_iFreeIndex[iEntityType]];
-			m_iFreeIndex[iEntityType] = -1;
-			cResult = cItem;
-			return &cResult;
-		}
-
-		for ( TEntityIndex i=0; i < aItems.size(); ++i )
-			if ( aItems[i].pEdict == NULL )
-			{
-				aItems[i] = cItem;
-				return &aItems[i];
-			}
-	}
-
-	aItems.push_back( cItem );
-	return &aItems.back();
+	return iIndex;
 }
+
 
 //----------------------------------------------------------------------------------------------------------------
 void CItems::AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServerEntity* pServerEntity )
@@ -457,7 +519,7 @@ void CItems::AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServ
 	}
 
 	good::vector<CEntity>& aItems = m_aItems[EEntityTypeObject];
-	CEntity cObject( pEdict, iFlags, fMaxsRadiusSqr, pObjectClass, CUtil::vZero, -1 );
+	CEntity cObject( pEdict, iFlags, fMaxsRadiusSqr, pObjectClass, pCollidable->GetCollisionOrigin(), -1 );
 	if ( m_bMapLoaded ) // Check if there are free space in items array.
 	{
 		if ( m_iFreeIndex[EEntityTypeObject] != -1 )
@@ -482,12 +544,12 @@ void CItems::AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServ
 bool CItems::IsDoorOpened( TEntityIndex iDoor )
 {
 	const CEntity& cDoor = m_aItems[EEntityTypeDoor][iDoor];
-	TWaypointId w1 = cDoor.iWaypoint, w2 = (int)cDoor.pArguments;
+	TWaypointId w1 = cDoor.iWaypoint, w2 = (TWaypointId)cDoor.pArguments;
 	if ( CWaypoints::IsValid(w1) && CWaypoints::IsValid(w2) )
 	{
 		const Vector& v1 = CWaypoints::Get(w1).vOrigin;
 		const Vector& v2 = CWaypoints::Get(w2).vOrigin;
-		return CUtil::IsVisible(v1, v2, false);
+		return CUtil::IsVisible(v1, v2, FVisibilityProps);
 	}
 	else
 	{
@@ -540,17 +602,25 @@ void CItems::Draw( CClient* pClient )
 				if ( FLAG_SOME_SET(EItemDrawStats, pClient->iItemDrawFlags) )
 				{
 					int pos = 0;
-					CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, CTypeToString::EntityTypeToString(iEntityType).c_str() );
+
+					// Draw entity class name name with index.
+					sprintf( szMainBuffer, "%s %d", CTypeToString::EntityTypeToString(iEntityType).c_str(), i+1 );
+					CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, szMainBuffer );
+
 					CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, pEdict->GetClassName() );
 					if ( iEntityType == EEntityTypeDoor )
 						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsDoorOpened(i) ? "opened" : "closed" );
 					else if ( iEntityType == EEntityTypeObject )
 					{
+						sprintf( szMainBuffer, "%s %d", CTypeToString::EntityTypeToString(iEntityType).c_str(), i );
 						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityOnMap(pServerEntity) ? "alive" : "dead" );
 						//CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityTaken(pServerEntity) ? "taken" : "not taken" ); // Taken not shown.
 						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityBreakable(pServerEntity) ? "breakable" : "non breakable" );
 						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, CTypeToString::EntityClassFlagsToString(pEntity->iFlags).c_str() );
 					}
+					//if ( iEntityType >= EEntityTypeButton ) // Draw entity name. Doesn't work.
+					//	CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, GetEntityName(pServerEntity).ToCStr() );
+
 					if ( iEntityType >= EEntityTypeObject ) // Draw object model.
 						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, STRING( pEdict->GetIServerEntity()->GetModelName() ) );
 				}
@@ -566,8 +636,8 @@ void CItems::Draw( CClient* pClient )
 						CUtil::DrawLine(CWaypoints::Get(pEntity->iWaypoint).vOrigin, vOrigin, 1.0f, 0xFF, 0xFF, 0);
 
 					// Draw second waypoint for door.
-					if ( (iEntityType == EEntityTypeDoor) && CWaypoint::IsValid((int)pEntity->pArguments) )
-						CUtil::DrawLine(CWaypoints::Get((int)pEntity->pArguments).vOrigin, vOrigin, 1.0f, 0xFF, 0xFF, 0);
+					if ( (iEntityType == EEntityTypeDoor) && CWaypoint::IsValid( (TWaypointId)pEntity->pArguments ) )
+						CUtil::DrawLine(CWaypoints::Get((TWaypointId)pEntity->pArguments).vOrigin, vOrigin, 1.0f, 0xFF, 0xFF, 0);
 				}
 			}
 		}
@@ -588,6 +658,9 @@ void CItems::WaypointDeleted( TWaypointId id )
 				cItem.iWaypoint = CWaypoints::GetNearestWaypoint( cItem.vOrigin );
 			else if ( cItem.iWaypoint > id )
 				--cItem.iWaypoint;
+
+			// TODO: update doors.
+			//if ( iEntityType == EEntityTypeDoor )
 		}
 	}
 }

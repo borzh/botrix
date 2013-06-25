@@ -5,8 +5,8 @@
 #include "chat.h"
 #include "config.h"
 #include "mod.h"
+#include "source_engine.h"
 #include "type2string.h"
-#include "util.h"
 #include "weapon.h"
 
 #include "good/string_buffer.h"

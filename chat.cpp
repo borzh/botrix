@@ -4,8 +4,8 @@
 
 #include "chat.h"
 #include "player.h"
+#include "source_engine.h"
 #include "type2string.h"
-#include "util.h"
 
 
 #define ChatError(...) CUtil::Message(NULL, __VA_ARGS__)
@@ -60,8 +60,10 @@ const good::string& PhraseToString( const CPhrase& cPhrase )
 good::vector<CPhrase> CChat::m_aMatchPhrases[EBotChatTotal]; // Phrases for commands used for matching.
 good::vector<CPhrase> CChat::m_aPhrases[EBotChatTotal];      // Phrases for commands used for generation of commands.
 
-good::vector<StringVector> CChat::m_aSynonims;                  // Available synonims.
+good::vector<StringVector> CChat::m_aSynonims;               // Available synonims.
 
+StringVector CChat::m_aVariables;                            // Available variable names ($player, $door, $button, etc).
+good::vector<StringVector> CChat::m_aVariableValues;         // Available variable values (1, 2, opened, closed, weapon_...).
 
 
 //----------------------------------------------------------------------------------------------------------------

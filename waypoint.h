@@ -4,9 +4,8 @@
 
 #include "vector.h"
 
+#include "source_engine.h"
 #include "types.h"
-
-#include "util.h"
 
 #include "good/astar.h"
 
@@ -99,6 +98,13 @@ public: // Methods.
 	static void SetHealth( int iHealth, int& iArgument ) { SET_4TH_BYTE(iHealth, iArgument); }
 
 
+	/// Get button index from waypoint argument.
+	static TEntityIndex GetButton( int iArgument ) { return GET_3RD_BYTE(iArgument); }
+
+	/// Set button index for waypoint argument.
+	static void SetButton( TEntityIndex iButton, int& iArgument ) { SET_3RD_BYTE(iButton, iArgument); }
+
+
 	/// Return true if point v 'touches' this waypoint.
 	bool IsTouching( Vector const& v, bool bOnLadder ) const
 	{
@@ -109,7 +115,7 @@ public: // Methods.
 	void GetColor( unsigned char& r, unsigned char& g, unsigned char& b ) const;
 
 	/// Draw this waypoint for given amount of time.
-	void Draw( TWaypointDrawFlags iDrawType, float fDrawTime ) const;
+	void Draw( TWaypointId iWaypointId, TWaypointDrawFlags iDrawType, float fDrawTime ) const;
 
 
 public: // Members and constants.
@@ -171,10 +177,10 @@ public: // Types and constants.
 	/// Graph that represents graph of waypoints.
 	typedef good::graph< CWaypoint, CWaypointPath, good::vector, good::vector > WaypointGraph;
 	typedef WaypointGraph::node_t WaypointNode;     ///< Node of waypoint graph.
-	typedef WaypointGraph::arc_t WaypointPath;      ///< Graph arc, i.e. path between two waypoints.
+	typedef WaypointGraph::arc_t WaypointArc;       ///< Graph arc, i.e. path between two waypoints.
 	typedef WaypointGraph::node_it WaypointNodeIt;  ///< Node iterator.
-	typedef WaypointGraph::arc_it WaypointPathIt;   ///< Arc iterator.
-	typedef WaypointGraph::node_id TWaypointId;     ///< Type for node identifier.
+	typedef WaypointGraph::arc_it WaypointArcIt;    ///< Arc iterator.
+	//typedef WaypointGraph::node_id TWaypointId;     ///< Type for node identifier.
 
 
 public: // Methods.
@@ -190,7 +196,7 @@ public: // Methods.
 		if (m_cGraph.size() > 0)
 			ClearLocations();
 		m_cGraph.clear();
-		m_cAreaNames.clear();
+		m_cAreas.clear();
 	}
 
 	/// Save waypoints to a file.
@@ -202,9 +208,6 @@ public: // Methods.
 
 	/// Get waypoint.
 	static CWaypoint& Get( TWaypointId id ) { return m_cGraph[id].vertex; }
-
-	/// Get Id of given waypoint.
-	static TWaypointId GetId( const CWaypoint& w ) { return &w - &(m_cGraph.begin()->vertex); }
 
 	// Return true if there is a path from waypoint source to waypoint dest.
 	static bool HasPath(TWaypointId source, TWaypointId dest)
@@ -246,24 +249,18 @@ public: // Methods.
 	static TWaypointId GetAnyWaypoint( Vector const& vOrigin, TWaypointFlags iFlags = FWaypointNone );
 
 
-	/// Get total amount of areas in this map.
-	static int GetAreaIdsSize() { return m_cAreaNames.size(); }
-
-	/// Get area name of area id.
-	static const good::string& GetAreaName( TAreaId id ) { return m_cAreaNames[id]; }
+	/// Get areas names for current map.
+	static StringVector& GetAreas() { return m_cAreas; }
 
 	/// Get area id from name.
 	static TAreaId GetAreaId( const good::string& sName )
 	{
-		StringVector::const_iterator it = good::find(m_cAreaNames.begin(), m_cAreaNames.end(), sName);
-		if ( it == m_cAreaNames.end() )
-			return EInvalidAreaId;
-		else
-			return it - m_cAreaNames.begin();
+		StringVector::const_iterator it = good::find(m_cAreas.begin(), m_cAreas.end(), sName);
+		return ( it == m_cAreas.end() )  ?  EInvalidAreaId  :  ( it - m_cAreas.begin() );
 	}
 
 	/// Add new area name.
-	static TAreaId AddAreaName( const good::string& sName ) { m_cAreaNames.push_back(sName); return m_cAreaNames.size()-1; }
+	static TAreaId AddAreaName( const good::string& sName ) { m_cAreas.push_back(sName); return m_cAreas.size()-1; }
 
 
 	/// Draw nearest waypoints around player.
@@ -327,7 +324,7 @@ protected:
 	typedef good::vector<TWaypointId> Bucket;
 	static Bucket m_cBuckets[BUCKETS_SIZE_X][BUCKETS_SIZE_Y][BUCKETS_SIZE_Z]; // 3D hash table of arrays of waypoint IDs.
 
-	static StringVector m_cAreaNames;      // Areas names.
+	static StringVector m_cAreas;      // Areas names.
 
 	static WaypointGraph m_cGraph;         // Waypoints graph.
 	static float m_fNextDrawWaypointsTime; // Next draw time of waypoints (draw once per second).

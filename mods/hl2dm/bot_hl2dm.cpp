@@ -39,7 +39,7 @@ void CBot_HL2DM::HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow )
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot_HL2DM::Move()
+void CBot_HL2DM::Think()
 {
 	if ( !m_bAlive )
 	{

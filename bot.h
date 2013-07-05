@@ -12,7 +12,7 @@
 #include "chat.h"
 #include "item.h"
 #include "mod.h"
-#include "player.h"
+#include "players.h"
 #include "server_plugin.h"
 #include "source_engine.h"
 #include "waypoint_navigator.h"
@@ -95,7 +95,7 @@ public: // Methods.
 	virtual void HurtBy( int iPlayerIndex, CPlayer* pPlayer , int iHealthNow ) = 0;
 
 	/// Called when chat arrives from other player.
-	virtual void ReceiveChat( int iPlayerIndex, CPlayer* pPlayer , bool bTeamOnly, const char* szText ) = 0;
+	virtual void ReceiveChat( int iPlayerIndex, CPlayer* pPlayer, bool bTeamOnly, const char* szText ) = 0;
 
 	/// Called when chat request arrives from other player.
 	virtual void ReceiveChatRequest( const CBotChat& cRequest );
@@ -153,11 +153,12 @@ protected: // Methods.
 	static const int SIZE_ACTIONS = 32; // Size of circular buffer of actions.
 
 
-	// Return next index in circular buffer.
-	inline static int NextBufferIndex( int iIndex ) { return (iIndex == SIZE_ACTIONS-1) ? 0 : iIndex+1; }
-
-	// Return previous index in circular buffer.
-	inline int PreviousBufferIndex( int iIndex ) { return (iIndex == 0) ? SIZE_ACTIONS-1 : iIndex-1; }
+	/// Say current
+	void Speak( bool bTeamSay )
+	{
+		const good::string& sText = CChat::ChatToText(m_cChat);
+		ConsoleCommand( "%s %s", bTeamSay? "say_team" : "say", sText.c_str() );
+	}
 
 	// Return true if entity is inside bot's view cone.
 	bool IsVisible( CPlayer* pPlayer ) const;
@@ -232,12 +233,6 @@ protected: // Methods.
 
 	// If not using navigator, returns true if bot arrived to m_vDestination.
 	bool NormalMove();
-
-	// Perform atomic action from action buffer.
-	void PerformAction();
-
-	// Check if action condition is satisfied.
-	bool IsActionConditionSatisfied( bool bWaypointChange, bool bWaypointTouch );
 
 	// If m_bNeedMove then moves toward m_vDestination. If m_bNeedAim then smoothly aims to m_vLook until m_fEndAimTime.
 	void PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOrigin );
@@ -368,15 +363,13 @@ protected: // Members.
 	TWeaponId m_iWeapon, m_iBestWeapon;                            // Current / previous / best weapon.
 	TWeaponId m_iPhyscannon, m_iManualWeapon;                      // Index of gravity gun / manual gun, -1 if bot doesn't have it.
 
-	CBotAction m_aActionBuffer[SIZE_ACTIONS];                      // Circular buffer of commands, that bot is currently executing.
-	int m_iFirst, m_iLast;                                         // First and last element of the buffer (to insert faster).
-
 	float m_fNextDrawNearObjectsTime;                              // Next time to draw near objects.
 
 	TBotChat m_iObjective, m_iPrevRequest;                         // Current and last chat request.
 	TBotChat m_iPrevTalk;                                          // Last chat talk.
 	float m_fEndTalkActionTime;                                    // Time for bot to stop doing what other player asked (30 secs).
 
+	CBotChat m_cChat;                                              // Last spoken phrase.
 	TPlayerIndex m_iPrevChatMate;                                  // Previous chat mate.
 };
 

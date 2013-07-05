@@ -32,7 +32,7 @@ void CMod::Load( TModId iModId )
 	switch ( iModId )
 	{
 	case EModId_Borzh:
-		pCurrentMod = new Mod_Borzh();
+		pCurrentMod = new CMod_Borzh();
 		break;
 
 	case EModId_HL2DM:

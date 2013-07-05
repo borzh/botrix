@@ -21,17 +21,38 @@ enum TChatVariableValues
 typedef int TChatVariableValue;            ///< Number that represents chat variable value.
 
 
+
+/// Obtained value for chat variable.
+/**
+  * For example said sentence "hey Jonh" matches "hey, $player1" with one variable:
+  * iVar = index of $player var, iVarIndex to 1 (what left of $player1 without $player) and iValue to John index (player index).
+  */
+class CChatVarValue
+{
+public:
+	CChatVarValue( TChatVariable iVar, int iVarIndex, TChatVariableValue iValue ):
+		iVar(iVar), iVarIndex(iVarIndex), iValue(iValue) {}
+
+	TChatVariable iVar;
+	int iVarIndex;
+	TChatVariableValue iValue;
+};
+
+typedef good::vector< CChatVarValue > CChatVariablesMap; ///< Map from chat variables to their values.
+
+
+
 /// Class that hold information about player's request.
 class CBotChat
 {
 public:
-	CBotChat( TBotChat iBotRequest = EBotChatUnknown, int iSpeaker = -1, int iDirectedTo = -1, int iReferringTo = -1 ):
-		iBotRequest(iBotRequest), iSpeaker(iSpeaker), iDirectedTo(iDirectedTo), iReferringTo(iReferringTo) {}
+	CBotChat( TBotChat iBotRequest = EBotChatUnknown, int iSpeaker = -1, int iDirectedTo = -1 ):
+		iBotRequest(iBotRequest), iSpeaker(iSpeaker), iDirectedTo(iDirectedTo), cMap(4) {}
 
 	TBotChat iBotRequest;                  ///< Request type.
 	int iSpeaker;                          ///< Index of player, that talked this request.
-	int iDirectedTo;                       ///< Index of player, request is directed to.
-	int iReferringTo;                      ///< Index of player, request is referring to.
+	int iDirectedTo;                       ///< Index of player, request is directed to. It is $player or $player1.
+	CChatVariablesMap cMap;                ///< Map from variables to value.
 };
 
 
@@ -69,7 +90,14 @@ public:
 class CChat
 {
 
-public:
+public: // Members.
+	static TChatVariable iPlayerVar;       ///< Chat variable $player.
+
+public: // Methods.
+
+	static void Init();
+	static void Terminate();
+
 	/// Add synonims for a word.
 	static void AddSynonims( const good::string& sKey, const good::string& sValue );
 
@@ -90,22 +118,48 @@ public:
 			m_aVariableValues[i].clear();
 	}
 
-	/// Add possible variables value.
-	static TChatVariable AddVariable( const good::string& sVar, int iValuesSize = 0 )
-	{
-		m_aVariables.push_back(sVar);
-		m_aVariableValues.push_back( StringVector(iValuesSize) );
-		return m_aVariables.size() - 1;
-	}
-
-	/// Get chat variable from string.
+	/// Get chat variable index from string.
 	static TChatVariable GetVariable( const good::string& sVar )
 	{
 		StringVector::const_iterator it = good::find(m_aVariables.begin(), m_aVariables.end(), sVar);
 		return ( it == m_aVariables.end() )  ?  EChatVariableInvalid  :  ( it - m_aVariables.begin() );
 	}
 
-	/// Add possible variables value.
+	/// Get chat variable index and it's index from string (i.e. for $player1 returns <index of $player, 1>).
+	static good::pair<TChatVariable, int> GetVariableAndIndex( const good::string& sVarIndex )
+	{
+		for ( StringVector::const_iterator it = m_aVariables.begin(); it != m_aVariables.end(); ++it )
+		{
+			if ( sVarIndex.starts_with( *it ) )
+			{
+				const char* szRest = sVarIndex.c_str() + it->size();
+				if ( (*szRest == 0) || ( ('0' <= *szRest) && (*szRest <= '9') ) ) // Must follow a number.
+				{
+					int iIndex = atoi(szRest);
+					return good::pair<TChatVariable, int>( it - m_aVariables.begin(), iIndex );
+				}
+			}
+		}
+		return good::pair<TChatVariable, int>( EChatVariableInvalid, -1 );
+	}
+
+	/// Get variable value for variable index iVar, value index iValue.
+	static const good::string& GetVariableValue( TChatVariable iVar, TChatVariableValue iValue )
+	{
+		return m_aVariableValues[iVar][iValue];
+	}
+
+	/// Add chat variable. Returns variable index.
+	static TChatVariable AddVariable( const good::string& sVar, int iValuesSize = 0 )
+	{
+		if ( sVar == "$player" )
+			iPlayerVar = m_aVariables.size();
+		m_aVariables.push_back(sVar);
+		m_aVariableValues.push_back( StringVector(iValuesSize) );
+		return m_aVariables.size() - 1;
+	}
+
+	/// Add value for variable index iVar. Must be lower case to match. Returns value index.
 	static TChatVariableValue AddVariableValue( TChatVariable iVar, const good::string& sValue )
 	{
 		StringVector& cValues = m_aVariableValues[iVar];
@@ -113,16 +167,10 @@ public:
 		return cValues.size() - 1;
 	}
 
-	/// Remove variables value.
-	static const good::string& RemoveVariableValue( TChatVariable iVar, TChatVariableValue iValue )
+	/// Set string for given variable and value indexes. Must be lower case to match.
+	static void SetVariableValue( TChatVariable iVar, TChatVariableValue iValue, const good::string& sValue )
 	{
-		m_aVariableValues[iVar][iValue] = "";
-	}
-
-	/// Add possible variables value.
-	static const good::string& GetVariableValue( TChatVariable iVar, TChatVariableValue iValue )
-	{
-		return m_aVariableValues[iVar][iValue];
+		m_aVariableValues[iVar][iValue] = sValue;
 	}
 
 

@@ -1,9 +1,9 @@
 #include "cbase.h"
 
 #include "bot.h"
-#include "client.h"
+#include "clients.h"
 #include "item.h"
-#include "player.h"
+#include "players.h"
 #include "server_plugin.h"
 #include "source_engine.h"
 #include "type2string.h"
@@ -210,7 +210,7 @@ void CItems::MapUnloaded()
 //----------------------------------------------------------------------------------------------------------------
 void CItems::MapLoaded()
 {
-	m_iCurrentEntity = CPlayers::GetMaxPlayers()+1;
+	m_iCurrentEntity = CPlayers::Size()+1;
 
 	// 0 is world, 1..max players are players. Other entities are from indexes above max players.
 	int iCount = CBotrixPlugin::pEngineServer->GetEntityCount();
@@ -293,7 +293,7 @@ void CItems::Update()
 		if ( iEntityType == EEntityTypeWeapon )
 			AddItem( EEntityTypeWeapon, pEdict, pWeaponClass, pServerEntity );
 	}
-	m_iCurrentEntity = (iTo == iCount) ? CPlayers::GetMaxPlayers()+1: iTo;
+	m_iCurrentEntity = (iTo == iCount) ? CPlayers::Size()+1: iTo;
 #else
 	for ( int i = 0; i < m_aNewEntities.size(); ++i )
 		CheckNewEntity( m_aNewEntities[i] );

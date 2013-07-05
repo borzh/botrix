@@ -3,7 +3,7 @@
 #include "good/string_buffer.h"
 
 #include "chat.h"
-#include "player.h"
+#include "players.h"
 #include "source_engine.h"
 #include "type2string.h"
 
@@ -57,6 +57,8 @@ const good::string& PhraseToString( const CPhrase& cPhrase )
 
 
 //----------------------------------------------------------------------------------------------------------------
+TChatVariable CChat::iPlayerVar = EChatVariableInvalid;
+
 good::vector<CPhrase> CChat::m_aMatchPhrases[EBotChatTotal]; // Phrases for commands used for matching.
 good::vector<CPhrase> CChat::m_aPhrases[EBotChatTotal];      // Phrases for commands used for generation of commands.
 
@@ -65,6 +67,18 @@ good::vector<StringVector> CChat::m_aSynonims;               // Available synoni
 StringVector CChat::m_aVariables;                            // Available variable names ($player, $door, $button, etc).
 good::vector<StringVector> CChat::m_aVariableValues;         // Available variable values (1, 2, opened, closed, weapon_...).
 
+
+//----------------------------------------------------------------------------------------------------------------
+void CChat::Init()
+{
+	iPlayerVar = EChatVariableInvalid;
+}
+
+//----------------------------------------------------------------------------------------------------------------
+void CChat::Terminate()
+{
+	iPlayerVar = EChatVariableInvalid;
+}
 
 //----------------------------------------------------------------------------------------------------------------
 const good::string& CChat::GetSynonim( const good::string& sSentence )
@@ -100,7 +114,7 @@ void CChat::AddSynonims( const good::string& sKey, const good::string& sValue )
 	sOthers.lower_case();
 	sOthers.split<good::vector>(aSynonims, '.', true);
 
-	ChatMessage( "\t%s", CTypeToString::StringVectorToString(aSynonims).c_str() );
+	ChatMessage( "  %s", CTypeToString::StringVectorToString(aSynonims).c_str() );
 
 	m_aSynonims.push_back(aSynonims);
 }
@@ -131,16 +145,25 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
 	good::vector<CPhrase> aPhrases;
 	good::vector<CPhrase> aMatchPhrases;
 
-	int iBegin = 0, iFirstPhrase = 0, iWordsBeforeParallelInFirstPhrase = 0, iParallelCount = 0;
+	// Example:  1 2 3/4 <5 6>/<7 8 (9)>
+	int iBegin = 0, iFirstPhrase = 0;          // First frase index, for multiples '.'
+	int iWordsBeforeParallelInFirstPhrase = 0; // When found '/' calculate how much words must be copied. In given example: =2 between 3-4 and =3 at 6 .
+	int iWordsBeforeParallel = 0;              // Words before '/'. =3 for first '/', then it is reset, and it is 2 for the second '/'.
+	int iWordsAfterParallel = 1;               // Words after '/'.
+	int iParallelCount = 0;                    // How much phrases are now in parallel. In example =1 at 4 and =2 at 8.
 	bool bCanBreak = true, bOptional = false, bPreviousParenthesis = false, bCommaBeforeWord = false;
-	bool bParallel = false, bCanEndParallel = false, bEnd = false;
+	bool bParallel = false, bEnd = false;
+	char cPrevChar = 0;
+
 	for ( int iPos = 0; iPos < sbCommands.size(); ++iPos )
 	{
-		bool bQuestion = false, bExclamation = false, bSeparator = false;
+		bool bQuestion = false, bExclamation = false;
 		bool bWord = false, bComma = false;
 
+		char cChar = sbCommands[iPos];
+
 		// Before word is added to phrases.
-		switch ( sbCommands[iPos] ) // TODO: symbols from ini file.
+		switch ( cChar ) // TODO: symbols from ini file.
 		{
 		case ' ':
 		case '\t':
@@ -163,12 +186,17 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
 				ChatError("Error for '%s' command: sentence can't end inside <>", sKey.c_str());
 				return false;
 			}
+			if ( bParallel && (iWordsAfterParallel == 0) && (iPos-iBegin <= 0) )
+			{
+				ChatError("Error for '%s' command: sentence can't end at '/'", sKey.c_str());
+				return false;
+			}
 			bExclamation = (sbCommands[iPos] == '!');
-			bQuestion= (sbCommands[iPos] == '?');
+			bQuestion = (sbCommands[iPos] == '?');
 			break;
 
 		case '(':
-			if ( bCanBreak && bParallel && !bCanEndParallel )
+			if ( bCanBreak && bParallel && (iWordsAfterParallel == 0) )
 			{
 				ChatError("Error for '%s' command: word can't be optional after separator.", sKey.c_str());
 				return false;
@@ -186,20 +214,7 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
 				ChatError("Error for '%s' command: invalid <> secuence.", sKey.c_str());
 				return false;
 			}
-			bCanBreak = false;
 			bWord = true;
-			if ( !bParallel )
-			{
-				bParallel = true;
-				iParallelCount = aPhrases.size() - iFirstPhrase;
-				if ( iParallelCount == 0 )
-				{
-					iParallelCount = 1;
-					iWordsBeforeParallelInFirstPhrase = 0;
-				}
-				else
-					iWordsBeforeParallelInFirstPhrase = aPhrases[iFirstPhrase].aWords.size();
-			}
 			break;
 
 		case '>':
@@ -208,37 +223,16 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
 				ChatError("Error for '%s' command: invalid <> secuence.", sKey.c_str());
 				return false;
 			}
-
-			// Check if parallel processing is terminated.
-			if ( bParallel )
-			{
-				if ( bCanEndParallel )
-				{
-					bParallel = false;
-					iWordsBeforeParallelInFirstPhrase = iParallelCount = 0;
-				}
-				else
-					bCanEndParallel = true;
-			}
 			bWord = true;
 			break;
 
 		case '/':
-			if ( !bParallel )
+			if ( !bCanBreak )
 			{
-				bParallel = true;
-				iParallelCount = aPhrases.size() - iFirstPhrase;
-				if ( iParallelCount == 0 )
-				{
-					iParallelCount = 1;
-					iWordsBeforeParallelInFirstPhrase = 0;
-				}
-				else
-					iWordsBeforeParallelInFirstPhrase = aPhrases[iFirstPhrase].aWords.size();
+				ChatError("Error for '%s' command: '/' can't occur inside <> secuence.", sKey.c_str());
+				return false;
 			}
-
-			bWord = bSeparator = true;
-			bCanEndParallel = false;
+			bWord = true;
 			break;
 
 		default:
@@ -247,26 +241,20 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
 
 		if ( bWord )
 		{
-			// We have a separated word. Check for synonims in matching phrases.
+			if ( bParallel && (cPrevChar == '>') && (cChar != '/') )
+				bParallel = false;
+
+			// We have a separated word.
 			if ( iPos-iBegin > 0 )
 			{
-				// Check if parallel processing is terminated.
-				if ( bParallel && !bSeparator && bCanBreak )
-				{
-					if ( bCanEndParallel )
-					{
-						bParallel = false;
-						iWordsBeforeParallelInFirstPhrase = iParallelCount = 0;
-					}
-					else
-						bCanEndParallel = true;
-				}
+				//if ( bParallel && bCanBreak && (cChar == '/') && (iWordsAfterParallel > 0) )
+				//	bParallel = false;
 
 				// Get word from string.
 				good::string sWord = sbCommands.substr(iBegin, iPos - iBegin);
 
-				good::string sMatchWord;
-				sMatchWord.assign(sWord, true);
+				// Check for synonims in matching phrases.
+				good::string sMatchWord(sWord, true);
 				sMatchWord.lower_case();
 				const good::string& sSynonim = GetSynonim(sMatchWord);
 
@@ -279,15 +267,27 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
 				int iFirst = iFirstPhrase;
 				int iLast = aPhrases.size();
 				if ( bParallel )
-				{
 					iFirst = aPhrases.size() - iParallelCount;
-				}
 				for ( int i = iFirst; i < iLast; ++i )
 				{
 					aPhrases[i].aWords.push_back( CPhraseWord(sWord.duplicate(), bOptional, bOptional, bCommaBeforeWord, false ) );
 					aMatchPhrases[i].aWords.push_back( CPhraseWord(sSynonim.duplicate(), bOptional, bOptional, bCommaBeforeWord, false ) );
 				}
 				bCommaBeforeWord = bPreviousParenthesis = false;
+
+				// Check if parallel processing can be terminated.
+				if ( bCanBreak )
+				{
+					iWordsBeforeParallel = 1;
+					if ( bParallel && (cChar != '/') )
+						bParallel = false;
+				}
+				else
+				{
+					iWordsBeforeParallel++;
+					if ( bParallel )
+						iWordsAfterParallel++;
+				}
 			}
 			iBegin = iPos+1;
 		}
@@ -316,8 +316,14 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
 		}
 
 		// After word is added.
-		switch ( sbCommands[iPos] )
+		switch ( cChar )
 		{
+		case '<':
+			if ( bParallel && (iWordsAfterParallel > 0) )
+				bParallel = false;
+			iWordsBeforeParallel = iWordsAfterParallel = 0;
+			bCanBreak = false;
+			break;
 		case '>':
 			bPreviousParenthesis = false;
 			bCanBreak = true;
@@ -335,12 +341,25 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
 			break;
 		case '/':
 			{
+				if ( !bParallel )
+				{
+					bParallel = true;
+					iParallelCount = aPhrases.size() - iFirstPhrase;
+					if ( iParallelCount == 0 )
+					{
+						iParallelCount = 1;
+						iWordsBeforeParallelInFirstPhrase = 0;
+					}
+					else
+						iWordsBeforeParallelInFirstPhrase = aPhrases[iFirstPhrase].aWords.size() - iWordsBeforeParallel;
+				}
+
 				bPreviousParenthesis = false;
 
 				// Copy all phrases we have so far.
 				int iWordsBeforeSeparator = aPhrases[iFirstPhrase].aWords.size() - iWordsBeforeParallelInFirstPhrase;
 				if ( iWordsBeforeSeparator == 0 ) // Case when there is a space before separator.
-					iWordsBeforeSeparator = 1;
+					iWordsBeforeSeparator = 1;// TODO: error.
 
 				for ( int iPhrase = iFirstPhrase; iPhrase < iFirstPhrase + iParallelCount; ++iPhrase )
 				{
@@ -359,13 +378,15 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
 						cMatchPhraseCopy.aWords.push_back( cMatchCopy );
 					}
 				}
+
+				iWordsBeforeParallel = iWordsAfterParallel = 0;
 				break;
 			}
 		}
 
 		if ( bEnd )
 		{
-			if ( bParallel && !bCanEndParallel )
+			if ( bParallel && (iWordsAfterParallel == 0) )
 			{
 				ChatError("Error for '%s' command: sentence can't end in separator.", sKey.c_str());
 				return false;
@@ -383,16 +404,18 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
 			iWordsBeforeParallelInFirstPhrase = iParallelCount = 0;
 			bEnd = false;
 		}
+
+		cPrevChar = cChar;
 	}
 
 #if defined(DEBUG) || defined(_DEBUG)
 	// Show command name.
-	ChatMessage( "\t%s:", sCommandName.c_str() );
+	ChatMessage( "  %s:", sCommandName.c_str() );
 
 	for ( int iPhrase = 0; iPhrase < aPhrases.size(); ++iPhrase )
 	{
-		ChatMessage("\t\tTo generate: %s", PhraseToString(aPhrases[iPhrase]).c_str() );
-		ChatMessage("\t\tTo match:    %s", PhraseToString(aMatchPhrases[iPhrase]).c_str() );
+		ChatMessage("    To generate: %s", PhraseToString(aPhrases[iPhrase]).c_str() );
+		//ChatMessage("    To match:    %s", PhraseToString(aMatchPhrases[iPhrase]).c_str() );
 	}
 #endif	
 
@@ -414,7 +437,7 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 		sbBuffer.append('.');
 
 	cCommand.iBotRequest = EBotChatUnknown;
-	cCommand.iDirectedTo = cCommand.iReferringTo = -1;
+	cCommand.iDirectedTo = -1;
 
 	StringVector aPhrases[1]; // TODO: multiple commands in one sentence.
 	int iCurrentPhrase = 0, iBegin = 0;
@@ -448,63 +471,33 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 
 		if ( bWord )
 		{
-			if ( iPos - iBegin > 0 )
+			if ( iPos - iBegin > 0 ) // At least one character in the word.
 			{
-				// Check players names first.
-				bool bPlayerName = false;
-				if ( (cCommand.iDirectedTo == -1) || (cCommand.iReferringTo == -1) )
-				{
-					good::string sCurr( &szMainBuffer[iBegin], false, false, sbBuffer.size() - iBegin );
+				// Check for synonims.
+				szMainBuffer[iPos] = 0;
+				good::string sCurr( &szMainBuffer[iBegin], false, false, iPos - iBegin );
+				const good::string& sSynonim = GetSynonim(sCurr);
 
-					for ( int i=0; i < CPlayers::GetMaxPlayers(); ++i )
-					{
-						CPlayer* pPlayer = CPlayers::Get(i);
-						if ( pPlayer && sCurr.starts_with( pPlayer->GetLowerName() ) )
-						{
-							iBegin += pPlayer->GetLowerName().size();
-							if (iBegin > iPos)
-								iPos = iBegin;
-							if ( cCommand.iDirectedTo == -1 )
-							{
-								aPhrases[iCurrentPhrase].push_back("$player1");
-								cCommand.iDirectedTo = i;
-							}
-							else
-							{
-								aPhrases[iCurrentPhrase].push_back("$player2");
-								cCommand.iReferringTo = i;
-							}
-							bPlayerName = true;
-							break;
-						}
-					}
-				}
-
-				// Check synonims.
-				if ( !bPlayerName )
-				{
-					szMainBuffer[iPos] = 0;
-					good::string sCurr( &szMainBuffer[iBegin], false, false, iPos - iBegin );
-					const good::string& sSynonim = GetSynonim(sCurr);
-
-					aPhrases[iCurrentPhrase].push_back( good::string(sSynonim) ); // Don't copy string, we will just use it for matching.
-					iBegin = iPos+1;
-				}
+				aPhrases[iCurrentPhrase].push_back( good::string(sSynonim) ); // Don't copy string, we will just use it for matching.
 			}
-			else
-				iBegin = iPos+1;
+			iBegin = iPos+1;
 		}
 
 		if ( bEnd )
 			break;
 	}
 
-	StringVector& aWords = aPhrases[0];
+	StringVector& aWords = aPhrases[0]; // TODO: detect 2+ commands in one sentence.
+	
+	good::vector<bool> cFounded; // To know if word is in the matching phrase.
+	cFounded.resize( aWords.size() );
+	
+	cCommand.cMap.clear();
 
 	if ( aWords.size() == 0 )
 		return 0.0f;
 
-	// Search in all commands for match. TODO: detect 2+ commands in one sentence.
+	// Search in all commands for match.
 	int iBestFound, iBestRequired, iBestOrdered;
 	int iBestPhrase, iBestTotalRequired;
 	float fBestImportance = 0.0f; // Number from 0 to 10, represents how good matching is.
@@ -514,27 +507,70 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 		for ( int iPhrase = 0; iPhrase < m_aMatchPhrases[iCommand].size(); ++iPhrase )
 		{
 			int iFound = 0, iRequired = 0, iOrdered = 0, iTotalRequired = 0, iPrevPos = 0;
+
+			// Set all cFounded to false.
+			memset( cFounded.data(), false, sizeof(bool) * cFounded.size() );
+
 			CPhrase& currPhrase = m_aMatchPhrases[iCommand][iPhrase];
 			for ( int iWord = 0; iWord < currPhrase.aWords.size(); ++iWord )
 			{
 				const CPhraseWord& cPhraseWord = currPhrase.aWords[iWord];
-				StringVector::const_iterator it = good::find( aWords.begin(), aWords.end(), cPhraseWord.sWord );
+
+				// Check if word is a chat variable.
+				TChatVariable iVar = EChatVariableInvalid;
+				int iVarNumber = 0;
+				if ( cPhraseWord.sWord.starts_with('$') )
+				{
+					good::pair<TChatVariable, int> pair = GetVariableAndIndex( cPhraseWord.sWord );
+					iVar = pair.first;
+					iVarNumber = pair.second;
+					DebugAssert( iVar != EChatVariableInvalid );
+				}
+
+				// Check if word in match phrase occurres in spoken sentence.
+				int iWordIndex = -1;
+				if ( iVar == EChatVariableInvalid )
+				{
+					for ( int i = 0; i < aWords.size(); ++i )
+						if ( !cFounded[i] && (cPhraseWord.sWord == aWords[i]) )
+						{
+							iWordIndex = i;
+							break;
+						}
+				}
+				else
+				{
+					const StringVector& cValues = m_aVariableValues[iVar];
+					TChatVariableValue iValue = EChatVariableValueInvalid;
+					for ( int i = 0; i < aWords.size(); ++i )
+						if ( !cFounded[i] )
+							for ( StringVector::const_iterator it = cValues.begin(); it != cValues.end(); ++it )
+								if ( *it == aWords[i] )
+								{
+									iWordIndex = i;
+									iValue = it - cValues.begin();
+									goto found; // Break twice.
+								}
+				found:
+					if ( iValue != EChatVariableValueInvalid )
+						cCommand.cMap.push_back( CChatVarValue(iVar, iVarNumber, iValue) );
+				}
 
 				if ( !cPhraseWord.bOptional )
 					iTotalRequired++; // Count amount of required words in this phrase.
 
-				if ( it != aWords.end() )
+				if ( iWordIndex != -1 )
 				{
 					iFound++;
+					cFounded[iWordIndex] = true;
 					
 					if ( !currPhrase.aWords[iWord].bOptional )
 						iRequired++;
 
-					int iPos = it - aWords.begin();
-					if ( iPrevPos <= iPos )
+					if ( iPrevPos <= iWordIndex )
 						iOrdered++;
 
-					iPrevPos = iPos;
+					iPrevPos = iWordIndex;
 				}
 			}
 
@@ -568,10 +604,19 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 		const CPhrase& cPhrase = m_aMatchPhrases[cCommand.iBotRequest][iBestPhrase];
 		ChatMessage( "Chat match: %s", PhraseToString(cPhrase).c_str() );
 		ChatMessage( "Matching (from 0 to 10): %f.", fBestImportance );
+
+		// Get $player/$player1 from chat variables, this is where chat is directed to.
+		for ( int i=0; i < cCommand.cMap.size(); ++i )
+		{
+			CChatVarValue& cVar = cCommand.cMap[i];
+			if ( cVar.iVar == iPlayerVar )
+				if ( (cVar.iVarIndex == 0) || (cVar.iVarIndex == 1) ) // $player or $player1.
+					cCommand.iDirectedTo = cVar.iValue;
+		}
 	}
 	else
 	{
-		ChatMessage( "\tNo match found." );
+		ChatMessage( "No match found." );
 	}
 	return fBestImportance;
 }
@@ -591,49 +636,18 @@ const good::string& CChat::ChatToText( const CBotChat& cCommand )
 		return sbBuffer; // Empty string.
 	}
 
+	// Get random phrase from possible set of phrases.
 	int iRand = rand() % m_aPhrases[cCommand.iBotRequest].size();
 	const CPhrase& cPhrase = m_aPhrases[cCommand.iBotRequest][iRand];
 
 	DebugAssert( cPhrase.aWords.size() );
 
-	// Check if frase contains $player1 or $player2.
-	int iOptionalPlayer1 = -1, iPlayer1 = -1, iOptionalPlayer2 = -2, iPlayer2 = -1;
-	int iPrevOptional = 0;
-	bool bSameOptional = false;
-	if ( (cCommand.iDirectedTo != -1) || (cCommand.iReferringTo != -1))
-	{
-		for ( int i=0; i < cPhrase.aWords.size(); ++i )
-		{
-			const CPhraseWord& cWord = cPhrase.aWords[i];
-
-			if ( cWord.bOptional && !bSameOptional )
-				iPrevOptional = i;
-
-			if ( (cWord.sWord == "$player1") && (cCommand.iDirectedTo != -1) )
-			{
-				iPlayer1 = i;
-				if ( cWord.bOptional )
-					iOptionalPlayer1 = iPrevOptional;
-			}
-			else if ( (cWord.sWord == "$player2") && (cCommand.iReferringTo != -1) )
-			{
-				iPlayer2 = i;
-				if ( cWord.bOptional )
-					iOptionalPlayer1 = iPrevOptional;
-			}
-
-			bSameOptional = cWord.bNextOptional;
-		}
-	}
-
- 	bool bForceOptional = false;
+	// Get phrase into buffer replacing variables by their values.
+	bool bForceOptional = false;
 	for ( int i=0; i < cPhrase.aWords.size(); ++i )
 	{
 		const CPhraseWord& cWord = cPhrase.aWords[i];
 		bool bAdd = !cWord.bOptional;
-
-		if ( (i == iOptionalPlayer1) || (i == iOptionalPlayer2) )
-			bForceOptional = true;
 
 		bool bUseOptional = bForceOptional || (rand()&1);
 		if ( cWord.bOptional && bUseOptional )
@@ -647,10 +661,20 @@ const good::string& CChat::ChatToText( const CBotChat& cCommand )
 			if ( cWord.bCommaBefore )
 				sbBuffer.append(", ");
 
-			if ( i == iPlayer1 )
-				sbBuffer.append( CPlayers::Get(cCommand.iDirectedTo)->GetName() );
-			else if ( i == iPlayer2 )
-				sbBuffer.append( CPlayers::Get(cCommand.iReferringTo)->GetName() );
+			if ( cWord.sWord.starts_with('$') )
+			{
+				good::pair<TChatVariable, int> iVarIndex = GetVariableAndIndex( cWord.sWord );
+				DebugAssert( iVarIndex.first != EChatVariableInvalid );
+
+				bool bFound = false;
+				for ( int i=0; i < cCommand.cMap.size(); ++i )
+					if ( (cCommand.cMap[i].iVar == iVarIndex.first) && (cCommand.cMap[i].iVarIndex == iVarIndex.second) )
+					{
+						bFound = true;
+						sbBuffer.append( GetVariableValue(iVarIndex.first, cCommand.cMap[i].iValue) );
+					}
+				DebugAssert(bFound);
+			}
 			else
 				sbBuffer.append(cWord.sWord);
 

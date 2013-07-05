@@ -1,5 +1,5 @@
-#ifndef __BOTRIX_PLAYER_H__
-#define __BOTRIX_PLAYER_H__
+#ifndef __BOTRIX_PLAYERS_H__
+#define __BOTRIX_PLAYERS_H__
 
 
 #include "edict.h"
@@ -129,7 +129,7 @@ class CPlayers
 {
 public:
 	/// Get count of players on this server.
-	static int GetMaxPlayers() { return (int)m_aPlayers.size(); };
+	static int Size() { return (int)m_aPlayers.size(); };
 
 	/// Get bots count.
 	static int GetBotsCount() { return m_iBotsCount; }
@@ -191,14 +191,6 @@ public:
 	/// Called when player disconnects from this server.
 	static void PlayerDisconnected( edict_t* pEdict );
 
-	/// Called when player starts to play (joins some team).
-	static void PlayerRespawned( edict_t* pEdict )
-	{
-		int idx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
-		if ( (idx >= 0)  &&  m_aPlayers[idx].get() )
-			m_aPlayers[idx]->Respawned();
-	}
-
 
 	/// Called each frame. Will make players and bots 'think'.
 	static void PreThink();
@@ -230,4 +222,4 @@ protected:
 	static good::vector< good::vector<bool> > m_iChatPairs; // 2D array representing who chats with whom. 
 };
 
-#endif // __BOTRIX_PLAYER_H__
+#endif // __BOTRIX_PLAYERS_H__

@@ -31,7 +31,7 @@ namespace good
 		}
 
 		/// Get size of bitset.
-		int size() const { return m_cContainer.size(); }
+		int size() const { return m_iSize; }
 
 		/// Returns true if any bits are set.
 		bool any() const

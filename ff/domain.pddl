@@ -161,6 +161,7 @@
                 (at ?bot1 ?from)
                 (box-at ?box ?from)
                 (can-climb-two ?from ?to)
+                (empty ?bot1)
             )
 
         :effect
@@ -184,6 +185,8 @@
                 (at ?bot1 ?from)
                 (at ?bot2 ?from)
                 (can-climb-two ?from ?to)
+                (empty ?bot1)
+                (empty ?bot2)
             )
 
         :effect
@@ -209,6 +212,8 @@
                 (at ?bot2 ?from)
                 (box-at ?box ?from)
                 (can-climb-three ?from ?to)
+                (empty ?bot1)
+                (empty ?bot2)
             )
 
         :effect

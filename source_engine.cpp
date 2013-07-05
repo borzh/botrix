@@ -1,4 +1,4 @@
-#include "client.h"
+#include "clients.h"
 #include "console_commands.h"
 #include "server_plugin.h"
 #include "source_engine.h"
@@ -345,7 +345,7 @@ void CUtil::TraceLine(Vector const& vSrc, Vector const& vDest, int mask, ITraceF
 //----------------------------------------------------------------------------------------------------------------
 edict_t* CUtil::GetEntityByUserId( int iUserId )
 {
-	for ( int i = 1; i <= CPlayers::GetMaxPlayers(); i ++ )
+	for ( int i = 1; i <= CPlayers::Size(); i ++ )
 	{
 		edict_t* pEdict = CBotrixPlugin::pEngineServer->PEntityOfEntIndex(i);
 

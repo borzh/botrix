@@ -94,12 +94,38 @@ enum TBotChats
 	EBotChatStandUp,                             ///< Stop crouching.
 	EBotChatJump,                                ///< Jump.
 	EBotChatLeave,                               ///< Continue playing, stop helping (you can leave now).
+	EBotChatDontHurt,                            ///< Stop hurting me!
 
-	EBorzhChatDoorFound,                         ///< Chat when bot founds a door.
-	EBorzhChatDoorChange,                        ///< Chat when bot sees a change in door status.
+	EBorzhChatOk,                                ///< Ok.
+	EBorzhChatDone,                              ///< Done, finished task.
+	EBorzhChatNoMoves,                           ///< No more moves.
+	EBorzhChatThink,                             ///< Bot will think (use FF).
+	EBorzhChatExplore,                           ///< Explore new area.
+	EBorzhChatWeaponFound,                       ///< Bot founds a weapon.
 
-	EBorzhBotChatFoundButton,                    ///< Chat when bot founds a button.
-	EBorzhBotChatFoundNewArea,                   ///< Chat when bot enters new area.
+	EBorzhChatDoorFound,                         ///< Bot founds a new door.
+	EBorzhChatDoorChange,                        ///< Bot sees a change in door status.
+	EBorzhChatDoorNoChange,                      ///< Bot sees no change in door status.
+
+	EBorzhChatSeeButton,                         ///< Bot sees a button.
+	EBorzhChatButtonCanPush,                     ///< Bot can press a button.
+	EBorzhChatButtonCantPush,                    ///< Bot can't reach this button.
+
+	EBorzhChatButtonWeapon,                      ///< Bot has weapon to shoot button.
+	EBorzhChatButtonNoWeapon,                    ///< Bot doesn't have weapon to shoot button.
+	
+	EBorzhChatDoorTry,                           ///< Bot says to find button that opens given door.
+	EBorzhChatButtonTry,                         ///< Bot says to find doors that opens given button.
+
+	EBorzhChatButtonIPush,                       ///< Bot will try to push button.
+	EBorzhChatButtonYouPush,                     ///< Bot orders to push button to other bot.
+	EBorzhChatButtonIShoot,                      ///< Bot will try to shoot button.
+	EBorzhChatButtonYouShoot,                    ///< Bot orders to shoot button to other bot.
+
+	EBorzhChatAreaGo,                            ///< Bot orders to go to some area to other bot.
+	EBorzhChatDoorGo,                            ///< Bot orders to go to some door to other bot.
+	EBorzhChatButtonGo,                          ///< Bot orders to go to some button to other bot.
+	EBorzhChatCantGo,                            ///< Bot can't reach given area.
 
 	EBotChatTotal                                ///< Amount of bot sentences.
 };

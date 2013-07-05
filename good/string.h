@@ -329,10 +329,10 @@ namespace good
 		//--------------------------------------------------------------------------------------------------------
 		/// Remove leading and trailing whitespaces(space, tab, line feed - LF, carriage return - CR).
 		//--------------------------------------------------------------------------------------------------------
-		void trim()
+		base_string& trim()
 		{
 			if (m_iSize == 0)
-				return;
+				return *this;
 			int begin = 0, end = m_iSize - 1;
 
 			for (; begin <= end; ++begin)
@@ -353,12 +353,13 @@ namespace good
 			if (begin > 0)
 				memmove(m_pBuffer, &m_pBuffer[begin], m_iSize);
 			m_pBuffer[m_iSize] = 0;
+			return *this;
 		}
 
 		//--------------------------------------------------------------------------------------------------------
 		/// Process escape characters: \n, \r, \t, \0, else \ and next Char are transformed to that Char.
 		//--------------------------------------------------------------------------------------------------------
-		void escape()
+		base_string& escape()
 		{
 			Char* buf = m_pBuffer;
 
@@ -386,6 +387,7 @@ namespace good
 
 			m_iSize -= count;
 			buf[m_iSize] = 0;
+			return *this;
 		}
 
 		//--------------------------------------------------------------------------------------------------------

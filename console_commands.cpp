@@ -1,5 +1,5 @@
 #include "bot.h"
-#include "client.h"
+#include "clients.h"
 #include "console_commands.h"
 #include "waypoint.h"
 
@@ -355,7 +355,7 @@ TCommandResult CWaypointRemoveCommand::Execute( CClient* pClient, int argc, cons
 	CUtil::Message(pClient->GetEdict(), "Waypoint %d deleted.", id);
 
 	// Invalidate current / destination waypoints for all players.
-	for (int i=0; i < CPlayers::GetMaxPlayers(); ++i)
+	for (int i=0; i < CPlayers::Size(); ++i)
 	{
 		CPlayer* pPlayer = CPlayers::Get(i);
 		if ( pPlayer )
@@ -453,7 +453,7 @@ TCommandResult CWaypointClearCommand::Execute( CClient* pClient, int argc, const
 		return ECommandError;
 
 	// Invalidate current / next / destination waypoints for all players.
-	for ( int i = 0; i < CPlayers::GetMaxPlayers(); ++i )
+	for ( int i = 0; i < CPlayers::Size(); ++i )
 	{
 		CPlayer* pPlayer = CPlayers::Get(i);
 		if ( pPlayer )
@@ -1019,7 +1019,7 @@ TCommandResult CWaypointAreaShowCommand::Execute( CClient* pClient, int argc, co
 
 	for ( int i=0; i < CWaypoints::GetAreas().size(); ++i )
 	{
-		sbBuffer.append("\t - ");
+		sbBuffer.append("   - ");
 		sbBuffer.append( CWaypoints::GetAreas()[i] );
 		sbBuffer.append('\n');
 	}
@@ -1554,7 +1554,7 @@ TCommandResult CBotDebugCommand::Execute( CClient* pClient, int argc, const char
 	good::string sName = argv[0];
 
 	CBot* pBot = NULL;
-	for ( int i=0; i < CPlayers::GetMaxPlayers(); ++i )
+	for ( int i=0; i < CPlayers::Size(); ++i )
 	{
 		CPlayer* pPlayer = CPlayers::Get(i);
 		if ( pPlayer && pPlayer->IsBot() )
@@ -1843,7 +1843,7 @@ TCommandResult CConfigAdminsShowCommand::Execute( CClient* pClient, int argc, co
 	if ( pClient == NULL )
 		return ECommandError;
 
-	for (int i = 0; i < CPlayers::GetMaxPlayers(); ++i)
+	for (int i = 0; i < CPlayers::Size(); ++i)
 	{
 		CPlayer* pPlayer = CPlayers::Get(i);
 		if ( pPlayer && !pPlayer->IsBot() )

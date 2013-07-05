@@ -42,7 +42,7 @@ public:
 	virtual void HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow );
 
 	/// Called when chat arrives from other player.
-	virtual void ReceiveChat( int iPlayerIndex, CPlayer* pPlayer , bool bTeamOnly, const char* szText ) {}
+	virtual void ReceiveChat( int iPlayerIndex, CPlayer* pPlayer , bool bTeamOnly, const char* szText );
 
 	/// Called when chat request arrives from other player.
 	virtual void ReceiveChatRequest( const CBotChat& cRequest );
@@ -82,7 +82,7 @@ protected: // Inherited methods.
 protected: // Methods.
 
 	// Called when bot figures out if a button toggles or doesn't affect a door.
-	void ButtonTogglesDoor( TEntityIndex iButton, TEntityIndex iDoor, bool bToggle )
+	void SetButtonTogglesDoor( TEntityIndex iButton, TEntityIndex iDoor, bool bToggle )
 	{
 		if ( bToggle )
 			m_cDoorToggle[iButton].set(iDoor);
@@ -101,57 +101,79 @@ protected: // Methods.
 			return EUnknown;
 	}
 
-	// Speak about door/button/box/weapon,
-	//void Speak( TBotChat iChat, TEntityIndex iEntity, TBorzhChatArgument iArgument );
+	// Init current task.
+	void InitNewTask();
 
-	// Receive chat from other bot/player about domain change.
-	//void ReceiveSpeak( TBotChat iChat, TEntityIndex iEntity, TBorzhChatArgument iArgument );
+	// Speak about door/button/box/weapon.
+	void PushSpeakTask( TBotChat iChat, TEntityType iType, TEntityIndex iIndex, int iArguments = 0 );
+
+	// Perform speak task, say a phrase.
+	void DoSpeakTask();
+
+	// Get new task from stack.
+	void TaskPop()
+	{
+		if ( m_cTaskStack.size() > 0 )
+		{
+			m_cCurrentTask = m_cTaskStack.back();
+			m_cTaskStack.erase( m_cTaskStack.size() - 1 );
+		}
+		else
+			m_cCurrentTask.iTask = EBorzhTaskInvalid;
+		m_bNewTask = true;
+		m_bTaskFinished = false;
+	}
 
 	// Check if there is something to do.
 	void TaskUpdate();
 
-	// Save current task in task stack (will resume it later) and set new task.
-	void TaskChange( TBorzhTask iTask, int iTaskArgument );
-
-	// Check if there is something to do.
-	void TaskCheck();
-
 
 protected: // Members.
 
-	//
+	class CBorzhTask
+	{
+	public:
+		TBorzhTask iTask;                                // Task number.
+		int iArgument;                                   // Task argument. May be number of door, button, etc.
+	};
 
-	typedef good::pair<TBorzhTask, int> task_t;
-	typedef good::vector< task_t > task_stack_t;
+	typedef good::vector< CBorzhTask > task_stack_t;     // Typedef for stack of tasks.
+
 	task_stack_t m_cTaskStack;                           // Stack of tasks.
+	CBorzhTask m_cCurrentTask;                           // Current bot's task.
 
-	TBorzhTask m_iCurrentTask;                           // Current bot's task.
-	int m_iTaskArgument;                                 // Task argument.
+	TAreaId m_iCurrentArea;                              // Current area.
 
 	good::bitset m_cSeenDoors;                           // Seen doors.
-	good::bitset m_cOpenedDoors;                         // Opened doors. Closed implies (seen & !opened).
+	good::bitset m_cKnownDoors;                          // Known doors, other bot has spoken of. TODO: implement.
+	good::bitset m_cOpenedDoors;                         // Opened doors. Closed door means seen & !opened.
 
 	good::bitset m_cSeenButtons;                         // Seen buttons.
+	good::bitset m_cKnownButtons;                        // Known buttons, other bot has spoken of. TODO: implement.
 	good::bitset m_cPushedButtons;                       // Buttons pushed at least once.
 
 	good::vector<good::bitset> m_cDoorToggle;            // Bot's belief of which set of doors button DO toggle (button is index in array).
 	good::vector<good::bitset> m_cDoorNoAffect;          // Bot's belief of which set of doors button DOESN'T toggle (button is index in array).
 
-	good::bitset m_aUnknownWaypoints;                    // Not visited waypoints (1 = unknown, 0 = visited).
-	good::bitset m_aUnknownAreas;                        // Visited areas (1 = unknown, 0 = visited).
-	//good::bitset m_aCheckedAreas;                        // Checked areas for current task (1 = checked, 0 = unchecked).
+	good::bitset m_aVisitedWaypoints;                    // Visited waypoints (1 = visited, 0 = unknown).
+	good::bitset m_aVisitedAreas;                        // Visited areas (1 = visited, 0 = unknown).
+	good::bitset m_aCheckedAreas;                        // Checked areas for current task (1 = checked, 0 = unchecked).
 
-	float fWaitTime;                                     // Time when can stop waiting.
+	float m_fEndWaitTime;                                // Time when can stop waiting.
 
-	TWaypointId m_iDestination;                          // Destination waypoint.
+	//TWaypointId m_iDestination;                          // Destination waypoint.
 
-	TEntityIndex iCheckVisibleDoor;                      // Door to check visibility in this frame.
-	TEntityIndex iCheckButton;                           // Door to check visibility in this frame.
 
 protected: // Flags.
 
-	bool m_bNeedTaskCheck:1;                             // True if there is need to check for new tasks.
-	bool m_bTaskFinished:1;                              // True if there current task is finished.
+	static bool m_bUsingPlanner;                         // Set if some of the bots is using planner.
+
+	bool m_bStarted:1;                                   // Started by admin.
+
+	bool m_bNewTask:1;                                   // New task need to be initiated.
+	bool m_bTaskFinished:1;                              // Need to pop new task from stack.
+	bool m_bHasCrossbow:1;                               // True if bot has crossbow to shoot buttons.
+	bool m_bHasPhyscannon:1;                             // True if bot has physcannon to carry boxes.
 
 };
 

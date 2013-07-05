@@ -4,7 +4,7 @@
 #include "in_buttons.h"
 
 #include "bot.h"
-#include "client.h"
+#include "clients.h"
 #include "chat.h"
 #include "waypoint_navigator.h"
 #include "schedule.h"
@@ -26,7 +26,7 @@ int CBot::m_iCheckEntitiesPerFrame = 4;
 //----------------------------------------------------------------------------------------------------------------
 CBot::CBot( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence iIntelligence ):
 	CPlayer(pEdict, iIndex, true), m_aPickedItems(16),
-	m_aNearPlayers(CPlayers::GetMaxPlayers()), m_aSeenEnemies(CPlayers::GetMaxPlayers()), m_aEnemies(CPlayers::GetMaxPlayers()),
+	m_aNearPlayers(CPlayers::Size()), m_aSeenEnemies(CPlayers::Size()), m_aEnemies(CPlayers::Size()),
 	m_iIntelligence(iIntelligence), r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ), m_bDebugging(true)
 {
 	for ( TEntityType i=0; i < EEntityTypeTotal; ++i )
@@ -101,7 +101,6 @@ void CBot::Respawned()
 
 	//m_vLastVelocity.x = m_vLastVelocity.y = m_vLastVelocity.z = 0.0f;
 
-	m_iFirst = m_iLast = 0;
 	m_fPrevThinkTime = m_fStuckCheckTime = 0.0f;
 
 	for ( TEntityType i=0; i < EEntityTypeTotal; ++i )
@@ -220,7 +219,7 @@ void CBot::ReceiveChatRequest( const CBotChat& cRequest )
 	if (iChatMate == -1)
 		iChatMate = cRequest.iSpeaker;
 
-	CBotChat cResponse(EBotChatUnknown, m_iIndex, cRequest.iSpeaker, -1);
+	CBotChat cResponse(EBotChatUnknown, m_iIndex, cRequest.iSpeaker);
 	if ( iChatMate == cRequest.iSpeaker )
 	{
 		// If conversation is not started, decide whether to help teammate or not (random).
@@ -335,11 +334,21 @@ void CBot::EndPerformingChatRequest( bool bSayGoodbye )
 	m_bPerformingRequest = m_bRequestTimeout = false;
 	if ( bSayGoodbye )
 	{
-		CBotChat cBye(EBotChatBye, (rand()&1) ? iChatMate : -1);
+		m_cChat.cMap.clear();
+		m_cChat.iBotRequest = EBotChatBye;
+		if ( rand()&1 )
+		{
+			m_cChat.iDirectedTo = iChatMate;
+			m_cChat.cMap.push_back( CChatVarValue(CChat::iPlayerVar, 0, iChatMate) );
+		}
+		else
+			m_cChat.iDirectedTo = -1;
+
 		char* szSay = "say %s";
 		if ( CPlayers::Get(iChatMate)->GetTeam() == GetTeam() )
 			szSay = "say_team %s";
-		ConsoleCommand( szSay, CChat::ChatToText(cBye).c_str() );
+
+		ConsoleCommand( szSay, CChat::ChatToText(m_cChat).c_str() );
 	}
 
 	switch ( m_iObjective )
@@ -366,8 +375,8 @@ void CBot::PreThink()
 {
 	if ( m_bFirstRespawn )
 	{
-		m_bFirstRespawn = false;
 		Respawned(); // Force respawn, as first time bot appeares on map, Respawned() is not called.
+		m_bFirstRespawn = false;
 	}
 
 	Vector vPrevOrigin = m_vHead;
@@ -881,7 +890,7 @@ void CBot::UpdateWorld()
 
 	// Check only 1 player per frame.
 	CPlayer* pEnemy = NULL;
-	while ( m_iNextCheckPlayer < CPlayers::GetMaxPlayers() )
+	while ( m_iNextCheckPlayer < CPlayers::Size() )
 	{
 		CPlayer* pPlayer = CPlayers::Get(m_iNextCheckPlayer);
 		if ( pPlayer && (this != pPlayer) )
@@ -936,7 +945,7 @@ void CBot::UpdateWorld()
 	}
 
 	m_iNextCheckPlayer++;
-	if ( m_iNextCheckPlayer >= CPlayers::GetMaxPlayers() )
+	if ( m_iNextCheckPlayer >= CPlayers::Size() )
 		m_iNextCheckPlayer = 0;
 }
 
@@ -1394,7 +1403,7 @@ bool CBot::NavigatorMove()
 		m_bDestinationChanged = false;
 		m_pNavigator.Stop();
 
-		DebugAssert( CWaypoint::IsValid(iCurrentWaypoint) && CWaypoint::IsValid(m_iDestinationWaypoint) );
+		DebugAssert( CWaypoint::IsValid(iCurrentWaypoint) && CWaypoint::IsValid(m_iDestinationWaypoint) && (m_iDestinationWaypoint != iCurrentWaypoint) );
 		m_bMoveFailure = !m_pNavigator.SearchSetup( iCurrentWaypoint, m_iDestinationWaypoint, m_aAvoidAreas );
 		iPrevWaypoint = iCurrentWaypoint;
 	}
@@ -1469,141 +1478,6 @@ bool CBot::NormalMove()
 }
 
 //----------------------------------------------------------------------------------------------------------------
-bool CBot::IsActionConditionSatisfied( bool bWaypointChange, bool bWaypointTouch )
-{
-	switch ( m_aActionBuffer[m_iFirst].iWaitCondition )
-	{
-	case EWaitNone: 
-		return true;
-	case EWaitTime:
-		return (CBotrixPlugin::fTime >= m_aActionBuffer[m_iFirst].uniArgument.fTime[3]);
-	case EWaitAim:
-		return (CBotrixPlugin::fTime >= m_fEndAimTime);
-	case EWaitCloseWaypoint:
-		return bWaypointChange;
-	case EWaitNextWaypoint:
-		return bWaypointTouch;
-	case EWaitNavigate:
-		return bWaypointTouch && (iCurrentWaypoint == m_iDestinationWaypoint);
-	case EWaitActionStart:
-		return (CBotrixPlugin::fTime >= m_fStartActionTime);
-	case EWaitActionEnd:
-		return (CBotrixPlugin::fTime >= m_fEndActionTime);
-	case EWaitItemTouch:
-		return ((CEntity*)m_aActionBuffer[m_iFirst].pWaitArgument) -> IsOnMap();
-	case EWaitObjectGone:
-		return m_aNearestItems == NULL;
-	case EWaitEnemyGone:
-		return m_pCurrentEnemy == NULL;
-	}
-	DebugAssert(0);
-	return false;
-}
-
-//----------------------------------------------------------------------------------------------------------------
-void CBot::PerformAction()
-{
-	float* aVec;
-	switch ( m_aActionBuffer[m_iFirst].iActionType )
-	{
-	case EActionAim:
-		m_bNeedAim = true;
-		aVec = m_aActionBuffer[m_iFirst].uniArgument.vPosition;
-		m_vLook.x = aVec[0]; m_vLook.y = aVec[1]; m_vLook.z = aVec[2];
-		break;
-
-	case EActionLockAim:
-		m_bLockAim = true;
-		break;
-
-	case EActionMove:
-		m_bNeedMove = m_bDestinationChanged = true;
-		m_bUseNavigatorToMove = false;
-		aVec = m_aActionBuffer[m_iFirst].uniArgument.vPosition;
-		m_vDestination.x = aVec[0]; m_vDestination.y = aVec[1]; m_vDestination.z = aVec[2];
-		break;
-
-	case EActionMoveWaypoint:
-		m_bNeedMove = m_bDestinationChanged = true;
-		m_bUseNavigatorToMove = false;
-		m_vDestination = CWaypoints::Get( m_aActionBuffer[m_iFirst].uniArgument.iWaypointId ).vOrigin;
-		break;
-
-	case EActionNavigate:
-		m_bNeedMove = m_bDestinationChanged = m_bUseNavigatorToMove = true;
-		m_iDestinationWaypoint = m_aActionBuffer[m_iFirst].uniArgument.iWaypointId;
-		break;
-
-	case EActionStop:
-		m_bNeedMove = false;
-		m_bNeedStop = true;
-		break;
-
-	case EActionDuck:
-		m_bNeedDuck = true;
-		m_bNeedWalk = false;
-		m_bNeedSprint = false;
-		break;
-
-	case EActionWalk:
-		m_bNeedDuck = false;
-		m_bNeedWalk = true;
-		m_bNeedSprint = false;
-		break;
-
-	case EActionRun:
-		m_bNeedDuck = false;
-		m_bNeedWalk = false;
-		m_bNeedSprint = false;
-		break;
-
-	case EActionSprint:
-		m_bNeedDuck = false;
-		m_bNeedWalk = false;
-		m_bNeedSprint = true;
-		break;
-
-	case EActionJump:
-		m_bNeedJump = true;
-		aVec = m_aActionBuffer[m_iFirst].uniArgument.fTime;
-		m_fStartActionTime = CBotrixPlugin::fTime + aVec[0];
-		break;
-
-	case EActionJumpWithDuck:
-		m_bNeedJumpDuck = true;
-		aVec = m_aActionBuffer[m_iFirst].uniArgument.fTime;
-		m_fStartActionTime = CBotrixPlugin::fTime + aVec[0];
-		m_fEndActionTime = CBotrixPlugin::fTime + aVec[1];
-		break;
-	
-	case EActionSetWeapon:
-		SetActiveWeapon( m_aActionBuffer[m_iFirst].uniArgument.iWeapon );
-		break;
-
-	case EActionSetBestWeapon:
-		m_bNeedSetWeapon = true;
-		break;
-
-	case EActionAttack:
-		m_bNeedAttack = true;
-		aVec = m_aActionBuffer[m_iFirst].uniArgument.fTime;
-		m_fStartActionTime = CBotrixPlugin::fTime + aVec[0];
-		m_fEndActionTime = CBotrixPlugin::fTime + aVec[1];
-		break;
-
-	case EActionAttack2:
-		m_bNeedAttack2 = true;
-		aVec = m_aActionBuffer[m_iFirst].uniArgument.fTime;
-		m_fStartActionTime = CBotrixPlugin::fTime + aVec[0];
-		m_fEndActionTime = CBotrixPlugin::fTime + aVec[1];
-		break;
-
-	default:
-		Assert(0);
-	}
-}
-
-//----------------------------------------------------------------------------------------------------------------
 void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOrigin )
 {
 	//m_cCmd.viewangles = m_pController->GetLocalAngles(); // WTF?
@@ -1636,23 +1510,6 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
 	bool bMove = m_bNeedMove && !m_bMoveFailure && !m_bStuckBreakObject && !m_bStuckUsePhyscannon;
 	if ( m_bUseNavigatorToMove && ( !m_pNavigator.SearchEnded() || m_bLockNavigatorMove ) )
 		bMove = false; // Check if search is finished (m_bMoveFailure will be set if search fails).
-
-	// Perform atomic actions.
-	while ( m_iFirst != m_iLast )
-	{
-		if ( m_bConditionSatisfied )
-		{
-			PerformAction();
-			m_bConditionSatisfied = false;
-		}
-		if ( IsActionConditionSatisfied(bCurrentWaypointChanged, bTouchedWaypoint) )
-		{
-			m_iFirst = NextBufferIndex(m_iFirst);
-			m_bConditionSatisfied = true;
-		}
-		else
-			break;
-	}
 
 	// Check if need to look left/right/back/forward.
 	CheckSideLook(bMove, bTouchedWaypoint);

@@ -4,7 +4,7 @@
 
 // Plugin headers.
 #include "bot.h"
-#include "client.h"
+#include "clients.h"
 #include "config.h"
 #include "console_commands.h"
 #include "item.h"

@@ -530,11 +530,11 @@
 				Name="borzh"
 				>
 				<File
-					RelativePath=".\mods\borzh\bot_borzhmod.cpp"
+					RelativePath=".\mods\borzh\bot_borzh.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\mods\borzh\bot_borzhmod.h"
+					RelativePath=".\mods\borzh\bot_borzh.h"
 					>
 				</File>
 				<File
@@ -600,11 +600,11 @@
 			>
 		</File>
 		<File
-			RelativePath=".\client.cpp"
+			RelativePath=".\clients.cpp"
 			>
 		</File>
 		<File
-			RelativePath=".\client.h"
+			RelativePath=".\clients.h"
 			>
 		</File>
 		<File
@@ -648,11 +648,11 @@
 			>
 		</File>
 		<File
-			RelativePath=".\player.cpp"
+			RelativePath=".\players.cpp"
 			>
 		</File>
 		<File
-			RelativePath=".\player.h"
+			RelativePath=".\players.h"
 			>
 		</File>
 		<File

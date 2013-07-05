@@ -6,17 +6,17 @@
 #include "mod.h"
 
 
-class Mod_Borzh: public IMod
+class CMod_Borzh: public IMod
 {
 public: // Methods.
 
-	Mod_Borzh();
+	/// Constructor. Initializes events and chat variables.
+	CMod_Borzh();
 
-	///
+	/// Load chat configuration file.
 	virtual void LoadConfig(const good::string& sModName) {}
 
-
-	/// Called when map is loaded, after waypoints and items has been loaded.
+	/// Called when map is loaded, after waypoints and items has been loaded. TODO: map unload.
 	virtual void MapLoaded();
 
 
@@ -37,7 +37,7 @@ public: // Methods.
 	virtual const good::string* GetWaypointPathNames() { return NULL; }
 
 	/// Get waypoints path colors.
-	virtual const good::string* GetWaypointPathColors() { return NULL; }
+	virtual const int* GetWaypointPathColors() { return NULL; }
 
 
 	/// Get bot's objective count.
@@ -48,18 +48,25 @@ public: // Methods.
 
 
 	/// Get chat count.
-	virtual int GetChatCount() { return 0; }
+	virtual int GetChatCount() { return CHATS_COUNT; }
 
 	/// Get chat names.
 	virtual const good::string* GetChatNames() { return NULL; }
 
-public: // Members.
 
+public: // Static methods.
+
+	/// Get waypoints that are in given area.
+	static const good::vector<TWaypointId>& GetWaypointsForArea( TAreaId iArea ) { return m_cAreasWaypoints[iArea]; }
+
+
+public: // Members.
 	static TChatVariable iVarDoor;
 	static TChatVariable iVarDoorStatus;
 	static TChatVariable iVarButton;
 	static TChatVariable iVarWeapon;
 	static TChatVariable iVarArea;
+	static TChatVariable iVarPlayer;
 
 	static TChatVariableValue iVarValueDoorStatusOpened;
 	static TChatVariableValue iVarValueDoorStatusClosed;
@@ -71,7 +78,10 @@ protected:
 	static void GeneratePddl( const good::string& sProblemPath );
 
 	static const int CHATS_COUNT = 23;
-	static const good::string m_aChats[CHATS_COUNT];
+	//static const good::string m_aChats[CHATS_COUNT];
+
+	static good::vector< good::vector<TWaypointId> > m_cAreasWaypoints; // Waypoints for areas.
+
 };
 
 #endif // __BOTRIX_MOD_BORZH_H__

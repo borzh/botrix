@@ -1,11 +1,11 @@
 #include "chat.h"
-#include "client.h"
+#include "clients.h"
 #include "mod.h"
-#include "player.h"
+#include "players.h"
 #include "server_plugin.h"
 #include "type2string.h"
 #include "waypoint.h"
-#include "mods/borzh/bot_borzhmod.h"
+#include "mods/borzh/bot_borzh.h"
 #include "mods/hl2dm/bot_hl2dm.h"
 
 #include "good/string_buffer.h"
@@ -128,7 +128,7 @@ void CPlayers::Init( int iMaxPlayers )
 	m_aPlayers.clear();
 	m_aPlayers.resize( iMaxPlayers );
 	// TODO: Save bots config when changing map.
-	//for (int i = 0; i < CPlayers::GetMaxPlayers(); ++i)
+	//for (int i = 0; i < CPlayers::Size(); ++i)
 	//{
 	//	if ( m_aPlayers[i].get() )
 	//		m_aPlayers[i]->Respawned();
@@ -138,7 +138,7 @@ void CPlayers::Init( int iMaxPlayers )
 //----------------------------------------------------------------------------------------------------------------
 void CPlayers::Clear()
 {
-	for (int i = 0; i < CPlayers::GetMaxPlayers(); ++i)
+	for (int i = 0; i < CPlayers::Size(); ++i)
 		m_aPlayers[i].reset();
 	m_pListenServerClient = 0;
 
@@ -150,7 +150,7 @@ void CPlayers::Clear()
 //----------------------------------------------------------------------------------------------------------------
 CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
 {		
-	if ( GetPlayersCount() == GetMaxPlayers() )
+	if ( GetPlayersCount() == Size() )
 		return NULL;
 
 	TModId iModId = CMod::GetModId();
@@ -176,26 +176,34 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
 	if ( !pEdict )
 		return NULL;
 
-	TPlayerIndex idx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
-	DebugAssert(idx >= 0);
+	TPlayerIndex iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
+	DebugAssert(iIdx >= 0);
 
 	CPlayer* pPlayer = NULL;
 	switch ( iModId )
 	{
 		case EModId_HL2DM: 
-			pPlayer = new CBot_HL2DM(pEdict, idx, iIntelligence);
+			pPlayer = new CBot_HL2DM(pEdict, iIdx, iIntelligence);
 			break;
 		case EModId_Borzh: 
-			pPlayer = new CBot_BorzhMod(pEdict, idx, iIntelligence);
+			pPlayer = new CBot_BorzhMod(pEdict, iIdx, iIntelligence);
 			break;
 		default:
 			DebugAssert(false);
 			return NULL;
 	}
 
-	pPlayer->Activated();
-	m_aPlayers[idx] = pPlayer;
+	pPlayer->Activated(); // Event active is not created for bots.
+
+	m_aPlayers[iIdx] = pPlayer;
 	m_iBotsCount++;
+
+	if ( CChat::iPlayerVar != EChatVariableInvalid )
+	{
+		good::string sName(pPlayer->GetName(), true, true); // Copy and deallocate.
+		sName.lower_case();
+		CChat::SetVariableValue( CChat::iPlayerVar, iIdx, sName );
+	}
 
 	return pPlayer;
 }
@@ -251,7 +259,7 @@ bool CPlayers::KickRandomBot()
 }
 
 //----------------------------------------------------------------------------------------------------------------
-bool CPlayers::KickRandomBotOnTeam( int team )
+bool CPlayers::KickRandomBotOnTeam( int iTeam )
 {
 	// TODO:
 	if ( m_iBotsCount == 0 )
@@ -266,14 +274,14 @@ bool CPlayers::KickRandomBotOnTeam( int team )
 //----------------------------------------------------------------------------------------------------------------
 void CPlayers::PlayerConnected( edict_t* pEdict )
 {
-	TPlayerIndex idx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
-	DebugAssert( idx >= 0 );
+	TPlayerIndex iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
+	DebugAssert( iIdx >= 0 );
 
 	if ( !bAddingBot ) 
 	{
-		DebugAssert( m_aPlayers[idx].get() == NULL );
+		DebugAssert( m_aPlayers[iIdx].get() == NULL );
 
-		CPlayer* pPlayer = new CClient(pEdict, idx);
+		CPlayer* pPlayer = new CClient(pEdict, iIdx);
 		pPlayer->Activated();
 
 		if ( !CBotrixPlugin::pEngineServer->IsDedicatedServer() && (m_pListenServerClient == NULL) )
@@ -283,8 +291,15 @@ void CPlayers::PlayerConnected( edict_t* pEdict )
 			((CClient*)pPlayer)->iCommandAccessFlags = FCommandAccessAll;
 		}
 
-		m_aPlayers[idx] = pPlayer;
+		m_aPlayers[iIdx] = pPlayer;
 		m_iClientsCount++;
+
+		if ( CChat::iPlayerVar != EChatVariableInvalid )
+		{
+			good::string sName(pPlayer->GetName(), true, true); // Copy and deallocate.
+			sName.lower_case();
+			CChat::SetVariableValue( CChat::iPlayerVar, iIdx, sName );
+		}
 	}
 }
 
@@ -292,25 +307,28 @@ void CPlayers::PlayerConnected( edict_t* pEdict )
 //----------------------------------------------------------------------------------------------------------------
 void CPlayers::PlayerDisconnected( edict_t* pEdict )
 {
-	int idx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
-	DebugAssert(idx >= 0);
+	int iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
+	DebugAssert(iIdx >= 0);
 
-	if ( m_aPlayers[idx].get() == NULL )
+	if ( m_aPlayers[iIdx].get() == NULL )
 		return; // Happens when starting new map and pressing cancel button.
 
-	CPlayer* pPlayer = m_aPlayers[idx].get();
+	CPlayer* pPlayer = m_aPlayers[iIdx].get();
 	DebugAssert( pPlayer );
 
+	if ( CChat::iPlayerVar != EChatVariableInvalid )
+		CChat::SetVariableValue( CChat::iPlayerVar, iIdx, "" );
+
 	// Notify bots that player is disconnected.
-	for ( int i=0; i < GetMaxPlayers(); ++i)
+	for ( int i=0; i < Size(); ++i)
 	{
 		CPlayer* pBot = m_aPlayers[i].get();
 		if ( pBot && pBot->IsBot() && pBot->IsAlive() )
-			((CBot*)pBot)->PlayerDisconnect(idx, pPlayer);
+			((CBot*)pBot)->PlayerDisconnect(iIdx, pPlayer);
 	}
 
 	bool bIsBot = pPlayer->IsBot();
-	m_aPlayers[idx].reset();
+	m_aPlayers[iIdx].reset();
 
 	if ( bIsBot )
 		m_iBotsCount--;
@@ -372,45 +390,58 @@ void CPlayers::CheckForDebugging()
 //----------------------------------------------------------------------------------------------------------------
 void CPlayers::DeliverChat( edict_t* pFrom, bool bTeamOnly, const char* szText )
 {
-	int team = 0;
+	int iTeam = 0;
 
 	int iIdx = CPlayers::Get(pFrom);
 	DebugAssert( iIdx >= 0 );
 	CPlayer* pSpeaker = CPlayers::Get(iIdx);
 
 	if ( bTeamOnly )
-		team = pSpeaker->GetTeam();
+		iTeam = pSpeaker->GetTeam();
 
 	// Get command from text.
 	if ( GetBotsCount() > 0 )
 	{
-		CBotChat cChat(EBotChatUnknown, iIdx);
+		static CBotChat cChat;
+		cChat.iBotRequest = EBotChatUnknown;
+		cChat.iSpeaker = iIdx;
+
 		float fPercentage = CChat::ChatFromText( szText, cChat );
 		bool bIsRequest = (fPercentage >= 6.0f);
 
 		if ( cChat.iDirectedTo == -1 )
 			cChat.iDirectedTo = pSpeaker->iChatMate;
 		else
-			pSpeaker->iChatMate = cChat.iDirectedTo;
+			pSpeaker->iChatMate = cChat.iDirectedTo; // TODO: SetChatMate();
 
-		if ( cChat.iDirectedTo != -1 )
+		if ( bIsRequest && (cChat.iDirectedTo != -1) )
 		{
 			CPlayer* pReceiver = CPlayers::Get(cChat.iDirectedTo);
 			if ( pReceiver && pReceiver->IsBot() ) // Deliver chat only for bots.
 			{
-				// Should be on same team if chat is for team only.
-				if ( !bTeamOnly || ( pSpeaker->GetTeam() == pReceiver->GetTeam() ) )
+				// Should be on same iTeam if chat is for iTeam only.
+				if ( !bTeamOnly || ( pReceiver->GetTeam() == iTeam ) )
 				{
 					DebugAssert(pSpeaker != pReceiver);
 					CBot* pBot = (CBot*)pReceiver;
 					if ( bIsRequest ) 
 						pBot->ReceiveChatRequest(cChat);
-					else if ( !bTeamOnly || (pBot->GetTeam() == team) )
-						pBot->ReceiveChat( iIdx, pBot, bTeamOnly, szText );
 				}
 			}
 		}
 		else
+		{
 			DebugMessage("Can't detect player, chat is directed to.");
+			for ( TPlayerIndex iPlayer=0; iPlayer < CPlayers::Size(); ++iPlayer )
+			{
+				CPlayer* pReceiver = CPlayers::Get(iPlayer);
+				if ( (iIdx != iPlayer) && pReceiver && pReceiver->IsBot() )
+				{
+					CBot* pBot = (CBot*)pReceiver;
+					if ( !bTeamOnly || (pBot->GetTeam() == iTeam) ) // Should be on same iTeam if chat is for iTeam only.
+						pBot->ReceiveChat( iIdx, pSpeaker, bTeamOnly, szText );
+				}
+			}
+		}
 	}
 }

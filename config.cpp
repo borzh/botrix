@@ -66,7 +66,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 #if defined(DEBUG) || defined(_DEBUG)
 		ConfigMessage("Bot names:");
 		for ( int i = 0; i < (int)aBotNames.size(); ++i )
-			ConfigMessage( "\t%s", aBotNames[i].c_str() );
+			ConfigMessage( "  %s", aBotNames[i].c_str() );
 #endif
 
 		// Check if need to show intelligence in it's name.
@@ -145,7 +145,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 											CMod::iUnassignedTeam = i;
 										else if ( aTeams[i] == "spectators" )
 											CMod::iSpectatorTeam = i;
-										ConfigMessage( "\t%s", aTeams[i].c_str() );
+										ConfigMessage( "  %s", aTeams[i].c_str() );
 									}
 								}
 
@@ -167,7 +167,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 #if defined(DEBUG) || defined(_DEBUG)
 										ConfigMessage("Model names for team %s:", aTeams[i].c_str());
 										for ( int j = 0; j < (int)aModels.size(); ++j )
-											ConfigMessage( "\t%s", aModels[j].c_str() );
+											ConfigMessage( "  %s", aModels[j].c_str() );
 #endif
 										CMod::SetBotModels( aModels, i );
 									}
@@ -544,7 +544,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 
 				if ( !bError )
 				{
-					ConfigMessage( "\t%s", itemIt->key.c_str() );
+					ConfigMessage( "  %s", itemIt->key.c_str() );
 
 					pWeapon->iId = CWeapons::Size();
 
@@ -561,7 +561,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 						{
 							const CEntityClass* pAmmoClass = CItems::AddItemClassFor( EEntityTypeAmmo, aAmmos[bSec][i] );
 							pWeapon->aAmmos[bSec].push_back( pAmmoClass );
-							ConfigMessage( "\t\tammo %s (%u bullets)", pWeapon->aAmmos[bSec][i]->sClassName.c_str(),
+							ConfigMessage( "    ammo %s (%u bullets)", pWeapon->aAmmos[bSec][i]->sClassName.c_str(),
 							               pWeapon->aAmmos[bSec][i]->GetArgument(), itemIt->key.c_str() );
 						}
 

@@ -1,4 +1,4 @@
-#include "client.h"
+#include "clients.h"
 #include "item.h"
 #include "server_plugin.h"
 #include "type2string.h"
@@ -635,7 +635,7 @@ void CWaypoints::GetPathColor( TPathFlags iFlags, unsigned char& r, unsigned cha
 	}
 	else if ( FLAG_ALL_SET(FPathTotem, iFlags) )
 	{
-		r = 0x48; g = 0x24; b = 0x00;  // Brown effect, totem.
+		r = 0x96; g = 0x48; b = 0x00;  // Brown effect, totem.
 	}
 	else
 	{

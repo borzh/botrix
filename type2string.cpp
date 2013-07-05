@@ -439,6 +439,39 @@ good::string aBotCommands[EBotChatTotal] =
 	"stand up",
 	"jump",
 	"leave",
+	"dont hurt",
+
+	"ok",
+	"done",
+	"no moves",
+	"think",
+	"explore",
+
+	"weapon found",
+
+	"door found",
+	"door change",
+	"door no change",
+
+	"button see",
+	"button can push",
+	"button cant push",
+
+	"button weapon",
+	"button no weapon",
+
+	"door try",
+	"button try",
+
+	"button i push",
+	"button you push",
+	"button i shoot",
+	"button you shoot",
+	
+	"area go",
+	"door go",
+	"button go",
+	"can't go",
 };
 
 int CTypeToString::BotCommandFromString( const good::string& sCommand )

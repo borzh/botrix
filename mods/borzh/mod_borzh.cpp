@@ -1,60 +1,35 @@
 #include "chat.h"
 #include "event.h"
 #include "mods/borzh/mod_borzh.h"
+#include "players.h"
 #include "source_engine.h"
 #include "waypoint.h"
 
 
 //----------------------------------------------------------------------------------------------------------------
-const good::string Mod_Borzh::m_aChats[CHATS_COUNT] =
+/*const good::string CMod_Borzh::m_aChats[CHATS_COUNT] =
 {
-	"ok",
-	"no moves",
-	"think",
-	"explore",
+};*/
 
-	"error door",
-	"error door_status",
-	"error button",
-	"error weapon",
+TChatVariable CMod_Borzh::iVarDoor;
+TChatVariable CMod_Borzh::iVarDoorStatus;
+TChatVariable CMod_Borzh::iVarButton;
+TChatVariable CMod_Borzh::iVarWeapon;
+TChatVariable CMod_Borzh::iVarArea;
+TChatVariable CMod_Borzh::iVarPlayer;
 
-	"weapon found",
-	"door found",
-	"door change",
+TChatVariableValue CMod_Borzh::iVarValueDoorStatusOpened;
+TChatVariableValue CMod_Borzh::iVarValueDoorStatusClosed;
 
-	"door try",
-	"door stay",
-	"door go",
+TChatVariableValue CMod_Borzh::iVarValueWeaponPhyscannon;
+TChatVariableValue CMod_Borzh::iVarValueWeaponCrossbow;
 
-	"button see",
-	"button can push",
-	"button cant push",
-	"button push",
-
-	"button weapon",
-	"button no weapon",
-	"button shoot",
-
-	"button try",
-	"button stay",
-};
-
-TChatVariable Mod_Borzh::iVarDoor;
-TChatVariable Mod_Borzh::iVarDoorStatus;
-TChatVariable Mod_Borzh::iVarButton;
-TChatVariable Mod_Borzh::iVarWeapon;
-TChatVariable Mod_Borzh::iVarArea;
-
-TChatVariableValue Mod_Borzh::iVarValueDoorStatusOpened;
-TChatVariableValue Mod_Borzh::iVarValueDoorStatusClosed;
-
-TChatVariableValue Mod_Borzh::iVarValueWeaponPhyscannon;
-TChatVariableValue Mod_Borzh::iVarValueWeaponCrossbow;
+good::vector< good::vector<TWaypointId> > CMod_Borzh::m_cAreasWaypoints; // Waypoints for areas.
 
 //----------------------------------------------------------------------------------------------------------------
-Mod_Borzh::Mod_Borzh()
+CMod_Borzh::CMod_Borzh()
 {
-	CMod::AddEvent(new CPlayerActivateEvent());
+	//CMod::AddEvent(new CPlayerActivateEvent()); // No need for this.
 	CMod::AddEvent(new CPlayerTeamEvent());
 	CMod::AddEvent(new CPlayerSpawnEvent());
 
@@ -68,11 +43,12 @@ Mod_Borzh::Mod_Borzh()
 	iVarButton = CChat::AddVariable("$button");
 	iVarWeapon = CChat::AddVariable("$weapon");
 	iVarArea = CChat::AddVariable("$area");
+	iVarPlayer = CChat::AddVariable("$player"); // TODO: move away.
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
-void Mod_Borzh::MapLoaded()
+void CMod_Borzh::MapLoaded()
 {
 	// Add possible chat variable values for doors, buttons and weapons.
 	iVarValueDoorStatusOpened = CChat::AddVariableValue(iVarDoorStatus, "opened");
@@ -86,14 +62,14 @@ void Mod_Borzh::MapLoaded()
 	// Add possible doors values.
 	for ( TEntityIndex i=0; i < CItems::GetItems(EEntityTypeDoor).size(); ++i )
 	{
-		sprintf(szInt, "%d", i);
+		sprintf(szInt, "%d", i+1);
 		CChat::AddVariableValue( iVarDoor, good::string(szInt).duplicate() );
 	}
 
 	// Add possible buttons values.
 	for ( TEntityIndex i=0; i < CItems::GetItems(EEntityTypeButton).size(); ++i )
 	{
-		sprintf(szInt, "%d", i);
+		sprintf(szInt, "%d", i+1);
 		CChat::AddVariableValue( iVarButton, good::string(szInt).duplicate() );
 	}
 
@@ -102,12 +78,22 @@ void Mod_Borzh::MapLoaded()
 	for ( TAreaId i=0; i < cAreas.size(); ++i )
 		CChat::AddVariableValue( iVarButton, cAreas[i].duplicate() );
 
+	// Add empty player names.
+	for ( int i=0; i < CPlayers::Size(); ++i )
+		CChat::AddVariableValue( iVarPlayer, "" );
+
+	// Load waypoints for areas.
+	m_cAreasWaypoints.clear();
+	m_cAreasWaypoints.resize( cAreas.size() );
+	for ( TWaypointId iWaypoint = 0; iWaypoint < CWaypoints::Size(); ++iWaypoint )
+		m_cAreasWaypoints[ CWaypoints::Get(iWaypoint).iAreaId ].push_back( iWaypoint );
+
 	// Generate PDDL problem.
 	GeneratePddl("D:\\Games\\Botrix2007\\src\\!BotrixPlugin\\ff\\problem-generated.pddl");
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void Mod_Borzh::GeneratePddl( const good::string& sProblemPath )
+void CMod_Borzh::GeneratePddl( const good::string& sProblemPath )
 {
 	FILE* f = fopen( sProblemPath.c_str(), "w" );
 

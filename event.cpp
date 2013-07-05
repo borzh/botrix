@@ -1,5 +1,5 @@
 #include "bot.h"
-#include "client.h"
+#include "clients.h"
 #include "event.h"
 #include "server_plugin.h"
 #include "source_engine.h"

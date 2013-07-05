@@ -44,7 +44,7 @@ public: // Methods.
 	virtual const good::string* GetWaypointPathNames() = 0;
 
 	/// Get waypoints path colors.
-	virtual const good::string* GetWaypointPathColors() = 0;
+	virtual const int* GetWaypointPathColors() = 0;
 
 
 	/// Get bot's objective count.

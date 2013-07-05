@@ -65,7 +65,7 @@ protected:
 
 	good::bitset m_aWaypoints;                           // Waypoints, that bot can't use.
 
-	TBotTaskHL2DM m_iCurrentTask;                        // Current task.
+	TBotTaskHL2DM m_cCurrentTask;                        // Current task.
 	TWaypointId m_iTaskDestination;                      // Waypoint for task destination.
 	CPickedItem m_cItemToSearch;                         // Item, we are searching right now. If iType is -1 then iIndex
 	                                                     // is waypoint (found no items, so heading to waypoint of that type).

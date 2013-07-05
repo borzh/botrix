@@ -1,5 +1,5 @@
 #include "bot_hl2dm.h"
-#include "client.h"
+#include "clients.h"
 #include "type2string.h"
 
 
@@ -19,7 +19,7 @@ void CBot_HL2DM::Respawned()
 	m_aWaypoints.clear();
 	m_iFailWaypoint = EInvalidWaypointId;
 	
-	m_iCurrentTask = EBotTaskInvalid;
+	m_cCurrentTask = EBotTaskInvalid;
 	m_bNeedTaskCheck = true;
 	m_bCheckWeapon = CMod::HasMapItems(EEntityTypeWeapon);
 }
@@ -101,7 +101,7 @@ bool CBot_HL2DM::DoWaypointAction()
 {
 	if ( iCurrentWaypoint == m_iTaskDestination )
 	{
-		m_iCurrentTask = EBotTaskInvalid;
+		m_cCurrentTask = EBotTaskInvalid;
 		m_bNeedTaskCheck = true;
 	}
 	return CBot::DoWaypointAction();
@@ -111,7 +111,7 @@ bool CBot_HL2DM::DoWaypointAction()
 void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 {
 	TBotTaskHL2DM iNewTask = EBotTaskInvalid;
-	bool bForce = bForceTaskChange || (m_iCurrentTask == EBotTaskInvalid);
+	bool bForce = bForceTaskChange || (m_cCurrentTask == EBotTaskInvalid);
 
 	const CWeapon* pWeapon = m_aWeapons[m_iBestWeapon].GetBaseWeapon();
 	TBotIntelligence iWeaponPreference = m_iIntelligence;
@@ -238,9 +238,9 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 	DebugAssert( iNewTask != EBotTaskInvalid );
 
 	// Check if need task switch.
-	if ( bForce || (m_iCurrentTask != iNewTask) )
+	if ( bForce || (m_cCurrentTask != iNewTask) )
 	{
-		m_iCurrentTask = iNewTask;
+		m_cCurrentTask = iNewTask;
 
 		if ( pEntityClass ) // Health, armor, weapon, ammo.
 		{
@@ -264,7 +264,7 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 				m_cItemToSearch.iIndex = iItemToSearch;
 			}
 		}
-		else if (m_iCurrentTask == EBotTaskFindEnemy)
+		else if (m_cCurrentTask == EBotTaskFindEnemy)
 		{
 			// Just go to some random waypoint.
 			m_iTaskDestination = -1;
@@ -280,8 +280,8 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 		if ( (m_iTaskDestination == -1) || (m_iTaskDestination == iCurrentWaypoint) )
 		{
 			BotMessage( "%s -> task %s, invalid waypoint %d (current %d), recalculate task.", GetName(), 
-			            CTypeToString::BotTaskToString(m_iCurrentTask).c_str(), m_iTaskDestination, iCurrentWaypoint );
-			m_iCurrentTask = -1;
+			            CTypeToString::BotTaskToString(m_cCurrentTask).c_str(), m_iTaskDestination, iCurrentWaypoint );
+			m_cCurrentTask = -1;
 			m_bNeedTaskCheck = true; // Check new task in next frame.
 			m_bNeedMove = m_bUseNavigatorToMove = m_bDestinationChanged = false;
 
@@ -290,7 +290,7 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 		}
 		else
 		{
-			BotMessage( "%s -> new task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
+			BotMessage( "%s -> new task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_cCurrentTask).c_str(),
 			            pEntityClass ? pEntityClass->sClassName.c_str() : "", m_iTaskDestination, iCurrentWaypoint );
 
 			m_iDestinationWaypoint = m_iTaskDestination;

@@ -23,10 +23,6 @@ class IEffects;
 class IBotManager;
 class ICvar;
 
-class CClient;
-class CMod;
-class CPlayers;
-class CCommandCommandContainer;
 
 //****************************************************************************************************************
 /// Plugin class.

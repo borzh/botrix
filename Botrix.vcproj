@@ -463,6 +463,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\good\circular_buffer.h"
+				>
+			</File>
+			<File
 				RelativePath=".\good\defines.h"
 				>
 			</File>
@@ -543,6 +547,14 @@
 				</File>
 				<File
 					RelativePath=".\mods\borzh\mod_borzh.h"
+					>
+				</File>
+				<File
+					RelativePath=".\mods\borzh\planner.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\mods\borzh\planner.h"
 					>
 				</File>
 				<File

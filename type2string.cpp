@@ -48,7 +48,7 @@ const good::string& FlagsToString( int iFlags, int iFlagsCount, const good::stri
 int FlagsFromString( const good::string& s, int iFlagsCount, const good::string aStrings[] )
 {
 	int iResult = 0;
-	StringVector aFlags = s.split<good::vector>(' ', true);
+	StringVector aFlags( s.split<good::vector>(' ', true) );
 
 	for ( int i=0; i < (int)aFlags.size(); ++i )
 	{
@@ -443,9 +443,14 @@ good::string aBotCommands[EBotChatTotal] =
 
 	"ok",
 	"done",
+	"wait",
 	"no moves",
 	"think",
 	"explore",
+	"finish explore",
+
+	"new area",
+	"change area",
 
 	"weapon found",
 
@@ -469,9 +474,11 @@ good::string aBotCommands[EBotChatTotal] =
 	"button you shoot",
 	
 	"area go",
+	"area cant go",
 	"door go",
 	"button go",
-	"can't go",
+
+	"found plan",
 };
 
 int CTypeToString::BotCommandFromString( const good::string& sCommand )

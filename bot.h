@@ -153,12 +153,8 @@ protected: // Methods.
 	static const int SIZE_ACTIONS = 32; // Size of circular buffer of actions.
 
 
-	/// Say current
-	void Speak( bool bTeamSay )
-	{
-		const good::string& sText = CChat::ChatToText(m_cChat);
-		ConsoleCommand( "%s %s", bTeamSay? "say_team" : "say", sText.c_str() );
-	}
+	/// Say current chat.
+	void Speak( bool bTeamSay );
 
 	// Return true if entity is inside bot's view cone.
 	bool IsVisible( CPlayer* pPlayer ) const;

@@ -39,6 +39,9 @@ namespace good
 		{
 		public:
 			friend class good::vector<T, Alloc>;
+			
+			typedef T* pointer;
+			typedef T& reference;
 
 			// Constructor by value.
 			const_iterator( T* n = NULL ): m_pCurrent(n) {}
@@ -87,10 +90,10 @@ namespace good
 			/// Dereference.
 			const T& operator[] (int iOffset) const { DebugAssert(m_pCurrent); return m_pCurrent[iOffset]; }
 			/// Element selection through pointer.
-			const T* operator->() const { DebugAssert(m_pCurrent); return m_pCurrent; }
+			const pointer operator->() const { DebugAssert(m_pCurrent); return m_pCurrent; }
 			
 		protected:
-			T* m_pCurrent;
+			pointer m_pCurrent;
 		};
 
 
@@ -103,7 +106,7 @@ namespace good
 			typedef const_iterator base_class;
 
 			// Constructor by value.
-			iterator( T* n = NULL ): base_class(n) {}
+			iterator( pointer n = NULL ): base_class(n) {}
 			// Copy constructor.
 			iterator( iterator const& itOther ): base_class(itOther) {}
 
@@ -131,37 +134,16 @@ namespace good
 			iterator operator-- (int) { DebugAssert(m_pCurrent); iterator tmp(*this); m_pCurrent--; return tmp; }
 
 			/// Dereference.
-			T& operator*() const { DebugAssert(m_pCurrent); return *m_pCurrent; }
+			reference operator*() const { DebugAssert(m_pCurrent); return *m_pCurrent; }
 			/// Dereference.
-			T& operator[] (int iOffset) const { DebugAssert(m_pCurrent); return m_pCurrent[iOffset]; }
+			reference operator[] (int iOffset) const { DebugAssert(m_pCurrent); return m_pCurrent[iOffset]; }
 			/// Element selection through pointer.
-			T* operator->() const { DebugAssert(m_pCurrent); return m_pCurrent; }
+			pointer operator->() const { DebugAssert(m_pCurrent); return m_pCurrent; }
 		};
 
 
-		//========================================================================================================
-		/// Iterator of vector.
-		//========================================================================================================
-		class reverse_iterator: public iterator
-		{
-		public:
-			typedef iterator base_class;
-
-			// Constructor by value.
-			reverse_iterator( T* n = NULL ): base_class(n) {}
-			// Copy constructor.
-			reverse_iterator( iterator const& itOther ): base_class(itOther) {}
-
-			/// Pre-increment.
-			reverse_iterator& operator++() { DebugAssert(m_pCurrent); m_pCurrent--; return *this; }
-			/// Pre-decrement.
-			reverse_iterator& operator--() { DebugAssert(m_pCurrent); m_pCurrent++; return *this; }
-
-			/// Post-increment.
-			reverse_iterator operator++ (int) { DebugAssert(m_pCurrent); iterator tmp(*this); m_pCurrent--; return tmp; }
-			/// Post-decrement.
-			reverse_iterator operator-- (int) { DebugAssert(m_pCurrent); iterator tmp(*this); m_pCurrent++; return tmp; }
-		};
+		typedef reverse_iterator<const_iterator> const_reverse_iterator; ///< Reverse const iterator of a vector.
+		typedef reverse_iterator<iterator> reverse_iterator;             ///< Reverse iterator of a vector.
 
 
 		//--------------------------------------------------------------------------------------------------------
@@ -221,7 +203,7 @@ namespace good
 		const T* data() const { return m_pBuffer; }
 
 		//--------------------------------------------------------------------------------------------------------
-		/// Return underlaying const array.
+		/// Return underlaying array.
 		//--------------------------------------------------------------------------------------------------------
 		T* data() { return m_pBuffer; }
 
@@ -236,14 +218,14 @@ namespace good
 		const_iterator end() const { return const_iterator(m_pBuffer + m_iSize); }
 
 		//--------------------------------------------------------------------------------------------------------
-		/// Return const iterator to the last element. Notice that this is a random access iterator.
+		/// Return reverse const iterator to the last element. Notice that this is a random access iterator.
 		//--------------------------------------------------------------------------------------------------------
-		const_iterator rbegin() const { return const_iterator(m_pBuffer + m_iSize - 1); }
+		const_reverse_iterator rbegin() const { return const_reverse_iterator( end() ); }
 
 		//--------------------------------------------------------------------------------------------------------
-		/// Return const iterator to the element before first one. Notice that this is a random access iterator.
+		/// Return reverse const iterator to the first element. Notice that this is a random access iterator.
 		//--------------------------------------------------------------------------------------------------------
-		const_iterator rend() const { return const_iterator(m_pBuffer - 1); }
+		const_reverse_iterator rend() const { return const_reverse_iterator( begin() ); }
 
 		
 		//--------------------------------------------------------------------------------------------------------
@@ -259,12 +241,12 @@ namespace good
 		//--------------------------------------------------------------------------------------------------------
 		/// Return iterator to the last element. Notice that this is a random access iterator.
 		//--------------------------------------------------------------------------------------------------------
-		reverse_iterator rbegin() { return iterator(m_pBuffer + m_iSize - 1); }
+		reverse_iterator rbegin() { return reverse_iterator( end() ); }
 
 		//--------------------------------------------------------------------------------------------------------
 		/// Return iterator to the element before first one. Notice that this is a random access iterator.
 		//--------------------------------------------------------------------------------------------------------
-		reverse_iterator rend() { return iterator(m_pBuffer - 1); }
+		reverse_iterator rend() { return reverse_iterator( begin() ); }
 
 
 		//--------------------------------------------------------------------------------------------------------
@@ -288,7 +270,6 @@ namespace good
 		void assign( const vector& aOther )
 		{
 			clear();
-			
 			good::swap(m_pBuffer, ((vector&)aOther).m_pBuffer);
 			good::swap(m_iCapacity, ((vector&)aOther).m_iCapacity);
 			good::swap(m_iSize, ((vector&)aOther).m_iSize);
@@ -408,7 +389,7 @@ namespace good
 		//--------------------------------------------------------------------------------------------------------
 		void clear()
 		{
-			for( int i = 0; i < m_iSize; ++ i )
+			for ( int i=0; i<m_iSize; ++i )
 				m_cAlloc.destroy(&m_pBuffer[i]);
 			m_iSize = 0;
 		}

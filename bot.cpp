@@ -87,6 +87,8 @@ void CBot::Activated()
 	
 	m_iPrevChatMate = m_iPrevTalk = -1;
 	m_bTalkStarted = false;
+
+	m_cChat.iSpeaker = m_iIndex;
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -219,7 +221,7 @@ void CBot::ReceiveChatRequest( const CBotChat& cRequest )
 	if (iChatMate == -1)
 		iChatMate = cRequest.iSpeaker;
 
-	CBotChat cResponse(EBotChatUnknown, m_iIndex, cRequest.iSpeaker);
+	CBotChat cResponse(EBotChatUnknown, m_iIndex, cRequest.iSpeaker); // TODO: m_cChat.
 	if ( iChatMate == cRequest.iSpeaker )
 	{
 		// If conversation is not started, decide whether to help teammate or not (random).
@@ -705,6 +707,19 @@ void CBot::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex
 //================================================================================================================
 // CBot protected methods.
 //================================================================================================================
+void CBot::Speak( bool bTeamSay )
+{
+	TPlayerIndex iPlayerIndex = m_cChat.iDirectedTo;
+	if ( iPlayerIndex == EPlayerIndexInvalid )
+		iPlayerIndex = m_iPrevChatMate;
+	if ( iPlayerIndex != EPlayerIndexInvalid )
+		m_cChat.cMap.push_back( CChatVarValue(CChat::iPlayerVar, 0, iPlayerIndex) );
+	const good::string& sText = CChat::ChatToText(m_cChat);
+	ConsoleCommand( "%s %s", bTeamSay? "say_team" : "say", sText.c_str() );
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
 bool CBot::IsVisible( CPlayer* pPlayer ) const
 {
 	// First check if other player is in bot's view cone.

@@ -163,6 +163,45 @@ namespace good
 
 
 	//************************************************************************************************************
+	/// Template to create reverse iterator from simple iterator.
+	//************************************************************************************************************
+	template < typename Iterator >
+	class reverse_iterator: public Iterator
+	{
+	public:
+		typedef Iterator base_class;
+		typedef typename base_class::reference reference;
+		typedef typename base_class::pointer pointer;
+
+		// Default constructor.
+		reverse_iterator(): base_class(NULL) {}
+
+		// Copy constructor.
+		reverse_iterator( const base_class& itOther ): m_cCurrent(itOther) {}
+
+		/// Pre-increment.
+		reverse_iterator& operator++() { m_cCurrent--; return *this; }
+		/// Pre-decrement.
+		reverse_iterator& operator--() { m_cCurrent++; return *this; }
+
+		/// Post-increment.
+		reverse_iterator operator++ (int) { reverse_iterator tmp(*this); m_cCurrent--; return tmp; }
+		/// Post-decrement.
+		reverse_iterator operator-- (int) { reverse_iterator tmp(*this); m_cCurrent++; return tmp; }
+
+		/// Dereference.
+		reference operator*() const { return *(m_cCurrent-1); }
+		/// Dereference.
+		reference operator[] (int iOffset) const { return m_cCurrent[iOffset-1]; }
+		/// Element selection through pointer.
+		pointer operator->() const { return (m_cCurrent-1)->(); }
+		
+	protected:
+		Iterator m_cCurrent;
+	};
+
+
+	//************************************************************************************************************
 	/// Class that holds pointer that is erased at destructor.
 	//************************************************************************************************************
 	template < typename T >

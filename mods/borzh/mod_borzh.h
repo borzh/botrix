@@ -57,7 +57,20 @@ public: // Methods.
 public: // Static methods.
 
 	/// Get waypoints that are in given area.
-	static const good::vector<TWaypointId>& GetWaypointsForArea( TAreaId iArea ) { return m_cAreasWaypoints[iArea]; }
+	static const good::vector<TWaypointId>& GetWaypointsForArea( TAreaId iArea ) { return m_aAreasWaypoints[iArea]; }
+
+	/// Get doors that are in given area.
+	static const good::vector<TEntityIndex>& GetDoorsForArea( TAreaId iArea ) { return m_aAreasDoors[iArea]; }
+
+	/// Get buttons that are in given area.
+	static const good::vector<TEntityIndex>& GetButtonsForArea( TAreaId iArea ) { return m_aAreasButtons[iArea]; }
+
+	/// Get waypoint to shoot button.
+	static TWaypointId GetWaypointToShootButton( TEntityIndex iButton )
+	{
+		const good::vector<TWaypointId>& aWaypoints = m_aShootButtonWaypoints[iButton];
+		return aWaypoints.at( rand() % aWaypoints.size() );
+	}
 
 
 public: // Members.
@@ -75,12 +88,13 @@ public: // Members.
 	static TChatVariableValue iVarValueWeaponCrossbow;
 
 protected:
-	static void GeneratePddl( const good::string& sProblemPath );
-
 	static const int CHATS_COUNT = 23;
 	//static const good::string m_aChats[CHATS_COUNT];
 
-	static good::vector< good::vector<TWaypointId> > m_cAreasWaypoints; // Waypoints for areas.
+	static good::vector< good::vector<TWaypointId> > m_aAreasWaypoints;       // Waypoints for areas.
+	static good::vector< good::vector<TEntityIndex> > m_aAreasDoors;          // Doors for areas.
+	static good::vector< good::vector<TEntityIndex> > m_aAreasButtons;        // Buttons for areas.
+	static good::vector< good::vector<TWaypointId> > m_aShootButtonWaypoints; // Waypoints to shoot buttons.
 
 };
 

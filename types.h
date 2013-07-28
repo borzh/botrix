@@ -14,6 +14,13 @@
 #include "good/utility.h"
 
 
+enum TPlayerIndexInvalid
+{
+	EPlayerIndexInvalid = -1                     ///< Invalid player index.
+};
+typedef int TPlayerIndex;                        ///< Index of player in array of players.
+
+
 //****************************************************************************************************************
 /// Supported Source Mods.
 //****************************************************************************************************************
@@ -98,9 +105,15 @@ enum TBotChats
 
 	EBorzhChatOk,                                ///< Ok.
 	EBorzhChatDone,                              ///< Done, finished task.
+	EBorzhChatWait,                              ///< Please wait until I finish.
 	EBorzhChatNoMoves,                           ///< No more moves.
 	EBorzhChatThink,                             ///< Bot will think (use FF).
 	EBorzhChatExplore,                           ///< Explore new area.
+	EBorzhChatFinishExplore,                     ///< Bot ends exploring this area.
+
+	EBorzhChatNewArea,                           ///< Bot enters new area.
+	EBorzhChatChangeArea,                        ///< Bot changes area.
+
 	EBorzhChatWeaponFound,                       ///< Bot founds a weapon.
 
 	EBorzhChatDoorFound,                         ///< Bot founds a new door.
@@ -123,9 +136,11 @@ enum TBotChats
 	EBorzhChatButtonYouShoot,                    ///< Bot orders to shoot button to other bot.
 
 	EBorzhChatAreaGo,                            ///< Bot orders to go to some area to other bot.
+	EBorzhChatAreaCantGo,                        ///< Bot founds closed door when it tries to pass to given area.
 	EBorzhChatDoorGo,                            ///< Bot orders to go to some door to other bot.
 	EBorzhChatButtonGo,                          ///< Bot orders to go to some button to other bot.
-	EBorzhChatCantGo,                            ///< Bot can't reach given area.
+
+	EBorzhChatFoundPlan,                         ///< Bot founds a plan to reach goal.
 
 	EBotChatTotal                                ///< Amount of bot sentences.
 };
@@ -279,6 +294,7 @@ typedef enum TEventType TEventType;
 //****************************************************************************************************************
 enum TEntityTypes
 {
+	EEntityTypeInvalid = -1,                     ///< Invalid entity type.
 	EEntityTypeHealth = 0,                       ///< Item that restores players health. Can be health machine also.
 	EEntityTypeArmor,                            ///< Item that restores players armor. Can be armor machine also.
 	EEntityTypeWeapon,                           ///< Weapon.
@@ -293,14 +309,23 @@ enum TEntityTypes
 };
 typedef int TEntityType;                         ///<  Items types / object / other entities.
 
+enum TEntityClassIndexInvalid
+{
+	EEntityClassIndexInvalid = -1                ///< Invalid entity class index.
+};
+typedef int TEntityClassIndex;                   ///< Index of entity class in CItems::GetClass().
+
+enum TEntityIndexInvalid
+{
+	EEntityIndexInvalid = -1                     ///< Invalid entity index.
+};
+typedef int TEntityIndex;                        ///< Index of entity in CItems::GetItems().
+
 enum TEntityTypeFlag
 {
 	EItemTypeAll = (1<<(EOtherEntityType+1))-1   ///< Flag to draw all items.
 };
 typedef int TEntityTypeFlags;                    ///< Item type flags (used to define which items to draw).
-
-typedef int TEntityClassIndex;                   ///< Index of entity class in CItems::GetClass().
-typedef int TEntityIndex;                        ///< Index of entity in CItems::GetItems().
 
 
 //****************************************************************************************************************

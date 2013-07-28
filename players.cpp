@@ -414,31 +414,29 @@ void CPlayers::DeliverChat( edict_t* pFrom, bool bTeamOnly, const char* szText )
 		else
 			pSpeaker->iChatMate = cChat.iDirectedTo; // TODO: SetChatMate();
 
+		int iFrom = 0, iTo = CPlayers::Size();
+
 		if ( bIsRequest && (cChat.iDirectedTo != -1) )
 		{
-			CPlayer* pReceiver = CPlayers::Get(cChat.iDirectedTo);
-			if ( pReceiver && pReceiver->IsBot() ) // Deliver chat only for bots.
-			{
-				// Should be on same iTeam if chat is for iTeam only.
-				if ( !bTeamOnly || ( pReceiver->GetTeam() == iTeam ) )
-				{
-					DebugAssert(pSpeaker != pReceiver);
-					CBot* pBot = (CBot*)pReceiver;
-					if ( bIsRequest ) 
-						pBot->ReceiveChatRequest(cChat);
-				}
-			}
+			DebugAssert( cChat.iDirectedTo != iIdx );
+			iFrom = cChat.iDirectedTo;
+			iTo = iFrom + 1;
 		}
 		else
-		{
 			DebugMessage("Can't detect player, chat is directed to.");
-			for ( TPlayerIndex iPlayer=0; iPlayer < CPlayers::Size(); ++iPlayer )
+
+		// Deliver chat for all bots or one bot in particular.
+		for ( TPlayerIndex iPlayer = iFrom; iPlayer < iTo; ++iPlayer )
+		{
+			CPlayer* pReceiver = CPlayers::Get(iPlayer);
+			if ( pReceiver && pReceiver->IsBot() && (iIdx != iPlayer) )
 			{
-				CPlayer* pReceiver = CPlayers::Get(iPlayer);
-				if ( (iIdx != iPlayer) && pReceiver && pReceiver->IsBot() )
+				CBot* pBot = (CBot*)pReceiver;
+				if ( !bTeamOnly || (pBot->GetTeam() == iTeam) ) // Should be on same iTeam if chat is for iTeam only.
 				{
-					CBot* pBot = (CBot*)pReceiver;
-					if ( !bTeamOnly || (pBot->GetTeam() == iTeam) ) // Should be on same iTeam if chat is for iTeam only.
+					if ( bIsRequest )
+						pBot->ReceiveChatRequest(cChat);
+					else
 						pBot->ReceiveChat( iIdx, pSpeaker, bTeamOnly, szText );
 				}
 			}

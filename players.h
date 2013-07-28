@@ -16,8 +16,6 @@
 
 class CClient; // Forward declaration.
 
-typedef int TPlayerIndex; ///< Index of player in array of players.
-
 
 //****************************************************************************************************************
 /// Abstract class that defines a player.

@@ -11,14 +11,27 @@
 enum TBorzhTasks
 {
 	EBorzhTaskInvalid = -1,                      ///< Bot has no tasks.
-	EBorzhTaskWait,                              ///< Wait for timer to expire. Used during/after talk. Argument is time to wait.
+
+	// Next tasks are atomic.
+	EBorzhTaskWait,                              ///< Wait for timer to expire. Used during/after talk. Argument is time to wait in msecs.
 	EBorzhTaskLook,                              ///< Look at door/button/box.
-	EBorzhTaskMove,                              ///< Move to given area.
+	EBorzhTaskMove,                              ///< Move to given waypoint.
+	EBorzhTaskMoveAndCarry,                      ///< Move to given waypoint carrying a box.
 	EBorzhTaskSpeak,                             ///< Speak about something. Argument represents door/button/box/weapon, etc.
 
-	EBorzhTaskExplore,                           ///< Exploring unknown area. Argument is area number.
-
+	EBorzhTaskWaitAnswer,                        ///< Wait for other bot to answer.
 	EBorzhTaskWaitBot,                           ///< Wait for other bot to do something. The bot will say "done" phrase when it finishes.
+	EBorzhTaskUseWeapon,                         ///< Use weapon on box/button.
+	EBorzhTaskPushButton,                        ///< Push a button.
+	EBorzhTaskShootButton,                       ///< Shoot a button.
+
+	// Next tasks are tasks that consist of atomic tasks.
+	EBorzhTaskExplore,                           ///< Exploring current area.
+	EBorzhTaskCheckButton,                       ///< Check which doors opens a button. Argument is button.
+
+	EBorzhTaskHelping,                           ///< Helping another player. Argument is player index.
+
+	EBorzhTaskCheckDoors,                        ///< Checking doors. Argument is last pushed button.
 
 	EBorzhTaskCarryBox,                          ///< Start carrying box. Argument is box number.
 	EBorzhTaskDropBox,                           ///< Drop box at needed position in an area. Arguments are box number and area number.
@@ -27,13 +40,9 @@ enum TBorzhTasks
 	EBorzhTaskDoor,                              ///< Try to figure out which button opens a door. Argument is door number.
 	EBorzhTaskButton,                            ///< Try to figure out which door opens a button. Argument is button number.
 
-	EBorzhTaskPushButton,                        ///< Pushing button.
-
 	EBorzhTaskStayButton,                        ///< Check which doors opens this button. Argument is button.
-	EBorzhTaskCheckDoors,                        ///< Check which doors opens this button. Argument is door.
 
 	EBorzhTaskStayDoor,                          ///< Check which button opens this door. Argument is door.
-	EBorzhTaskCheckButtons,                      ///< Check which button opens this door. Argument is door.
 };
 typedef int TBorzhTask;                          ///< Bot task.
 

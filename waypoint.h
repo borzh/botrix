@@ -255,7 +255,7 @@ public: // Methods.
 	/// Get area id from name.
 	static TAreaId GetAreaId( const good::string& sName )
 	{
-		StringVector::const_iterator it = good::find(m_cAreas.begin(), m_cAreas.end(), sName);
+		StringVector::const_iterator it( good::find(m_cAreas.begin(), m_cAreas.end(), sName) );
 		return ( it == m_cAreas.end() )  ?  EInvalidAreaId  :  ( it - m_cAreas.begin() );
 	}
 

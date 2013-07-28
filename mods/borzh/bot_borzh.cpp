@@ -20,10 +20,6 @@
 
 
 //----------------------------------------------------------------------------------------------------------------
-bool CBot_BorzhMod::m_bUsingPlanner = false; // Set if some of the bots is using planner.
-
-
-//----------------------------------------------------------------------------------------------------------------
 CBot_BorzhMod::CBot_BorzhMod( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence iIntelligence ):
 	CBot(pEdict, iIndex, iIntelligence), m_bHasCrossbow(false), m_bHasPhyscannon(false), m_bStarted(false)
 {
@@ -41,7 +37,7 @@ void CBot_BorzhMod::Activated()
 	m_cSeenButtons.resize( CItems::GetItems(EEntityTypeButton).size() );
 
 	m_cOpenedDoors.resize( m_cSeenDoors.size() );
-	m_cDoorToggle.resize(m_cSeenButtons.size()  );
+	m_cDoorToggle.resize( m_cSeenButtons.size()  );
 	m_cDoorNoAffect.resize( m_cSeenButtons.size() );
 	for ( int i=0; i < m_cDoorToggle.size(); ++i )
 	{
@@ -50,8 +46,12 @@ void CBot_BorzhMod::Activated()
 	}
 
 	m_aVisitedWaypoints.resize( CWaypoints::Size() );
-	m_aVisitedAreas.resize( CWaypoints::GetAreas().size() );
-	m_aCheckedAreas.resize( CWaypoints::GetAreas().size() );
+
+	const StringVector& aAreas = CWaypoints::GetAreas();
+	m_aVisitedAreas.resize( aAreas.size() );
+	m_cReachableAreas.resize( aAreas.size() );
+
+	m_cWaitingPlayers.resize( CPlayers::Size() );
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -59,17 +59,39 @@ void CBot_BorzhMod::Respawned()
 {
 	CBot::Respawned();
 
-	m_bDontAttack = true;
+	m_bDontAttack = m_bDomainChanged = true;
+	m_cCurrentTask.iTask = EBorzhTaskInvalid;
 
 	if ( iCurrentWaypoint != -1 )
 		m_aVisitedWaypoints.set(iCurrentWaypoint);
+	m_iCurrentArea = CWaypoints::Get(iCurrentWaypoint).iAreaId;
 
-	m_bNewTask = true;
-	m_cCurrentTask.iTask = EBorzhTaskExplore;
+	SetReachableAreas(m_iCurrentArea, m_cSeenDoors, m_cOpenedDoors, m_cReachableAreas);
+
+	if ( !m_aVisitedAreas.test(m_iCurrentArea) )
+	{
+		// Explore new area after speak about it.
+		m_cCurrentTask.iTask = EBorzhTaskExplore;
+		m_cCurrentTask.iArgument = m_iCurrentArea;
+		PushSpeakTask(EBorzhChatExplore, EEntityTypeInvalid, m_iCurrentArea);
+
+		// Speak about new area after saying hello.
+		PushSpeakTask(EBorzhChatNewArea, EEntityTypeInvalid, m_iCurrentArea);
+	}
+	else
+		PushSpeakTask(EBorzhChatChangeArea, EEntityTypeInvalid, m_iCurrentArea);
 
 	if ( m_bFirstRespawn )
 	{
 		// Say hello to some other player.
+		for ( TPlayerIndex iPlayer = 0; iPlayer < CPlayers::Size(); ++iPlayer )
+		{
+			CPlayer* pPlayer = CPlayers::Get(iPlayer);
+			if ( pPlayer && (m_iIndex != iPlayer) )
+			{
+				PushSpeakTask(EBotChatGreeting, EEntityTypeInvalid, iPlayer);
+			}
+		}
 	}
 }
 
@@ -122,8 +144,12 @@ void CBot_BorzhMod::Think()
 		return;
 	}
 
-	if ( !m_bStarted )
+	if ( !m_bStarted || (m_bNothingToDo && !m_bDomainChanged) )
 		return;
+
+	// Check if there are some new tasks.
+	if ( m_cCurrentTask.iTask == EBorzhTaskInvalid )
+		CheckForNewTasks();
 
 	if ( m_bNewTask )
 		InitNewTask();
@@ -134,17 +160,17 @@ void CBot_BorzhMod::Think()
 		switch (m_cCurrentTask.iTask)
 		{
 		case EBorzhTaskWait:
-			if ( CBotrixPlugin::fTime >= m_fEndWaitTime )
+			if ( CBotrixPlugin::fTime >= m_fEndWaitTime ) // Bot finished waiting.
 				m_bTaskFinished = true;
 			break;
 
 		case EBorzhTaskLook:
-			if ( !m_bNeedAim )
+			if ( !m_bNeedAim ) // Bot finished aiming.
 				m_bTaskFinished = true;
 			break;
 
 		case EBorzhTaskMove:
-			if ( !m_bNeedMove )
+			if ( !m_bNeedMove ) // Bot finished moving.
 				m_bTaskFinished = true;
 			break;
 
@@ -167,13 +193,11 @@ void CBot_BorzhMod::CurrentWaypointJustChanged()
 	CBot::CurrentWaypointJustChanged();
 	
 	m_aVisitedWaypoints.set(iCurrentWaypoint);
-	bool bNearDoor = false;
 
-	// Get waypoint node.
+	bool bDomainChanged = false;
+
+	// Check neighbours of a new waypoint.
 	const CWaypoints::WaypointNode& cNode = CWaypoints::GetNode(iCurrentWaypoint);
-	m_iCurrentArea = cNode.vertex.iAreaId;
-
-	// Check new waypoint neighbours.
 	const CWaypoints::WaypointNode::arcs_t& cNeighbours = cNode.neighbours;
 	for ( int i=0; i < cNeighbours.size(); ++i)
 	{
@@ -184,16 +208,31 @@ void CBot_BorzhMod::CurrentWaypointJustChanged()
 			const CWaypointPath& cPath = cArc.edge;
 			if ( FLAG_SOME_SET(FPathDoor, cPath.iFlags) ) // Waypoint path is passing through a door.
 			{
-				bNearDoor = true;
-
 				TEntityIndex iDoor = cPath.iArgument;
 				if ( iDoor > 0 )
 				{
 					--iDoor;
+
 					bool bOpened = CItems::IsDoorOpened(iDoor);
 					TChatVariableValue iDoorStatus = bOpened ? CMod_Borzh::iVarValueDoorStatusOpened : CMod_Borzh::iVarValueDoorStatusClosed;
 
-					if ( !m_cSeenDoors.test(iDoor) ) // Bot sees door for the first time.
+					if ( m_cCurrentBigTask.iTask == EBorzhTaskCheckButton )
+					{
+						DebugAssert( m_cSeenDoors.test(iDoor) ); // Bot should at least see this door.
+						m_cCheckedDoors.set(iDoor);
+						PushSpeakTask(EBorzhChatDoorChange, EEntityTypeDoor, iDoor, iDoorStatus);
+					}
+
+					if ( !bOpened && (iWaypoint == m_iAfterNextWaypoint) && m_bNeedMove && m_bUseNavigatorToMove )
+					{
+						// Bot needs to pass through the door, but door is closed.
+						DebugAssert( m_cCurrentTask.iTask == EBorzhTaskMove );
+						TAreaId iArea = CWaypoints::Get( m_iDestinationWaypoint ).iAreaId;
+						CancelTask(); // Cancel last task, like investigate area.
+						PushSpeakTask(EBorzhChatDoorChange, EEntityTypeDoor, iDoor, iDoorStatus);
+						PushSpeakTask(EBorzhChatAreaCantGo, EEntityTypeInvalid, iArea);
+					}
+					else if ( !m_cSeenDoors.test(iDoor) ) // Bot sees door for the first time.
 					{
 						m_cSeenDoors.set(iDoor);
 						m_cOpenedDoors.set(iDoor, bOpened);
@@ -224,6 +263,19 @@ void CBot_BorzhMod::CurrentWaypointJustChanged()
 		else
 			CUtil::Message(NULL, "Error, waypoint %d has invalid button index.", iCurrentWaypoint);
 	}
+
+	// Check if bot enters new area.
+	if ( cNode.vertex.iAreaId != m_iCurrentArea )
+	{
+		m_iCurrentArea = cNode.vertex.iAreaId;
+		if ( m_aVisitedAreas.test(m_iCurrentArea) )
+			PushSpeakTask(EBorzhChatNewArea, EEntityTypeInvalid, m_iCurrentArea);
+		else
+			PushSpeakTask(EBorzhChatChangeArea, EEntityTypeInvalid, m_iCurrentArea);
+	}
+
+	if ( bDomainChanged )
+		SetReachableAreas(m_iCurrentArea, m_cSeenDoors, m_cOpenedDoors, m_cReachableAreas);
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -270,14 +322,177 @@ void CBot_BorzhMod::DoPathAction()
 void CBot_BorzhMod::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex iIndex )
 {
 	CBot::PickItem( cItem, iEntityType, iIndex );
-	//switch( iEntityType )
-	ConsoleCommand("say Hey, I just found %s %s.", CTypeToString::EntityTypeToString(iEntityType).c_str(), cItem.pItemClass->sClassName.c_str());
+	switch( iEntityType )
+	{
+	case EEntityTypeWeapon:
+		TEntityIndex iIdx;
+		if ( cItem.pItemClass->sClassName == "weapon_crossbow" ) 
+			iIdx = CMod_Borzh::iVarValueWeaponCrossbow;
+		else if ( cItem.pItemClass->sClassName == "weapon_physcannon" ) 
+			iIdx = CMod_Borzh::iVarValueWeaponPhyscannon;
+		else
+			break;
+		PushSpeakTask(EBorzhChatWeaponFound, EEntityTypeInvalid, iIdx);
+		break;
+	}
+}
+
+//----------------------------------------------------------------------------------------------------------------
+void CBot_BorzhMod::SetReachableAreas( int iCurrentArea, const good::bitset& cSeenDoors, const good::bitset& cOpenedDoors, good::bitset& cReachableAreas )
+{
+	cReachableAreas.clear();
+
+	good::vector<TAreaId> cToVisit( CWaypoints::GetAreas().size() );
+	cToVisit.push_back( iCurrentArea );
+
+	const good::vector<CEntity>& cDoorEntities = CItems::GetItems(EEntityTypeDoor);
+	while ( !cToVisit.empty() )
+	{
+		int iArea = cToVisit.back();
+		cToVisit.pop_back();
+
+		cReachableAreas.set(iArea);
+
+		const good::vector<TEntityIndex>& cDoors = CMod_Borzh::GetDoorsForArea(iArea);
+		for ( TEntityIndex i = 0; i < cDoors.size(); ++i )
+		{
+			const CEntity& cDoor = cDoorEntities[ cDoors[i] ];
+			if ( cSeenDoors.test( cDoors[i] ) && cOpenedDoors.test( cDoors[i] ) ) // Seen and opened door.
+			{
+				TWaypointId iWaypoint1 = cDoor.iWaypoint;
+				TWaypointId iWaypoint2 = (TWaypointId)cDoor.pArguments;
+				if ( CWaypoints::IsValid(iWaypoint1) && CWaypoints::IsValid(iWaypoint2) )
+				{
+					TAreaId iArea1 = CWaypoints::Get(iWaypoint1).iAreaId;
+					TAreaId iArea2 = CWaypoints::Get(iWaypoint2).iAreaId;
+					TAreaId iNewArea = ( iArea1 == iArea ) ? iArea2 : iArea1;
+					if ( !cReachableAreas.test(iNewArea) )
+						cToVisit.push_back(iArea2);
+				}
+			}
+		}
+	}
+}
+
+//----------------------------------------------------------------------------------------------------------------
+bool CBot_BorzhMod::IsButtonReachable( TEntityIndex iButton, const good::bitset& cReachableAreas )
+{
+	const good::vector<CEntity>& cButtonEntities = CItems::GetItems(EEntityTypeButton);
+	const CEntity& cButton = cButtonEntities[ iButton ];
+
+	if ( CWaypoints::IsValid(cButton.iWaypoint) )
+		return cReachableAreas.test( CWaypoints::Get(cButton.iWaypoint).iAreaId );
+	return false;
+}
+
+//----------------------------------------------------------------------------------------------------------------
+bool CBot_BorzhMod::IsDoorReachable( TEntityIndex iDoor, const good::bitset& cReachableAreas )
+{
+	const good::vector<CEntity>& cDoorEntities = CItems::GetItems(EEntityTypeDoor);
+	const CEntity& cDoor = cDoorEntities[ iDoor ];
+
+	TWaypointId iWaypoint1 = cDoor.iWaypoint;
+	TWaypointId iWaypoint2 = (TWaypointId)cDoor.pArguments;
+	if ( CWaypoints::IsValid(iWaypoint1) && CWaypoints::IsValid(iWaypoint2) )
+	{
+		TAreaId iArea1 = CWaypoints::Get(iWaypoint1).iAreaId;
+		TAreaId iArea2 = CWaypoints::Get(iWaypoint2).iAreaId;
+		return cReachableAreas.test(iArea1) || cReachableAreas.test(iArea2);
+	}
+	return false;
+}
+
+//----------------------------------------------------------------------------------------------------------------
+void CBot_BorzhMod::CheckForNewTasks()
+{
+	DebugAssert( m_cCurrentTask.iTask == EBorzhTaskInvalid );
+
+	// Check if there is some player waiting for this bot. TODO:
+	/*if ( m_cWaitingPlayers.any() )
+	{
+		for ( TPlayerIndex iPlayer = 0; iPlayer < m_cWaitingPlayers.size(); ++iPlayer )
+			if ( m_cWaitingPlayers.test(iPlayer) )
+			{
+				m_cCurrentBigTask.iTask = EBorzhTaskHelping;
+				m_cCurrentBigTask.iArgument = iPlayer;
+
+				// Wait for answer to the question.
+				m_cCurrentTask.iTask = EBorzhTaskWaitAnswer;
+				m_cCurrentTask.iArgument = 0;
+				//SET_TYPE(, m_cCurrentTask.iArgument);
+				//SET_INDEX(iPlayer, m_cCurrentTask.iArgument);
+				return;
+			}
+	}*/
+
+	// TODO: Check if all bots can pass to goal area.
+
+	// Check if there is some area to investigate.
+	const StringVector& aAreas = CWaypoints::GetAreas();
+	for ( TAreaId iArea = 0; iArea < aAreas.size(); ++iArea )
+	{
+		if ( !m_aVisitedAreas.test(iArea) && m_cReachableAreas.test(iArea) )
+		{
+			m_cCurrentBigTask.iTask = m_cCurrentTask.iTask = EBorzhTaskExplore;
+			m_cCurrentBigTask.iArgument = m_cCurrentTask.iArgument = iArea;
+			m_bNewTask = true;
+			return;
+		}
+	}
+
+	// Check if there are new button to push.
+	const good::vector<CEntity>& aButtons = CItems::GetItems(EEntityTypeButton);
+	for ( TEntityIndex iButton = 0; iButton < aButtons.size(); ++iButton )
+	{
+		if ( m_cSeenButtons.test(iButton) && !m_cPushedButtons.test(iButton) && IsButtonReachable(iButton, m_cReachableAreas) )
+		{
+			PushCheckButtonTask(iButton);
+			return;
+		}
+	}
+
+	// Check if there are unknown button-door configuration to check (without pushing intermediate buttons).
+	/*const good::vector<CEntity>& aDoors = CItems::GetItems(EEntityTypeDoor);
+	good::bitset cReachableAreas( aAreas.size() );
+
+	for ( TEntityIndex iButton = 0; iButton < aButtons.size(); ++iButton )
+	{
+		TWaypointId iButtonWaypoint = aButtons[iButton].iWaypoint;
+		TAreaId iAreaButton = ( iButtonWaypoint == EInvalidWaypointId ) ? EInvalidAreaId : CWaypoints::Get(iButtonWaypoint).iAreaId;
+
+		if ( iAreaButton == EInvalidAreaId )
+		{
+			// TODO: check shoot button.
+		}
+		else
+		{
+			for ( TPlayerIndex iPlayer = 0; iPlayer < m_cCollaborativePlayers.size(); ++iPlayer )
+			{
+				if ( (iPlayer != m_iIndex) && m_cCollaborativePlayers.test(iPlayer) && (m_aPlayersAreas[iPlayer] != EInvalidAreaId) )
+				{
+					SetReachableAreas(m_aPlayersAreas[iPlayer], m_cSeenDoors, m_cOpenedDoors, cReachableAreas);
+
+					if ()
+					for ( TEntityIndex iDoor = 0; iDoor < aDoors.size(); ++iDoor )
+					{
+						if (  )
+					}
+				}
+			}
+		}
+	}*/
+
+	// Bot has nothing to do, wait for domain change.
+	PushSpeakTask(EBorzhChatNoMoves, EEntityTypeInvalid, EEntityIndexInvalid);
+	m_bNothingToDo = true;
+	m_bDomainChanged = false;
 }
 
 //----------------------------------------------------------------------------------------------------------------
 void CBot_BorzhMod::InitNewTask()
 {
-	m_bNewTask = false;
+	m_bNewTask = m_bTaskFinished = false;
+
 	switch ( m_cCurrentTask.iTask )
 	{
 	case EBorzhTaskWait:
@@ -295,12 +510,13 @@ void CBot_BorzhMod::InitNewTask()
 	}
 	case EBorzhTaskMove:
 		if ( iCurrentWaypoint == m_cCurrentTask.iArgument )
+		{
+			m_bNeedMove = m_bUseNavigatorToMove = m_bDestinationChanged = false;
 			m_bTaskFinished = true;
+		}
 		else
 		{
-			m_bNeedMove = true;
-			m_bUseNavigatorToMove = true;
-			m_bDestinationChanged = true;
+			m_bNeedMove = m_bUseNavigatorToMove = m_bDestinationChanged = true;
 			m_iDestinationWaypoint = m_cCurrentTask.iArgument;
 		}
 		break;
@@ -310,7 +526,7 @@ void CBot_BorzhMod::InitNewTask()
 		break;
 	case EBorzhTaskExplore:
 	{
-		TAreaId iArea = CWaypoints::Get(iCurrentWaypoint).iAreaId;
+		TAreaId iArea = m_cCurrentTask.iArgument;
 
 		const good::vector<TWaypointId>& cWaypoints = CMod_Borzh::GetWaypointsForArea(iArea);
 		DebugAssert( cWaypoints.size() > 0 );
@@ -342,54 +558,69 @@ void CBot_BorzhMod::InitNewTask()
 		}
 
 		DebugAssert( iWaypoint != iCurrentWaypoint );
-		if ( iWaypoint != EInvalidWaypointId )
+		if ( iWaypoint == EInvalidWaypointId )
 		{
-			m_cTaskStack.push_back( m_cCurrentTask ); // Return to this task later.
+			m_aVisitedAreas.set(iArea);
+			m_cCurrentTask.iTask = EBorzhTaskInvalid; // Don't save current task, it is finished.
+			PushSpeakTask(EBorzhChatFinishExplore, EEntityTypeInvalid, EEntityIndexInvalid);
+		}
+		else
+		{
+			m_cTaskStack.push_back( m_cCurrentTask ); // Return to explore task later.
 			
 			// Start task to move to given waypoint.
 			m_cCurrentTask.iTask = EBorzhTaskMove;
 			m_cCurrentTask.iArgument = iWaypoint;
-			m_cTaskStack.push_back( m_cCurrentTask );
+			m_cTaskStack.push_back( m_cCurrentTask ); // Return to explore task later.
+
+			m_bTaskFinished = true;
 		}
-		m_bTaskFinished = true;
 		break;
 	}
-//	case EBorzhTaskExplore:
+	case EBorzhTaskPushButton:
+		FLAG_SET(IN_USE, m_cCmd.buttons);
+		m_cCurrentTask.iTask = EBorzhTaskWait;
+		m_fEndWaitTime = CBotrixPlugin::fTime + 2.0f; // Wait 2 seconds after pushing button.
+		break;
 	}
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot_BorzhMod::PushSpeakTask( TBotChat iChat, TEntityType iType, TEntityIndex iIndex, int iArguments )
+void CBot_BorzhMod::PushSpeakTask( TBotChat iChat, TEntityType iType, TEntityIndex iIndex, int iArguments, bool bWaitFirst )
 {
-	int iArgumentSpeak = 0;
-	SET_TYPE(iChat, iArgumentSpeak);
-	SET_INDEX(iIndex, iArgumentSpeak);
-	SET_AUX1(iArguments, iArgumentSpeak);
-
-	int iArgumentLook = 0;
-	SET_TYPE(iType, iArgumentLook);
-	SET_INDEX(iIndex, iArgumentLook);
-
-	// Save current task.
-	if ( m_cCurrentTask.iTask != EBorzhTaskInvalid )
-		m_cTaskStack.push_back( m_cCurrentTask );
+	SaveCurrentTask();
 
 	// Wait after speak.
 	m_cCurrentTask.iTask = EBorzhTaskWait;
-	m_cCurrentTask.iArgument = 4000;
+	m_cCurrentTask.iArgument = 3000;
 	m_cTaskStack.push_back( m_cCurrentTask );
 
-	// Speak after look.
+	// Speak.
 	m_cCurrentTask.iTask = EBorzhTaskSpeak;
-	m_cCurrentTask.iArgument = iArgumentSpeak;
+	m_cCurrentTask.iArgument = 0;
+	SET_TYPE(iChat, m_cCurrentTask.iArgument);
+	SET_INDEX(iIndex, m_cCurrentTask.iArgument);
+	SET_AUX1(iArguments, m_cCurrentTask.iArgument);
 	m_cTaskStack.push_back( m_cCurrentTask );
 
-	// Look at entity (door, button, box, etc).
-	m_cCurrentTask.iTask = EBorzhTaskLook;
-	m_cCurrentTask.iArgument = iArgumentLook;
+	if ( iType != EEntityTypeInvalid ) // There is something to look at.
+	{
+		// Look at entity before speak (door, button, box, etc).
+		m_cCurrentTask.iTask = EBorzhTaskLook;
+		m_cCurrentTask.iArgument = 0;
+		SET_TYPE(iType, m_cCurrentTask.iArgument);
+		SET_INDEX(iIndex, m_cCurrentTask.iArgument);
+		m_cTaskStack.push_back( m_cCurrentTask );
+	}
 
-	m_bNeedMove = false;
-	m_bNewTask = true;
+	if ( bWaitFirst )
+	{
+		m_cCurrentTask.iTask = EBorzhTaskWait;
+		m_cCurrentTask.iArgument = 2000;
+		m_cTaskStack.push_back( m_cCurrentTask );
+	}
+
+	m_bTaskFinished = true; // Switch to new task.
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -401,6 +632,10 @@ void CBot_BorzhMod::DoSpeakTask()
 
 	switch ( m_cChat.iBotRequest )
 	{
+	case EBotChatGreeting:
+		m_cChat.iDirectedTo = GET_INDEX(m_cCurrentTask.iArgument);
+		break;
+
 	case EBorzhChatDoorFound:
 	case EBorzhChatDoorChange:
 		// Add door status.
@@ -409,17 +644,78 @@ void CBot_BorzhMod::DoSpeakTask()
 
 	case EBorzhChatDoorNoChange:
 	case EBorzhChatDoorTry:
+	case EBorzhChatDoorGo:
 		m_cChat.cMap.push_back( CChatVarValue(CMod_Borzh::iVarDoor, 0, GET_INDEX(m_cCurrentTask.iArgument) ) );
 		break;
 
 	case EBorzhChatSeeButton:
+	case EBorzhChatButtonIPush:
+	case EBorzhChatButtonYouPush:
+	case EBorzhChatButtonIShoot:
+	case EBorzhChatButtonYouShoot:
+	case EBorzhChatButtonGo:
 		m_cChat.cMap.push_back( CChatVarValue(CMod_Borzh::iVarButton, 0, GET_INDEX(m_cCurrentTask.iArgument) ) );
 		break;
 
 	case EBorzhChatWeaponFound:
 		m_cChat.cMap.push_back( CChatVarValue(CMod_Borzh::iVarWeapon, 0, GET_INDEX(m_cCurrentTask.iArgument)) );
 		break;
+
+	case EBorzhChatNewArea:
+	case EBorzhChatChangeArea:
+	case EBorzhChatAreaCantGo:
+	case EBorzhChatAreaGo:
+		m_cChat.cMap.push_back( CChatVarValue(CMod_Borzh::iVarArea, 0, GET_INDEX(m_cCurrentTask.iArgument)) );
+		break;
 	}
 
 	Speak(false);
+}
+
+//----------------------------------------------------------------------------------------------------------------
+void CBot_BorzhMod::PushCheckButtonTask( TEntityIndex iButton, bool bShoot )
+{
+	DebugAssert( !bShoot || m_bHasCrossbow );
+
+	SaveCurrentTask();
+
+	m_cCurrentBigTask.iTask = EBorzhTaskCheckButton;
+	m_cCurrentBigTask.iArgument = iButton;
+
+	// Push button.
+	m_cCurrentTask.iTask = bShoot ? EBorzhTaskShootButton : EBorzhTaskPushButton;
+	m_cCurrentTask.iArgument = iButton;
+	m_cTaskStack.push_back(m_cCurrentTask);
+
+	// Say: I will push/shoot button $button now.
+	m_cCurrentTask.iTask = EBorzhTaskSpeak;
+	m_cCurrentTask.iArgument = 0;
+	SET_TYPE(bShoot ? EBorzhChatButtonIShoot : EBorzhChatButtonIPush, m_cCurrentTask.iArgument);
+	SET_INDEX(iButton, m_cCurrentTask.iArgument);
+	m_cTaskStack.push_back(m_cCurrentTask);
+
+	// Look at button.
+	m_cCurrentTask.iTask = EBorzhTaskLook;
+	m_cCurrentTask.iArgument = 0;
+	SET_TYPE(EEntityTypeButton, m_cCurrentTask.iArgument);
+	SET_INDEX(iButton, m_cCurrentTask.iArgument);
+	m_cTaskStack.push_back(m_cCurrentTask);
+
+	// Go to button waypoint.
+	m_cCurrentTask.iTask = EBorzhTaskMove;
+	const CEntity& cButton = CItems::GetItems(EEntityTypeButton)[iButton];
+	if ( bShoot )
+		m_cCurrentTask.iArgument = CMod_Borzh::GetWaypointToShootButton(iButton);
+	else
+		m_cCurrentTask.iArgument = cButton.iWaypoint;
+	m_cTaskStack.push_back(m_cCurrentTask);
+
+	// Say: Let's try to find which doors opens button $button.
+	m_cCurrentTask.iTask = EBorzhTaskSpeak;
+	m_cCurrentTask.iArgument = 0;
+	SET_TYPE(EBorzhChatButtonTry, m_cCurrentTask.iArgument);
+	SET_INDEX(iButton, m_cCurrentTask.iArgument);
+	m_cTaskStack.push_back(m_cCurrentTask);
+
+	m_bTaskFinished = true; // Switch to new task.
 }

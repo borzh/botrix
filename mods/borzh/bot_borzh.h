@@ -81,6 +81,15 @@ protected: // Inherited methods.
 
 protected: // Methods.
 
+	// Set areas that can be reached from iCurrentArea according to seen&opened doors.
+	static void SetReachableAreas( int iCurrentArea, const good::bitset& cSeenDoors, const good::bitset& cOpenedDoors, good::bitset& cReachableAreas );
+
+	// Check if button is reachable.
+	static bool IsButtonReachable( TEntityIndex iButton, const good::bitset& cReachableAreas );
+
+	// Check if door is reachable.
+	static bool IsDoorReachable( TEntityIndex iDoor, const good::bitset& cReachableAreas );
+
 	// Called when bot figures out if a button toggles or doesn't affect a door.
 	void SetButtonTogglesDoor( TEntityIndex iButton, TEntityIndex iDoor, bool bToggle )
 	{
@@ -101,11 +110,24 @@ protected: // Methods.
 			return EUnknown;
 	}
 
+	// Task stack is empty, check if there is something to do: investigate new area, push some button, or use FF.
+	void CheckForNewTasks();
+
 	// Init current task.
 	void InitNewTask();
 
+	// Save current task in stack.
+	void SaveCurrentTask()
+	{
+		if ( m_cCurrentTask.iTask == EBorzhTaskInvalid )
+			return;
+		if ( m_cCurrentTask.iTask == EBorzhTaskWait )
+			m_cCurrentTask.iArgument = (m_fEndWaitTime - CBotrixPlugin::fTime) * 1000; // Save only time left to wait.
+		m_cTaskStack.push_back(m_cCurrentTask);
+	}
+
 	// Speak about door/button/box/weapon.
-	void PushSpeakTask( TBotChat iChat, TEntityType iType, TEntityIndex iIndex, int iArguments = 0 );
+	void PushSpeakTask( TBotChat iChat, TEntityType iType, TEntityIndex iIndex, int iArguments = 0, bool bWaitFirst = false );
 
 	// Perform speak task, say a phrase.
 	void DoSpeakTask();
@@ -116,7 +138,7 @@ protected: // Methods.
 		if ( m_cTaskStack.size() > 0 )
 		{
 			m_cCurrentTask = m_cTaskStack.back();
-			m_cTaskStack.erase( m_cTaskStack.size() - 1 );
+			m_cTaskStack.pop_back();
 		}
 		else
 			m_cCurrentTask.iTask = EBorzhTaskInvalid;
@@ -124,56 +146,86 @@ protected: // Methods.
 		m_bTaskFinished = false;
 	}
 
-	// Check if there is something to do.
-	void TaskUpdate();
+	// Cancel last task.
+	void CancelTask()
+	{
+		m_cTaskStack.clear();
+		m_cCurrentTask.iTask = EBorzhTaskInvalid;
+		m_bNeedMove = false;
+	}
 
+	// Go to new button and push it.
+	void PushCheckButtonTask( TEntityIndex iButton, bool bShoot = false );
+
+	// Called when domain has been changed, like found opened/closed door when expecting otherwise, or button has been pressed.
+	void DomainChanged() {}
+
+	// Get nearest door that is reachable from current position.
+	TEntityIndex GetNearestDoor() {}
 
 protected: // Members.
+
+	static good::vector<TEntityIndex> m_aLastPushedButtons; // We need to know the order of pushed buttons.
 
 	class CBorzhTask
 	{
 	public:
-		TBorzhTask iTask;                                // Task number.
-		int iArgument;                                   // Task argument. May be number of door, button, etc.
+		CBorzhTask(): iTask(EBorzhTaskInvalid), iArgument(0), pArguments(NULL) {}
+
+		TBorzhTask iTask;                                   // Task number.
+		int iArgument;                                      // Task argument. May be number of door, button, etc.
+		void* pArguments;                                   // Other task arguments;
 	};
 
-	typedef good::vector< CBorzhTask > task_stack_t;     // Typedef for stack of tasks.
+	typedef good::vector< CBorzhTask > task_stack_t;        // Typedef for stack of tasks.
+	good::string m_sNameWithoutSpaces;                      // Bot's name without spaces to use it in planner. TODO:
 
-	task_stack_t m_cTaskStack;                           // Stack of tasks.
-	CBorzhTask m_cCurrentTask;                           // Current bot's task.
+	task_stack_t m_cTaskStack;                              // Stack of tasks for small tasks.
+	CBorzhTask m_cCurrentTask;                              // Current bot's task.
 
-	TAreaId m_iCurrentArea;                              // Current area.
+	CBorzhTask m_cCurrentBigTask;                           // Current bot's task at high level.
 
-	good::bitset m_cSeenDoors;                           // Seen doors.
-	good::bitset m_cKnownDoors;                          // Known doors, other bot has spoken of. TODO: implement.
-	good::bitset m_cOpenedDoors;                         // Opened doors. Closed door means seen & !opened.
+	good::bitset m_aVisitedWaypoints;                       // Visited waypoints (1 = visited, 0 = unknown).
 
-	good::bitset m_cSeenButtons;                         // Seen buttons.
-	good::bitset m_cKnownButtons;                        // Known buttons, other bot has spoken of. TODO: implement.
-	good::bitset m_cPushedButtons;                       // Buttons pushed at least once.
+	TAreaId m_iCurrentArea;                                 // Current area.
+	good::bitset m_aVisitedAreas;                           // Areas that were explored (1 = explored, 0 = unknown).
+	good::bitset m_cReachableAreas;                         // Areas that can be reached from current one.
 
-	good::vector<good::bitset> m_cDoorToggle;            // Bot's belief of which set of doors button DO toggle (button is index in array).
-	good::vector<good::bitset> m_cDoorNoAffect;          // Bot's belief of which set of doors button DOESN'T toggle (button is index in array).
+	good::bitset m_cSeenDoors;                              // Seen doors. Other bot could see it also.
+	good::bitset m_cOpenedDoors;                            // Opened doors. Closed door means seen & !opened.
+	good::bitset m_cCheckedDoors;                           // Useful bitset when checking doors.
 
-	good::bitset m_aVisitedWaypoints;                    // Visited waypoints (1 = visited, 0 = unknown).
-	good::bitset m_aVisitedAreas;                        // Visited areas (1 = visited, 0 = unknown).
-	good::bitset m_aCheckedAreas;                        // Checked areas for current task (1 = checked, 0 = unchecked).
+	good::bitset m_cSeenButtons;                            // Seen buttons. Other bot could see it also.
+	good::bitset m_cPushedButtons;                          // Buttons pushed at least once.
 
-	float m_fEndWaitTime;                                // Time when can stop waiting.
+	good::bitset m_cDontTestButtons;                        // Buttons that has been tested. When domain change is produced, they will be cleared.
+	good::bitset m_cDontTestDoors;                          // Door that has been tested. When domain change is produced, they will be cleared.
 
-	//TWaypointId m_iDestination;                          // Destination waypoint.
+	good::vector<good::bitset> m_cDoorToggle;               // Bot's belief of which set of doors button DO toggle (button is index in array).
+	good::vector<good::bitset> m_cDoorNoAffect;             // Bot's belief of which set of doors button DOESN'T toggle (button is index in array).
+
+	good::bitset m_cCollaborativePlayers;                   // Players that are collaborating with this bot.
+	good::bitset m_cWaitingPlayers;                         // Players that are waiting for this bot.
+	good::vector<TAreaId> m_aPlayersAreas;                  // Bot's belief of where another player is.
+
+	float m_fEndWaitTime;                                   // Time when can stop waiting.
+
+	//TWaypointId m_iDestination;                             // Destination waypoint.
 
 
 protected: // Flags.
 
-	static bool m_bUsingPlanner;                         // Set if some of the bots is using planner.
+	bool m_bUsingPlan;                                      // Using plan obtained from FF planner.
 
-	bool m_bStarted:1;                                   // Started by admin.
+	bool m_bStarted:1;                                      // Started (some admin must say 'begin' or 'start').
 
-	bool m_bNewTask:1;                                   // New task need to be initiated.
-	bool m_bTaskFinished:1;                              // Need to pop new task from stack.
-	bool m_bHasCrossbow:1;                               // True if bot has crossbow to shoot buttons.
-	bool m_bHasPhyscannon:1;                             // True if bot has physcannon to carry boxes.
+	bool m_bNothingToDo:1;                                  // Bot has no more task to do, wait for domain change.
+	bool m_bDomainChanged:1;                                // Domain has changed (like button has been pressed).
+
+	bool m_bNewTask:1;                                      // New task need to be initiated.
+	bool m_bTaskFinished:1;                                 // Need to pop new task from stack.
+	bool m_bHasCrossbow:1;                                  // True if bot has crossbow to shoot buttons.
+	bool m_bHasPhyscannon:1;                                // True if bot has physcannon to carry boxes.
 
 };
 

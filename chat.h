@@ -50,8 +50,8 @@ public:
 		iBotRequest(iBotRequest), iSpeaker(iSpeaker), iDirectedTo(iDirectedTo), cMap(4) {}
 
 	TBotChat iBotRequest;                  ///< Request type.
-	int iSpeaker;                          ///< Index of player, that talked this request.
-	int iDirectedTo;                       ///< Index of player, request is directed to. It is $player or $player1.
+	TPlayerIndex iSpeaker;                 ///< Index of player, that talked this request.
+	TPlayerIndex iDirectedTo;              ///< Index of player, request is directed to. It is $player or $player1.
 	CChatVariablesMap cMap;                ///< Map from variables to value.
 };
 

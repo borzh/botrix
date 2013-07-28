@@ -1,5 +1,5 @@
-#ifndef __BOTRIX_CLIENT_H__
-#define __BOTRIX_CLIENT_H__
+#ifndef __BOTRIX_CLIENTS_H__
+#define __BOTRIX_CLIENTS_H__
 
 
 #include "vector.h"
@@ -54,4 +54,4 @@ protected:
 };
 
 
-#endif // __BOTRIX_CLIENT_H__
+#endif // __BOTRIX_CLIENTS_H__

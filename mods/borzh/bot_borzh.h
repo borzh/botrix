@@ -85,30 +85,39 @@ protected: // Methods.
 	static void SetReachableAreas( int iCurrentArea, const good::bitset& cSeenDoors, const good::bitset& cOpenedDoors, good::bitset& cReachableAreas );
 
 	// Check if button is reachable.
-	static bool IsButtonReachable( TEntityIndex iButton, const good::bitset& cReachableAreas );
+	static TWaypointId ButtonWaypoint( TEntityIndex iButton, const good::bitset& cReachableAreas );
 
 	// Check if door is reachable.
-	static bool IsDoorReachable( TEntityIndex iDoor, const good::bitset& cReachableAreas );
+	static TWaypointId DoorWaypoint( TEntityIndex iDoor, const good::bitset& cReachableAreas );
 
 	// Called when bot figures out if a button toggles or doesn't affect a door.
 	void SetButtonTogglesDoor( TEntityIndex iButton, TEntityIndex iDoor, bool bToggle )
 	{
 		if ( bToggle )
-			m_cDoorToggle[iButton].set(iDoor);
+			m_cButtonTogglesDoor[iButton].set(iDoor);
 		else
-			m_cDoorNoAffect[iButton].set(iDoor);
+			m_cButtonNoAffectDoor[iButton].set(iDoor);
 	}
 
 	// Check if given button toggles given door.
 	TYesNoAnswer IsButtonTogglesDoor( TEntityIndex iButton, TEntityIndex iDoor )
 	{
-		if ( m_cDoorNoAffect[iButton].test(iDoor) )
+		if ( m_cButtonNoAffectDoor[iButton].test(iDoor) )
 			return ENo;
-		else if ( m_cDoorToggle[iButton].test(iDoor) )
+		else if ( m_cButtonTogglesDoor[iButton].test(iDoor) )
 			return EYes;
 		else
 			return EUnknown;
 	}
+
+	// When coming near door, check it's status.
+	void CheckDoorStatus( TEntityIndex iDoor, bool bOpened, bool bNeedToPassThrough );
+
+	// Bot needs to pass through the door, but it is closed.
+	void ClosedDoorOnTheWay( TEntityIndex iDoor );
+
+	// Task stack is empty, check if the big task has more steps.
+	void CheckBigTask();
 
 	// Task stack is empty, check if there is something to do: investigate new area, push some button, or use FF.
 	void CheckForNewTasks();
@@ -124,13 +133,33 @@ protected: // Methods.
 		if ( m_cCurrentTask.iTask == EBorzhTaskWait )
 			m_cCurrentTask.iArgument = (m_fEndWaitTime - CBotrixPlugin::fTime) * 1000; // Save only time left to wait.
 		m_cTaskStack.push_back(m_cCurrentTask);
+		m_cCurrentTask.iTask = EBorzhTaskInvalid;
+	}
+
+	// Wait given amount of milliseconds.
+	void Wait( int iMSecs, bool bSaveCurrentTask = false )
+	{
+		if ( bSaveCurrentTask )
+			SaveCurrentTask();
+
+		m_cCurrentTask.iTask = EBorzhTaskWait;
+		m_cCurrentTask.iArgument = iMSecs;
+		m_fEndWaitTime = CBotrixPlugin::fTime + m_cCurrentTask.iArgument/1000.0f;
 	}
 
 	// Speak about door/button/box/weapon.
-	void PushSpeakTask( TBotChat iChat, TEntityType iType, TEntityIndex iIndex, int iArguments = 0, bool bWaitFirst = false );
+	void PushSpeakTask( TBotChat iChat, TEntityType iType, TEntityIndex iIndex, int iArguments = 0 );
+
+	// Switch to speak task.
+	void SwitchToSpeakTask( TBotChat iChat, TEntityType iType, TEntityIndex iIndex, int iArguments = 0 )
+	{
+		SaveCurrentTask();
+		PushSpeakTask(iChat, iType, iIndex, iArguments);
+		m_bTaskFinished = true;
+	}
 
 	// Perform speak task, say a phrase.
-	void DoSpeakTask();
+	void DoSpeakTask( int iArgument );
 
 	// Get new task from stack.
 	void TaskPop()
@@ -170,7 +199,8 @@ protected: // Members.
 	class CBorzhTask
 	{
 	public:
-		CBorzhTask(): iTask(EBorzhTaskInvalid), iArgument(0), pArguments(NULL) {}
+		CBorzhTask(TBorzhTask iTask = EBorzhTaskInvalid, int iArgument = 0):
+			iTask(iTask), iArgument(iArgument), pArguments(NULL) {}
 
 		TBorzhTask iTask;                                   // Task number.
 		int iArgument;                                      // Task argument. May be number of door, button, etc.
@@ -201,8 +231,8 @@ protected: // Members.
 	good::bitset m_cDontTestButtons;                        // Buttons that has been tested. When domain change is produced, they will be cleared.
 	good::bitset m_cDontTestDoors;                          // Door that has been tested. When domain change is produced, they will be cleared.
 
-	good::vector<good::bitset> m_cDoorToggle;               // Bot's belief of which set of doors button DO toggle (button is index in array).
-	good::vector<good::bitset> m_cDoorNoAffect;             // Bot's belief of which set of doors button DOESN'T toggle (button is index in array).
+	good::vector<good::bitset> m_cButtonTogglesDoor;        // Bot's belief of which set of doors button DO toggle (button is index in array).
+	good::vector<good::bitset> m_cButtonNoAffectDoor;       // Bot's belief of which set of doors button DOESN'T toggle (button is index in array).
 
 	good::bitset m_cCollaborativePlayers;                   // Players that are collaborating with this bot.
 	good::bitset m_cWaitingPlayers;                         // Players that are waiting for this bot.

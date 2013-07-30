@@ -27,7 +27,7 @@ enum TBorzhTasks
 
 	// Next tasks are tasks that consist of atomic tasks.
 	EBorzhTaskExplore,                           ///< Exploring current area.
-	EBorzhTaskCheckButton,                       ///< Check which doors opens a button. Argument is button.
+	EBorzhTaskCheckButton,                       ///< Check which doors opens a button. Argument: index is button, type is bool (pushed or still not).
 
 	EBorzhTaskHelping,                           ///< Helping another player. Argument is player index.
 

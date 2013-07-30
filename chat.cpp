@@ -673,7 +673,7 @@ const good::string& CChat::ChatToText( const CBotChat& cCommand )
 						bFound = true;
 						sbBuffer.append( GetVariableValue(iVarIndex.first, cCommand.cMap[i].iValue) );
 					}
-				DebugAssert(bFound);
+				DebugAssert(bFound); // You need to add pair <var, value> to the map.
 			}
 			else
 				sbBuffer.append(cWord.sWord);

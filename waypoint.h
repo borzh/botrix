@@ -18,7 +18,7 @@ class CWaypoint
 
 public: // Methods.
 	/// Return true if waypoint id can be valid. Use CWaypoints::IsValid() to actualy verify waypoint range.
-	static inline bool IsValid(TWaypointId id) { return id != EInvalidWaypointId; }
+	static inline bool IsValid(TWaypointId id) { return id != EWaypointIdInvalid; }
 
 public: // Methods.
 	/// Default constructor.
@@ -256,7 +256,7 @@ public: // Methods.
 	static TAreaId GetAreaId( const good::string& sName )
 	{
 		StringVector::const_iterator it( good::find(m_cAreas.begin(), m_cAreas.end(), sName) );
-		return ( it == m_cAreas.end() )  ?  EInvalidAreaId  :  ( it - m_cAreas.begin() );
+		return ( it == m_cAreas.end() )  ?  EAreaIdInvalid  :  ( it - m_cAreas.begin() );
 	}
 
 	/// Add new area name.

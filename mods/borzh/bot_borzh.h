@@ -85,10 +85,10 @@ protected: // Methods.
 	static void SetReachableAreas( int iCurrentArea, const good::bitset& cSeenDoors, const good::bitset& cOpenedDoors, good::bitset& cReachableAreas );
 
 	// Check if button is reachable.
-	static TWaypointId ButtonWaypoint( TEntityIndex iButton, const good::bitset& cReachableAreas );
+	static TWaypointId GetButtonWaypoint( TEntityIndex iButton, const good::bitset& cReachableAreas );
 
 	// Check if door is reachable.
-	static TWaypointId DoorWaypoint( TEntityIndex iDoor, const good::bitset& cReachableAreas );
+	static TWaypointId GetDoorWaypoint( TEntityIndex iDoor, const good::bitset& cReachableAreas );
 
 	// Called when bot figures out if a button toggles or doesn't affect a door.
 	void SetButtonTogglesDoor( TEntityIndex iButton, TEntityIndex iDoor, bool bToggle )
@@ -113,14 +113,21 @@ protected: // Methods.
 	// When coming near door, check it's status.
 	void CheckDoorStatus( TEntityIndex iDoor, bool bOpened, bool bNeedToPassThrough );
 
+	// Door has same status as bot thinks.
+	void SameDoorStatus( TEntityIndex iDoor, bool bOpened, bool bCheckingDoors );
+
+	// Bot thinks that door was opened when it is closed, and viceversa.
+	void DifferentDoorStatus( TEntityIndex iDoor, bool bOpened, bool bCheckingDoors );
+
 	// Bot needs to pass through the door, but it is closed.
-	void ClosedDoorOnTheWay( TEntityIndex iDoor );
+	void ClosedDoorOnTheWay( TEntityIndex iDoor, bool bCheckingDoors );
 
 	// Task stack is empty, check if the big task has more steps.
 	void CheckBigTask();
 
-	// Task stack is empty, check if there is something to do: investigate new area, push some button, or use FF.
-	void CheckForNewTasks();
+	// Task stack is empty, check if there is something to do: investigate new area, push some button, or use FF. 
+	// If iProposedTask is valid, then check if there is some other task of more importance to do. Return true when accepting proposed task.
+	bool CheckForNewTasks( TBorzhTask iProposedTask = EBorzhTaskInvalid );
 
 	// Init current task.
 	void InitNewTask();
@@ -139,12 +146,13 @@ protected: // Methods.
 	// Wait given amount of milliseconds.
 	void Wait( int iMSecs, bool bSaveCurrentTask = false )
 	{
-		if ( bSaveCurrentTask )
+		if ( bSaveCurrentTask && !m_bTaskFinished )
 			SaveCurrentTask();
 
 		m_cCurrentTask.iTask = EBorzhTaskWait;
 		m_cCurrentTask.iArgument = iMSecs;
-		m_fEndWaitTime = CBotrixPlugin::fTime + m_cCurrentTask.iArgument/1000.0f;
+		m_fEndWaitTime = CBotrixPlugin::fTime + iMSecs / 1000.0f;
+		m_bNeedMove = m_bNeedAim = m_bTaskFinished = false;
 	}
 
 	// Speak about door/button/box/weapon.
@@ -168,10 +176,10 @@ protected: // Methods.
 		{
 			m_cCurrentTask = m_cTaskStack.back();
 			m_cTaskStack.pop_back();
+			m_bNewTask = true;
 		}
 		else
 			m_cCurrentTask.iTask = EBorzhTaskInvalid;
-		m_bNewTask = true;
 		m_bTaskFinished = false;
 	}
 
@@ -180,11 +188,20 @@ protected: // Methods.
 	{
 		m_cTaskStack.clear();
 		m_cCurrentTask.iTask = EBorzhTaskInvalid;
-		m_bNeedMove = false;
+		m_bNeedMove = m_bNeedAim = false;
 	}
 
 	// Go to new button and push it.
 	void PushCheckButtonTask( TEntityIndex iButton, bool bShoot = false );
+
+	//
+	void CheckRemainingPlayersForBigTask();
+
+	//
+	void OfferCurrentBigTask();
+
+	// 
+	void ReceiveTaskOffer( TBorzhTask iProposedTask, int iArgument, TPlayerIndex iSpeaker );
 
 	// Called when domain has been changed, like found opened/closed door when expecting otherwise, or button has been pressed.
 	void DomainChanged() {}
@@ -193,8 +210,8 @@ protected: // Methods.
 	TEntityIndex GetNearestDoor() {}
 
 protected: // Members.
-
-	static good::vector<TEntityIndex> m_aLastPushedButtons; // We need to know the order of pushed buttons.
+	
+	friend void GeneratePddl();
 
 	class CBorzhTask
 	{
@@ -207,6 +224,13 @@ protected: // Members.
 		void* pArguments;                                   // Other task arguments;
 	};
 
+	static const int m_iTimeAfterPushingButton = 2000;      // Wait 2 seconds after pushing button.
+	static const int m_iTimeAfterSpeak = 3000;              // Wait 3 seconds after speaking (other bots will stop and wait too).
+	static const int m_iTimeToWaitPlayer = 30000;           // Wait 60 seconds for another player.
+
+	static good::vector<TEntityIndex> m_aLastPushedButtons; // We need to know the order of pushed buttons.
+	static CBorzhTask m_cCurrentProposedTask;               // Last proposed task.
+
 	typedef good::vector< CBorzhTask > task_stack_t;        // Typedef for stack of tasks.
 	good::string m_sNameWithoutSpaces;                      // Bot's name without spaces to use it in planner. TODO:
 
@@ -217,30 +241,33 @@ protected: // Members.
 
 	good::bitset m_aVisitedWaypoints;                       // Visited waypoints (1 = visited, 0 = unknown).
 
-	TAreaId m_iCurrentArea;                                 // Current area.
 	good::bitset m_aVisitedAreas;                           // Areas that were explored (1 = explored, 0 = unknown).
 	good::bitset m_cReachableAreas;                         // Areas that can be reached from current one.
+	good::bitset m_cVisitedAreasAfterPushButton;            // Areas that wasn't visited after pushing buttons.
 
 	good::bitset m_cSeenDoors;                              // Seen doors. Other bot could see it also.
 	good::bitset m_cOpenedDoors;                            // Opened doors. Closed door means seen & !opened.
+	good::bitset m_cFalseOpenedDoors;                       // Used when checking a button.
 	good::bitset m_cCheckedDoors;                           // Useful bitset when checking doors.
 
 	good::bitset m_cSeenButtons;                            // Seen buttons. Other bot could see it also.
 	good::bitset m_cPushedButtons;                          // Buttons pushed at least once.
 
-	good::bitset m_cDontTestButtons;                        // Buttons that has been tested. When domain change is produced, they will be cleared.
-	good::bitset m_cDontTestDoors;                          // Door that has been tested. When domain change is produced, they will be cleared.
-
 	good::vector<good::bitset> m_cButtonTogglesDoor;        // Bot's belief of which set of doors button DO toggle (button is index in array).
 	good::vector<good::bitset> m_cButtonNoAffectDoor;       // Bot's belief of which set of doors button DOESN'T toggle (button is index in array).
 
+	good::bitset m_cDontTestButtons;                        // Buttons that has been tested. When domain change is produced, they will be cleared.
+	good::bitset m_cDontTestDoors;                          // Door that has been tested. When domain change is produced, they will be cleared.
+
 	good::bitset m_cCollaborativePlayers;                   // Players that are collaborating with this bot.
+	good::bitset m_cAcceptedPlayers;                        // Players that accepted this bot task. All players need to accept task in order to perform it.
+	good::bitset m_cBusyPlayers;                            // Players that are busy right now. All players need to accept task in order to perform it.
 	good::bitset m_cWaitingPlayers;                         // Players that are waiting for this bot.
 	good::vector<TAreaId> m_aPlayersAreas;                  // Bot's belief of where another player is.
 
-	float m_fEndWaitTime;                                   // Time when can stop waiting.
+	good::vector<TAreaId> m_cDesiredPlayersPositions;       // Desired positions of players, this will be passed to planner.
 
-	//TWaypointId m_iDestination;                             // Destination waypoint.
+	float m_fEndWaitTime;                                   // Time when can stop waiting.
 
 
 protected: // Flags.
@@ -256,6 +283,8 @@ protected: // Flags.
 	bool m_bTaskFinished:1;                                 // Need to pop new task from stack.
 	bool m_bHasCrossbow:1;                                  // True if bot has crossbow to shoot buttons.
 	bool m_bHasPhyscannon:1;                                // True if bot has physcannon to carry boxes.
+
+	bool m_bAllPlayersIdle:1;                               // Some player has done it's tasks. This bot will OfferCurrentBigTask() when waiting for players answers if this is true.
 
 };
 

@@ -1,5 +1,6 @@
 #include "server_plugin.h"
 #include "type2string.h"
+#include "mods/borzh/types_borzh.h"
 
 #include "good/string_buffer.h"
 
@@ -447,6 +448,7 @@ good::string aBotCommands[EBotChatTotal] =
 	"no moves",
 	"think",
 	"explore",
+	"explore new",
 	"finish explore",
 
 	"new area",
@@ -490,4 +492,25 @@ int CTypeToString::BotCommandFromString( const good::string& sCommand )
 const good::string& CTypeToString::BotCommandToString( TBotChat iCommand )
 {
 	return EnumToString( iCommand, EBotChatTotal, aBotCommands, sUnknown );
+}
+
+//----------------------------------------------------------------------------------------------------------------
+// Ordered by TBotAction.
+//----------------------------------------------------------------------------------------------------------------
+good::string aBotActions[EBotActionTotal] =
+{
+	"MOVE",
+	"PUSH-BUTTON",
+	"SHOOT-BUTTON",
+	"CARRY-BOX",
+	"CARRY-BOX-FAR",
+	"DROP-BOX",
+	"CLIMB-BOX",
+	"CLIMB-TWO",
+	"CLIMB-THREE",
+};
+
+int CTypeToString::BotActionFromString( const good::string& sAction )
+{
+	return EnumFromString( sAction, EBotActionTotal, aBotActions );
 }

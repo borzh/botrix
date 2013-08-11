@@ -1002,7 +1002,7 @@ TCommandResult CWaypointAreaSetCommand::Execute( CClient* pClient, int argc, con
 
 	// Check if that area id already exists.
 	TAreaId iAreaId = CWaypoints::GetAreaId(sbBuffer);
-	if ( iAreaId == EInvalidAreaId ) // If not, add it.
+	if ( iAreaId == EAreaIdInvalid ) // If not, add it.
 		iAreaId = CWaypoints::AddAreaName(sbBuffer.duplicate());
 
 	CWaypoints::Get(iWaypoint).iAreaId = iAreaId;

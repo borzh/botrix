@@ -17,6 +17,11 @@
 #endif
 
 
+#ifndef TIME_INFINITE
+#	define TIME_INFINITE                0xFFFFFFFF
+#endif
+
+
 #ifndef MAX_UINT32
 /// Max of unsigned 32bit int.
 #	define MAX_UINT32                   0xFFFFFFFF
@@ -148,9 +153,8 @@
 /// Debug asserts. Will produce debug break, allowing debugging if exp is false.
 #if defined(DEBUG) || defined(_DEBUG)
 
-#include <stdio.h>
-
 #	ifndef DebugPrint
+#		include <stdio.h>
 #		define DebugPrint printf
 #	endif
 

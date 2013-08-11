@@ -519,7 +519,7 @@ TWaypointId CWaypoints::GetNearestWaypoint(Vector const& vOrigin, const good::bi
 TWaypointId CWaypoints::GetAnyWaypoint(Vector const& vOrigin, TWaypointFlags iFlags)
 {
 	if ( CWaypoints::Size() == 0 )
-		return EInvalidWaypointId;
+		return EWaypointIdInvalid;
 
 	TWaypointId id = rand() % CWaypoints::Size();
 	for ( TWaypointId i = id; i >= 0; --i )
@@ -528,7 +528,7 @@ TWaypointId CWaypoints::GetAnyWaypoint(Vector const& vOrigin, TWaypointFlags iFl
 	for ( TWaypointId i = id+1; i < CWaypoints::Size(); ++i )
 		if ( FLAG_SOME_SET(iFlags, CWaypoints::Get(i).iFlags) )
 			return i;
-	return EInvalidWaypointId;
+	return EWaypointIdInvalid;
 }
 
 

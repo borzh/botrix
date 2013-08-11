@@ -507,6 +507,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\good\process.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\good\process.h"
+				>
+			</File>
+			<File
 				RelativePath=".\good\set.h"
 				>
 			</File>
@@ -516,6 +524,14 @@
 			</File>
 			<File
 				RelativePath=".\good\string_buffer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\good\thread.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\good\thread.h"
 				>
 			</File>
 			<File

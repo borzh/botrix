@@ -52,7 +52,7 @@ namespace good
 		//--------------------------------------------------------------------------------------------------------
 		/// Constructor giving buffer with capacity.
 		//--------------------------------------------------------------------------------------------------------
-		base_string_buffer( const Char* sbBuffer, int iCapacity, bool bDeallocate )
+		base_string_buffer( const Char* sbBuffer, int iCapacity, bool bDeallocate, bool bUseAsString = false )
 		{
 #ifdef DEBUG_STRING_PRINT
 			printf( "base_string_buffer constructor with buffer, reserved %d\n", iCapacity );
@@ -61,9 +61,16 @@ namespace good
 
 			m_iCapacity = iCapacity;
 			m_iStatic = !bDeallocate;
-			m_iSize = 0;
 			m_pBuffer = (Char*)sbBuffer;
-			m_pBuffer[0] = 0;
+			if ( bUseAsString )
+			{
+				m_iSize = strlen(sbBuffer);
+			}
+			else
+			{
+				m_iSize = 0;
+				m_pBuffer[0] = 0;
+			}
 		}
 
 		//--------------------------------------------------------------------------------------------------------

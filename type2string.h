@@ -155,6 +155,11 @@ public:
 	static const good::string& BotCommandToString( TBotChat iCommand );
 
 
+	//------------------------------------------------------------------------------------------------------------
+	/// Get bot action from string.
+	//------------------------------------------------------------------------------------------------------------
+	static int BotActionFromString( const good::string& sAction );
+
 };
 
 #endif // __BOTRIX_TYPE_TO_STRING_H__

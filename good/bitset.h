@@ -30,13 +30,31 @@ namespace good
 			memcpy(m_cContainer.data(), data, iCharSize);
 		}
 
+		/// Or operator.
+		base_bitset& operator|= (const base_bitset& other)
+		{
+			DebugAssert( size() == other.size() );
+			for ( int i=0; i < m_cContainer.size(); ++i )
+				m_cContainer[i] |= other.m_cContainer[i];
+			return *this;
+		}
+
+		/// = operator.
+		base_bitset& operator= (const base_bitset& other)
+		{
+			DebugAssert( size() == other.size() );
+			for ( int i=0; i < m_cContainer.size(); ++i )
+				m_cContainer[i] = other.m_cContainer[i];
+			return *this;
+		}
+
 		/// Get size of bitset.
 		int size() const { return m_iSize; }
 
 		/// Returns true if any bits are set.
 		bool any() const
 		{
-			for ( int i=0; i<m_cContainer.size(); ++i )
+			for ( int i=0; i < m_cContainer.size(); ++i )
 				if ( m_cContainer[i] )
 					return true;
 			return false;
@@ -49,7 +67,7 @@ namespace good
 		void resize( int iNewSize ) { m_cContainer.resize( BIT_ARRAY_SIZE(iNewSize) ); m_iSize = iNewSize; }
 
 		/// Clear all bits.
-		void clear() { memset( m_cContainer.data(), 0, m_cContainer.size() ); }
+		void reset() { memset( m_cContainer.data(), 0, m_cContainer.size() ); }
 
 		/// Set all bits.
 		void set() { memset( m_cContainer.data(), 0xFF, m_cContainer.size() ); }
@@ -71,7 +89,7 @@ namespace good
 		}
 
 		/// Clear bit at given position.
-		void clear( int iIndex ) { set(iIndex, false); }
+		void reset( int iIndex ) { set(iIndex, false); }
 
 		/// Get count of set bits.
 		int count()

@@ -201,8 +201,9 @@
     ;---------------------------------------------------------------------------
     (:action climb-three
         :parameters
-            (?bot1 ?bot2 - bot
+            (?bot1 - bot
              ?box - box
+             ?bot2 - bot
              ?from ?to - waypoint)
 
         :precondition

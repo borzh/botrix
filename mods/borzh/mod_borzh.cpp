@@ -101,9 +101,9 @@ void CMod_Borzh::MapLoaded()
 		const CEntity& cDoor = aDoors[iDoor];
 		TWaypointId iDoorWaypoint1 = cDoor.iWaypoint;
 		TWaypointId iDoorWaypoint2 = (TWaypointId)cDoor.pArguments;
-		if ( iDoorWaypoint1 != EInvalidWaypointId )
+		if ( iDoorWaypoint1 != EWaypointIdInvalid )
 			m_aAreasDoors[ CWaypoints::Get(iDoorWaypoint1).iAreaId ].push_back( iDoor );
-		if ( iDoorWaypoint2 != EInvalidWaypointId )
+		if ( iDoorWaypoint2 != EWaypointIdInvalid )
 			m_aAreasDoors[ CWaypoints::Get(iDoorWaypoint2).iAreaId ].push_back( iDoor );
 	}
 
@@ -113,7 +113,7 @@ void CMod_Borzh::MapLoaded()
 	for ( TEntityIndex iButton = 0; iButton < aButtons.size(); ++iButton )
 	{
 		const CEntity& cButton = aButtons[iButton];
-		if ( cButton.iWaypoint != EInvalidWaypointId )
+		if ( cButton.iWaypoint != EWaypointIdInvalid )
 			m_aAreasButtons[ CWaypoints::Get(cButton.iWaypoint).iAreaId ].push_back( iButton );
 	}
 

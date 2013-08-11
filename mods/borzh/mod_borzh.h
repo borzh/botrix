@@ -80,6 +80,7 @@ public: // Members.
 	static TChatVariable iVarWeapon;
 	static TChatVariable iVarArea;
 	static TChatVariable iVarPlayer;
+	static const int iTotalVars = 6;
 
 	static TChatVariableValue iVarValueDoorStatusOpened;
 	static TChatVariableValue iVarValueDoorStatusClosed;

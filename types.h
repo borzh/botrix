@@ -108,7 +108,8 @@ enum TBotChats
 	EBorzhChatWait,                              ///< Please wait until I finish.
 	EBorzhChatNoMoves,                           ///< No more moves.
 	EBorzhChatThink,                             ///< Bot will think (use FF).
-	EBorzhChatExplore,                           ///< Explore new area.
+	EBorzhChatExplore,                           ///< Explore current area.
+	EBorzhChatExploreNew,                        ///< Explore new area.
 	EBorzhChatFinishExplore,                     ///< Bot ends exploring this area.
 
 	EBorzhChatNewArea,                           ///< Bot enters new area.
@@ -235,13 +236,13 @@ typedef short TPathFlags;                        ///< Set of waypoint path flags
 
 enum TInvalidWaypoint
 {
-	EInvalidWaypointId         = -1              ///< Constant to indicate that waypoint is invalid.
+	EWaypointIdInvalid         = -1              ///< Constant to indicate that waypoint is invalid.
 };
 typedef int TWaypointId;                         ///< Waypoint ID is index of waypoint in array of waypoints.
 
 enum TInvalidArea
 {
-	EInvalidAreaId             = 255             ///< Constant to indicate that waypoint's area is invalid.
+	EAreaIdInvalid             = 255             ///< Constant to indicate that waypoint's area is invalid.
 };
 typedef unsigned char TAreaId;                   ///< Waypoints are grouped in areas. This is a type for area id.
 

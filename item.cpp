@@ -170,7 +170,7 @@ void CItems::Freed( const edict_t* pEdict )
 	if ( !m_aUsedItems.test(iIndex) )
 		return;
 
-	m_aUsedItems.clear(iIndex);
+	m_aUsedItems.reset(iIndex);
 	good::vector<CEntity>& aWeapons = m_aItems[EEntityTypeWeapon];
 	for ( TEntityIndex i=0; i < aWeapons.size(); ++i )
 		if ( aWeapons[i].pEdict == pEdict )
@@ -202,7 +202,7 @@ void CItems::MapUnloaded()
 	}
 
 	m_aOthers.clear();
-	m_aUsedItems.clear();
+	m_aUsedItems.reset();
 	m_bMapLoaded = false;
 }
 
@@ -415,7 +415,7 @@ TEntityIndex CItems::InsertEntity( int iEntityType, const CEntity& cEntity )
 void CItems::AutoWaypointPathFlagsForEntity( TEntityType iEntityType, TEntityIndex iIndex, CEntity& cEntity )
 {
 	TWaypointId iWaypoint = cEntity.iWaypoint;
-	if ( (iEntityType == EEntityTypeButton) && (iWaypoint != EInvalidWaypointId) )
+	if ( (iEntityType == EEntityTypeButton) && (iWaypoint != EWaypointIdInvalid) )
 	{
 		// Set waypoint argument to button.
 		CWaypoint& cWaypoint = CWaypoints::Get(iWaypoint);
@@ -426,7 +426,7 @@ void CItems::AutoWaypointPathFlagsForEntity( TEntityType iEntityType, TEntityInd
 	// Check 2nd nearest waypoint for door.
 	if ( iEntityType == EEntityTypeDoor )
 	{
-		if ( iWaypoint != EInvalidWaypointId )
+		if ( iWaypoint != EWaypointIdInvalid )
 		{
 			good::bitset cOmitWaypoints(CWaypoints::Size());
 			cOmitWaypoints.set(iWaypoint);
@@ -435,7 +435,7 @@ void CItems::AutoWaypointPathFlagsForEntity( TEntityType iEntityType, TEntityInd
 		cEntity.pArguments = (void*)iWaypoint;
 
 		// Set door for paths between these two waypoints.
-		if ( iWaypoint != EInvalidWaypointId )
+		if ( iWaypoint != EWaypointIdInvalid )
 		{
 			CWaypointPath* pPath = CWaypoints::GetPath(iWaypoint, cEntity.iWaypoint); // From -> To.
 			if ( pPath )

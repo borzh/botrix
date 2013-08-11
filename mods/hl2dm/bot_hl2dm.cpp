@@ -16,8 +16,8 @@ CBot_HL2DM::CBot_HL2DM( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence i
 void CBot_HL2DM::Respawned()
 {
 	CBot::Respawned();
-	m_aWaypoints.clear();
-	m_iFailWaypoint = EInvalidWaypointId;
+	m_aWaypoints.reset();
+	m_iFailWaypoint = EWaypointIdInvalid;
 	
 	m_cCurrentTask = EBotTaskInvalid;
 	m_bNeedTaskCheck = true;
@@ -249,7 +249,7 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 
 			if ( iItemToSearch == -1 )
 			{
-				m_aWaypoints.clear();
+				m_aWaypoints.reset();
 				m_aWaypoints.set(iCurrentWaypoint);
 
 				// Try to get to waypoint with flags.

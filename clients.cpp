@@ -33,7 +33,7 @@ void CClient::Activated()
 	iItemDrawFlags = EItemDrawAll;
 	iItemTypeFlags = 0;
 
-	iDestinationWaypoint = EInvalidWaypointId;
+	iDestinationWaypoint = EWaypointIdInvalid;
 
 #if defined(DEBUG) || defined(_DEBUG)
 	bDebuggingEvents = FLAG_ALL_SET(FCommandAccessConfig, iCommandAccessFlags);

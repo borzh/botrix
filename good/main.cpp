@@ -6,6 +6,8 @@
 #include <map>
 #include <queue>
 
+#include <windows.h>
+
 #include "good/bitset.h"
 #include "good/list.h"
 #include "good/file.h"
@@ -19,6 +21,8 @@
 #include "good/priority_queue.h"
 #include "good/graph.h"
 #include "good/astar.h"
+#include "good/thread.h"
+#include "good/process.h"
 
 class MyClass
 {
@@ -36,12 +40,146 @@ protected:
 };
 
 //--------------------------------------------------------------------------------------
+bool bExit = false;
+void process_write_proc(void* param) 
+{
+	good::process* cProcess = (good::process*)param;
+	char* ss = strdup("0123456789\n");
+	int ssSize = strlen(ss);
+	char j='A';
+	while ( !bExit )
+	{
+		for (int i = 0; i < 10; ++i)
+			ss[i] = j;
+
+		if ( !cProcess->write_stdin(ss, ssSize) )
+		{
+			printf(cProcess->get_last_error());
+			break;
+		}
+
+		if ( ++j > 'Z' )
+			j = 'A';
+
+		Sleep(100);
+	}
+	cProcess->close_stdin();
+	free(ss);
+}
+
+void test_process()
+{
+	printf("%s()\n\n", __FUNCTION__);
+
+	bool bRedirect = true;
+	bool bMakeInput = true;
+	good::thread cThread;
+	cThread.set_func( &process_write_proc );
+
+	good::process cProcess;
+	cProcess.set_params("echo.exe", "echo.exe", bRedirect, false);
+	//cProcess.set_params("..\\..\\ff\\ff.exe", "..\\..\\ff\\ff.exe -o domain.pddl -f result-problem-83steps.pddl", bRedirect, true);
+	for ( int times = 0; times < 2; ++times )
+	{
+		if ( !cProcess.launch(times%2 == 0) )
+		{
+			printf(cProcess.get_last_error());
+			return;
+		}
+
+		if ( bMakeInput )
+			cThread.launch(&cProcess, false);
+
+		bExit = false;
+		if ( bRedirect )
+		{
+			char szBuff[64*1024];
+			int i=0;
+			while ( i < 25 && (!cProcess.is_finished() || cProcess.has_data_stdout() || cProcess.has_data_stderr()) )
+			{
+				int iRead;
+				if ( cProcess.has_data_stdout() )
+				{
+					if ( !cProcess.read_output(szBuff, 512, iRead) )
+					{
+						printf(cProcess.get_last_error());
+						break;
+					}
+					szBuff[iRead] = 0;
+					printf(szBuff);
+				}
+
+				if ( cProcess.has_data_stderr() )
+				{
+					if ( !cProcess.read_error(szBuff, 512, iRead) )
+					{
+						printf(cProcess.get_last_error());
+						break;
+					}
+					szBuff[iRead] = 0;
+					fprintf(stderr, "StdErr: '%s'\n",szBuff);
+				}
+				Sleep(200);
+				++i;
+			}
+		}
+		bExit = (times%2 == 0);
+		
+		Sleep(5000);
+		printf("Before terminate\n");
+		if ( bMakeInput )
+			cThread.terminate();
+		if ( cProcess.is_finished() )
+			printf("  Already finished\n");
+		cProcess.terminate();
+		printf("After terminate\n");
+		Sleep(500);
+
+		cThread.dispose();
+		cProcess.dispose();
+	}
+}
+
+//--------------------------------------------------------------------------------------
+void thread_proc(void* param) 
+{
+	for (int i=0; i<50; ++i)
+	{
+		printf("Thread %d: %d\n", param, i);
+		Sleep(100);
+	}
+	printf("Thread %d exited\n", param);
+}
+
+void test_threads()
+{
+	printf("%s()\n\n", __FUNCTION__);
+	const int threads_count = 10;
+	good::thread pThreads[threads_count];
+	for (int i=0; i<threads_count; ++i)
+	{
+		pThreads[i].set_func(&thread_proc);
+		pThreads[i].launch((void*)i, false);
+	}
+
+	Sleep(3000);
+	for (int i=0; i<threads_count-1; ++i)
+	{
+		pThreads[i].terminate();
+		printf("Thread %d terminated\n", i);
+	}
+	printf("Before join\n");
+	pThreads[threads_count-1].join(10000);
+	printf("After join\n");
+}
+
+//--------------------------------------------------------------------------------------
 void test_bitset()
 {
 	printf("%s()\n\n", __FUNCTION__);
 	good::bitset b;
 	b.resize(100);
-	b.clear();
+	b.reset();
 	for ( int i=0; i<100; ++i )
 		if (i % 3 == 0)
 			b.set(i);
@@ -541,10 +679,18 @@ void test_graph()
 //--------------------------------------------------------------------------------------
 int main(int argc, char** argv)
 {
-	test_bitset();
+	test_process();
 	system("pause");
 	system("cls");
 	
+	//test_threads();
+	//system("pause");
+	//system("cls");
+	//
+	//test_bitset();
+	//system("pause");
+	//system("cls");
+	//
 	//test_list();
 	//system("pause");
 	//system("cls");

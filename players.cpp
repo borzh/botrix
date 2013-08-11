@@ -404,28 +404,30 @@ void CPlayers::DeliverChat( edict_t* pFrom, bool bTeamOnly, const char* szText )
 	{
 		static CBotChat cChat;
 		cChat.iBotRequest = EBotChatUnknown;
+		cChat.iDirectedTo = EPlayerIndexInvalid;
 		cChat.iSpeaker = iIdx;
 
 		float fPercentage = CChat::ChatFromText( szText, cChat );
 		bool bIsRequest = (fPercentage >= 6.0f);
 
+/*
 		if ( cChat.iDirectedTo == -1 )
 			cChat.iDirectedTo = pSpeaker->iChatMate;
 		else
 			pSpeaker->iChatMate = cChat.iDirectedTo; // TODO: SetChatMate();
-
+*/
 		int iFrom = 0, iTo = CPlayers::Size();
-
 		if ( bIsRequest && (cChat.iDirectedTo != -1) )
 		{
 			DebugAssert( cChat.iDirectedTo != iIdx );
 			iFrom = cChat.iDirectedTo;
 			iTo = iFrom + 1;
 		}
-		else
-			DebugMessage("Can't detect player, chat is directed to.");
+		//else
+		//	DebugMessage("Can't detect player, chat is directed to.");
 
-		// Deliver chat for all bots or one bot in particular.
+
+		// Deliver chat for all bots.
 		for ( TPlayerIndex iPlayer = iFrom; iPlayer < iTo; ++iPlayer )
 		{
 			CPlayer* pReceiver = CPlayers::Get(iPlayer);

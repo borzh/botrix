@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="test"
 	ProjectGUID="{17A83237-39B5-4AF6-8E25-57EFBD4D39B6}"
 	RootNamespace="test"
@@ -21,7 +21,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="1"
+			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -46,7 +46,7 @@
 				GeneratePreprocessedFile="0"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -177,6 +177,22 @@
 			>
 		</File>
 		<File
+			RelativePath=".\bitmatrix.h"
+			>
+		</File>
+		<File
+			RelativePath=".\bitset.h"
+			>
+		</File>
+		<File
+			RelativePath=".\circular_buffer.h"
+			>
+		</File>
+		<File
+			RelativePath=".\defines.h"
+			>
+		</File>
+		<File
 			RelativePath=".\file.cpp"
 			>
 		</File>
@@ -221,6 +237,14 @@
 			>
 		</File>
 		<File
+			RelativePath=".\process.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\process.h"
+			>
+		</File>
+		<File
 			RelativePath=".\set.h"
 			>
 		</File>
@@ -234,6 +258,14 @@
 		</File>
 		<File
 			RelativePath=".\string_buffer.h"
+			>
+		</File>
+		<File
+			RelativePath=".\thread.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\thread.h"
 			>
 		</File>
 		<File

@@ -491,8 +491,8 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 	
 	good::vector<bool> cFounded; // To know if word is in the matching phrase.
 	cFounded.resize( aWords.size() );
-	
-	cCommand.cMap.clear();
+
+	CChatVariablesMap cMatchMap(4);
 
 	if ( aWords.size() == 0 )
 		return 0.0f;
@@ -506,6 +506,7 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 	{
 		for ( int iPhrase = 0; iPhrase < m_aMatchPhrases[iCommand].size(); ++iPhrase )
 		{
+			cMatchMap.clear();
 			int iFound = 0, iRequired = 0, iOrdered = 0, iTotalRequired = 0, iPrevPos = 0;
 
 			// Set all cFounded to false.
@@ -553,7 +554,7 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 								}
 				found:
 					if ( iValue != EChatVariableValueInvalid )
-						cCommand.cMap.push_back( CChatVarValue(iVar, iVarNumber, iValue) );
+						cMatchMap.push_back( CChatVarValue(iVar, iVarNumber, iValue) );
 				}
 
 				if ( !cPhraseWord.bOptional )
@@ -595,6 +596,10 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 				iBestOrdered = iOrdered;
 				cCommand.iBotRequest = iCommand;
 				iBestPhrase = iPhrase;
+
+				cCommand.cMap.clear();
+				for ( int i=0; i < cMatchMap.size(); ++i )
+					cCommand.cMap.push_back( cMatchMap[i] );
 			}
 		}
 	}

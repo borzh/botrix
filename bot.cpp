@@ -114,8 +114,8 @@ void CBot::Respawned()
 	m_aAvoidAreas.clear();
 
 	m_iNextCheckPlayer = 0;
-	m_aNearPlayers.clear();
-	m_aSeenEnemies.clear();
+	m_aNearPlayers.reset();
+	m_aSeenEnemies.reset();
 	m_pCurrentEnemy = NULL;
 	m_iObjective = EBotChatUnknown;
 
@@ -203,8 +203,8 @@ void CBot::Dead()
 //----------------------------------------------------------------------------------------------------------------
 void CBot::PlayerDisconnect( int iPlayerIndex, CPlayer* pPlayer )
 {
-	m_aNearPlayers.clear(iPlayerIndex);
-	m_aSeenEnemies.clear(iPlayerIndex);
+	m_aNearPlayers.reset(iPlayerIndex);
+	m_aSeenEnemies.reset(iPlayerIndex);
 
 	if ( pPlayer == m_pCurrentEnemy )
 	{
@@ -949,10 +949,10 @@ void CBot::UpdateWorld()
 				}
 			}
 			else
-				m_aNearPlayers.clear(m_iNextCheckPlayer);
+				m_aNearPlayers.reset(m_iNextCheckPlayer);
 		}
 		else
-			m_aNearPlayers.clear(m_iNextCheckPlayer);
+			m_aNearPlayers.reset(m_iNextCheckPlayer);
 
 		// Check if this enemy can be seen / should be attacked.
 		if ( IsEnemy(pEnemy) )
@@ -993,7 +993,7 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
 	}
 	else // Can't see this player anymore or player is dead.
 	{
-		m_aSeenEnemies.clear(iPlayerIndex);
+		m_aSeenEnemies.reset(iPlayerIndex);
 		if ( m_pCurrentEnemy == pPlayer )
 		{
 			m_pCurrentEnemy = NULL;

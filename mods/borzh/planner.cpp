@@ -3,11 +3,15 @@
 #include "good/thread.h"
 
 #include "mods/borzh/bot_borzh.h"
+#include "mods/borzh/mod_borzh.h"
 #include "mods/borzh/planner.h"
 #include "players.h"
 #include "type2string.h"
 #include "waypoint.h"
 
+
+#define PRINT_MESSAGE(...) CUtil::PutMessageInQueue(__VA_ARGS__)
+//#define PRINT_MESSAGE(...)
 
 //----------------------------------------------------------------------------------------------------------------
 const int g_iPlannerBufferSize = 64*1024;
@@ -23,27 +27,40 @@ good::process g_cPlannerProcess(sExe, sCommand, true, true); // Spawned process 
 void PlannerThreadFunc( void* pArgument );                   // Forward declaration.
 good::thread g_cThread(PlannerThreadFunc);                   // Thread that reads and transforms ff.exe output.
 
-CPlanner::CPlan g_cPlan(128);                                // Plan: global array of actions.
+CPlanner::CPlan g_cPlan(64);                                 // Plan: global array of actions.
 CPlanner::CPlan* g_pPlan = NULL;                             // Result of ff.exe, can be NULL or &g_cPlan.
 
-const CBot_BorzhMod* g_pBot = NULL;
-const good::vector<TAreaId>* g_pDesiredPlayersPositions = NULL;
+const CBotBorzh* g_pBot = NULL;                          // Bot for which make a plan.
+
+//----------------------------------------------------------------------------------------------------------------
+bool CPlanner::m_bLocked = false;
+const CBotBorzh* CPlanner::m_pBot = NULL;
 
 //----------------------------------------------------------------------------------------------------------------
 bool CPlanner::IsRunning()
 {
+	if ( !bIsPlannerRunning )
+		g_cThread.dispose();
 	return bIsPlannerRunning;
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CPlanner::ExecutePlanner( const CBot_BorzhMod& cBot, const good::vector<TAreaId>& cDesiredPlayersPositions )
+void CPlanner::Start( const CBotBorzh* pBot )
 {
-	DebugAssert( !bIsPlannerRunning );
+	DebugAssert( !bIsPlannerRunning && m_bLocked && (pBot == m_pBot) );
 
 	bIsPlannerRunning = true;
-	g_pBot = &cBot;
-	g_pDesiredPlayersPositions = &cDesiredPlayersPositions;
-	g_cThread.launch(NULL, false);
+	g_pBot = pBot;
+	g_cThread.launch(NULL, true);
+}
+
+//----------------------------------------------------------------------------------------------------------------
+void CPlanner::Stop()
+{
+	g_cPlannerProcess.dispose();
+	g_cThread.dispose(); // This will not kill the thread.
+	//bIsPlannerRunning = false;
+	g_pPlan = NULL;
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -118,42 +135,17 @@ void GeneratePddl()
 	// Print initial state.
 	fprintf(f, "	(:init\n");
 
-	// Print weapons type and where weapons are.
-	for ( TEntityIndex iWeapon=0; iWeapon < cWeapons.size(); ++iWeapon )
-	{
-		const CEntity& cWeapon = cWeapons[iWeapon];
-		if ( cWeapon.IsFree() || !cWeapon.IsOnMap() || !CWaypoints::IsValid(cWeapon.iWaypoint) )
-			continue;
-
-		CWaypoint& cWaypoint = CWaypoints::Get(cWeapon.iWaypoint);
-		TAreaId iArea = cWaypoint.iAreaId;
-
-		const good::string& sWeapon = cWeapon.pItemClass->sClassName;
-		if ( sWeapon == "weapon_physcannon" )
-		{
-			fprintf( f, "		(physcannon weapon%d)\n", iWeapon );
-			fprintf( f, "		(weapon-at weapon%d area%d)\n\n", iWeapon, iArea );
-		}
-		else if ( sWeapon == "weapon_crossbow" )
-		{
-			fprintf( f, "		(sniper-weapon weapon%d)\n", iWeapon );
-			fprintf( f, "		(weapon-at weapon%d area%d)\n\n", iWeapon, iArea );
-		}
-	}
-
 	// Bot's position and weapons.
 	for ( TPlayerIndex iPlayer=0; iPlayer < CPlayers::Size(); ++iPlayer )
 	{
 		CPlayer* pPlayer = CPlayers::Get(iPlayer);
 		if ( pPlayer && g_pBot->m_cCollaborativePlayers.test(iPlayer) )
 		{
-			fprintf(f, "		(at bot%d area%d) (empty bot%d) ", iPlayer, g_pBot->m_aPlayersAreas[iPlayer], iPlayer);
-			/*
-			if ( g_pBot->m_cPlayersWithPhyscannon.test(iPlayer)) )
-				fprintf(f, "(has bot%d gravity-gun) ", iPlayer);
-			if ( g_pBot->m_cPlayersWithCrossbow.test(iPlayer)) )
-				fprintf(f, "(has bot%d cross-bow) ", iPlayer);
-				*/
+			fprintf(f, "		(at bot%d area%d) (empty bot%d)", iPlayer, g_pBot->m_aPlayersAreas[iPlayer], iPlayer);
+			if ( g_pBot->m_cPlayersWithPhyscannon.test(iPlayer) )
+				fprintf(f, " (has bot%d gravity-gun)", iPlayer);
+			if ( g_pBot->m_cPlayersWithCrossbow.test(iPlayer) )
+				fprintf(f, " (has bot%d cross-bow)", iPlayer);
 			fprintf(f, "\n\n");
 		}
 	}
@@ -161,10 +153,13 @@ void GeneratePddl()
 	// Buttons positions.
 	for ( TEntityIndex iButton=0; iButton < cButtons.size(); ++iButton )
 	{
-		const CEntity& cButton = cButtons[iButton];
-		int iWaypoint = cButton.iWaypoint;
-		if ( CWaypoints::IsValid(iWaypoint) )
-			fprintf(f, "		(button-at button%d area%d)\n", iButton, CWaypoints::Get(iWaypoint).iAreaId);
+		if ( g_pBot->m_cSeenButtons.test(iButton) )
+		{
+			const CEntity& cButton = cButtons[iButton];
+			int iWaypoint = cButton.iWaypoint;
+			if ( CWaypoints::IsValid(iWaypoint) )
+				fprintf(f, "		(button-at button%d area%d)\n", iButton, CWaypoints::Get(iWaypoint).iAreaId);
+		}
 	}
 	fprintf(f, "\n");
 
@@ -179,7 +174,7 @@ void GeneratePddl()
 			int iArea1 = CWaypoints::Get(iWaypoint1).iAreaId;
 			int iArea2 = CWaypoints::Get(iWaypoint2).iAreaId;
 			fprintf(f, "		(between door%d area%d area%d)\n", i, iArea1, iArea2);
-			if ( CItems::IsDoorOpened(i) )
+			if ( g_pBot->m_cOpenedDoors.test(i) )
 			{
 				fprintf(f, "		(can-move area%d area%d)\n", iArea1, iArea2);
 				fprintf(f, "		(can-move area%d area%d)\n", iArea2, iArea1);
@@ -187,7 +182,10 @@ void GeneratePddl()
 
 		}
 		else
-			CUtil::Message(NULL, "Error, door%d doesn't have 2 waypoints close.", i+1);
+		{
+			DebugAssert(false);
+			PRINT_MESSAGE("Error, door%d doesn't have 2 waypoints close.", i+1);
+		}
 	}
 	fprintf(f, "\n");
 
@@ -202,7 +200,7 @@ void GeneratePddl()
 			if ( CWaypoints::IsValid(iWaypoint) )
 				fprintf( f, "		(box-at box%d area%d)\n", i, CWaypoints::Get(iWaypoint).iAreaId );
 			else
-				CUtil::Message(NULL, "Warning, box%d has no waypoint near.", i+1);
+				PRINT_MESSAGE("Warning, box%d has no waypoint near.", i+1);
 		}
 	}
 
@@ -220,7 +218,7 @@ void GeneratePddl()
 			if ( iButton > 0 )
 				fprintf(f, "		(can-shoot button%d area%d)\n", iButton-1, iArea1);
 			else
-				CUtil::Message(NULL, "Error, waypoint %d: see_button argument has invalid button.", iWaypoint1);
+				PRINT_MESSAGE("Error, waypoint %d: see_button argument has invalid button.", iWaypoint1);
 		}
 
 		CWaypoints::WaypointNode::arcs_t& cNeighbours = cNode.neighbours;
@@ -240,7 +238,7 @@ void GeneratePddl()
 					else if ( cPath.iArgument == 3 )
 						fprintf(f, "		(can-climb-three area%d area%d)\n", iArea1, iArea2);
 					else
-						CUtil::Message(NULL, "Error, totem value must be 2 or 3 for path from %d to %d.", iWaypoint1, iWaypoint2);
+						PRINT_MESSAGE("Error, totem value must be 2 or 3 for path from %d to %d.", iWaypoint1, iWaypoint2);
 				}
 				else if ( !FLAG_SOME_SET(FPathDoor, cPath.iFlags) ) // Has no door between, and no need to make totem, just pass.
 					fprintf(f, "		(can-move area%d area%d)\n", iArea1, iArea2);
@@ -273,19 +271,48 @@ void GeneratePddl()
 	// Goal.
 	fprintf(f, "	(:goal\n");
 	fprintf(f, "		(and\n");
-	
-	// Print desired player's positions.
-	for ( int iPlayer = 0; iPlayer < CPlayers::Size(); ++iPlayer )
+
+	if ( g_pBot->m_cCurrentBigTask.iTask == EBorzhTaskGoToGoal )
 	{
-		CPlayer* pPlayer = CPlayers::Get(iPlayer);
-		if ( pPlayer && g_pBot->m_cCollaborativePlayers.test(iPlayer) )
+		TAreaId iGoalArea = CWaypoints::GetAreas().size() - 1;
+
+		// Print goal positions for all bots.
+		for ( int iPlayer = 0; iPlayer < CPlayers::Size(); ++iPlayer )
 		{
-			TAreaId iDesiredPosition = g_pBot->m_cDesiredPlayersPositions[iPlayer];
-			fprintf(f, "			(at bot%d area%d)\n", iPlayer, iDesiredPosition);
+			CPlayer* pPlayer = CPlayers::Get(iPlayer);
+			if ( pPlayer && g_pBot->m_cCollaborativePlayers.test(iPlayer) )
+				fprintf(f, "			(at bot%d area%d)\n", iPlayer, iGoalArea);
 		}
 	}
-	fprintf(f, "\n");
-	
+	else
+	{
+		DebugAssert( g_pBot->m_cCurrentBigTask.iTask == EBorzhTaskButtonDoorConfig );
+
+		TEntityIndex iButton = GET_2ND_BYTE(g_pBot->m_cCurrentBigTask.iArgument);
+		TEntityIndex iDoor = GET_3RD_BYTE(g_pBot->m_cCurrentBigTask.iArgument);
+
+		const CEntity& cButton = CItems::GetItems(EEntityTypeButton)[iButton];
+		
+		TWaypointId iButtonWaypoint = cButton.iWaypoint;
+		if ( iButtonWaypoint == EWaypointIdInvalid )
+			iButtonWaypoint = CModBorzh::GetWaypointToShootButton(iButton);
+		DebugAssert( iButtonWaypoint != EWaypointIdInvalid );
+		fprintf(f, "			(exists (?bot - bot) (at ?bot area%d))\n", CWaypoints::Get(iButtonWaypoint).iAreaId);
+		
+		if ( iDoor != 0xFF )
+		{
+			const CEntity& cDoor = CItems::GetItems(EEntityTypeDoor)[iDoor];
+			TWaypointId iDoorWaypoint1 = cDoor.iWaypoint;
+			TWaypointId iDoorWaypoint2 = (TWaypointId)cDoor.pArguments;
+			DebugAssert( (iDoorWaypoint1 != EWaypointIdInvalid) && (iDoorWaypoint2 != EWaypointIdInvalid) );
+			fprintf(f, "			(or\n");
+			fprintf(f, "				(exists (?bot - bot) (at ?bot area%d))\n", CWaypoints::Get(iDoorWaypoint1).iAreaId);
+			fprintf(f, "				(exists (?bot - bot) (at ?bot area%d))\n", CWaypoints::Get(iDoorWaypoint2).iAreaId);
+			fprintf(f, "			)\n");
+		}
+		
+	}
+
 	fprintf(f, "		)\n");
 	fprintf(f, "	)\n");
 	fprintf(f, ")\n");
@@ -299,16 +326,15 @@ void GeneratePddl()
 //----------------------------------------------------------------------------------------------------------------
 const good::string GetNextWord( good::string& sStr, int& iFrom )
 {
-	char c;
+	char c = sStr[iFrom];
 	// Skip space.
-	do {
-		c = sStr[iFrom++];
-	} while ( ((c == ' ') || (c == '\n')) && (iFrom < sStr.size()) );
+	while ( ((c == ' ') || (c == '\n') || (c == '\r')) && (iFrom < sStr.size()) )
+		c = sStr[++iFrom];
 
 	// Skip non-space.
-	int iTo = iFrom+1;
-	while ( (c != ' ') && (c != '\n') && (iTo < sStr.size()) )
-		c = sStr[iTo++];
+	int iTo = iFrom;
+	while ( (c != ' ') && (c != '\n') && (c != '\r') && (iTo < sStr.size()) )
+		c = sStr[++iTo];
 
 	DebugAssert( iTo-iFrom > 0 );
 	good::string result = sStr.substr(iFrom, iTo-iFrom, false);
@@ -319,8 +345,21 @@ const good::string GetNextWord( good::string& sStr, int& iFrom )
 bool TransformPlannerOutput()
 {
 	static good::string sPlanStart("ff: found legal plan as follows");
+	static good::string sNoPlan("ff: goal can be simplified to FALSE");
+	static good::string sEmptyPlan("ff: goal can be simplified to TRUE");
+
+	g_cPlan.clear();
 
 	good::string_buffer sbBuffer(g_szPlannerBuffer, g_iPlannerBufferSize, false, true);
+
+	if ( sbBuffer.find(sNoPlan) != good::string::npos ) // No plan.
+		return false;
+
+	if ( sbBuffer.find(sEmptyPlan) != good::string::npos ) // Empty plan.
+	{
+		g_pPlan = &g_cPlan;
+		return true;
+	}
 
 	int iPos = sbBuffer.find(sPlanStart);
 	if ( iPos == good::string::npos ) // No plan.
@@ -328,13 +367,11 @@ bool TransformPlannerOutput()
 
 	// Skip end of line twice.
 	iPos += sPlanStart.size();
-	iPos = sbBuffer.find('\n', iPos);
+	iPos = sbBuffer.find('\n', iPos+1);
 	DebugAssert( iPos != good::string::npos );
-	iPos = sbBuffer.find('\n', iPos);
+	iPos = sbBuffer.find('\n', iPos+1);
 	DebugAssert( iPos != good::string::npos );
 	iPos++;
-
-	g_cPlan.clear();
 
 	// Find ':' until empty string is found.
 	while ( iPos < sbBuffer.size() )
@@ -355,8 +392,11 @@ bool TransformPlannerOutput()
 		// Get action.
 		good::string sAction = GetNextWord(sbBuffer, ++iPos);
 		DebugAssert( iPos < iEnd );
+        if ( sAction == "REACH-GOAL" ) // FF interrnal action :S
+            break;
+
 		TBotAction iAction = CTypeToString::BotActionFromString(sAction);
-		DebugAssert( iAction != -1 );
+		DebugAssert( iAction != EBotActionInvalid );
 
 		// Get bot.
 		static good::string sBot("BOT");
@@ -370,7 +410,7 @@ bool TransformPlannerOutput()
 		// Get argument.
 		good::string sArgument = GetNextWord(sbBuffer, ++iPos);
 		DebugAssert( iPos < iEnd );
-		const char* szArgumentNumber = sPerformer.c_str();
+		const char* szArgumentNumber = sArgument.c_str();
 		while ( *szArgumentNumber < '0' || *szArgumentNumber > '9' )
 			szArgumentNumber++;
 		int iArgument = atoi(szArgumentNumber);
@@ -408,8 +448,8 @@ void PlannerThreadFunc( void* pParameter )
 	GeneratePddl();
 	if ( !g_cPlannerProcess.launch(false, false) )
 	{
-		CUtil::Message( NULL, "Error while executing ff.exe:");
-		CUtil::Message( NULL, "    %s", g_cPlannerProcess.get_last_error() );
+		PRINT_MESSAGE( "Error while executing ff.exe:");
+		PRINT_MESSAGE( "    %s", g_cPlannerProcess.get_last_error() );
 		g_pPlan = NULL;
 		goto planner_thread_end;
 	}
@@ -429,8 +469,8 @@ void PlannerThreadFunc( void* pParameter )
 			}
 			else
 			{
-				CUtil::Message( NULL, "Error while executing ff.exe:");
-				CUtil::Message( NULL, "    %s", g_cPlannerProcess.get_last_error() );
+				PRINT_MESSAGE( "Error while executing ff.exe:" );
+				PRINT_MESSAGE( "    %s", g_cPlannerProcess.get_last_error() );
 				break;
 			}
 		}
@@ -443,7 +483,7 @@ void PlannerThreadFunc( void* pParameter )
 		// Finished correctly.
 		g_szPlannerBuffer[iTotalRead] = 0;
 		g_cPlan.clear();
-		CUtil::Message( NULL, "%s", g_szPlannerBuffer);
+		PRINT_MESSAGE( "%s", g_szPlannerBuffer);
 		if ( TransformPlannerOutput() )
 			g_pPlan = &g_cPlan;
 		else
@@ -458,6 +498,5 @@ void PlannerThreadFunc( void* pParameter )
 
 planner_thread_end:
 	g_cPlannerProcess.dispose();
-	g_cThread.dispose();
 	bIsPlannerRunning = false;
 }

@@ -6,6 +6,8 @@
 #include "public/eiface.h"
 #include "public/engine/IEngineTrace.h"
 
+#include "good/mutex.h"
+
 #include "types.h"
 
 #include "server_plugin.h"
@@ -50,11 +52,18 @@ public:
 	/// Util function to get path inside Botrix folder.
 	static const good::string& BuildFileName( const good::string& sFolder, const good::string& sFile, const good::string& sExtension );
 
-	/// Print a message to given client. If message tag is used then message will start with "[Botrix] ".
-	static void Message( edict_t* pEntity, const char* fmt, ... );	
 
 	/// If message tag is used then all client messages using Message() will start with "[Botrix] ".
 	static void SetMessageUseTag( bool bUseTag ) { m_bMessageUseTag = bUseTag; }
+
+	/// Print a message to given client (must be called from game thread). If message tag is used then message will start with "[Botrix] ".
+	static void Message( edict_t* pEntity, const char* fmt, ... );	
+
+	/// Put message in message queue. It must be done when called from thread != game thread, to avoid incorrect behaviour.
+	static void PutMessageInQueue( const char* fmt, ... );	
+
+	/// Print messages in queue.
+	static void PrintMessagesInQueue();	
 
 	/// Return true if given entity is server networkable.
 	static bool IsNetworkable( edict_t* pEntity );
@@ -71,6 +80,9 @@ public:
 	static void SetPVSForVector( const Vector& vFrom );
 	/// Check if point v is in potentially visible set.
 	static bool IsVisiblePVS( const Vector& v );
+
+	/// Return true given ray hits given entity.
+	static bool IsRayHitsEntity( edict_t* pDoor, Vector const& vSrc, Vector const& vDest );
 
 	/// Return true if vDest is visible from vSrc.
 	static bool IsVisible( Vector const& vSrc, Vector const& vDest, TVisibilityFlags iFlags = FVisibilityWorld );
@@ -206,6 +218,11 @@ public: // Members.
 protected:
 	static bool m_bMessageUseTag;
 	static trace_t m_TraceResult;
+	
+	static good::mutex m_cMessagesMutex;
+	static good::vector<char*> m_aMessages;
+	static good::vector<edict_t*> m_aMessagesEntities;
+
 };
 
 #endif // __BOTRIX_UTIL_H__

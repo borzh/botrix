@@ -32,7 +32,7 @@
     (:action move
         :parameters
             (?bot - bot
-             ?from ?to - waypoint)
+             ?to ?from - waypoint)
 
         :precondition
             (and

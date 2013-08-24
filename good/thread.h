@@ -34,16 +34,17 @@ namespace good
 		/// Set function.
 		void set_func( thread_func_t thread_func );
 
-		/// Execute thread.
+		/// Execute thread. TODO: add it to list of threads.
 		void launch( void* pThreadParameter, bool bDaemon = true );
 
-		/// Free all handles and memory. Terminate thread if not daemon.
+		/// Free all handles and memory. Interrupts thread if not daemon.
+		// http://stackoverflow.com/questions/14290394/terminatethread-locks-up-when-thread-has-infinate-loop
 		void dispose();
 
 		/// Wait for this thread. Return true if thread is terminated.
 		bool join( int iMSecs = TIME_INFINITE );
 
-		/// Terminate thread.
+		/// Interrupt thread.
 		void terminate();
 
 		/// Check if thread was launched previously.

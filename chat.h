@@ -46,10 +46,10 @@ typedef good::vector< CChatVarValue > CChatVariablesMap; ///< Map from chat vari
 class CBotChat
 {
 public:
-	CBotChat( TBotChat iBotRequest = EBotChatUnknown, int iSpeaker = -1, int iDirectedTo = -1 ):
-		iBotRequest(iBotRequest), iSpeaker(iSpeaker), iDirectedTo(iDirectedTo), cMap(4) {}
+	CBotChat( TBotChat iBotChat = EBotChatUnknown, int iSpeaker = -1, int iDirectedTo = -1 ):
+		iBotChat(iBotChat), iSpeaker(iSpeaker), iDirectedTo(iDirectedTo), cMap(4) {}
 
-	TBotChat iBotRequest;                  ///< Request type.
+	TBotChat iBotChat;                  ///< Request type.
 	TPlayerIndex iSpeaker;                 ///< Index of player, that talked this request.
 	TPlayerIndex iDirectedTo;              ///< Index of player, request is directed to. It is $player or $player1.
 	CChatVariablesMap cMap;                ///< Map from variables to value.

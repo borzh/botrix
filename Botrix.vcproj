@@ -503,6 +503,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\good\mutex.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\good\mutex.h"
+				>
+			</File>
+			<File
 				RelativePath=".\good\priority_queue.h"
 				>
 			</File>

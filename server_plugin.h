@@ -155,6 +155,7 @@ public: // Members.
 
 	static int iFPS;                      ///< Frames per second. Updated each second.
 	static float fTime;                   ///< Current time.
+	static float fEngineTime;             ///< Current engine time.
 
 protected:
 	static float m_fFpsEnd;               // Time of ending counting frames to calculate fps.

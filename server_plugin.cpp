@@ -48,8 +48,9 @@ EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CBotrixPlugin, IServerPluginCallbacks, INTERFA
 //----------------------------------------------------------------------------------------------------------------
 // CBotrixPlugin static members.
 //----------------------------------------------------------------------------------------------------------------
-int CBotrixPlugin::iFPS = 0;
+int CBotrixPlugin::iFPS = 60;
 float CBotrixPlugin::fTime = 0.0f;
+float CBotrixPlugin::fEngineTime = 0.0f;
 float CBotrixPlugin::m_fFpsEnd = 0.0f;
 int CBotrixPlugin::m_iFramesCount = 60;
 
@@ -245,18 +246,39 @@ void CBotrixPlugin::ServerActivate( edict_t* pEdictList, int edictCount, int cli
 //----------------------------------------------------------------------------------------------------------------
 void CBotrixPlugin::GameFrame( bool simulating )
 {
-	fTime = pEngineServer->Time();
-	m_iFramesCount++;
-	if (fTime >= m_fFpsEnd)
+	CUtil::PrintMessagesInQueue();
+
+	float fPrevEngineTime = fEngineTime;
+	fEngineTime = pEngineServer->Time();
+
+	float fDiff = fEngineTime - fPrevEngineTime;
+	if ( fDiff > 1.0f ) // Too low fps, possibly debugging.
+		fTime += 0.1f;
+	else
+		fTime += fDiff;
+
+	// FPS counting. Used in draw waypoints.
+	/*m_iFramesCount++;
+	if (fEngineTime >= m_fFpsEnd)
 	{
 		iFPS = m_iFramesCount;
 		m_iFramesCount = 0;
-		m_fFpsEnd = fTime + 1.0f;
+		m_fFpsEnd = fEngineTime + 1.0f;
 		//CUtil::Message(NULL, "FPS: %d", iFPS);
-	}
+	}*/
 
 	if ( bMapRunning )
 	{
+		// Show fps.
+		//m_iFramesCount++;
+		//if (fTime >= m_fFpsEnd)
+		//{
+		//	iFPS = m_iFramesCount;
+		//	m_iFramesCount = 0;
+		//	m_fFpsEnd = fTime + 1.0f;
+		//	CUtil::Message(NULL, "FPS: %d", iFPS);
+		//}
+
 		CItems::Update();
 		CPlayers::PreThink();
 		//CUtil::Message(NULL, "Players think time: %.5f", pEngineServer->Time() - fTime);

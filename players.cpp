@@ -186,7 +186,7 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
 			pPlayer = new CBot_HL2DM(pEdict, iIdx, iIntelligence);
 			break;
 		case EModId_Borzh: 
-			pPlayer = new CBot_BorzhMod(pEdict, iIdx, iIntelligence);
+			pPlayer = new CBotBorzh(pEdict, iIdx, iIntelligence);
 			break;
 		default:
 			DebugAssert(false);
@@ -403,7 +403,7 @@ void CPlayers::DeliverChat( edict_t* pFrom, bool bTeamOnly, const char* szText )
 	if ( GetBotsCount() > 0 )
 	{
 		static CBotChat cChat;
-		cChat.iBotRequest = EBotChatUnknown;
+		cChat.iBotChat = EBotChatUnknown;
 		cChat.iDirectedTo = EPlayerIndexInvalid;
 		cChat.iSpeaker = iIdx;
 

@@ -130,6 +130,10 @@ enum TBotChats
 	
 	EBorzhChatDoorTry,                           ///< Bot says to find button that opens given door.
 	EBorzhChatButtonTry,                         ///< Bot says to find doors that opens given button.
+	EBorzhChatButtonTryGo,                       ///< Bot says to try to go to given button.
+	EBorzhChatButtonDoor,                        ///< Bot says to check button-door configuration.
+	EBorzhChatButtonToggles,                     ///< Bot says that button $button toggles door $door.
+	EBorzhChatButtonNoToggles,                   ///< Bot says that button $button doesn't affect door $door.
 
 	EBorzhChatButtonIPush,                       ///< Bot will try to push button.
 	EBorzhChatButtonYouPush,                     ///< Bot orders to push button to other bot.
@@ -140,6 +144,9 @@ enum TBotChats
 	EBorzhChatAreaCantGo,                        ///< Bot founds closed door when it tries to pass to given area.
 	EBorzhChatDoorGo,                            ///< Bot orders to go to some door to other bot.
 	EBorzhChatButtonGo,                          ///< Bot orders to go to some button to other bot.
+	
+	EBorzhChatTaskCancel,                        ///< Bot releases other players from task.
+	EBorzhChatBetterIdea,                        ///< Bot has better idea.
 
 	EBorzhChatFoundPlan,                         ///< Bot founds a plan to reach goal.
 

@@ -20,22 +20,31 @@ enum TBorzhTasks
 	EBorzhTaskSpeak,                             ///< Speak about something. Argument represents door/button/box/weapon, etc.
 
 	EBorzhTaskWaitAnswer,                        ///< Wait for other player to accept/reject task.
-	//EBorzhTaskWaitPlayer,                        ///< Wait for other player to do something. The bot will say "done" phrase when it finishes.
+	EBorzhTaskWaitPlanner,                       ///< Wait for planner to finish.
+	EBorzhTaskWaitPlayer,                        ///< Wait for other player to do something. The bot will say "done" phrase when it finishes.
 	EBorzhTaskWaitButton,                        ///< Wait for other player to push a button. The other player must say "i will push button now".
-	EBorzhTaskUseWeapon,                         ///< Use weapon on box/button.
 	EBorzhTaskPushButton,                        ///< Push a button.
-	EBorzhTaskShootButton,                       ///< Shoot a button.
 
-	// Next tasks are tasks that consist of several atomic tasks. Ordered by priority: explore has higher priority than
-	EBorzhTaskButtonDoorConfig,                  ///< Trying to check door-button configuration.
-	EBorzhTaskButtonTry,                         ///< Check which doors opens a button. Argument: index is button, type is bool (already pushed or still not).
-	EBorzhTaskCheckingDoors,                     ///< Checking if door status is changed.
-	EBorzhTaskExplore,                           ///< Exploring new area.
-	EBorzhTaskGoToGoal,                          ///< Performing go to goal task.
+	EBorzhTaskWeaponSet,                         ///< Set current weapon. Argument can be 0xFF for crowbar or CModBorzh::iVarValueWeapon*.
+	EBorzhTaskWeaponZoom,                        ///< Zoom weapon.
+	EBorzhTaskWeaponRemoveZoom,                  ///< Remove zoom from weapon.
+	EBorzhTaskWeaponShoot,                       ///< Shoot weapon.
 
 	EBorzhTaskCarryBox,                          ///< Start carrying box. Argument is box number.
 	EBorzhTaskDropBox,                           ///< Drop box at needed position in an area. Arguments are box number and area number.
 	EBorzhTaskClimbBox,                          ///< Climb to a box and then to another area. Arguments are box number and area number.
+
+	// Next tasks are tasks that consist of several atomic tasks. Ordered by priority, i.e. explore has higher priority than try button.
+	EBorzhTaskButtonDoorConfig,                  ///< Trying to check door-button configuration.
+	EBorzhTaskButtonDoorConfigHelp,              ///< Helping another bot to achieve buttons-door configuration.
+	EBorzhTaskButtonTry,                         ///< Check which doors opens a button.
+	EBorzhTaskButtonTryHelp,                     ///< Helping another bot to check which doors opens a button.
+	//EBorzhTaskCheckingDoors,                     ///< Checking if door status is changed.
+	EBorzhTaskExplore,                           ///< Exploring new area.
+	EBorzhTaskGoToGoal,                          ///< Performing go to goal task.
+	EBorzhTaskGoToGoalHelp,                      ///< Helping another bot to make it to goal area.
+
+	EBorzhTaskTotal                              ///< Amount of tasks.
 };
 typedef int TBorzhTask;                          ///< Bot task.
 
@@ -45,6 +54,7 @@ typedef int TBorzhTask;                          ///< Bot task.
 //****************************************************************************************************************
 enum TBotActions
 {
+	EBotActionInvalid = -1,                      ///< Invalid action.
 	EBotActionMove = 0,                          ///< Go to given area.
 	EBotActionPushButton,                        ///< Push given button.
 	EBotActionShootButton,                       ///< Shoot given button.

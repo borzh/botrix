@@ -54,6 +54,7 @@ namespace good
 		/// Returns true if any bits are set.
 		bool any() const
 		{
+			// TODO: iterate on long.
 			for ( int i=0; i < m_cContainer.size(); ++i )
 				if ( m_cContainer[i] )
 					return true;
@@ -61,7 +62,7 @@ namespace good
 		}
 
 		/// Returns true if no bits are set.
-		bool none() const { !any(); }
+		bool none() const { return !any(); }
 
 		/// Resize set to given size. Note that new bits will be undefined.
 		void resize( int iNewSize ) { m_cContainer.resize( BIT_ARRAY_SIZE(iNewSize) ); m_iSize = iNewSize; }
@@ -79,7 +80,14 @@ namespace good
 		bool test( int iIndex ) const { DebugAssert( iIndex < m_iSize ); return BIT_ARRAY_IS_SET(iIndex, m_cContainer) != 0; }
 
 		/// Set bit at given position.
-		void set( int iIndex, bool bValue = true )
+		void set( int iIndex )
+		{
+			DebugAssert( iIndex < m_iSize );
+			BIT_ARRAY_SET(iIndex, m_cContainer);
+		}
+
+		/// Set bit at given position.
+		void set( int iIndex, bool bValue )
 		{
 			DebugAssert( iIndex < m_iSize );
 			if ( bValue )
@@ -92,10 +100,10 @@ namespace good
 		void reset( int iIndex ) { set(iIndex, false); }
 
 		/// Get count of set bits.
-		int count()
+		int count() const
 		{
-			                            // 0000 0001 0010 0011 0100 0101 0110 0111 1000 1001 1010 1011 1100 1101 1110 1111
-			static int char_counts[16] = { 0,   1,   1,   2,   1,   2,   2,   3,   1,   2,   2,   3,   2,   2,   3,   4 };
+			// Bits expanded:                    0000 0001 0010 0011 0100 0101 0110 0111 1000 1001 1010 1011 1100 1101 1110 1111
+			static const int char_counts[16] = { 0,   1,   1,   2,   1,   2,   2,   3,   1,   2,   2,   3,   2,   3,   3,   4 };
 			int count = 0;
 			for ( int i=0; i < m_cContainer.size(); ++i )
 			{

@@ -6,12 +6,12 @@
 #include "mod.h"
 
 
-class CMod_Borzh: public IMod
+class CModBorzh: public IMod
 {
 public: // Methods.
 
 	/// Constructor. Initializes events and chat variables.
-	CMod_Borzh();
+	CModBorzh();
 
 	/// Load chat configuration file.
 	virtual void LoadConfig(const good::string& sModName) {}
@@ -55,6 +55,9 @@ public: // Methods.
 
 
 public: // Static methods.
+
+	/// Get random waypoint at given area, away from any door.
+	static TWaypointId GetRandomAreaWaypoint( TAreaId iArea );
 
 	/// Get waypoints that are in given area.
 	static const good::vector<TWaypointId>& GetWaypointsForArea( TAreaId iArea ) { return m_aAreasWaypoints[iArea]; }

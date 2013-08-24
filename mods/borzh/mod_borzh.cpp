@@ -7,30 +7,30 @@
 
 
 //----------------------------------------------------------------------------------------------------------------
-/*const good::string CMod_Borzh::m_aChats[CHATS_COUNT] =
+/*const good::string CModBorzh::m_aChats[CHATS_COUNT] =
 {
 };*/
 
-TChatVariable CMod_Borzh::iVarDoor;
-TChatVariable CMod_Borzh::iVarDoorStatus;
-TChatVariable CMod_Borzh::iVarButton;
-TChatVariable CMod_Borzh::iVarWeapon;
-TChatVariable CMod_Borzh::iVarArea;
-TChatVariable CMod_Borzh::iVarPlayer;
+TChatVariable CModBorzh::iVarDoor;
+TChatVariable CModBorzh::iVarDoorStatus;
+TChatVariable CModBorzh::iVarButton;
+TChatVariable CModBorzh::iVarWeapon;
+TChatVariable CModBorzh::iVarArea;
+TChatVariable CModBorzh::iVarPlayer;
 
-TChatVariableValue CMod_Borzh::iVarValueDoorStatusOpened;
-TChatVariableValue CMod_Borzh::iVarValueDoorStatusClosed;
+TChatVariableValue CModBorzh::iVarValueDoorStatusOpened;
+TChatVariableValue CModBorzh::iVarValueDoorStatusClosed;
 
-TChatVariableValue CMod_Borzh::iVarValueWeaponPhyscannon;
-TChatVariableValue CMod_Borzh::iVarValueWeaponCrossbow;
+TChatVariableValue CModBorzh::iVarValueWeaponPhyscannon;
+TChatVariableValue CModBorzh::iVarValueWeaponCrossbow;
 
-good::vector< good::vector<TWaypointId> > CMod_Borzh::m_aAreasWaypoints;       // Waypoints for areas.
-good::vector< good::vector<TEntityIndex>  >CMod_Borzh::m_aAreasDoors;          // Doors for areas.
-good::vector< good::vector<TEntityIndex> > CMod_Borzh::m_aAreasButtons;        // Buttons for areas.
-good::vector< good::vector<TWaypointId> > CMod_Borzh::m_aShootButtonWaypoints; // Waypoints to shoot buttons.
+good::vector< good::vector<TWaypointId> > CModBorzh::m_aAreasWaypoints;       // Waypoints for areas.
+good::vector< good::vector<TEntityIndex>  >CModBorzh::m_aAreasDoors;          // Doors for areas.
+good::vector< good::vector<TEntityIndex> > CModBorzh::m_aAreasButtons;        // Buttons for areas.
+good::vector< good::vector<TWaypointId> > CModBorzh::m_aShootButtonWaypoints; // Waypoints to shoot buttons.
 
 //----------------------------------------------------------------------------------------------------------------
-CMod_Borzh::CMod_Borzh()
+CModBorzh::CModBorzh()
 {
 	//CMod::AddEvent(new CPlayerActivateEvent()); // No need for this.
 	CMod::AddEvent(new CPlayerTeamEvent());
@@ -51,14 +51,14 @@ CMod_Borzh::CMod_Borzh()
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CMod_Borzh::MapLoaded()
+void CModBorzh::MapLoaded()
 {
 	// Add possible chat variable values for doors, buttons and weapons.
 	iVarValueDoorStatusOpened = CChat::AddVariableValue(iVarDoorStatus, "opened");
 	iVarValueDoorStatusClosed = CChat::AddVariableValue(iVarDoorStatus, "closed");
 
-	iVarValueWeaponPhyscannon = CChat::AddVariableValue(iVarWeapon, "weapon_physcannon");
-	iVarValueWeaponCrossbow = CChat::AddVariableValue(iVarWeapon, "weapon_crossbow");
+	iVarValueWeaponPhyscannon = CChat::AddVariableValue(iVarWeapon, "physcannon");
+	iVarValueWeaponCrossbow = CChat::AddVariableValue(iVarWeapon, "crossbow");
 
 	static char szInt[16];
 
@@ -128,3 +128,25 @@ void CMod_Borzh::MapLoaded()
 	}
 }
 
+//----------------------------------------------------------------------------------------------------------------
+TWaypointId CModBorzh::GetRandomAreaWaypoint( TAreaId iArea )
+{
+	const good::vector<TWaypointId>& aWaypoints = CModBorzh::GetWaypointsForArea(iArea);
+
+	// Get random waypoint until it is not near door.
+	int iWaypoint;
+	bool bDone;
+	do {
+		bDone = true;
+		iWaypoint = aWaypoints[rand() % aWaypoints.size()];
+		const CWaypoints::WaypointNode& cNode = CWaypoints::GetNode(iWaypoint);
+		for ( int i = 0; i < cNode.neighbours.size(); ++i )
+			if ( FLAG_SOME_SET(FPathDoor, cNode.neighbours[i].edge.iFlags) )
+			{
+				bDone = false;
+				break;
+			}
+
+	} while ( !bDone );
+	return iWaypoint;
+}

@@ -267,12 +267,31 @@ namespace good
 		//--------------------------------------------------------------------------------------------------------
 		/// Assignment.
 		//--------------------------------------------------------------------------------------------------------
-		void assign( const vector& aOther )
+		void assign( const vector& aOther, bool bCopy = false, bool bUseMemCpy = false )
 		{
-			clear();
-			good::swap(m_pBuffer, ((vector&)aOther).m_pBuffer);
-			good::swap(m_iCapacity, ((vector&)aOther).m_iCapacity);
-			good::swap(m_iSize, ((vector&)aOther).m_iSize);
+			if ( bCopy )
+			{
+				reserve(aOther.m_iCapacity);
+				if ( bUseMemCpy )
+				{
+					m_iSize = aOther.m_iSize;
+					memcpy(data(), aOther.data(), m_iSize * sizeof(T));
+				}
+				else
+				{
+					clear();
+					m_iSize = aOther.m_iSize;
+					for ( int i=0; i < m_iSize; ++i )
+						m_pBuffer[i] = aOther.m_pBuffer[i];
+				}
+			}
+			else
+			{
+				clear();
+				good::swap(m_pBuffer, ((vector&)aOther).m_pBuffer);
+				good::swap(m_iCapacity, ((vector&)aOther).m_iCapacity);
+				good::swap(m_iSize, ((vector&)aOther).m_iSize);
+			}
 		}
 
 		//--------------------------------------------------------------------------------------------------------

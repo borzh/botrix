@@ -78,6 +78,20 @@
 
 
 
+/// Make first byte of a number.
+#define MAKE_1ST_BYTE(x)                ((x) & 0xFF)
+
+/// Make second byte of a number.
+#define MAKE_2ND_BYTE(x)                ( ((x) & 0xFF) << 8 )
+
+/// Make third byte of a number.
+#define MAKE_3RD_BYTE(x)                ( ((x) & 0xFF) << 16 )
+
+/// Make fourth byte of a number.
+#define MAKE_4TH_BYTE(x)                ( ((x) & 0xFF) << 24 )
+
+
+
 /// Set first byte of a number.
 #define SET_1ST_BYTE(b, number)         number = (number & 0xFFFFFF00)  |  ( (b)&0xFF )
 

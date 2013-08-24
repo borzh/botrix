@@ -451,7 +451,7 @@ namespace good
 			}
 			else
 			{
-				m_pBuffer[iFrom + iSize + 1] = 0;
+				m_pBuffer[iFrom + iSize] = 0;
 				return base_string( &m_pBuffer[iFrom], false, false, iSize );
 			}
 		}

@@ -30,7 +30,8 @@ namespace good
 			DebugAssert( m_hThread == NULL );
 			m_bDaemon = bDaemon;
 			m_pThreadParameter = pThreadParameter;
-			m_hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)(&thread_impl_thread_proc), (LPVOID)this, 0, NULL);
+			m_hThread = CreateThread(NULL, 0, thread_impl_thread_proc, (LPVOID)this, 0, NULL);
+			DebugAssert(m_hThread);
 		}
 
 		/// Free all handles and memory. Terminate thread if not daemon.
@@ -38,8 +39,7 @@ namespace good
 		{
 			if ( m_hThread )
 			{
-				if ( !m_bDaemon && !is_finished() )
-					TerminateThread(m_hThread, 2);
+				// TODO: interrupt thread.
 				CloseHandle(m_hThread);
 				m_hThread = NULL;
 			}

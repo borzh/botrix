@@ -176,6 +176,30 @@ protected:
 };
 
 //----------------------------------------------------------------------------------------------------------------
+class COnlyOneEntityTraceFilter: public ITraceFilter
+{
+public:
+	COnlyOneEntityTraceFilter( edict_t* pEntity )
+	{
+		pHandle = pEntity->GetIServerEntity()->GetNetworkable()->GetEntityHandle();
+	}
+
+	virtual TraceType_t	GetTraceType() const { return TRACE_ENTITIES_ONLY; }
+	virtual bool ShouldHitEntity( IHandleEntity *pEntity, int contentsMask ) { return pHandle == pEntity; }
+
+protected:
+	const IHandleEntity* pHandle;
+};
+
+//----------------------------------------------------------------------------------------------------------------
+bool CUtil::IsRayHitsEntity( edict_t* pEntity, Vector const& vSrc, Vector const& vDest )
+{
+	COnlyOneEntityTraceFilter filter(pEntity);
+	TraceLine(vSrc, vDest, MASK_OPAQUE, &filter);
+	return m_TraceResult.fraction != 1.0f;
+}
+
+//----------------------------------------------------------------------------------------------------------------
 bool CUtil::IsVisible( Vector const& vSrc, Vector const& vDest, TVisibilityFlags iFlags )
 {
 	CVisibilityTraceFilter filter(iFlags);
@@ -448,13 +472,13 @@ bool CUtil::IsLineTouch3d(Vector const& amins, Vector const& amaxs, Vector const
 }
 
 //================================================================================================================
+char szMessageString[4096];
 void CUtil::Message( edict_t* pEntity, const char* fmt, ... )
 {
-	va_list argptr; 
-	static char string[1024];
+	va_list argptr;
 
 	va_start(argptr, fmt);
-	vsprintf(string, fmt, argptr); 
+	vsprintf(szMessageString, fmt, argptr); 
 	va_end(argptr); 
 
 	static char sTime[24];
@@ -463,12 +487,12 @@ void CUtil::Message( edict_t* pEntity, const char* fmt, ... )
 		if ( m_bMessageUseTag )
 		{
 			CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, "[Botrix] ");
-#if defined(DEBUG) || defined(_DEBUG)
+#if (defined(DEBUG) || defined(_DEBUG)) && defined(MESSAGE_USE_TIME)
 			sprintf(sTime, "%.5f: ", CBotrixPlugin::fTime);
 			CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, sTime);
 #endif
 		}
-		CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, string);
+		CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, szMessageString);
 		CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, "\n");
 	}
 	else
@@ -476,13 +500,56 @@ void CUtil::Message( edict_t* pEntity, const char* fmt, ... )
 		if ( m_bMessageUseTag )
 		{
 			Msg("[Botrix] ");
-#if defined(DEBUG) || defined(_DEBUG)
+#if (defined(DEBUG) || defined(_DEBUG)) && defined(MESSAGE_USE_TIME)
 			sprintf(sTime, "%.5f: ", CBotrixPlugin::fTime);
 			Msg(sTime);
 #endif
 		}
-		Msg(string);
+		Msg(szMessageString);
 		Msg("\n");
+	}
+}
+
+//----------------------------------------------------------------------------------------------------------------
+good::mutex cMessagesMutex;
+int iQueueMessageStringSize = 0;
+char szQueueMessageString[4096];
+
+void CUtil::PutMessageInQueue( const char* fmt, ... )
+{
+	va_list argptr;
+
+	va_start(argptr, fmt);
+	cMessagesMutex.lock();
+
+	int iSize = vsprintf( &szQueueMessageString[iQueueMessageStringSize], fmt, argptr ); 
+	DebugAssert( iSize >= 0 );
+	iQueueMessageStringSize += iSize;
+
+	cMessagesMutex.unlock();
+	va_end(argptr); 
+
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+void CUtil::PrintMessagesInQueue()
+{
+	if ( (iQueueMessageStringSize > 0) && cMessagesMutex.try_lock() )
+	{
+		if ( m_bMessageUseTag )
+		{
+			Msg("[Botrix] ");
+	#if (defined(DEBUG) || defined(_DEBUG)) && defined(MESSAGE_USE_TIME)
+			sprintf(sTime, "%.5f: ", CBotrixPlugin::fTime);
+			Msg(sTime);
+	#endif
+		}
+		Msg(szQueueMessageString);
+		Msg("\n");
+
+		iQueueMessageStringSize = 0;
+		cMessagesMutex.unlock();
 	}
 }
 

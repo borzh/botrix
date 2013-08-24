@@ -469,6 +469,10 @@ good::string aBotCommands[EBotChatTotal] =
 
 	"door try",
 	"button try",
+	"button try go",
+	"button door",
+	"button toggles",
+	"button no toggles",
 
 	"button i push",
 	"button you push",
@@ -479,6 +483,9 @@ good::string aBotCommands[EBotChatTotal] =
 	"area cant go",
 	"door go",
 	"button go",
+
+	"cancel task",
+	"better idea",
 
 	"found plan",
 };
@@ -513,4 +520,52 @@ good::string aBotActions[EBotActionTotal] =
 int CTypeToString::BotActionFromString( const good::string& sAction )
 {
 	return EnumFromString( sAction, EBotActionTotal, aBotActions );
+}
+
+const good::string& CTypeToString::BotActionToString( int iAction )
+{
+	return EnumToString( iAction, EBotActionTotal, aBotActions, sUnknown );
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+// Ordered by TBorzhTask.
+//----------------------------------------------------------------------------------------------------------------
+good::string aBorzhTasks[EBorzhTaskTotal] =
+{
+	"EBorzhTaskWait",                              ///< Wait for timer to expire. Used during/after talk. Argument is time to wait in msecs.
+	"EBorzhTaskLook",                              ///< Look at door/button/box.
+	"EBorzhTaskMove",                              ///< Move to given waypoint.
+	"EBorzhTaskMoveAndCarry",                      ///< Move to given waypoint carrying a box.
+	"EBorzhTaskSpeak",                             ///< Speak about something. Argument represents door/button/box/weapon, etc.
+
+	"EBorzhTaskWaitAnswer",                        ///< Wait for other player to accept/reject task.
+	"EBorzhTaskWaitPlanner",                       ///< Wait for planner to finish.
+	"EBorzhTaskWaitPlayer",                        ///< Wait for other player to do something. The bot will say "done" phrase when it finishes.
+	"EBorzhTaskWaitButton",                        ///< Wait for other player to push a button. The other player must say "i will push button now".
+	"EBorzhTaskPushButton",                        ///< Push a button.
+
+	"EBorzhTaskWeaponSet",                         ///< Set current weapon. Argument can be 0xFF for crowbar or CModBorzh::iVarValueWeapon*.
+	"EBorzhTaskWeaponZoom",                        ///< Zoom weapon.
+	"EBorzhTaskWeaponRemoveZoom",                  ///< Remove zoom from weapon.
+	"EBorzhTaskWeaponShoot",                       ///< Shoot weapon.
+
+	"EBorzhTaskCarryBox",                          ///< Start carrying box. Argument is box number.
+	"EBorzhTaskDropBox",                           ///< Drop box at needed position in an area. Arguments are box number and area number.
+	"EBorzhTaskClimbBox",                          ///< Climb to a box and then to another area. Arguments are box number and area number.
+
+	// Next tasks are tasks that consist of several atomic tasks. Ordered by priority, i.e. explore has higher priority than try button.
+	"EBorzhTaskButtonDoorConfig",                  ///< Trying to check door-button configuration. Type is button, index is door, aux1 is true when using planner, aux2 is plan step.
+	"EBorzhTaskButtonDoorConfigHelp",              ///< Helping another bot to achieve buttons-door configuration.
+	"EBorzhTaskButtonTry",                         ///< Check which doors opens a button. Argument: index is button, type is bool (already pushed or still not).
+	"EBorzhTaskButtonTryHelp",                     ///< Helping another bot to check which doors opens a button.
+	//"EBorzhTaskCheckingDoors",                     ///< Checking if door status is changed.
+	"EBorzhTaskExplore",                           ///< Exploring new area.
+	"EBorzhTaskGoToGoal",                          ///< Performing go to goal task.
+	"EBorzhTaskGoToGoalHelp",                      ///< Helping another bot to make it to goal area.
+};
+
+const good::string& CTypeToString::BorzhTaskToString( int iTask )
+{
+	return EnumToString( iTask, EBorzhTaskTotal, aBorzhTasks, sUnknown );
 }

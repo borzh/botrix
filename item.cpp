@@ -549,7 +549,7 @@ bool CItems::IsDoorOpened( TEntityIndex iDoor )
 	{
 		const Vector& v1 = CWaypoints::Get(w1).vOrigin;
 		const Vector& v2 = CWaypoints::Get(w2).vOrigin;
-		return CUtil::IsVisible(v1, v2, FVisibilityProps);
+		return !CUtil::IsRayHitsEntity(cDoor.pEdict, v1, v2);
 	}
 	else
 	{

@@ -100,7 +100,7 @@ void test_process()
 				int iRead;
 				if ( cProcess.has_data_stdout() )
 				{
-					if ( !cProcess.read_output(szBuff, 512, iRead) )
+					if ( !cProcess.read_stdout(szBuff, 512, iRead) )
 					{
 						printf(cProcess.get_last_error());
 						break;
@@ -111,7 +111,7 @@ void test_process()
 
 				if ( cProcess.has_data_stderr() )
 				{
-					if ( !cProcess.read_error(szBuff, 512, iRead) )
+					if ( !cProcess.read_stderr(szBuff, 512, iRead) )
 					{
 						printf(cProcess.get_last_error());
 						break;
@@ -679,14 +679,14 @@ void test_graph()
 //--------------------------------------------------------------------------------------
 int main(int argc, char** argv)
 {
-	test_process();
+	//test_process();
+	//system("pause");
+	//system("cls");
+	
+	test_threads();
 	system("pause");
 	system("cls");
 	
-	//test_threads();
-	//system("pause");
-	//system("cls");
-	//
 	//test_bitset();
 	//system("pause");
 	//system("cls");

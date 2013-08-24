@@ -42,7 +42,7 @@ namespace good
 		class arc_t
 		{
 		public:
-			Edge edge;           ///< Edge of arc.
+			Edge edge;                             ///< Edge of arc.
 			/// Target for arc (index in array of nodes, it is better than pointer/iterator in case of realloc).
 			node_id target;
 

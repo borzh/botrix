@@ -27,6 +27,8 @@ public:
 	CPlayer(edict_t* pEdict, TPlayerIndex iIndex, bool bIsBot): m_pEdict(pEdict), m_iIndex(iIndex), m_bBot(bIsBot), 
 		m_pPlayerInfo(NULL), iCurrentWaypoint(-1), iNextWaypoint(-1), iPrevWaypoint(-1), iChatMate(-1), m_bAlive(false) {}
 
+	/// Destructor.
+	virtual ~CPlayer() {}
 
 	/// Return true if player is a bot.
 	bool IsBot() const { return m_bBot; }

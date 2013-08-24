@@ -433,11 +433,14 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 	sbBuffer = sText;
 	sbBuffer.trim();
 	sbBuffer.lower_case();
+
+	cCommand.iBotChat = EBotChatUnknown;
+	cCommand.iDirectedTo = -1;
+	if ( sbBuffer.size() == 0 )
+		return 0.0f;
+
 	if ( !sbBuffer.ends_with('.') && !sbBuffer.ends_with('!') && !sbBuffer.ends_with('?') )
 		sbBuffer.append('.');
-
-	cCommand.iBotRequest = EBotChatUnknown;
-	cCommand.iDirectedTo = -1;
 
 	StringVector aPhrases[1]; // TODO: multiple commands in one sentence.
 	int iCurrentPhrase = 0, iBegin = 0;
@@ -594,7 +597,7 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 				iBestRequired = iRequired;
 				iBestTotalRequired = iTotalRequired;
 				iBestOrdered = iOrdered;
-				cCommand.iBotRequest = iCommand;
+				cCommand.iBotChat = iCommand;
 				iBestPhrase = iPhrase;
 
 				cCommand.cMap.clear();
@@ -606,9 +609,9 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 
 	if ( fBestImportance > 0.0f )
 	{
-		const CPhrase& cPhrase = m_aMatchPhrases[cCommand.iBotRequest][iBestPhrase];
-		ChatMessage( "Chat match: %s", PhraseToString(cPhrase).c_str() );
-		ChatMessage( "Matching (from 0 to 10): %f.", fBestImportance );
+		//const CPhrase& cPhrase = m_aMatchPhrases[cCommand.iBotChat][iBestPhrase];
+		//ChatMessage( "Chat match: %s", PhraseToString(cPhrase).c_str() );
+		//ChatMessage( "Matching (from 0 to 10): %f.", fBestImportance );
 
 		// Get $player/$player1 from chat variables, this is where chat is directed to.
 		for ( int i=0; i < cCommand.cMap.size(); ++i )
@@ -630,20 +633,20 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 //----------------------------------------------------------------------------------------------------------------
 const good::string& CChat::ChatToText( const CBotChat& cCommand )
 {
-	DebugAssert( (EBotChatUnknown < cCommand.iBotRequest) && (cCommand.iBotRequest < EBotChatTotal) );
+	DebugAssert( (EBotChatUnknown < cCommand.iBotChat) && (cCommand.iBotChat < EBotChatTotal) );
 
 	static good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
 	sbBuffer.erase();
 
-	if ( m_aPhrases[cCommand.iBotRequest].size() == 0 )
+	if ( m_aPhrases[cCommand.iBotChat].size() == 0 )
 	{
-		ChatError( "No phrases provided to generate chat message for '%s'.", CTypeToString::BotCommandToString(cCommand.iBotRequest).c_str() );
+		ChatError( "No phrases provided to generate chat message for '%s'.", CTypeToString::BotCommandToString(cCommand.iBotChat).c_str() );
 		return sbBuffer; // Empty string.
 	}
 
 	// Get random phrase from possible set of phrases.
-	int iRand = rand() % m_aPhrases[cCommand.iBotRequest].size();
-	const CPhrase& cPhrase = m_aPhrases[cCommand.iBotRequest][iRand];
+	int iRand = rand() % m_aPhrases[cCommand.iBotChat].size();
+	const CPhrase& cPhrase = m_aPhrases[cCommand.iBotChat][iRand];
 
 	DebugAssert( cPhrase.aWords.size() );
 

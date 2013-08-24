@@ -160,6 +160,14 @@ public:
 	//------------------------------------------------------------------------------------------------------------
 	static int BotActionFromString( const good::string& sAction );
 
+	/// Get string from bot action.
+	static const good::string& BotActionToString( int iAction );
+
+	//------------------------------------------------------------------------------------------------------------
+	/// Get string from borzh's task.
+	//------------------------------------------------------------------------------------------------------------
+	static const good::string& BorzhTaskToString( int iTask );
+
 };
 
 #endif // __BOTRIX_TYPE_TO_STRING_H__

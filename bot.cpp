@@ -150,13 +150,13 @@ void CBot::Respawned()
 	m_bUnderAttack = m_bDontAttack = m_bFlee = m_bNeedSetWeapon = m_bNeedReload = m_bAttackDuck = false;
 
 	m_bNeedAim = m_bUseSideLook = false;
-	m_bDontAttack = m_bDestinationChanged = m_bNeedMove = m_bUseNavigatorToMove = m_bTest;
+	m_bDontAttack = m_bDestinationChanged = m_bNeedMove = m_bLastNeedMove = m_bUseNavigatorToMove = m_bTest;
 
 	m_bLockAim = m_bLockNavigatorMove = m_bLockMove = m_bLockAll = false;
 	m_bMoveFailure = false;
 
 	m_bStuck = m_bNeedCheckStuck = m_bStuckBreakObject = m_bStuckUsePhyscannon = false;
-	m_bStuckTryingSide = m_bStuckTryGoLeft = m_bStuckGotoCurrent = false;
+	m_bStuckTryingSide = m_bStuckTryGoLeft = m_bStuckGotoCurrent = m_bRepeatWaypointAction = false;
 
 	m_bLadderMove = m_bNeedStop = m_bNeedDuck = m_bNeedWalk = m_bNeedSprint = false;
 	m_bNeedFlashlight = m_bUsingFlashlight = false;
@@ -245,29 +245,29 @@ void CBot::ReceiveChatRequest( const CBotChat& cRequest )
 		if ( m_iPrevTalk == -1 ) // This is a request from other player, generate response.
 		{
 			// We want to know what bot can answer.
-			const good::vector<TBotChat>& aPossibleAnswers = CChat::PossibleAnswers(cRequest.iBotRequest);
+			const good::vector<TBotChat>& aPossibleAnswers = CChat::PossibleAnswers(cRequest.iBotChat);
 			if ( aPossibleAnswers.size() == 1 )
-				cResponse.iBotRequest = aPossibleAnswers[0];
+				cResponse.iBotChat = aPossibleAnswers[0];
 			else if ( aPossibleAnswers.size() > 0 )
 			{
 				bool bAffirmativeNegativeAnswer = good::find(aPossibleAnswers.begin(), aPossibleAnswers.end(), EBotChatAffirm) != aPossibleAnswers.end();
 				if ( bAffirmativeNegativeAnswer )
 				{
 					bool bYesNoAnswer = good::find(aPossibleAnswers.begin(), aPossibleAnswers.end(), EBotChatAffirmative) != aPossibleAnswers.end();
-					cResponse.iBotRequest = bYesNoAnswer ? ( (rand()&1) ? EBotChatAffirmative : EBotChatAffirm ) : EBotChatAffirm;
+					cResponse.iBotChat = bYesNoAnswer ? ( (rand()&1) ? EBotChatAffirmative : EBotChatAffirm ) : EBotChatAffirm;
 					if ( m_bHelpingMate )
 						StartPerformingChatRequest(cRequest);
 					else
-						cResponse.iBotRequest += 1; // Negate request (EBotChatAffirmative + 1 = EBotChatNegative).
+						cResponse.iBotChat += 1; // Negate request (EBotChatAffirmative + 1 = EBotChatNegative).
 				}
 				else
-					cResponse.iBotRequest = aPossibleAnswers[ rand() % aPossibleAnswers.size() ];
+					cResponse.iBotChat = aPossibleAnswers[ rand() % aPossibleAnswers.size() ];
 			}
 		}
 		else // This is a response to this bot's request.
 		{
 			// TODO: this part is not implemented yet.
-			switch ( cRequest.iBotRequest )
+			switch ( cRequest.iBotChat )
 			{
 			case EBotChatAffirm:
 			case EBotChatAffirmative:
@@ -280,23 +280,23 @@ void CBot::ReceiveChatRequest( const CBotChat& cRequest )
 			}
 		}
 
-		if ( cRequest.iBotRequest == EBotChatBye )
+		if ( cRequest.iBotChat == EBotChatBye )
 		{
 			m_iPrevChatMate = iChatMate;
 			m_iPrevTalk = EBotChatBye;
 			iChatMate = -1;
 		}
 	}
-	else if ( cRequest.iBotRequest == EBotChatBye )
+	else if ( cRequest.iBotChat == EBotChatBye )
 	{
 		if ( (m_iPrevTalk != EBotChatBye) || (m_iPrevChatMate != cRequest.iSpeaker) )
-			cResponse.iBotRequest = EBotChatBye;
+			cResponse.iBotChat = EBotChatBye;
 	}
 	else
-		cResponse.iBotRequest = EBotChatBusy;
+		cResponse.iBotChat = EBotChatBusy;
 
 	// Generate chat.
-	if ( cResponse.iBotRequest != -1 )
+	if ( cResponse.iBotChat != -1 )
 	{
 		const good::string& sText = CChat::ChatToText(cResponse);
 		ConsoleCommand( "say %s", sText.c_str() );
@@ -307,7 +307,7 @@ void CBot::ReceiveChatRequest( const CBotChat& cRequest )
 void CBot::StartPerformingChatRequest( const CBotChat& cRequest )
 {
 	m_bPerformingRequest = true;
-	m_iObjective = cRequest.iBotRequest;
+	m_iObjective = cRequest.iBotChat;
 
 	switch ( m_iObjective )
 	{
@@ -337,7 +337,7 @@ void CBot::EndPerformingChatRequest( bool bSayGoodbye )
 	if ( bSayGoodbye )
 	{
 		m_cChat.cMap.clear();
-		m_cChat.iBotRequest = EBotChatBye;
+		m_cChat.iBotChat = EBotChatBye;
 		if ( rand()&1 )
 		{
 			m_cChat.iDirectedTo = iChatMate;
@@ -489,7 +489,7 @@ void CBot::CurrentWaypointJustChanged()
 				BotMessage("%s -> invalid current waypoint %d (should be %d).", GetName(), iCurrentWaypoint, iNextWaypoint);
 #endif
 				m_bMoveFailure = true;
-				iCurrentWaypoint = -1;
+				iCurrentWaypoint = EWaypointIdInvalid;
 				m_pNavigator.Stop();
 			}
 		}
@@ -501,7 +501,10 @@ void CBot::CurrentWaypointJustChanged()
 //----------------------------------------------------------------------------------------------------------------
 bool CBot::DoWaypointAction()
 {
-	DebugAssert( m_bNeedMove && m_bUseNavigatorToMove );
+	if ( !m_bNeedMove )
+		return false;
+
+	DebugAssert( m_bUseNavigatorToMove );
 	DebugAssert( CWaypoint::IsValid(iCurrentWaypoint) );
  	CWaypoint& w = CWaypoints::Get(iCurrentWaypoint);
 
@@ -645,6 +648,8 @@ void CBot::DoPathAction()
 			m_fEndActionTime = CBotrixPlugin::fTime + ( (iStartTime + iDuration) / 10.0f);
 		}
 	}
+
+	m_bRepeatWaypointAction = false;
 }
 	
 //----------------------------------------------------------------------------------------------------------------
@@ -715,6 +720,7 @@ void CBot::Speak( bool bTeamSay )
 	if ( iPlayerIndex != EPlayerIndexInvalid )
 		m_cChat.cMap.push_back( CChatVarValue(CChat::iPlayerVar, 0, iPlayerIndex) );
 	const good::string& sText = CChat::ChatToText(m_cChat);
+	CUtil::Message( NULL, "%s: %s %s", GetName(), bTeamSay? "say_team" : "say", sText.c_str() );
 	ConsoleCommand( "%s %s", bTeamSay? "say_team" : "say", sText.c_str() );
 }
 
@@ -1343,6 +1349,8 @@ bool CBot::ResolveStuckMove()
 				m_iAfterNextWaypoint = iNextWaypoint;
 				iNextWaypoint = iCurrentWaypoint;
 				iCurrentWaypoint = iPrevWaypoint;
+
+				m_bRepeatWaypointAction = true;
 			
 				BotMessage("%s -> stucked, but not lost, go to current waypoint %d and touch it.", GetName(), iCurrentWaypoint);
 
@@ -1433,7 +1441,7 @@ bool CBot::NavigatorMove()
 
 		bool bDoingAction = DoWaypointAction();
 
-		m_bNeedMove = m_pNavigator.HasMoreCoords();
+		m_bNeedMove = m_bNeedMove && m_pNavigator.HasMoreCoords();
 		if ( m_bNeedMove )
 		{
 			m_pNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
@@ -1511,6 +1519,12 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
 	{
 		m_pNavigator.Stop();
 		return;
+	}
+
+	if ( !m_bLastNeedMove && m_bNeedMove ) // Bot started to move just now, update stuck check time.
+	{
+		m_fStuckCheckTime = CBotrixPlugin::fTime + 1.0f;
+		m_bLastNeedMove = m_bNeedMove;
 	}
 
 	// Waypoint just changed from previous and valid waypoint.

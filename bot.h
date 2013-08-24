@@ -194,7 +194,7 @@ protected: // Methods.
 	void SetActiveWeapon( int iIndex );
 
 	// Shoot current weapon.
-	void Shoot( bool bSecondary );
+	void Shoot( bool bSecondary = false );
 
 	// Toggle zoom.
 	void ToggleZoom()
@@ -247,6 +247,7 @@ protected: // Bot flags.
 
 	bool m_bDestinationChanged:1;                                  // Set this to true when you change destination to go to.
 	bool m_bNeedMove:1;                                            // True if need to move. Will be set to false if reached m_vDestination.
+	bool m_bLastNeedMove:1;                                        // m_bNeedMove value of previous frame.
 	bool m_bLockMove:1;                                            // Force not to move.
 	
 	bool m_bUseNavigatorToMove:1;                                  // If true then use waypoint navigator to get to m_vDestination, else just move there in line.
@@ -261,6 +262,8 @@ protected: // Bot flags.
 	bool m_bStuckTryGoLeft:1;                                      // If true go left when stucked, else go right.
 	bool m_bStuckGotoCurrent:1;                                    // When stucked will try go to current waypoint (for 'touching' and so performing action).
 	                                                               // If false, then will try to do left or right move.
+	bool m_bRepeatWaypointAction;                                  // Set when stucked, and repeats go to current waypoint and touch it.
+
 	bool m_bLadderMove:1;                                          // Will be set to true, when current waypoint path has ladder flag.
 
 	bool m_bNeedStop:1;                                            // Need to stop when reach next waypoint.

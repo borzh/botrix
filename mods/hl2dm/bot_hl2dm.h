@@ -48,12 +48,8 @@ protected:
 		CBot::PickItem( cItem, iEntityType, iIndex );
 		if ( m_bFlee && (iEntityType == EEntityTypeHealth) )
 		{
-			bool bAlmostDead = ( m_pPlayerInfo->GetHealth() < (CUtil::iPlayerMaxHealth/8) );
-			if ( !bAlmostDead )
-			{
-				m_bDontAttack = false;
-				m_bFlee = false;
-			}
+			m_bFlee = ( m_pPlayerInfo->GetHealth() < (CUtil::iPlayerMaxHealth/8) );
+			m_bDontAttack = m_bFlee;
 		}
 	}
 

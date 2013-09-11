@@ -247,6 +247,19 @@ public:
 //****************************************************************************************************************
 // Area waypoint commands.
 //****************************************************************************************************************
+class CWaypointAreaRemoveCommand: public CConsoleCommand
+{
+public:
+	CWaypointAreaRemoveCommand()
+	{
+		m_sCommand = "remove";
+		m_sHelp = "delete waypoint area";
+		m_iAccessLevel = FCommandAccessWaypoint;
+	}
+
+	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
 class CWaypointAreaRenameCommand: public CConsoleCommand
 {
 public:
@@ -651,6 +664,7 @@ public:
 	CWaypointAreaCommand()
 	{
 		m_sCommand = "area";
+		Add(new CWaypointAreaRemoveCommand());
 		Add(new CWaypointAreaRenameCommand());
 		Add(new CWaypointAreaSetCommand());
 		Add(new CWaypointAreaShowCommand());

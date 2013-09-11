@@ -125,6 +125,20 @@ enum TBotChats
 	EBorzhChatButtonCanPush,                     ///< Bot can press a button.
 	EBorzhChatButtonCantPush,                    ///< Bot can't reach this button.
 
+	EBorzhChatBoxFound,                          ///< Bot founds a box.
+	EBorzhChatBoxLost,                           ///< Bot lost a box.
+	EBorzhChatHaveGravityGun,                    ///< Bot has a gravity gun to lift a box.
+	EBorzhChatNeedGravityGun,                    ///< Bot need a gravity gun to lift a box.
+
+	EBorzhChatWallFound,                         ///< Bot founds a wall that can be climbed with help of box.
+	EBorzhChatBoxNeed,                           ///< Bot needs a box to climb the wall.
+	EBorzhChatBoxTry,                            ///< Bot offers to bring a box to area for climbing the wall.
+
+	EBorzhChatBoxITake,                          ///< Bot will take a box.
+	EBorzhChatBoxYouTake,                        ///< Bot says to player to take a box.
+	EBorzhChatBoxIDrop,                          ///< Bot will drop the box.
+	EBorzhChatBoxYouDrop,                        ///< Bot says to player to drop the box.
+
 	EBorzhChatButtonWeapon,                      ///< Bot has weapon to shoot button.
 	EBorzhChatButtonNoWeapon,                    ///< Bot doesn't have weapon to shoot button.
 	
@@ -377,6 +391,7 @@ typedef int TEntityFlags;                        ///< Entity flags.
 //****************************************************************************************************************
 enum TWeaponTypes
 {
+	EWeaponIdInvalid = -1,                       ///< Invalid weapon id.
 	EWeaponPhysics = 0,                          ///< Physcannon.
 	EWeaponManual,                               ///< Knife, stunstick, crowbar.
 

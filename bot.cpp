@@ -27,7 +27,8 @@ int CBot::m_iCheckEntitiesPerFrame = 4;
 CBot::CBot( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence iIntelligence ):
 	CPlayer(pEdict, iIndex, true), m_aPickedItems(16),
 	m_aNearPlayers(CPlayers::Size()), m_aSeenEnemies(CPlayers::Size()), m_aEnemies(CPlayers::Size()),
-	m_iIntelligence(iIntelligence), r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ), m_bDebugging(true)
+	m_iIntelligence(iIntelligence), r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ), m_bDebugging(true),
+	m_bDontBreakObjects(false), m_bDontThrowObjects(false)
 {
 	for ( TEntityType i=0; i < EEntityTypeTotal; ++i )
 	{
@@ -156,7 +157,7 @@ void CBot::Respawned()
 	m_bMoveFailure = false;
 
 	m_bStuck = m_bNeedCheckStuck = m_bStuckBreakObject = m_bStuckUsePhyscannon = false;
-	m_bStuckTryingSide = m_bStuckTryGoLeft = m_bStuckGotoCurrent = m_bRepeatWaypointAction = false;
+	m_bStuckTryingSide = m_bStuckTryGoLeft = m_bStuckGotoCurrent = m_bStuckGotoPrevious = m_bRepeatWaypointAction = false;
 
 	m_bLadderMove = m_bNeedStop = m_bNeedDuck = m_bNeedWalk = m_bNeedSprint = false;
 	m_bNeedFlashlight = m_bUsingFlashlight = false;
@@ -631,10 +632,10 @@ void CBot::DoPathAction()
 		if ( FLAG_ALL_SET(FPathBreak, pCurrentPath->iFlags) )
 			m_bNeedAttack = true;
 
-		if ( FLAG_ALL_SET(FPathJump, pCurrentPath->iFlags) )
+		if ( FLAG_SOME_SET(FPathJump | FPathTotem, pCurrentPath->iFlags) )
 			m_bNeedJump = true;
 
-		if ( FLAG_ALL_SET(FPathCrouch | FPathJump, pCurrentPath->iFlags) )
+		if ( FLAG_ALL_SET(FPathCrouch | FPathJump, pCurrentPath->iFlags) || FLAG_SOME_SET(FPathTotem, pCurrentPath->iFlags) )
 			m_bNeedJumpDuck = true;
 
 		if ( m_bNeedAttack || m_bNeedJump || m_bNeedJumpDuck )
@@ -665,7 +666,7 @@ void CBot::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex
 		break;
 	case EEntityTypeWeapon:
 	{
-		TWeaponId iWeaponId = CWeapons::GetIdFromWeaponClass(cItem.pItemClass->sClassName);
+		TWeaponId iWeaponId = CWeapons::GetIdFromWeaponName(cItem.pItemClass->sClassName);
 		DebugAssert( iWeaponId >= 0 );
 		m_aWeapons[iWeaponId].AddWeapon();
 
@@ -1285,11 +1286,32 @@ bool CBot::ResolveStuckMove()
 	}
 
 	const CEntity* pObject = NULL;
+	CWaypoint& wCurr = CWaypoints::Get(iCurrentWaypoint);
+
 	if ( m_aNearestItems[EEntityTypeObject].size() )
+	{
 		pObject = &CItems::GetItems(EEntityTypeObject)[ m_aNearestItems[EEntityTypeObject][0] ];
+		// If object is behind, it doesn't disturb.
+		Vector vObject = pObject->CurrentPosition();
+		vObject -= m_vHead;
+
+		Vector vGoing( CWaypoints::Get(iNextWaypoint).vOrigin );
+		vGoing -= m_vHead;
+
+		QAngle angGoing, angObject;
+		VectorAngles(vObject, angObject);
+		VectorAngles(vGoing, angGoing);
+
+		CUtil::GetAngleDifference(angGoing, angObject, angGoing);
+
+		if ( angGoing.y <= -90.0f || angGoing.y >= 90.0f )
+			pObject = NULL;
+	}
+
 	if ( pObject )
 	{
-		if ( CWeapon::IsValid(m_iManualWeapon) && m_aWeapons[m_iManualWeapon].IsPresent() && pObject->IsBreakable() && !pObject->IsExplosive() )
+		if ( !m_bDontBreakObjects && CWeapon::IsValid(m_iManualWeapon) && m_aWeapons[m_iManualWeapon].IsPresent() && 
+		     pObject->IsBreakable() && !pObject->IsExplosive() )
 		{
 			// Look at origin of the object.
 			m_vLook = pObject->CurrentPosition();
@@ -1297,7 +1319,7 @@ bool CBot::ResolveStuckMove()
 
 			m_bStuckBreakObject = m_bLockAim = true;
 		}
-		else if ( CWeapon::IsValid(m_iPhyscannon) && m_aWeapons[m_iPhyscannon].IsPresent() && !pObject->IsHeavy() )
+		else if ( !m_bDontThrowObjects && CWeapon::IsValid(m_iPhyscannon) && m_aWeapons[m_iPhyscannon].IsPresent() && !pObject->IsHeavy() )
 		{
 			// Look at origin of the object.
 			m_vLook = m_vDisturbingObjectPosition = pObject->CurrentPosition();
@@ -1332,8 +1354,6 @@ bool CBot::ResolveStuckMove()
 
 	else if ( m_bUseNavigatorToMove )
 	{
-		CWaypoint& wCurr = CWaypoints::Get(iCurrentWaypoint);
-
 		if ( iCurrentWaypoint == iPrevCurrWaypoint ) // Got stucked because action didn't work?
 		{
 			m_bStuck = false;
@@ -1342,17 +1362,14 @@ bool CBot::ResolveStuckMove()
 			bool bTouch = wCurr.IsTouching(m_vHead, m_bLadderMove);
 			if ( bTouch || m_bStuckGotoCurrent )
 			{
-				if ( iCurrentWaypoint != iNextWaypoint )
-					m_pNavigator.SetPreviousPathPosition();
-
 				// Force to make action again.
-				m_iAfterNextWaypoint = iNextWaypoint;
-				iNextWaypoint = iCurrentWaypoint;
-				iCurrentWaypoint = iPrevWaypoint;
+				m_pNavigator.SetPreviousPathPosition();
+				m_pNavigator.SetPreviousPathPosition();
+				m_pNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
 
 				m_bRepeatWaypointAction = true;
 			
-				BotMessage("%s -> stucked, but not lost, go to current waypoint %d and touch it.", GetName(), iCurrentWaypoint);
+				BotMessage("%s -> stucked, but not lost, go to previous waypoint %d and touch it.", GetName(), iNextWaypoint);
 
 				if ( !bTouch )
 				{
@@ -1619,7 +1636,8 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
 			// Distance that bot moves since m_fStuckCheckTime.
 			if ( m_vStuckCheck.DistToSqr(m_vHead) < SQR(CUtil::fMinNonStuckSpeed) )
 			{
-				m_bStuck = true;
+				m_bNeedCheckStuck = true;
+				m_fStuckCheckTime = CBotrixPlugin::fTime + 5.0f; // Try again in 5 secs.
 				if ( !ResolveStuckMove() )
 					return;
 			}
@@ -1716,55 +1734,57 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
 
 
 	//---------------------------------------------------------------
-	CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
-	if ( m_bUnderAttack ) // Check if can shoot.
+	if ( !m_bDontAttack )
 	{
-		if ( m_pCurrentEnemy )
+		CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
+		if ( m_bUnderAttack ) // Check if can shoot.
 		{
-			DebugAssert( m_pCurrentEnemy != this );
-			if ( !m_bNeedAim )
+			if ( m_pCurrentEnemy )
 			{
-				// Aim again.
-				EnemyAim();
-
-				if ( !m_bEnemyAimed ) // First time aimed at enemy.
+				DebugAssert( m_pCurrentEnemy != this );
+				if ( !m_bNeedAim )
 				{
-					m_bEnemyAimed = true; 
-					m_bStayReloading = false; // At reload time, check if it is better to change weapon.
-				}
+					// Aim again.
+					EnemyAim();
 
-			}
-
-			if ( cWeapon.CanUse() )
-			{
-				if ( m_bEnemyAimed ) // Stay shooting after first time aimed at enemy.
-				{
-					if ( cWeapon.IsSniper()  ) // Check if need to zoom or out.
+					if ( !m_bEnemyAimed ) // First time aimed at enemy.
 					{
-						bool bNeedZoom = cWeapon.ShouldZoom(m_fDistanceSqrToEnemy);
-						if ( (  bNeedZoom && !cWeapon.IsUsingZoom() ) ||
-							 ( !bNeedZoom &&  cWeapon.IsUsingZoom() ) )
-							ToggleZoom();
+						m_bEnemyAimed = true; 
+						m_bStayReloading = false; // At reload time, check if it is better to change weapon.
 					}
 
-					// Prefer secondary attack.
-					if ( cWeapon.HasAmmoInClip(1) && cWeapon.IsDistanceSafe(m_fDistanceSqrToEnemy, 1) )
-						Shoot(1);
-					else if ( cWeapon.HasAmmoInClip(0) && cWeapon.IsDistanceSafe(m_fDistanceSqrToEnemy, 0) )
-						Shoot(0);
-					else
-						CheckWeapon(); // No more bullets, select another weapon.
+				}
+
+				if ( cWeapon.CanUse() )
+				{
+					if ( m_bEnemyAimed ) // Stay shooting after first time aimed at enemy.
+					{
+						if ( cWeapon.IsSniper()  ) // Check if need to zoom or out.
+						{
+							bool bNeedZoom = cWeapon.ShouldZoom(m_fDistanceSqrToEnemy);
+							if ( (  bNeedZoom && !cWeapon.IsUsingZoom() ) ||
+								 ( !bNeedZoom &&  cWeapon.IsUsingZoom() ) )
+								ToggleZoom();
+						}
+
+						// Prefer secondary attack.
+						if ( cWeapon.HasAmmoInClip(1) && cWeapon.IsDistanceSafe(m_fDistanceSqrToEnemy, 1) )
+							Shoot(1);
+						else if ( cWeapon.HasAmmoInClip(0) && cWeapon.IsDistanceSafe(m_fDistanceSqrToEnemy, 0) )
+							Shoot(0);
+						else
+							CheckWeapon(); // No more bullets, select another weapon.
+					}
 				}
 			}
+			else
+				m_bUnderAttack = m_bCloseAttack = m_bAttackDuck = false; // Bot is not under attack now.
 		}
-		else
-			m_bUnderAttack = m_bCloseAttack = m_bAttackDuck = false; // Bot is not under attack now.
+		else if ( cWeapon.IsSniper() && cWeapon.IsUsingZoom() && cWeapon.CanUse() )
+			ToggleZoom();
+		else if ( m_bNeedReload && !m_bStuckUsePhyscannon && !m_bStuckBreakObject )
+			CheckWeapon();
 	}
-	else if ( cWeapon.IsSniper() && cWeapon.IsUsingZoom() && cWeapon.CanUse() )
-		ToggleZoom();
-	else if ( m_bNeedReload && !m_bStuckUsePhyscannon && !m_bStuckBreakObject )
-		CheckWeapon();
-
 
 	//---------------------------------------------------------------
 	// Aim finished and need start to use IN_USE button.

@@ -27,10 +27,12 @@ good::process g_cPlannerProcess(sExe, sCommand, true, true); // Spawned process 
 void PlannerThreadFunc( void* pArgument );                   // Forward declaration.
 good::thread g_cThread(PlannerThreadFunc);                   // Thread that reads and transforms ff.exe output.
 
+TAreaId g_iBoxArea = EAreaIdInvalid;                         // Where need to leave a box.
+
 CPlanner::CPlan g_cPlan(64);                                 // Plan: global array of actions.
 CPlanner::CPlan* g_pPlan = NULL;                             // Result of ff.exe, can be NULL or &g_cPlan.
 
-const CBotBorzh* g_pBot = NULL;                          // Bot for which make a plan.
+const CBotBorzh* g_pBot = NULL;                              // Bot for which make a plan.
 
 //----------------------------------------------------------------------------------------------------------------
 bool CPlanner::m_bLocked = false;
@@ -70,7 +72,7 @@ const CPlanner::CPlan* CPlanner::GetPlan()
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void GeneratePddl()
+void GeneratePddl( bool bFromBotBelief )
 {
 	FILE* f = fopen( sProblemPath.c_str(), "w" );
 
@@ -85,7 +87,7 @@ void GeneratePddl()
 	for ( TPlayerIndex iPlayer = 0; iPlayer < CPlayers::Size(); ++iPlayer )
 	{
 		CPlayer* pPlayer = CPlayers::Get(iPlayer);
-		if ( pPlayer && g_pBot->m_cCollaborativePlayers.test(iPlayer) )
+		if ( pPlayer && (!bFromBotBelief || g_pBot->m_cCollaborativePlayers.test(iPlayer)) )
 			fprintf(f, "bot%d ", iPlayer);
 	}
 	fprintf(f, "- bot\n\n");
@@ -99,35 +101,56 @@ void GeneratePddl()
 	fprintf(f, "		");
 	const good::vector<CEntity>& cDoors = CItems::GetItems(EEntityTypeDoor);
 	for ( TEntityIndex i=0; i < cDoors.size(); ++i )
-		fprintf( f, "door%d ", i );
+		if ( !bFromBotBelief || g_pBot->m_cSeenDoors.test(i) )
+			fprintf( f, "door%d ", i );
 	fprintf(f, "- door\n\n");
 
 	fprintf(f, "		");
 	const good::vector<CEntity>& cButtons = CItems::GetItems(EEntityTypeButton);
 	for ( TEntityIndex i=0; i < cButtons.size(); ++i )
-		fprintf( f, "button%d ", i );
+		if ( !bFromBotBelief || g_pBot->m_cSeenButtons.test(i) )
+			fprintf( f, "button%d ", i );
 	fprintf(f, "- button\n");
 
 	fprintf(f, "		");
+	
 	const good::vector<CEntity>& cWeapons = CItems::GetItems(EEntityTypeWeapon);
-	for ( TEntityIndex i=0; i < cWeapons.size(); ++i )
+	if ( bFromBotBelief )
+		fprintf(f, "gravity-gun crossbow - weapon\n\n"); // Add void weapons names for players that have that weapon.
+	else
 	{
-		const CEntity& cWeapon = cWeapons[i];
-		if ( cWeapon.IsFree() || !cWeapon.IsOnMap() )
-			continue;
+		for ( TEntityIndex i=0; i < cWeapons.size(); ++i )
+		{
+			const CEntity& cWeapon = cWeapons[i];
+			if ( cWeapon.IsFree() || !cWeapon.IsOnMap() )
+				continue;
 
-		const good::string& sWeapon = cWeapons[i].pItemClass->sClassName;
-		if ( (sWeapon == "weapon_physcannon") || (sWeapon == "weapon_crossbow") )
-			fprintf( f, "weapon%d ", i );
+			const good::string& sWeapon = cWeapons[i].pItemClass->sClassName;
+			if ( (sWeapon == "weapon_physcannon") || (sWeapon == "weapon_crossbow") )
+				fprintf( f, "weapon%d ", i );
+		}
+		fprintf(f, "- weapon\n");
 	}
-	fprintf(f, "gravity-gun cross-bow - weapon\n\n"); // Add void weapons names for players that have that weapon.
 
 	fprintf(f, "		");
-	const good::vector<CEntity>& cObjects = CItems::GetItems(EEntityTypeObject);
-	for ( TEntityIndex i=0; i < cObjects.size(); ++i )
-		if ( FLAG_SOME_SET(FObjectBox, cObjects[i].iFlags) )
-			fprintf( f, "box%d ", i );
-	fprintf(f, "- box\n");
+	if ( bFromBotBelief )
+	{
+		if ( g_pBot->m_aBoxes.size() > 0 )
+		{
+			for ( TEntityIndex i=0; i < g_pBot->m_aBoxes.size(); ++i )
+				fprintf( f, "box%d ", g_pBot->m_aBoxes[i].iBox );
+			fprintf(f, "- box\n");
+		}
+	}
+	else
+	{
+		if ( CModBorzh::GetBoxes().size() > 0 )
+		{
+			for ( TEntityIndex i=0; i < CModBorzh::GetBoxes().size(); ++i )
+				fprintf( f, "box%d ", CModBorzh::GetBoxes()[i].iBox );
+			fprintf(f, "- box\n");
+		}
+	}
 
 	fprintf(f, "	)\n\n");
 
@@ -135,158 +158,187 @@ void GeneratePddl()
 	// Print initial state.
 	fprintf(f, "	(:init\n");
 
+	// Default weapons.
+	if ( bFromBotBelief )
+	{
+		fprintf(f, "		(physcannon gravity-gun)\n");
+		fprintf(f, "		(sniper-weapon crossbow)\n");
+	}
+	else
+	{
+		for ( TEntityIndex i=0; i < cWeapons.size(); ++i )
+		{
+			const CEntity& cWeapon = cWeapons[i];
+			if ( cWeapon.IsFree() || !cWeapon.IsOnMap() )
+				continue;
+
+			const good::string& sWeapon = cWeapon.pItemClass->sClassName;
+			if ( sWeapon == "weapon_physcannon" )
+				fprintf( f, "		(physcannon weapon%d)\n", i );
+			else if ( sWeapon == "weapon_crossbow" )
+				fprintf( f, "		(sniper-weapon weapon%d)\n", i );
+			else
+			{
+				PRINT_MESSAGE("Warning, not using %s %d, it is not crossbow nor physcannon.", sWeapon.c_str(), i);
+				continue;
+			}
+
+			if ( CWaypoints::IsValid(cWeapon.iWaypoint) )
+				fprintf( f, "		(weapon-at weapon%d area%d)\n\n", i, CWaypoints::Get(cWeapon.iWaypoint).iAreaId );
+			else
+				PRINT_MESSAGE("Error, %s %d doesn't have waypoint close.", sWeapon.c_str(), i);
+		}
+	}
+
 	// Bot's position and weapons.
 	for ( TPlayerIndex iPlayer=0; iPlayer < CPlayers::Size(); ++iPlayer )
 	{
 		CPlayer* pPlayer = CPlayers::Get(iPlayer);
-		if ( pPlayer && g_pBot->m_cCollaborativePlayers.test(iPlayer) )
+		if ( pPlayer && (!bFromBotBelief || g_pBot->m_cCollaborativePlayers.test(iPlayer)) )
 		{
-			fprintf(f, "		(at bot%d area%d) (empty bot%d)", iPlayer, g_pBot->m_aPlayersAreas[iPlayer], iPlayer);
-			if ( g_pBot->m_cPlayersWithPhyscannon.test(iPlayer) )
-				fprintf(f, " (has bot%d gravity-gun)", iPlayer);
-			if ( g_pBot->m_cPlayersWithCrossbow.test(iPlayer) )
-				fprintf(f, " (has bot%d cross-bow)", iPlayer);
+			if ( bFromBotBelief )
+			{
+				fprintf(f, "		(at bot%d area%d) (empty bot%d)", iPlayer, g_pBot->m_aPlayersAreas[iPlayer], iPlayer);
+				if ( g_pBot->m_cPlayersWithPhyscannon.test(iPlayer) )
+					fprintf(f, " (has bot%d gravity-gun)", iPlayer);
+				if ( g_pBot->m_cPlayersWithCrossbow.test(iPlayer) )
+					fprintf(f, " (has bot%d crossbow)", iPlayer);
+			}
+			else
+				fprintf(f, "		(at bot%d area%d) (empty bot%d)", iPlayer, CWaypoints::Get(pPlayer->iCurrentWaypoint).iAreaId, iPlayer);
 			fprintf(f, "\n\n");
 		}
 	}
 
+	// Box-at.
+	if ( bFromBotBelief )
+	{
+		for ( int i=0; i < g_pBot->m_aBoxes.size(); ++i )
+			fprintf( f, "		(box-at box%d area%d)\n", g_pBot->m_aBoxes[i].iBox, g_pBot->m_aBoxes[i].iArea );
+	}
+	else
+	{
+		for ( int i=0; i < CModBorzh::GetBoxes().size(); ++i )
+			fprintf( f, "		(box-at box%d area%d)\n", CModBorzh::GetBoxes()[i].iBox, CModBorzh::GetBoxes()[i].iArea );
+	}
+	fprintf(f, "\n");
+
 	// Buttons positions.
 	for ( TEntityIndex iButton=0; iButton < cButtons.size(); ++iButton )
 	{
-		if ( g_pBot->m_cSeenButtons.test(iButton) )
+		if ( !bFromBotBelief || g_pBot->m_cSeenButtons.test(iButton) )
 		{
 			const CEntity& cButton = cButtons[iButton];
 			int iWaypoint = cButton.iWaypoint;
 			if ( CWaypoints::IsValid(iWaypoint) )
 				fprintf(f, "		(button-at button%d area%d)\n", iButton, CWaypoints::Get(iWaypoint).iAreaId);
+			else
+			{
+				iWaypoint = CModBorzh::GetWaypointToShootButton(iButton);
+				fprintf(f, "		(can-shoot button%d area%d)\n", iButton, CWaypoints::Get(iWaypoint).iAreaId);
+			}
 		}
 	}
 	fprintf(f, "\n");
 
 	// Between.
-	for ( TEntityIndex i=0; i < cDoors.size(); ++i )
+	for ( TEntityIndex iDoor=0; iDoor < cDoors.size(); ++iDoor )
 	{
-		const CEntity& cDoor = cDoors[i];
-		int iWaypoint1 = cDoor.iWaypoint;
-		int iWaypoint2 = (TWaypointId)cDoor.pArguments;
-		if ( CWaypoints::IsValid(iWaypoint1) && CWaypoints::IsValid(iWaypoint2) )
+		if ( !bFromBotBelief || g_pBot->m_cSeenDoors.test(iDoor) )
 		{
-			int iArea1 = CWaypoints::Get(iWaypoint1).iAreaId;
-			int iArea2 = CWaypoints::Get(iWaypoint2).iAreaId;
-			fprintf(f, "		(between door%d area%d area%d)\n", i, iArea1, iArea2);
-			if ( g_pBot->m_cOpenedDoors.test(i) )
+			const CEntity& cDoor = cDoors[iDoor];
+			int iWaypoint1 = cDoor.iWaypoint;
+			int iWaypoint2 = (TWaypointId)cDoor.pArguments;
+			if ( CWaypoints::IsValid(iWaypoint1) && CWaypoints::IsValid(iWaypoint2) )
 			{
-				fprintf(f, "		(can-move area%d area%d)\n", iArea1, iArea2);
-				fprintf(f, "		(can-move area%d area%d)\n", iArea2, iArea1);
-			}
-
-		}
-		else
-		{
-			DebugAssert(false);
-			PRINT_MESSAGE("Error, door%d doesn't have 2 waypoints close.", i+1);
-		}
-	}
-	fprintf(f, "\n");
-
-	// Box-at.
-	for ( TEntityIndex i=0; i < cObjects.size(); ++i )
-	{
-		const CEntity& cObject = cObjects[i];
-		if ( !cObject.IsFree() && cObject.IsOnMap() && FLAG_SOME_SET(FObjectBox, cObject.iFlags) )
-		{
-			// Neares waypoints for objects are not set, calculate it.
-			TWaypointId iWaypoint = CWaypoints::GetNearestWaypoint(cObject.vOrigin);
-			if ( CWaypoints::IsValid(iWaypoint) )
-				fprintf( f, "		(box-at box%d area%d)\n", i, CWaypoints::Get(iWaypoint).iAreaId );
-			else
-				PRINT_MESSAGE("Warning, box%d has no waypoint near.", i+1);
-		}
-	}
-
-	fprintf(f, "\n");
-
-	// can-climb-two, can-climb-three, can-shoot.
-	for ( TWaypointId iWaypoint1=0; iWaypoint1 < CWaypoints::Size(); ++iWaypoint1 )
-	{
-		CWaypoints::WaypointNode& cNode = CWaypoints::GetNode(iWaypoint1);
-		int iArea1 = cNode.vertex.iAreaId;
-
-		if ( FLAG_SOME_SET(FWaypointSeeButton, cNode.vertex.iFlags) )
-		{
-			TEntityIndex iButton = CWaypoint::GetButton(cNode.vertex.iArgument);
-			if ( iButton > 0 )
-				fprintf(f, "		(can-shoot button%d area%d)\n", iButton-1, iArea1);
-			else
-				PRINT_MESSAGE("Error, waypoint %d: see_button argument has invalid button.", iWaypoint1);
-		}
-
-		CWaypoints::WaypointNode::arcs_t& cNeighbours = cNode.neighbours;
-		for ( int i=0; i < cNeighbours.size(); ++i)
-		{
-			CWaypoints::WaypointArc& cArc = cNeighbours[i];
-			TWaypointId iWaypoint2 = cArc.target;
-			CWaypointPath& cPath = cArc.edge;
-			TAreaId iArea2 = CWaypoints::Get(iWaypoint2).iAreaId;
-
-			if ( iArea1 != iArea2 )
-			{
-				if ( FLAG_SOME_SET(FPathTotem, cPath.iFlags) )
+				int iArea1 = CWaypoints::Get(iWaypoint1).iAreaId;
+				int iArea2 = CWaypoints::Get(iWaypoint2).iAreaId;
+				if ( !bFromBotBelief || ( g_pBot->m_cVisitedAreas.test(iArea1) && g_pBot->m_cVisitedAreas.test(iArea2) ) )
 				{
-					if ( cPath.iArgument == 2 )
-						fprintf(f, "		(can-climb-two area%d area%d)\n", iArea1, iArea2);
-					else if ( cPath.iArgument == 3 )
-						fprintf(f, "		(can-climb-three area%d area%d)\n", iArea1, iArea2);
-					else
-						PRINT_MESSAGE("Error, totem value must be 2 or 3 for path from %d to %d.", iWaypoint1, iWaypoint2);
+					fprintf(f, "		(between door%d area%d area%d)\n", iDoor, iArea1, iArea2);
+					bool bOpened = bFromBotBelief ? g_pBot->m_cOpenedDoors.test(iDoor) : CItems::IsDoorOpened(iDoor);
+					if ( bOpened )
+					{
+						fprintf(f, "		(can-move area%d area%d)\n", iArea1, iArea2);
+						fprintf(f, "		(can-move area%d area%d)\n", iArea2, iArea1);
+					}
 				}
-				else if ( !FLAG_SOME_SET(FPathDoor, cPath.iFlags) ) // Has no door between, and no need to make totem, just pass.
-					fprintf(f, "		(can-move area%d area%d)\n", iArea1, iArea2);
+			}
+			else
+			{
+				DebugAssert(false);
+				PRINT_MESSAGE("Error, door%d doesn't have 2 waypoints close.", iDoor+1);
+			}
+		}
+	}
+	fprintf(f, "\n");
+
+	// Walls.
+	for ( TAreaId iArea=0; iArea < aAreas.size(); ++iArea )
+	{
+		const good::vector<CWall>& aWalls = CModBorzh::GetWallsForArea(iArea);
+		if ( (aWalls.size() > 0) && ( !bFromBotBelief || g_pBot->m_cSeenWalls.test(iArea) ) )
+		{
+			for ( int iWall=0; iWall < aWalls.size(); ++iWall )
+			{
+				DebugAssert( iArea == CWaypoints::Get(aWalls[iWall].iLowerWaypoint).iAreaId );
+				fprintf(f, "		(wall area%d area%d)\n", iArea, CWaypoints::Get(aWalls[iWall].iHigherWaypoint).iAreaId);
 			}
 		}
 	}
 
 	// Buttons configuration.
-	for ( TEntityIndex iButton=0; iButton < cButtons.size(); ++iButton )
+	if ( bFromBotBelief )
 	{
-		const good::bitset& cButtonTogglesDoor = g_pBot->m_cButtonTogglesDoor[iButton];
-		if ( cButtonTogglesDoor.any() )
+		for ( TEntityIndex iButton=0; iButton < cButtons.size(); ++iButton )
 		{
-			int iDoorsCount = 0;
-			int iDoors[2] = { -1, -1};
-			for ( TEntityIndex iDoor = 0; iDoor < cDoors.size(); ++iDoor )
-				if ( cButtonTogglesDoor.test(iDoor) )
-					iDoors[iDoorsCount++] = iDoor;
+			const good::bitset& cButtonTogglesDoor = g_pBot->m_cButtonTogglesDoor[iButton];
+			if ( cButtonTogglesDoor.any() )
+			{
+				int iDoorsCount = 0;
+				int iDoors[2] = { -1, -1};
+				for ( TEntityIndex iDoor = 0; iDoor < cDoors.size(); ++iDoor )
+					if ( cButtonTogglesDoor.test(iDoor) )
+						iDoors[iDoorsCount++] = iDoor;
 
-			DebugAssert( iDoorsCount <= 2 );
-			if ( iDoors[1] == -1 )
-				iDoors[1] = iDoors[0];
-			fprintf(f, "		(toggle button%d door%d door%d)\n", iButton, iDoors[0], iDoors[1]);
+				DebugAssert( iDoorsCount <= 2 );
+				if ( iDoors[1] == -1 )
+					iDoors[1] = iDoors[0];
+				fprintf(f, "		(toggle button%d door%d door%d)\n", iButton, iDoors[0], iDoors[1]);
+			}
 		}
 	}
+	else
+		fprintf(f, "\n		; Auto-generated buttons configuration.\n");
 
 	// End init.
 	fprintf(f, "	)\n\n");
 
 	// Goal.
 	fprintf(f, "	(:goal\n");
-	fprintf(f, "		(and\n");
 
-	if ( g_pBot->m_cCurrentBigTask.iTask == EBorzhTaskGoToGoal )
+	if ( !bFromBotBelief || g_pBot->m_cCurrentBigTask.iTask == EBorzhTaskGoToGoal )
 	{
+		fprintf(f, "		(and\n");
 		TAreaId iGoalArea = CWaypoints::GetAreas().size() - 1;
 
 		// Print goal positions for all bots.
 		for ( int iPlayer = 0; iPlayer < CPlayers::Size(); ++iPlayer )
 		{
 			CPlayer* pPlayer = CPlayers::Get(iPlayer);
-			if ( pPlayer && g_pBot->m_cCollaborativePlayers.test(iPlayer) )
+			if ( pPlayer && ( !bFromBotBelief || g_pBot->m_cCollaborativePlayers.test(iPlayer) ) )
 				fprintf(f, "			(at bot%d area%d)\n", iPlayer, iGoalArea);
 		}
+		fprintf(f, "		)\n"); // and
+	}
+	else if ( g_pBot->m_cCurrentBigTask.iTask == EBorzhTaskBringBox )
+	{
+		TAreaId iArea = GET_2ND_BYTE(g_pBot->m_cCurrentBigTask.iArgument);
+		fprintf(f, "			( exists (?box - box) (box-at ?box area%d) )\n", iArea);
 	}
 	else
 	{
-		DebugAssert( g_pBot->m_cCurrentBigTask.iTask == EBorzhTaskButtonDoorConfig );
+		DebugAssert( g_pBot->m_cCurrentBigTask.iTask == EBorzhTaskButtonTryDoor );
 
 		TEntityIndex iButton = GET_2ND_BYTE(g_pBot->m_cCurrentBigTask.iArgument);
 		TEntityIndex iDoor = GET_3RD_BYTE(g_pBot->m_cCurrentBigTask.iArgument);
@@ -294,10 +346,16 @@ void GeneratePddl()
 		const CEntity& cButton = CItems::GetItems(EEntityTypeButton)[iButton];
 		
 		TWaypointId iButtonWaypoint = cButton.iWaypoint;
-		if ( iButtonWaypoint == EWaypointIdInvalid )
+		bool bShoot = (iButtonWaypoint == EWaypointIdInvalid);
+		if ( bShoot )
 			iButtonWaypoint = CModBorzh::GetWaypointToShootButton(iButton);
 		DebugAssert( iButtonWaypoint != EWaypointIdInvalid );
-		fprintf(f, "			(exists (?bot - bot) (at ?bot area%d))\n", CWaypoints::Get(iButtonWaypoint).iAreaId);
+		
+		fprintf(f, "		(and\n");
+		if ( bShoot )
+			fprintf(f, "			( exists (?bot - bot) (and (at ?bot area%d) (has ?bot crossbow)) )\n", CWaypoints::Get(iButtonWaypoint).iAreaId);
+		else
+			fprintf(f, "			( exists (?bot - bot) (at ?bot area%d) )\n", CWaypoints::Get(iButtonWaypoint).iAreaId);
 		
 		if ( iDoor != 0xFF )
 		{
@@ -305,17 +363,21 @@ void GeneratePddl()
 			TWaypointId iDoorWaypoint1 = cDoor.iWaypoint;
 			TWaypointId iDoorWaypoint2 = (TWaypointId)cDoor.pArguments;
 			DebugAssert( (iDoorWaypoint1 != EWaypointIdInvalid) && (iDoorWaypoint2 != EWaypointIdInvalid) );
+
+			TAreaId iDoorArea1 = CWaypoints::Get(iDoorWaypoint1).iAreaId;
+			TAreaId iDoorArea2 = CWaypoints::Get(iDoorWaypoint2).iAreaId;
 			fprintf(f, "			(or\n");
-			fprintf(f, "				(exists (?bot - bot) (at ?bot area%d))\n", CWaypoints::Get(iDoorWaypoint1).iAreaId);
-			fprintf(f, "				(exists (?bot - bot) (at ?bot area%d))\n", CWaypoints::Get(iDoorWaypoint2).iAreaId);
+			if ( g_pBot->m_cVisitedAreas.test(iDoorArea1) )
+				fprintf(f, "				( exists (?bot - bot) (at ?bot area%d) )\n", iDoorArea1);
+			if ( g_pBot->m_cVisitedAreas.test(iDoorArea2) )
+				fprintf(f, "				( exists (?bot - bot) (at ?bot area%d) )\n", iDoorArea2);
 			fprintf(f, "			)\n");
 		}
-		
+		fprintf(f, "		)\n"); // and
 	}
 
-	fprintf(f, "		)\n");
 	fprintf(f, "	)\n");
-	fprintf(f, ")\n");
+	fprintf(f, ")\n"); // (define (problem bots)
 
 	fflush(f);
 	fclose(f);
@@ -416,19 +478,6 @@ bool TransformPlannerOutput()
 		int iArgument = atoi(szArgumentNumber);
 
 		CAction cAction(iAction, iBot, iArgument);
-
-		// Get helper.
-		if ( iAction == EBotActionClimbBoxBot )
-		{
-			good::string sHelper = GetNextWord(sbBuffer, ++iPos);
-			DebugAssert( iPos < iEnd );
-			DebugAssert( sHelper.size() > sBot.size() && sHelper.starts_with(sBot) );
-			const char* sBotHelperNumber = sHelper.c_str() + sBot.size();
-			int iBotHelper = atoi(sBotHelperNumber);
-			DebugAssert( 0 <= iBotHelper && iBotHelper <= CPlayers::Size() );
-			cAction.iHelper = iBotHelper;
-		}
-
 		g_cPlan.push_back(cAction);
 		iPos = iEnd;
 	}
@@ -445,7 +494,7 @@ void PlannerThreadFunc( void* pParameter )
 	const int iMaxTimeToRunProcess = 5000;
 	int iTotalRead = 0;
 
-	GeneratePddl();
+	GeneratePddl(true);
 	if ( !g_cPlannerProcess.launch(false, false) )
 	{
 		PRINT_MESSAGE( "Error while executing ff.exe:");

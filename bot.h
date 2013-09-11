@@ -262,6 +262,7 @@ protected: // Bot flags.
 	bool m_bStuckTryGoLeft:1;                                      // If true go left when stucked, else go right.
 	bool m_bStuckGotoCurrent:1;                                    // When stucked will try go to current waypoint (for 'touching' and so performing action).
 	                                                               // If false, then will try to do left or right move.
+	bool m_bStuckGotoPrevious:1;                                   // 
 	bool m_bRepeatWaypointAction;                                  // Set when stucked, and repeats go to current waypoint and touch it.
 
 	bool m_bLadderMove:1;                                          // Will be set to true, when current waypoint path has ladder flag.
@@ -287,7 +288,10 @@ protected: // Bot flags.
 	
 	bool m_bConditionSatisfied;                                    // True if action condition has been satisfied.
 
+	bool m_bDontBreakObjects:1;                                    // Set to true to not to break nearby objects.
+	bool m_bDontThrowObjects:1;                                    // Set to true to not to throw nearby objects.
 	bool m_bDontAttack:1;                                          // Set to true to ignore enemy (for example if defusing the bomb).
+
 	bool m_bUnderAttack:1;                                         // True if engaging enemy.
 	bool m_bCloseAttack:1;                                         // True if need to stop, while attacking enemy.
 	bool m_bFlee:1;                                                // True, if currenly running away from enemy.

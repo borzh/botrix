@@ -83,8 +83,6 @@ namespace good
 
 			if ( m_bRedirect )
 			{
-				HANDLE hProcess = GetCurrentProcess();
-
 				// Create the child input pipe, inheritable.
 				if ( !CreatePipe(&si.hStdInput, &m_hWriteChildInput, &sa, 0) )
 					SET_LAUNCH_ERROR("CreatePipe");

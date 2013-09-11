@@ -5,25 +5,26 @@
 	(:types bot, waypoint, weapon, door, button, box)
 
     (:predicates
-        (physcannon ?weapon - weapon)                    ; Arma de gravedad
-        (sniper-weapon ?weapon - weapon)                 ; Arma francotirador
+        (physcannon ?weapon - weapon)                     ; Arma de gravedad
+        (sniper-weapon ?weapon - weapon)                  ; Arma francotirador
 
         (can-move ?from ?to - waypoint)
-        (can-climb-two ?from ?to - waypoint)              ; Subirse a la caja u otro bot
-        (can-climb-three ?from ?to - waypoint)            ; Hacer totem de 3
         (can-shoot ?button - button ?waypoint - waypoint) ; Disparar al boton
+        (wall ?from ?to - waypoint)                       ; Una pared.
 
-        (at ?bot ?waypoint)
-		(box-at ?box ?waypoint)
-		(button-at ?button ?waypoint)
-        (weapon-at ?weapon ?waypoint)
+        ;(visited ?bot - bot ?area - waypoint)
 
-        (has ?bot ?weapon)
-		(carry ?bot ?box)
-		(empty ?bot)
+        (at ?bot - bot ?waypoint - waypoint)
+		(box-at ?box - box ?waypoint - waypoint)
+		(button-at ?button - button ?waypoint - waypoint)
+        (weapon-at ?weapon - weapon ?waypoint - waypoint)
 
-        (between ?door ?waypoint1 ?waypoint2)   ; Puertas que separan 2 waypoints
-		(toggle ?button ?door1 ?door2)          ; Boton cambia estados de 2 puertas
+        (has ?bot - bot ?weapon - weapon)
+		(carry ?bot - bot ?box - box)
+		(empty ?bot - bot)
+
+        (between ?door - door ?waypoint1 ?waypoint2 - waypoint) ; Puertas que separan 2 waypoints
+		(toggle ?button - button ?door1 ?door2 - door)          ; Boton cambia estados de 2 puertas
     )
 
 	;---------------------------------------------------------------------------
@@ -75,9 +76,9 @@
     (:action carry-box
         :parameters
             (?bot - bot
-             ?weapon - weapon
              ?box - box
-             ?waypoint - waypoint)
+             ?waypoint - waypoint
+             ?weapon - weapon)
 
         :precondition
             (and
@@ -97,13 +98,13 @@
     )
 
     ;---------------------------------------------------------------------------
-    ; Bot agarra la caja con el arma de lejos.
+    ; Bot agarra la caja con el arma desde arriba de la pared.
     ;---------------------------------------------------------------------------
     (:action carry-box-far
         :parameters
             (?bot - bot
-             ?weapon - weapon
              ?box - box
+             ?weapon - weapon
              ?waypoint-bot ?waypoint-box - waypoint)
 
         :precondition
@@ -113,7 +114,7 @@
                 (has ?bot ?weapon)
 				(physcannon ?weapon)
                 (empty ?bot)
-				(can-move ?waypoint-bot ?waypoint-box)
+				(wall ?waypoint-box ?waypoint-bot)
             )
 
         :effect
@@ -152,75 +153,43 @@
     ;---------------------------------------------------------------------------
     (:action climb-box
         :parameters
-            (?bot1 - bot
+            (?bot - bot
              ?box - box
              ?from ?to - waypoint)
 
         :precondition
             (and
-                (at ?bot1 ?from)
+                (at ?bot ?from)
                 (box-at ?box ?from)
-                (can-climb-two ?from ?to)
-                (empty ?bot1)
+                (wall ?from ?to)
+                (empty ?bot)
             )
 
         :effect
             (and
-                (not (at ?bot1 ?from))
-                (at ?bot1 ?to)
+                (not (at ?bot ?from))
+                (at ?bot ?to)
             )
     )
 
-    ;---------------------------------------------------------------------------
-    ; Bot sube a otro bot para pasar a otro waypoint.
-    ;---------------------------------------------------------------------------
-    (:action climb-two
+	;---------------------------------------------------------------------------
+	; Bot salta desde una pared.
+	;---------------------------------------------------------------------------
+    (:action fall
         :parameters
-            (?bot1 ?bot2 - bot
-             ?from ?to - waypoint)
+            (?bot - bot
+             ?to ?from - waypoint)
 
         :precondition
             (and
-            	(not (= ?bot1 ?bot2))
-                (at ?bot1 ?from)
-                (at ?bot2 ?from)
-                (can-climb-two ?from ?to)
-                (empty ?bot1)
-                (empty ?bot2)
+                (at ?bot ?from)
+                (wall ?to ?from)
             )
 
         :effect
             (and
-                (not (at ?bot1 ?from))
-                (at ?bot1 ?to)
-            )
-    )
-
-    ;---------------------------------------------------------------------------
-    ; Los dos bots suben la caja y uno sube arriba de otro para pasar a otro waypoint.
-    ;---------------------------------------------------------------------------
-    (:action climb-three
-        :parameters
-            (?bot1 - bot
-             ?box - box
-             ?bot2 - bot
-             ?from ?to - waypoint)
-
-        :precondition
-            (and
-            	(not (= ?bot1 ?bot2))
-                (at ?bot1 ?from)
-                (at ?bot2 ?from)
-                (box-at ?box ?from)
-                (can-climb-three ?from ?to)
-                (empty ?bot1)
-                (empty ?bot2)
-            )
-
-        :effect
-            (and
-                (not (at ?bot1 ?from))
-                (at ?bot1 ?to)
+                (at ?bot ?to)
+                (not (at ?bot ?from))
             )
     )
 
@@ -242,6 +211,7 @@
                 (between ?door2 ?door2-waypoint1 ?door2-waypoint2)
                 (toggle ?button ?door1 ?door2)
                 (at ?bot ?waypoint)
+                (empty ?bot)
                 (button-at ?button ?waypoint)
             )
 
@@ -296,6 +266,7 @@
                 (sniper-weapon ?sniper-weapon)
                 (at ?bot ?waypoint)
                 (has ?bot ?sniper-weapon)
+                (empty ?bot)
                 (can-shoot ?button ?waypoint)
                 (toggle ?button ?door1 ?door2)
                 (between ?door1 ?door1-waypoint1 ?door1-waypoint2)

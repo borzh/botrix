@@ -55,6 +55,16 @@
 		(wall area12 area11)
 
 		; Auto-generated buttons configuration.
+        (toggle button0 door0 door5)
+        (toggle button1 door3 door1)
+        (toggle button2 door6 door6)
+        (toggle button3 door7 door2)
+        (toggle button4 door8 door0)
+        (toggle button5 door9 door6)
+        (toggle button6 door7 door0)
+        (toggle button7 door1 door4)
+        (toggle button8 door5 door7)
+        (toggle button9 door0 door9)
 	)
 
 	(:goal

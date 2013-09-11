@@ -4,16 +4,9 @@
 
 #include "bot.h"
 #include "server_plugin.h"
-#include "types_borzh.h"
+#include "mods/borzh/types_borzh.h"
+#include "mods/borzh/mod_borzh.h"
 
-
-/// Enum to represent possible answer to yes/no question.
-enum TYesNoAnswer
-{
-	EUnknown = 0,
-	EYes,
-	ENo,
-};
 
 class CAction; // Forward declaration.
 
@@ -86,27 +79,23 @@ protected: // Inherited methods.
 
 protected: // Methods.
 
-	// Set areas that can be reached from iCurrentArea according to seen&opened doors.
-	static void SetReachableAreas( int iCurrentArea, const good::bitset& cSeenDoors, const good::bitset& cOpenedDoors, good::bitset& cReachableAreas );
+	// Set areas that can be reached from current area according to seen&opened doors.
+	void SetReachableAreas( const good::bitset& cOpenedDoors );
 
 	// Check if button is reachable.
-	static TWaypointId GetButtonWaypoint( TEntityIndex iButton, const good::bitset& cReachableAreas );
+	TWaypointId GetButtonWaypoint( TEntityIndex iButton, const good::bitset& cReachableAreas, bool bSameArea = false  );
 
 	// Check if door is reachable.
 	static TWaypointId GetDoorWaypoint( TEntityIndex iDoor, const good::bitset& cReachableAreas );
 
-	// Check if task is trying a button.
-	bool IsTryingButton() { return (m_cCurrentBigTask.iTask == EBorzhTaskButtonTry) || (m_cCurrentBigTask.iTask == EBorzhTaskButtonTryHelp); }
-	
-	// Check if task is a planner task.
-	bool IsPlannerTask() { return (m_cCurrentBigTask.iTask == EBorzhTaskButtonDoorConfig) || (m_cCurrentBigTask.iTask == EBorzhTaskGoToGoal); }
-	
-	// Check if task is a planner task.
-	bool IsPlannerTaskHelp() { return (m_cCurrentBigTask.iTask == EBorzhTaskButtonDoorConfigHelp) || (m_cCurrentBigTask.iTask == EBorzhTaskGoToGoalHelp); }
-	
-	// Check if task is a collaborative task.
-	bool IsCollaborativeTask() { return (m_cCurrentBigTask.iTask == EBorzhTaskButtonTry) || IsPlannerTask(); }
-	
+	// Return true if current task needs collaborative players.
+	bool IsCollaborativeTask() { return (m_cCurrentBigTask.iTask == EBorzhTaskButtonTryDoor) || (m_cCurrentBigTask.iTask == EBorzhTaskBringBox) || 
+	                                    (m_cCurrentBigTask.iTask == EBorzhTaskGoToGoal); }
+
+	// Return true if using a planner.
+	bool IsUsingPlanner() { return IsCollaborativeTask() && (m_cCurrentBigTask.iArgument&1); }
+
+	// Check if player is in area where door is.
 	bool IsPlayerInDoorArea( TPlayerIndex iPlayer, const CEntity& cDoor )
 	{
 		TAreaId iArea = m_aPlayersAreas[iPlayer];
@@ -117,6 +106,16 @@ protected: // Methods.
 		TAreaId iArea1 = CWaypoints::Get(iWaypoint1).iAreaId;
 		TAreaId iArea2 = CWaypoints::Get(iWaypoint2).iAreaId;
 		return (iArea == iArea1) || (iArea == iArea2);
+	}
+
+	// Check if there is a box in area.
+	good::vector<CBoxInfo>::iterator GetBoxInArea( TAreaId iArea )
+	{
+		good::vector<CBoxInfo>::iterator result;
+		for ( result = m_aBoxes.begin(); result != m_aBoxes.end(); ++result )
+			if ( result->iArea == iArea )
+				break;
+		return result;
 	}
 
 	// Get last plan step performer.
@@ -131,31 +130,20 @@ protected: // Methods.
 			m_cButtonNoAffectDoor[iButton].set(iDoor);
 	}
 
-	// Check if given button toggles given door.
-	TYesNoAnswer IsButtonTogglesDoor( TEntityIndex iButton, TEntityIndex iDoor )
-	{
-		if ( m_cButtonNoAffectDoor[iButton].test(iDoor) )
-			return ENo;
-		else if ( m_cButtonTogglesDoor[iButton].test(iDoor) )
-			return EYes;
-		else
-			return EUnknown;
-	}
-
 	// When starting new task, check for doors at current waypoint.
-	void DoorsCheckAtCurrentWaypoint();
+	void CheckPathsAtCurrentWaypoint();
 
 	// When coming near door, check it's status.
-	void DoorStatusCheck( TEntityIndex iDoor, bool bOpened, bool bNeedToPassThrough );
+	void DoorStatusCheck( TEntityIndex iDoor, bool bOpened, bool bNeedToPassThrough, bool bSpoken );
 
 	// Door has same status as bot thinks.
-	void DoorStatusSame( TEntityIndex iDoor, bool bOpened, bool bCheckingDoors );
+	void DoorStatusSame( TEntityIndex iDoor, bool bOpened, bool bCheckingDoors, bool bSpoken );
 
 	// Bot thinks that door was opened when it is closed, and viceversa.
-	void DoorStatusDifferent( TEntityIndex iDoor, bool bOpened, bool bCheckingDoors );
+	void DoorStatusDifferent( TEntityIndex iDoor, bool bOpened, bool bCheckingDoors, bool bSpoken );
 
 	// Bot needs to pass through the door, but it is closed.
-	void DoorClosedOnTheWay( TEntityIndex iDoor, bool bCheckingDoors );
+	void DoorClosedOnTheWay( TEntityIndex iDoor, bool bCheckingDoors, bool bSpoken );
 
 	// Say hello to all players and start investigating areas.
 	void Start();
@@ -184,13 +172,13 @@ protected: // Methods.
 	// Wait given amount of milliseconds.
 	void Wait( int iMSecs, bool bSaveCurrentTask = false )
 	{
-		if ( bSaveCurrentTask && !m_bTaskFinished )
+		if ( bSaveCurrentTask )
 			SaveCurrentTask();
 
 		m_cCurrentTask.iTask = EBorzhTaskWait;
 		m_cCurrentTask.iArgument = iMSecs;
 		m_fEndWaitTime = CBotrixPlugin::fTime + iMSecs / 1000.0f;
-		m_bNeedMove = m_bNeedAim = m_bTaskFinished = false;
+		m_bNeedMove = m_bNeedAim = false;
 	}
 
 	// Speak about door/button/box/weapon.
@@ -201,25 +189,24 @@ protected: // Methods.
 	{
 		SaveCurrentTask();
 		PushSpeakTask(iChat, iArgument, iType, iIndex);
-		TaskFinish();
+		m_cCurrentTask.iTask = EBorzhTaskInvalid;
 	}
 
 	// Start planner trying to reach goal area for all collaborative players.
 	void StartPlannerForGoal();
 
+	// Check if planner can bring some box to area to climb to a new area.
+	bool CheckBoxForAreas();
+
 	// Check if there is some unknown button-door configuration and start planner trying to figuring it out.
 	// Return false if there is none such configuration.
 	bool CheckButtonDoorConfigurations();
 
+	// When carrying a box check if it is not fallen.
+	void CheckCarryingBox();
+
 	// Perform speak task, say a phrase.
 	void DoSpeakTask( int iArgument );
-
-	// Get new task from stack.
-	inline void TaskFinish()
-	{
-		m_bTaskFinished = true;
-		m_cCurrentTask.iTask = EBorzhTaskInvalid;
-	}
 
 	// End big task.
 	void BigTaskFinish();
@@ -247,17 +234,32 @@ protected: // Methods.
 	}
 
 
-	// Go to new button and push it.
-	void PushPressButtonTask( TEntityIndex iButton, bool bShoot );
+	// Go to button and push it.
+	void PushPressButtonTask( TEntityIndex iButton );
 
-	// Go to new button and push it.
-	void PushCheckButtonTask( TEntityIndex iButton, bool bShoot = false );
+	// Offer task to go to button and push it.
+	void PushCheckButtonTask( TEntityIndex iButton, TEntityIndex iDoor );
+
+	// Carry box (maybe from upstairs).
+	void PerformActionCarryBox( TEntityIndex iBox );
+
+	// Drop given box.
+	void PerformActionDropBox( TEntityIndex iBox );
+
+	// Go to box and use gravity gun on it.
+	void PushGrabBoxTask( TEntityIndex iBox, TWaypointId iBoxWaypoint, bool bSpeak = true );
+
+	// Release box at needed waypoint. Will check totem waypoint and look at it before dropping the box.
+	void PushDropBoxTask( TEntityIndex iBox, TWaypointId iWhere );
+
+	// Drop box in place.
+	void DropBox();
 
 	// Check if all collaborative players accepted big task.
 	void CheckAcceptedPlayersForCollaborativeTask();
 
 	// Offer current task to players.
-	void OfferCollaborativeTask();
+	void OfferCollaborativeTask( int iArgument = -1 );
 
 	// Receive task offer from another player.
 	void ReceiveTaskOffer( TBorzhTask iProposedTask, int iArgument1, int iArgument2, TPlayerIndex iSpeaker );
@@ -266,7 +268,7 @@ protected: // Methods.
 	void ButtonPushed( TEntityIndex iButton );
 
 	// Return true if task of planner is finished.
-	bool IsPlannerTaskFinished();
+	bool IsPlanPerformed();
 
 	// Perform next step in plan in execution. Return false if there is nothing left to do.
 	bool PlanStepNext();
@@ -277,14 +279,25 @@ protected: // Methods.
 	// Execute last step of the plan.
 	void PlanStepLast();
 
-	// Cancel collaborative task (if planner task, stop planner).
-	void CancelCollaborativeTask( TPlayerIndex iWaitForPlayer = EPlayerIndexInvalid );
-
 	// Called when unexpected chat arrives when performing collaborative task.
 	void UnexpectedChatForCollaborativeTask( TPlayerIndex iSpeaker, bool bWaitForThisPlayer );
 
+	// Cancel collaborative task (if planner task, stop planner).
+	void CancelCollaborativeTask( TPlayerIndex iWaitForPlayer = EPlayerIndexInvalid );
+
+	// Check if goal of plan is reached. If it is push button and we are in button area, then change objective to push it.
+	void CheckGoalReached( TPlayerIndex iSpeaker );
+
+	// Check if bot sees a box.
+	void CheckIfSeeBox();
+
+	// Check if box is needed to go back, and bring it in that case.
+	void CheckToReturnBox();
+
+
 protected: // Members.
-	friend void GeneratePddl();
+
+	friend void GeneratePddl( bool bFromBotBelief );
 
 	class CBorzhTask
 	{
@@ -297,7 +310,27 @@ protected: // Members.
 		void* pArguments;                                   // Other task arguments;
 	};
 
-	static const int m_iTimeAfterPushingButton = 2000;      // Wait 2 seconds after pushing button.
+protected: // Flags.
+
+	bool m_bStarted:1;                                      // Started (someone must say 'start'). Say 'pause' to pause all bots.
+	bool m_bWasMovingBeforePause:1;                         // True if bot was moving before pause.
+
+	bool m_bSaidHello:1;                                    // To not say hello twice.
+	bool m_bNothingToDo:1;                                  // Bot has no more task to do, wait for domain change.
+
+	bool m_bNewTask:1;                                      // New task need to be initiated.
+	bool m_bTaskFinished:1;                                 // Need to pop new task from stack.
+
+	bool m_bUsingPlanner:1;                                 // Trying to get plan for something currently.
+	bool m_bUsedPlannerForGoal:1;                           // .
+	bool m_bUsedPlannerForBox:1;                            // .
+	bool m_bUsedPlannerForButton:1;                         // .
+
+	bool m_bCarryingBox:1;                                  // .
+	bool m_bLostBox:1;                                      // .
+
+protected: // Members.
+	static const int m_iTimeAfterPushingButton = 4000;      // Wait 2 seconds after pushing button.
 	static const int m_iTimeAfterSpeak = 3000;              // Wait 3 seconds after speaking (other bots will stop and wait too).
 	static const int m_iTimeToWaitPlayer = 30000;           // Wait 60 seconds for another player.
 
@@ -323,18 +356,20 @@ protected: // Members.
 	good::bitset m_cOpenedDoors;                            // Opened doors. Closed door means seen & !opened.
 	good::bitset m_cFalseOpenedDoors;                       // Used when checking a button.
 	good::bitset m_cCheckedDoors;                           // Useful bitset when checking doors.
+	good::bitset m_cUnknownDoors;                           // Doors with unknown status.
 
 	good::bitset m_cSeenButtons;                            // Seen buttons. Other bot could see it also.
 	good::bitset m_cPushedButtons;                          // Buttons pushed at least once.
+
+	good::bitset m_cSeenWalls;                              // Areas that were explored (1 = explored, 0 = unknown).
 
 	good::vector<good::bitset> m_cButtonTogglesDoor;        // Bot's belief of which set of doors button DO toggle (button is index in array).
 	good::vector<good::bitset> m_cButtonNoAffectDoor;       // Bot's belief of which set of doors button DOESN'T toggle (button is index in array).
 
 	good::vector<good::bitset> m_cTestedToggles;            // Button-doors configurations that has been tested. When domain change is produced, they will be cleared.
-	//good::bitset m_cDontTestButtons;                        // Buttons that has been tested. When domain change is produced, they will be cleared.
-	//good::bitset m_cDontTestDoors;                          // Door that has been tested. When domain change is produced, they will be cleared.
 
 	good::bitset m_cCollaborativePlayers;                   // Players that are collaborating with this bot.
+	good::bitset m_cWaitingPlayers;                         // Players that are waiting for this bot.
 	good::bitset m_cBusyPlayers;                            // Players that are busy. m_bNothingToDo will be true until all of them became idle.
 	good::bitset m_cAcceptedPlayers;                        // Players that accepted this bot task. All players need to accept task in order to perform it.
 	good::bitset m_cPlayersWithPhyscannon;                  // Players that have a gravity gun.
@@ -342,29 +377,17 @@ protected: // Members.
 	good::vector<TAreaId> m_aPlayersAreas;                  // Bot's belief of where another player is.
 	good::vector<TBorzhTask> m_aPlayersTasks;               // Bot's belief of what another player is doing.
 
-	TWeaponId m_iCrossbow;                                  // Index of crossbow. -1 if bot doesn't have it.
-	TWeaponId m_iPhyscannon;                                // Index of gravity gun. -1 if bot doesn't have it.
+	good::vector<CBoxInfo> m_aBoxes;                        // Bot's belief of where some box is.
 
+	TWeaponId m_iCrossbow;                                  // Index of crossbow. -1 if bot doesn't have it.
+	
+	TEntityIndex m_iBox;                                    // If m_bCarryingBox then this is box index.
+	Vector m_vPrevBoxPosition;                              // Util when box stucks to know when it stops moving.
+
+	int m_iPlanStep;                                        // Current plan step.
 	float m_fEndWaitTime;                                   // Time when can stop waiting.
 
-
-protected: // Flags.
-	bool m_bStarted:1;                                      // Started (someone must say 'start'). Say 'pause' to pause all bots.
-	bool m_bWasMovingBeforePause:1;                         // True if bot was moving before pause.
-
-	bool m_bSaidHello:1;                                    // To not say hello twice.
-	bool m_bNothingToDo:1;                                  // Bot has no more task to do, wait for domain change.
-
-	bool m_bNewTask:1;                                      // New task need to be initiated.
-	bool m_bTaskFinished:1;                                 // Need to pop new task from stack.
-	bool m_bHasCrossbow:1;                                  // True if bot has crossbow to shoot buttons.
-	bool m_bHasPhyscannon:1;                                // True if bot has physcannon to carry boxes.
-
-	bool m_bUsingPlanner:1;                                 // Trying to get plan for something currently.
-	bool m_bUsedPlannerForGoal:1;                           // .
-	bool m_bUsedPlannerForButton:1;                         // .
-
-	bool m_bSpokenAboutAllBoxes:1;                          // .
+	float m_fNextBoxCheck;                                  // Time when will check next box.
 
 };
 

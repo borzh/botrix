@@ -326,10 +326,10 @@ public:
 	static void GetRespawnWeapons( good::vector<CWeaponWithAmmo>& aWeapons, int iTeam );
 
 	/// Get weapon from weapon name.
-	static TWeaponId GetIdFromWeaponClass( const good::string& sName )
+	static TWeaponId GetIdFromWeaponName( const good::string& sName )
 	{
 		for ( int i=0; i < m_aWeapons.size(); ++i )
-			if ( m_aWeapons[i].GetBaseWeapon()->pWeaponClass->sClassName == sName )
+			if ( m_aWeapons[i].GetName() == sName )
 				return i;
 		return -1;
 	}

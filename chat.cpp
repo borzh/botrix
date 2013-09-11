@@ -651,17 +651,27 @@ const good::string& CChat::ChatToText( const CBotChat& cCommand )
 	DebugAssert( cPhrase.aWords.size() );
 
 	// Get phrase into buffer replacing variables by their values.
-	bool bForceOptional = false;
+	bool bNextOptional = false, bUseOptional = false;
 	for ( int i=0; i < cPhrase.aWords.size(); ++i )
 	{
 		const CPhraseWord& cWord = cPhrase.aWords[i];
 		bool bAdd = !cWord.bOptional;
 
-		bool bUseOptional = bForceOptional || (rand()&1);
-		if ( cWord.bOptional && bUseOptional )
+		if ( cWord.bOptional )
 		{
-			bAdd = true;
-			bForceOptional = cWord.bNextOptional;
+			if ( bNextOptional ) // Previous word was optional.
+			{
+				bAdd = bUseOptional;
+			}
+			else
+			{
+				bUseOptional = (rand()&1); // First optional.
+				if ( bUseOptional )
+				{
+					bAdd = true;
+				}
+			}
+			bNextOptional = cWord.bNextOptional;
 		}
 
 		if ( bAdd )

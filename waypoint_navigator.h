@@ -63,8 +63,8 @@ public:
 	/// Decrement path position. Used in case of some bot action didn't work, to perform waypoint touch again.
 	void SetPreviousPathPosition()
 	{
-		DebugAssert(m_iPathIndex > 0 );
-		m_iPathIndex--;
+		if (m_iPathIndex > 0 )
+			m_iPathIndex--;
 	}
 
 	/// Drawpath.

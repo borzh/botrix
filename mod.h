@@ -60,6 +60,9 @@ public: // Methods.
 	/// Get chat names.
 	virtual const good::string* GetChatNames() = 0;
 
+	/// Mod think function.
+	virtual void Think() = 0;
+
 
 };
 

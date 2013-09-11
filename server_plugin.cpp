@@ -151,11 +151,11 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 	good::string iniName( good::file::append_path(sBotrixPath, "config.ini") );
 	TModId iModId = CConfiguration::Load(iniName, sGameFolder, sModFolder);
 
-	// Load mod configuration.
-	CMod::Load(iModId);
-
 	// Create console command instance.
 	CMainCommand::instance = new CMainCommand();
+
+	// Load mod configuration.
+	CMod::Load(iModId);
 
 #ifdef SOURCE_ENGINE_2006
 	MathLib_Init(1.0, 1.0, 1.0, 1.0, false, true, false, true);
@@ -269,6 +269,8 @@ void CBotrixPlugin::GameFrame( bool simulating )
 
 	if ( bMapRunning )
 	{
+		CMod::pCurrentMod->Think();
+
 		// Show fps.
 		//m_iFramesCount++;
 		//if (fTime >= m_fFpsEnd)

@@ -15,6 +15,9 @@ public:
 	CAction(TBotAction iAction, TPlayerIndex iExecutioner, int iArgument):
 		iAction(iAction), iExecutioner(iExecutioner), iArgument(iArgument) {}
 
+	bool operator ==( CAction iOther ) const { return iAction == iOther.iAction; }
+	bool operator ==( TBotAction iOther ) const { return iAction == iOther; }
+
 	TBotAction iAction;                  ///< Action: move, shoot, push button, climb bot one on another etc.
 	TPlayerIndex iExecutioner;           ///< Bot who must perform action.
 	TPlayerIndex iHelper;                ///< Bot who helps.

@@ -303,7 +303,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 					DebugAssert( aCurrent.size() > 0 );
 
 					// Get weapon from name.
-					TWeaponId iWeaponId = CWeapons::GetIdFromWeaponClass( aCurrent[0] );
+					TWeaponId iWeaponId = CWeapons::GetIdFromWeaponName( aCurrent[0] );
 					if ( iWeaponId == -1 )
 					{
 						ConfigError("File %s, section [%s], 'default' weapons: unknown weapon '%s', skipping.",

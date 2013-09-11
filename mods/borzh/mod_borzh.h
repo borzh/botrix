@@ -6,6 +6,35 @@
 #include "mod.h"
 
 
+/// Class to represent high area that needs a box to climb to.
+class CWall
+{
+public:
+	CWall() {}
+	CWall( TWaypointId iLower, TWaypointId iHigher ): iLowerWaypoint(iLower), iHigherWaypoint(iHigher) {}
+
+	TWaypointId iLowerWaypoint;
+	TWaypointId iHigherWaypoint;
+};
+
+
+/// Class to represent info for a box.
+class CBoxInfo
+{
+public:
+	CBoxInfo() {}
+	CBoxInfo( TEntityIndex iBox, TWaypointId iWaypoint, TAreaId iArea): iBox(iBox), iWaypoint(iWaypoint), iArea(iArea) {}
+
+	bool operator==( const CBoxInfo& cOther ) const { return iBox == cOther.iBox; }
+	bool operator==( TEntityIndex iOtherBox ) const { return iBox == iOtherBox; }
+
+	TEntityIndex iBox;
+	TWaypointId iWaypoint;
+	TAreaId iArea;
+};
+
+
+/// Class for BorzhMod.
 class CModBorzh: public IMod
 {
 public: // Methods.
@@ -53,6 +82,8 @@ public: // Methods.
 	/// Get chat names.
 	virtual const good::string* GetChatNames() { return NULL; }
 
+	/// Mod think function.
+	virtual void Think();
 
 public: // Static methods.
 
@@ -68,6 +99,21 @@ public: // Static methods.
 	/// Get buttons that are in given area.
 	static const good::vector<TEntityIndex>& GetButtonsForArea( TAreaId iArea ) { return m_aAreasButtons[iArea]; }
 
+	/// Get all boxes.
+	static const good::vector<CBoxInfo>& GetBoxes() { return m_aBoxes; }
+
+	/// Get walls between 2 areas.
+	static const CWall* GetWallBetweenAreas( TAreaId iLowerArea, TAreaId iHigherArea );
+
+	/// Get walls for given area.
+	static const good::vector<CWall>& GetWallsForArea( TAreaId iArea ) { return m_aWalls[iArea]; }
+
+	/// Get falls for given area.
+	static const good::vector<CWall>& GetFallsForArea( TAreaId iArea ) { return m_aFalls[iArea]; }
+
+	/// Get walls for given area.
+	static bool IsWallClimbable( const CWall& cWall);
+
 	/// Get waypoint to shoot button.
 	static TWaypointId GetWaypointToShootButton( TEntityIndex iButton )
 	{
@@ -80,10 +126,11 @@ public: // Members.
 	static TChatVariable iVarDoor;
 	static TChatVariable iVarDoorStatus;
 	static TChatVariable iVarButton;
+	static TChatVariable iVarBox;
 	static TChatVariable iVarWeapon;
 	static TChatVariable iVarArea;
 	static TChatVariable iVarPlayer;
-	static const int iTotalVars = 6;
+	static const int iTotalVars = 7;
 
 	static TChatVariableValue iVarValueDoorStatusOpened;
 	static TChatVariableValue iVarValueDoorStatusClosed;
@@ -99,6 +146,12 @@ protected:
 	static good::vector< good::vector<TEntityIndex> > m_aAreasDoors;          // Doors for areas.
 	static good::vector< good::vector<TEntityIndex> > m_aAreasButtons;        // Buttons for areas.
 	static good::vector< good::vector<TWaypointId> > m_aShootButtonWaypoints; // Waypoints to shoot buttons.
+	static good::vector< good::vector<CWall> > m_aWalls;                      // Walls for areas.
+	static good::vector< good::vector<CWall> > m_aFalls;                      // Falls for areas.
+	static good::vector< CBoxInfo > m_aBoxes;                                 // Boxes.
+
+	static int m_iCheckBox;                                                   // Next box to get it waypoint.
+	static float m_fCheckBoxTime;                                             // Time to check next box waypoint.
 
 };
 

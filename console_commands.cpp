@@ -916,6 +916,50 @@ TCommandResult CWaypointLoadCommand::Execute( CClient* pClient, int argc, const 
 //----------------------------------------------------------------------------------------------------------------
 // Waypoint area commands.
 //----------------------------------------------------------------------------------------------------------------
+TCommandResult CWaypointAreaRemoveCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+	if ( pClient == NULL )
+		return ECommandError;
+
+	good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false); // Don't deallocate after use.
+
+	if ( argc < 1 )
+	{
+		CUtil::Message(pClient->GetEdict(), "Error, 1 argument needed.");
+		return ECommandError;
+	}
+
+	for ( int i=0; i < argc; ++i )
+	{
+		sbBuffer.append(argv[i]);
+		sbBuffer.append(' ');
+	}
+	sbBuffer.erase( sbBuffer.size()-1, 1 ); // Erase last space.
+
+	StringVector& cAreas = CWaypoints::GetAreas();
+	for ( TAreaId iArea = 1; iArea < cAreas.size(); ++iArea ) // Do not take default area in account.
+	{
+		if ( sbBuffer == cAreas[iArea] )
+		{
+			for ( TWaypointId iWaypoint = 0; iWaypoint < CWaypoints::Size(); ++iWaypoint )
+			{
+				CWaypoint& cWaypoint = CWaypoints::Get(iWaypoint);
+				if ( cWaypoint.iAreaId > iArea )
+					--cWaypoint.iAreaId;
+				else if ( cWaypoint.iAreaId == iArea )
+					cWaypoint.iAreaId = 0; // Set to default.
+			}
+
+			cAreas.erase(iArea);
+			CUtil::Message( pClient->GetEdict(), "Deleted area '%s'.", sbBuffer.c_str() );
+			return ECommandPerformed;
+		}
+	}
+
+	CUtil::Message(pClient->GetEdict(), "Error, no area with such name.");
+	return ECommandError;
+}
+
 TCommandResult CWaypointAreaRenameCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( pClient == NULL )
@@ -945,13 +989,13 @@ TCommandResult CWaypointAreaRenameCommand::Execute( CClient* pClient, int argc, 
 			sbBuffer.trim();
 			if ( sbBuffer.size() > 0 )
 			{
-				CUtil::Message( pClient->GetEdict(), "Renamed '%s' to '%s'", cAreas[i].c_str(), sbBuffer.c_str() );
+				CUtil::Message( pClient->GetEdict(), "Renamed '%s' to '%s'.", cAreas[i].c_str(), sbBuffer.c_str() );
 				cAreas[i] = sbBuffer.duplicate();
 				return ECommandPerformed;
 			}
 			else
 			{
-				CUtil::Message( pClient->GetEdict(), "Error, can't rename '%s' to '%s'", cAreas[i].c_str(), sbBuffer.c_str() );
+				CUtil::Message( pClient->GetEdict(), "Error, can't rename '%s' to '%s'.", cAreas[i].c_str(), sbBuffer.c_str() );
 				return ECommandError;
 			}
 		}
@@ -981,13 +1025,13 @@ TCommandResult CWaypointAreaSetCommand::Execute( CClient* pClient, int argc, con
 	if ( index == argc ) // Only waypoint given, show waypoint area.
 	{
 		const CWaypoint& w = CWaypoints::Get(iWaypoint);
-		CUtil::Message(pClient->GetEdict(), "Waypoint %d is at area %s (%d)", iWaypoint, CWaypoints::GetAreas()[w.iAreaId].c_str(), w.iAreaId);
+		CUtil::Message(pClient->GetEdict(), "Waypoint %d is at area %s (%d).", iWaypoint, CWaypoints::GetAreas()[w.iAreaId].c_str(), w.iAreaId);
 		return ECommandPerformed;
 	}
 
 	if ( !CWaypoints::IsValid(iWaypoint) )
 	{
-		CUtil::Message(pClient->GetEdict(), "Error, invalid waypoint: %d", iWaypoint);
+		CUtil::Message(pClient->GetEdict(), "Error, invalid waypoint: %d.", iWaypoint);
 		return ECommandError;
 	}
 
@@ -1119,7 +1163,7 @@ TCommandResult CPathDrawCommand::Execute( CClient* pClient, int argc, const char
 			int iAddFlag = CTypeToString::PathDrawFlagsFromString(argv[i]);
 			if ( iAddFlag == -1 )
 			{
-				CUtil::Message( pClient->GetEdict(), "Error, invalid draw flag(s). Can be 'none' / 'all' / 'next' or mix of: %s", CTypeToString::PathDrawFlagsToString(FWaypointDrawAll).c_str() );
+				CUtil::Message( pClient->GetEdict(), "Error, invalid draw flag(s). Can be 'none' / 'all' / 'next' or mix of: %s.", CTypeToString::PathDrawFlagsToString(FWaypointDrawAll).c_str() );
 				return ECommandError;
 			}
 			FLAG_SET(iAddFlag, iFlags);
@@ -1473,7 +1517,7 @@ TCommandResult AllowOrForbid( bool bForbid, CClient* pClient, int argc, const ch
 	{
 		for ( int i=0; i < argc; ++i )
 		{
-			TWeaponId iWeaponId = CWeapons::GetIdFromWeaponClass( argv[i] );
+			TWeaponId iWeaponId = CWeapons::GetIdFromWeaponName( argv[i] );
 			if ( CWeapon::IsValid(iWeaponId) )
 			{
 				const CWeapon* pWeapon = CWeapons::Get(iWeaponId);

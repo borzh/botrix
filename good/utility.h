@@ -90,12 +90,32 @@ namespace good
 	/// Util function search for element in container.
 	//************************************************************************************************************
 	template <typename T, typename Iterator>
-	Iterator find(Iterator itBegin, Iterator itEnd, const T& elem)
+	Iterator find( Iterator itBegin, Iterator itEnd, const T& elem )
 	{
 		for (; itBegin != itEnd; ++itBegin)
-			if (*itBegin == elem)
+			if ((const T&)*itBegin == elem)
 				return itBegin;
 		return itEnd;
+	}
+
+
+	//************************************************************************************************************
+	/// Util function search for element in container.
+	//************************************************************************************************************
+	template <typename T, typename Container>
+	typename Container::const_iterator find( const Container& aContainer, const T& elem )
+	{
+		return good::find<T, Container::const_iterator>(aContainer.begin(), aContainer.end(), elem);
+	}
+
+
+	//************************************************************************************************************
+	/// Util function search for element in container.
+	//************************************************************************************************************
+	template <typename T, typename Container>
+	typename Container::iterator find( Container& aContainer, const T& elem )
+	{
+		return good::find<T, Container::iterator>(aContainer.begin(), aContainer.end(), elem);
 	}
 
 

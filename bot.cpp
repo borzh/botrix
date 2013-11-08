@@ -59,18 +59,28 @@ void CBot::TestWaypoints( TWaypointId iFrom, TWaypointId iTo )
 
 
 //----------------------------------------------------------------------------------------------------------------
+static char szBotBuffer[2048];
+
+//----------------------------------------------------------------------------------------------------------------
 void CBot::ConsoleCommand(const char* szFormat, ...)
 {
-	static char szBuffer[2048];
 	va_list vaList;
 	va_start(vaList, szFormat);
-	vsprintf(szBuffer, szFormat, vaList); 
+	vsprintf(szBotBuffer, szFormat, vaList); 
 	va_end(vaList); 
 
-	CBotrixPlugin::pServerPluginHelpers->ClientCommand(m_pEdict, szBuffer);
+	CBotrixPlugin::pServerPluginHelpers->ClientCommand(m_pEdict, szBotBuffer);
 }
 
+void CBot::Say(bool bTeamOnly, const char* szFormat, ...)
+{
+	va_list vaList;
+	va_start(vaList, szFormat);
+	vsprintf(szBotBuffer, szFormat, vaList); 
+	va_end(vaList); 
 
+	CBotrixPlugin::instance->GenerateSayEvent(m_pEdict, szBotBuffer, bTeamOnly);
+}
 //----------------------------------------------------------------------------------------------------------------
 void CBot::Activated()
 {
@@ -300,7 +310,7 @@ void CBot::ReceiveChatRequest( const CBotChat& cRequest )
 	if ( cResponse.iBotChat != -1 )
 	{
 		const good::string& sText = CChat::ChatToText(cResponse);
-		ConsoleCommand( "say %s", sText.c_str() );
+		Say(false, sText.c_str());
 	}
 }
 
@@ -347,11 +357,8 @@ void CBot::EndPerformingChatRequest( bool bSayGoodbye )
 		else
 			m_cChat.iDirectedTo = -1;
 
-		char* szSay = "say %s";
-		if ( CPlayers::Get(iChatMate)->GetTeam() == GetTeam() )
-			szSay = "say_team %s";
-
-		ConsoleCommand( szSay, CChat::ChatToText(m_cChat).c_str() );
+		bool bTeam = ( CPlayers::Get(iChatMate)->GetTeam() == GetTeam() );
+		Say( bTeam, CChat::ChatToText(m_cChat).c_str() );
 	}
 
 	switch ( m_iObjective )
@@ -439,7 +446,9 @@ void CBot::PreThink()
 	}
 
 	m_pController->RunPlayerMove(&m_cCmd);
+#ifndef SOURCE_ENGINE_2013
 	m_pController->PostClientMessagesSent();
+#endif
 
 	m_fPrevThinkTime = CBotrixPlugin::fTime;
 
@@ -722,7 +731,7 @@ void CBot::Speak( bool bTeamSay )
 		m_cChat.cMap.push_back( CChatVarValue(CChat::iPlayerVar, 0, iPlayerIndex) );
 	const good::string& sText = CChat::ChatToText(m_cChat);
 	CUtil::Message( NULL, "%s: %s %s", GetName(), bTeamSay? "say_team" : "say", sText.c_str() );
-	ConsoleCommand( "%s %s", bTeamSay? "say_team" : "say", sText.c_str() );
+	Say( bTeamSay, sText.c_str() );
 }
 
 

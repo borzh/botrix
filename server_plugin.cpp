@@ -144,8 +144,9 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 	int gamePos = sGameFolder.rfind(PATH_SEPARATOR);
 	szMainBuffer[gamePos] = 0;
 	sGameFolder = good::string(&szMainBuffer[gamePos+1], true, true);
+	sGameFolder.lower_case();
 
-	sBotrixPath = good::file::append_path(szMainBuffer, "Botrix");
+	sBotrixPath = good::file::append_path(szMainBuffer, "botrix");
 
 	// Load configuration file.
 	good::string iniName( good::file::append_path(sBotrixPath, "config.ini") );
@@ -455,6 +456,43 @@ void CBotrixPlugin::FireGameEvent( KeyValues* event )
 void CBotrixPlugin::FireGameEvent( IGameEvent * event )
 {
 	CMod::ExecuteEvent( (void*)event, EEventTypeKeyValues );
+}
+
+void CBotrixPlugin::GenerateSayEvent( edict_t* pEntity, const char* szText, bool bTeamOnly )
+{
+	int iUserId = pEngineServer->GetPlayerUserId(pEntity);
+	if (iUserId == -1)
+	{
+		DebugAssert(false);
+		return;
+	}
+
+#define USE_GAME_EVENT_MANAGER2
+#ifdef USE_GAME_EVENT_MANAGER2
+	IGameEvent* pEvent = pGameEventManager2->CreateEvent("player_say");
+	if (pEvent)
+	{
+		pEvent->SetInt("userid", iUserId);
+		pEvent->SetString("text", szText);
+		pEvent->SetBool("teamonly", bTeamOnly);
+		//pEvent->SetInt("priority", 1 );	// HLTV event priority, not transmitted
+		pGameEventManager2->FireEvent(pEvent);
+		//pGameEventManager2->FreeEvent(pEvent);
+	}
+#else
+	KeyValues* pEvent = pGameEventManager->GetEvent("player_say", true);
+	if (pEvent)
+	{
+		DebugAssert(strcmp(pEvent->GetName(), "player_say") == 0);
+		pEvent->SetInt("userid", iUserId);
+		pEvent->SetString("text", szText);
+		pEvent->SetBool("teamonly", bTeamOnly);
+		pGameEventManager->FireEvent(pEvent);
+		//pEvent->deleteThis();
+	}
+#endif
+	else
+		CUtil::Message(NULL, "Error creating event player_say: %s.", szText);
 }
 
 void CBotrixPlugin::HudTextMessage( edict_t* pEntity, char *szMsgName, char *szTitle, char *szMessage, Color colour, int level, int time )

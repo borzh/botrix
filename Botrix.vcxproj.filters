@@ -1,0 +1,172 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="good">
+      <UniqueIdentifier>{3d2c37be-5d0d-438e-a9d9-5dff51c71d1b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mods">
+      <UniqueIdentifier>{2ebb66cd-4841-4878-ac76-3bd379115294}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mods\borzh">
+      <UniqueIdentifier>{9bc9d9bc-c541-4f1a-9faf-05678d19c048}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mods\hl2dm">
+      <UniqueIdentifier>{56d3e086-7707-4384-a083-e8714815a8ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mods\css">
+      <UniqueIdentifier>{d995789f-492f-45fd-9cd4-51988edd4546}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="good\aatree.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\astar.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\bitmatrix.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\bitset.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\circular_buffer.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\defines.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\file.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\graph.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\heap.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\ini_file.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\list.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\map.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\mutex.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\priority_queue.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\process.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\set.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\string.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\string_buffer.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\thread.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\utility.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\vector.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="mods\borzh\bot_borzh.h">
+      <Filter>mods\borzh</Filter>
+    </ClInclude>
+    <ClInclude Include="mods\borzh\mod_borzh.h">
+      <Filter>mods\borzh</Filter>
+    </ClInclude>
+    <ClInclude Include="mods\borzh\planner.h">
+      <Filter>mods\borzh</Filter>
+    </ClInclude>
+    <ClInclude Include="mods\borzh\types_borzh.h">
+      <Filter>mods\borzh</Filter>
+    </ClInclude>
+    <ClInclude Include="mods\hl2dm\bot_hl2dm.h">
+      <Filter>mods\hl2dm</Filter>
+    </ClInclude>
+    <ClInclude Include="mods\hl2dm\types_hl2dm.h">
+      <Filter>mods\hl2dm</Filter>
+    </ClInclude>
+    <ClInclude Include="mods\css\event_css.h">
+      <Filter>mods\css</Filter>
+    </ClInclude>
+    <ClInclude Include="mods\css\types_css.h">
+      <Filter>mods\css</Filter>
+    </ClInclude>
+    <ClInclude Include="bot.h" />
+    <ClInclude Include="chat.h" />
+    <ClInclude Include="clients.h" />
+    <ClInclude Include="config.h" />
+    <ClInclude Include="console_commands.h" />
+    <ClInclude Include="event.h" />
+    <ClInclude Include="item.h" />
+    <ClInclude Include="mod.h" />
+    <ClInclude Include="players.h" />
+    <ClInclude Include="server_plugin.h" />
+    <ClInclude Include="source_engine.h" />
+    <ClInclude Include="type2string.h" />
+    <ClInclude Include="types.h" />
+    <ClInclude Include="waypoint.h" />
+    <ClInclude Include="waypoint_navigator.h" />
+    <ClInclude Include="weapon.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="good\file.cpp">
+      <Filter>good</Filter>
+    </ClCompile>
+    <ClCompile Include="good\ini_file.cpp">
+      <Filter>good</Filter>
+    </ClCompile>
+    <ClCompile Include="good\mutex.cpp">
+      <Filter>good</Filter>
+    </ClCompile>
+    <ClCompile Include="good\process.cpp">
+      <Filter>good</Filter>
+    </ClCompile>
+    <ClCompile Include="good\thread.cpp">
+      <Filter>good</Filter>
+    </ClCompile>
+    <ClCompile Include="mods\borzh\bot_borzh.cpp">
+      <Filter>mods\borzh</Filter>
+    </ClCompile>
+    <ClCompile Include="mods\borzh\mod_borzh.cpp">
+      <Filter>mods\borzh</Filter>
+    </ClCompile>
+    <ClCompile Include="mods\borzh\planner.cpp">
+      <Filter>mods\borzh</Filter>
+    </ClCompile>
+    <ClCompile Include="mods\hl2dm\bot_hl2dm.cpp">
+      <Filter>mods\hl2dm</Filter>
+    </ClCompile>
+    <ClCompile Include="mods\css\event_css.cpp">
+      <Filter>mods\css</Filter>
+    </ClCompile>
+    <ClCompile Include="bot.cpp" />
+    <ClCompile Include="chat.cpp" />
+    <ClCompile Include="clients.cpp" />
+    <ClCompile Include="config.cpp" />
+    <ClCompile Include="console_commands.cpp" />
+    <ClCompile Include="event.cpp" />
+    <ClCompile Include="item.cpp" />
+    <ClCompile Include="mod.cpp" />
+    <ClCompile Include="players.cpp" />
+    <ClCompile Include="server_plugin.cpp" />
+    <ClCompile Include="source_engine.cpp" />
+    <ClCompile Include="type2string.cpp" />
+    <ClCompile Include="waypoint.cpp" />
+    <ClCompile Include="waypoint_navigator.cpp" />
+    <ClCompile Include="weapon.cpp" />
+  </ItemGroup>
+</Project>

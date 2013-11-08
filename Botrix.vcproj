@@ -31,8 +31,8 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="Copying dll to sourcemods."
-				CommandLine="copy &quot;$(OutDir)\botrix.dll&quot; &quot;\Games\Steam\steamapps\borzh62\source sdk base 2007\bin\&quot;&#x0D;&#x0A;copy &quot;$(OutDir)\botrix.pdb&quot; &quot;\Games\Steam\steamapps\borzh62\source sdk base 2007\bin\&quot;&#x0D;&#x0A;copy &quot;$(OutDir)\botrix.dll&quot; &quot;\Games\Steam\steamapps\borzh62\half-life 2 deathmatch\bin\&quot;&#x0D;&#x0A;copy &quot;$(OutDir)\botrix.pdb&quot; &quot;\Games\Steam\steamapps\borzh62\half-life 2 deathmatch\bin\&quot;&#x0D;&#x0A;"
-				Outputs="\Games\Steam\steamapps\borzh62\source sdk base 2007\bin\botrix.dll;\Games\Steam\steamapps\borzh62\source sdk base 2007\bin\botrix.pdb;\Games\Steam\steamapps\borzh62\half-life 2 deathmatch\bin\botrix.dll;\Games\Steam\steamapps\borzh62\half-life 2 deathmatch\bin\botrix.pdb"
+				CommandLine="rem copy /Y &quot;$(OutDir)\botrix.dll&quot; &quot;\Games\Steam\steamapps\common\Half-Life 2 Deathmatch\borzhmod\bin&quot;&#x0D;&#x0A;rem copy /Y &quot;$(OutDir)\botrix.pdb&quot; &quot;\Games\Steam\steamapps\common\Half-Life 2 Deathmatch\borzhmod\bin&quot;&#x0D;&#x0A;copy /Y &quot;$(OutDir)\botrix.dll&quot; &quot;\Games\Steam\steamapps\common\Source SDK Base 2007\borzhmod\bin&quot;&#x0D;&#x0A;copy /Y &quot;$(OutDir)\botrix.pdb&quot; &quot;\Games\Steam\steamapps\common\Source SDK Base 2007\borzhmod\bin&quot;&#x0D;&#x0A;"
+				Outputs="&quot;\Games\Steam\steamapps\common\Source SDK Base 2007\borzhmod\bin\botrix.dll&quot;"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"

@@ -99,7 +99,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 			if ( (games != it->end()) && (mods != it->end()) )
 			{
 				sbBuffer = games->value;
-				sbBuffer.escape();
+				sbBuffer.lower_case();
 				StringVector aGameDirs = sbBuffer.split<good::vector>(',', true);
 				for ( StringVector::const_iterator gameDirsIt = aGameDirs.begin(); gameDirsIt != aGameDirs.end(); ++gameDirsIt )
 				{

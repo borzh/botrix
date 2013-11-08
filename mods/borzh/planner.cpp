@@ -19,9 +19,9 @@ char g_szPlannerBuffer[g_iPlannerBufferSize];                // Here we will rea
 
 bool bIsPlannerRunning = false;                              // Indicates if planner is running.
 
-const good::string sProblemPath( "D:\\Games\\Botrix2007\\src\\!BotrixPlugin\\ff\\problem-generated.pddl" );
-const good::string sExe( "D:\\Games\\Botrix2007\\src\\!BotrixPlugin\\ff\\ff.exe"  );
-const good::string sCommand( "D:\\Games\\Botrix2007\\src\\!BotrixPlugin\\ff\\ff.exe -o domain.pddl -f problem-generated.pddl"  );
+const good::string sProblemPath( "D:\\Games\\Botrix2013\\mp\\src\\!BotrixPlugin\\ff\\problem-generated.pddl" );
+const good::string sExe( "D:\\Games\\Botrix2013\\mp\\src\\!BotrixPlugin\\ff\\ff.exe"  );
+const good::string sCommand( "D:\\Games\\Botrix2013\\mp\\src\\!BotrixPlugin\\ff\\ff.exe -o domain.pddl -f problem-generated.pddl"  );
 good::process g_cPlannerProcess(sExe, sCommand, true, true); // Spawned process of ff.exe
 
 void PlannerThreadFunc( void* pArgument );                   // Forward declaration.
@@ -95,8 +95,8 @@ void GeneratePddl( bool bFromBotBelief )
 	fprintf(f, "		");
 	const StringVector& aAreas = CWaypoints::GetAreas();
 	for ( TAreaId i=0; i < aAreas.size(); ++i )
-		fprintf(f, "area%d ", i);
-	fprintf( f, "- waypoint\n" );
+		fprintf(f, "%s ", aAreas[i].c_str());
+	fprintf( f, "- area\n" );
 
 	fprintf(f, "		");
 	const good::vector<CEntity>& cDoors = CItems::GetItems(EEntityTypeDoor);
@@ -184,7 +184,7 @@ void GeneratePddl( bool bFromBotBelief )
 			}
 
 			if ( CWaypoints::IsValid(cWeapon.iWaypoint) )
-				fprintf( f, "		(weapon-at weapon%d area%d)\n\n", i, CWaypoints::Get(cWeapon.iWaypoint).iAreaId );
+				fprintf( f, "		(weapon-at weapon%d %s)\n\n", i, aAreas[ CWaypoints::Get(cWeapon.iWaypoint).iAreaId ].c_str() );
 			else
 				PRINT_MESSAGE("Error, %s %d doesn't have waypoint close.", sWeapon.c_str(), i);
 		}
@@ -198,14 +198,14 @@ void GeneratePddl( bool bFromBotBelief )
 		{
 			if ( bFromBotBelief )
 			{
-				fprintf(f, "		(at bot%d area%d) (empty bot%d)", iPlayer, g_pBot->m_aPlayersAreas[iPlayer], iPlayer);
+				fprintf(f, "		(at bot%d %s) (empty bot%d)", iPlayer, aAreas[ g_pBot->m_aPlayersAreas[iPlayer] ].c_str(), iPlayer);
 				if ( g_pBot->m_cPlayersWithPhyscannon.test(iPlayer) )
 					fprintf(f, " (has bot%d gravity-gun)", iPlayer);
 				if ( g_pBot->m_cPlayersWithCrossbow.test(iPlayer) )
 					fprintf(f, " (has bot%d crossbow)", iPlayer);
 			}
 			else
-				fprintf(f, "		(at bot%d area%d) (empty bot%d)", iPlayer, CWaypoints::Get(pPlayer->iCurrentWaypoint).iAreaId, iPlayer);
+				fprintf(f, "		(at bot%d %s) (empty bot%d)", iPlayer, aAreas[ CWaypoints::Get(pPlayer->iCurrentWaypoint).iAreaId ].c_str(), iPlayer);
 			fprintf(f, "\n\n");
 		}
 	}
@@ -214,12 +214,12 @@ void GeneratePddl( bool bFromBotBelief )
 	if ( bFromBotBelief )
 	{
 		for ( int i=0; i < g_pBot->m_aBoxes.size(); ++i )
-			fprintf( f, "		(box-at box%d area%d)\n", g_pBot->m_aBoxes[i].iBox, g_pBot->m_aBoxes[i].iArea );
+			fprintf( f, "		(box-at box%d %s)\n", g_pBot->m_aBoxes[i].iBox, aAreas[ g_pBot->m_aBoxes[i].iArea ].c_str() );
 	}
 	else
 	{
 		for ( int i=0; i < CModBorzh::GetBoxes().size(); ++i )
-			fprintf( f, "		(box-at box%d area%d)\n", CModBorzh::GetBoxes()[i].iBox, CModBorzh::GetBoxes()[i].iArea );
+			fprintf( f, "		(box-at box%d %s)\n", CModBorzh::GetBoxes()[i].iBox, aAreas[ CModBorzh::GetBoxes()[i].iArea ].c_str() );
 	}
 	fprintf(f, "\n");
 
@@ -231,11 +231,11 @@ void GeneratePddl( bool bFromBotBelief )
 			const CEntity& cButton = cButtons[iButton];
 			int iWaypoint = cButton.iWaypoint;
 			if ( CWaypoints::IsValid(iWaypoint) )
-				fprintf(f, "		(button-at button%d area%d)\n", iButton, CWaypoints::Get(iWaypoint).iAreaId);
+				fprintf( f, "		(button-at button%d %s)\n", iButton, aAreas[ CWaypoints::Get(iWaypoint).iAreaId ].c_str() );
 			else
 			{
 				iWaypoint = CModBorzh::GetWaypointToShootButton(iButton);
-				fprintf(f, "		(can-shoot button%d area%d)\n", iButton, CWaypoints::Get(iWaypoint).iAreaId);
+				fprintf( f, "		(can-shoot button%d %s)\n", iButton, aAreas[ CWaypoints::Get(iWaypoint).iAreaId ].c_str() );
 			}
 		}
 	}
@@ -255,12 +255,12 @@ void GeneratePddl( bool bFromBotBelief )
 				int iArea2 = CWaypoints::Get(iWaypoint2).iAreaId;
 				if ( !bFromBotBelief || ( g_pBot->m_cVisitedAreas.test(iArea1) && g_pBot->m_cVisitedAreas.test(iArea2) ) )
 				{
-					fprintf(f, "		(between door%d area%d area%d)\n", iDoor, iArea1, iArea2);
+					fprintf( f, "		(between door%d %s %s)\n", iDoor, aAreas[iArea1].c_str(), aAreas[iArea2].c_str() );
 					bool bOpened = bFromBotBelief ? g_pBot->m_cOpenedDoors.test(iDoor) : CItems::IsDoorOpened(iDoor);
 					if ( bOpened )
 					{
-						fprintf(f, "		(can-move area%d area%d)\n", iArea1, iArea2);
-						fprintf(f, "		(can-move area%d area%d)\n", iArea2, iArea1);
+						fprintf(f, "		(can-move %s %s)\n", aAreas[iArea1].c_str(), aAreas[iArea2].c_str());
+						fprintf(f, "		(can-move %s %s)\n", aAreas[iArea2].c_str(), aAreas[iArea1].c_str());
 					}
 				}
 			}
@@ -282,7 +282,7 @@ void GeneratePddl( bool bFromBotBelief )
 			for ( int iWall=0; iWall < aWalls.size(); ++iWall )
 			{
 				DebugAssert( iArea == CWaypoints::Get(aWalls[iWall].iLowerWaypoint).iAreaId );
-				fprintf(f, "		(wall area%d area%d)\n", iArea, CWaypoints::Get(aWalls[iWall].iHigherWaypoint).iAreaId);
+				fprintf( f, "		(wall %s %s)\n", aAreas[iArea].c_str(), aAreas[ CWaypoints::Get(aWalls[iWall].iHigherWaypoint).iAreaId ].c_str() );
 			}
 		}
 	}
@@ -327,14 +327,14 @@ void GeneratePddl( bool bFromBotBelief )
 		{
 			CPlayer* pPlayer = CPlayers::Get(iPlayer);
 			if ( pPlayer && ( !bFromBotBelief || g_pBot->m_cCollaborativePlayers.test(iPlayer) ) )
-				fprintf(f, "			(at bot%d area%d)\n", iPlayer, iGoalArea);
+				fprintf( f, "			(at bot%d %s)\n", iPlayer, aAreas[iGoalArea].c_str() );
 		}
 		fprintf(f, "		)\n"); // and
 	}
 	else if ( g_pBot->m_cCurrentBigTask.iTask == EBorzhTaskBringBox )
 	{
 		TAreaId iArea = GET_2ND_BYTE(g_pBot->m_cCurrentBigTask.iArgument);
-		fprintf(f, "			( exists (?box - box) (box-at ?box area%d) )\n", iArea);
+		fprintf( f, "			( exists (?box - box) (box-at ?box %s) )\n", aAreas[iArea].c_str() );
 	}
 	else
 	{
@@ -353,9 +353,9 @@ void GeneratePddl( bool bFromBotBelief )
 		
 		fprintf(f, "		(and\n");
 		if ( bShoot )
-			fprintf(f, "			( exists (?bot - bot) (and (at ?bot area%d) (has ?bot crossbow)) )\n", CWaypoints::Get(iButtonWaypoint).iAreaId);
+			fprintf( f, "			( exists (?bot - bot) (and (at ?bot %s) (has ?bot crossbow)) )\n", aAreas[ CWaypoints::Get(iButtonWaypoint).iAreaId ].c_str() );
 		else
-			fprintf(f, "			( exists (?bot - bot) (at ?bot area%d) )\n", CWaypoints::Get(iButtonWaypoint).iAreaId);
+			fprintf( f, "			( exists (?bot - bot) (at ?bot %s) )\n", aAreas[ CWaypoints::Get(iButtonWaypoint).iAreaId ].c_str() );
 		
 		if ( iDoor != 0xFF )
 		{
@@ -368,9 +368,9 @@ void GeneratePddl( bool bFromBotBelief )
 			TAreaId iDoorArea2 = CWaypoints::Get(iDoorWaypoint2).iAreaId;
 			fprintf(f, "			(or\n");
 			if ( g_pBot->m_cVisitedAreas.test(iDoorArea1) )
-				fprintf(f, "				( exists (?bot - bot) (at ?bot area%d) )\n", iDoorArea1);
+				fprintf(f, "				( exists (?bot - bot) (at ?bot %s) )\n", aAreas[iDoorArea1].c_str());
 			if ( g_pBot->m_cVisitedAreas.test(iDoorArea2) )
-				fprintf(f, "				( exists (?bot - bot) (at ?bot area%d) )\n", iDoorArea2);
+				fprintf(f, "				( exists (?bot - bot) (at ?bot %s) )\n", aAreas[iDoorArea2].c_str());
 			fprintf(f, "			)\n");
 		}
 		fprintf(f, "		)\n"); // and
@@ -435,6 +435,8 @@ bool TransformPlannerOutput()
 	DebugAssert( iPos != good::string::npos );
 	iPos++;
 
+	const StringVector& aAreas = CWaypoints::GetAreas();
+
 	// Find ':' until empty string is found.
 	while ( iPos < sbBuffer.size() )
 	{
@@ -471,11 +473,23 @@ bool TransformPlannerOutput()
 
 		// Get argument.
 		good::string sArgument = GetNextWord(sbBuffer, ++iPos);
+		sArgument.lower_case();
 		DebugAssert( iPos < iEnd );
-		const char* szArgumentNumber = sArgument.c_str();
-		while ( *szArgumentNumber < '0' || *szArgumentNumber > '9' )
-			szArgumentNumber++;
-		int iArgument = atoi(szArgumentNumber);
+
+		int iArgument;
+		if ( sArgument.starts_with("area") )
+		{
+			StringVector::const_iterator it = good::find(aAreas, sArgument);
+			DebugAssert( it != aAreas.end() );
+			iArgument = it - aAreas.begin();
+		}
+		else
+		{
+			const char* szArgumentNumber = sArgument.c_str();
+			while ( *szArgumentNumber < '0' || *szArgumentNumber > '9' )
+				szArgumentNumber++;
+			iArgument = atoi(szArgumentNumber);
+		}
 
 		CAction cAction(iAction, iBot, iArgument);
 		g_cPlan.push_back(cAction);

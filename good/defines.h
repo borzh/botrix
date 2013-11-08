@@ -155,11 +155,11 @@
 
 
 /// Debug break, stopping execution.
-#ifndef DebuggerBreak
+#ifndef BreakDebugger
 #	ifdef _WIN32
-#		define DebuggerBreak()          __asm { int 3 }
+#		define AsmBreak()          __asm { int 3 }
 #	else
-#		define DebuggerBreak()          {}
+#		define AsmBreak()          {}
 #	endif
 #endif
 
@@ -177,7 +177,7 @@
 			if ( !(exp) )\
 			{\
 				DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
-				DebuggerBreak();\
+				AsmBreak();\
 			}
 #	endif
 

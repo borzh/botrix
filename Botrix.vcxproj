@@ -1,0 +1,436 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug 2006|Win32">
+      <Configuration>Debug 2006</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release 2006|Win32">
+      <Configuration>Release 2006</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>Botrix</ProjectName>
+    <ProjectGuid>{B6572CBE-7C7F-4FFF-94DE-AFBBBAB11C64}</ProjectGuid>
+    <RootNamespace>Botrix</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release 2006|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug 2006|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release 2006|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug 2006|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug 2006|Win32'">$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug 2006|Win32'">$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug 2006|Win32'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release 2006|Win32'">$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release 2006|Win32'">$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release 2006|Win32'">false</LinkIncremental>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">botrix</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <CustomBuildStep>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+      <Outputs>
+      </Outputs>
+    </CustomBuildStep>
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\$(OutDir)botrix.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\public;..\public\engine;..\public\tier0;..\public\tier1;..\public\game\server;..\public\mathlib;..\public\vstdlib;..\game\server;..\game\server\hl2;..\game\server\hl2mp;..\game\shared;..;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;SOURCE_ENGINE_2013;_HAS_ITERATOR_DEBUGGING=0;_DEBUG;_WINDOWS;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessToFile>false</PreprocessToFile>
+      <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeaderOutputFile>.\$(OutDir)botrix.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(OutDir)</AssemblerListingLocation>
+      <ObjectFileName>.\$(OutDir)</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(OutDir)</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+      <ForcedIncludeFiles>%(ForcedIncludeFiles)</ForcedIncludeFiles>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)botrix.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>..\lib\public;..\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\$(OutDir)botrix.pdb</ProgramDatabaseFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>.\$(OutDir)botrix.map</MapFileName>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <ImportLibrary>.\$(OutDir)botrix.lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+      <ShowProgress>NotSet</ShowProgress>
+      <MapExports>true</MapExports>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(OutDir)botrix.dll" "\Games\Steam\steamapps\common\Source SDK Base 2013 Multiplayer\borzhmod\bin"
+copy /Y "$(OutDir)botrix.pdb" "\Games\Steam\steamapps\common\Source SDK Base 2013 Multiplayer\borzhmod\bin"
+</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying dll to sourcemods.</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <CustomBuildStep>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+      <Outputs>
+      </Outputs>
+    </CustomBuildStep>
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\$(OutDir)botrix.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>..\public;..\public\engine;..\public\tier0;..\public\tier1;..\public\game\server;..\public\mathlib;..\public\vstdlib;..\game\server;..\game\server\hl2;..\game\server\hl2mp;..\game\shared;..;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;SOURCE_ENGINE_2013;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;VECTOR;GAME_DLL;HL2_DLL;HL2_EPISODIC;HL2_MP;MP_SDK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\$(OutDir)botrix.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(OutDir)</AssemblerListingLocation>
+      <ObjectFileName>.\$(OutDir)</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(OutDir)</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)botrix.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>..\lib\public;..\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMTD;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\$(OutDir)botrix.pdb</ProgramDatabaseFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>.\$(OutDir)botrix.map</MapFileName>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <ImportLibrary>.\$(OutDir)botrix.lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(OutDir)botrix.dll" "\Games\Steam\steamapps\common\Source SDK Base 2013 Multiplayer\borzhmod\bin"
+copy /Y "$(OutDir)botrix.pdb" "\Games\Steam\steamapps\common\Source SDK Base 2013 Multiplayer\borzhmod\bin"
+</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying dll to sourcemods.</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug 2006|Win32'">
+    <CustomBuildStep>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+      <Outputs>
+      </Outputs>
+    </CustomBuildStep>
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\$(OutDir)botrix.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\public;..\public\engine;..\public\tier0;..\public\tier1;..\public\game\server;..\public\mathlib;..\public\vstdlib;..\game\server;..\game\server\hl2;..\game\server\hl2mp;..\game\shared;..;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;SOURCE_ENGINE_2013;_HAS_ITERATOR_DEBUGGING=0;_DEBUG;_WINDOWS;VECTOR;GAME_DLL;HL2_DLL;HL2_EPISODIC;HL2_MP;MP_SDK;SOURCE_ENGINE_2006;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessToFile>false</PreprocessToFile>
+      <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeaderOutputFile>.\$(OutDir)botrix.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(OutDir)</AssemblerListingLocation>
+      <ObjectFileName>.\$(OutDir)</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(OutDir)</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+      <ForcedIncludeFiles>%(ForcedIncludeFiles)</ForcedIncludeFiles>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)botrix.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>..\lib\public;..\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\$(OutDir)botrix.pdb</ProgramDatabaseFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>.\$(OutDir)botrix.map</MapFileName>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <ImportLibrary>.\$(OutDir)botrix.lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(OutDir)botrix.dll" "\Games\Steam\steamapps\common\Source SDK Base 2013 Multiplayer\borzhmod\bin"
+copy /Y "$(OutDir)botrix.pdb" "\Games\Steam\steamapps\common\Source SDK Base 2013 Multiplayer\borzhmod\bin"
+</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying dll to sourcemods.</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release 2006|Win32'">
+    <CustomBuildStep>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+      <Outputs>
+      </Outputs>
+    </CustomBuildStep>
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\$(OutDir)botrix.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>..\public;..\public\engine;..\public\tier0;..\public\tier1;..\public\game\server;..\public\mathlib;..\public\vstdlib;..\game\server;..\game\server\hl2;..\game\server\hl2mp;..\game\shared;..;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;SOURCE_ENGINE_2013;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;VECTOR;GAME_DLL;HL2_DLL;HL2_EPISODIC;HL2_MP;MP_SDK;SOURCE_ENGINE_2006;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\$(OutDir)botrix.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(OutDir)</AssemblerListingLocation>
+      <ObjectFileName>.\$(OutDir)</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(OutDir)</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)botrix.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>..\lib\public;..\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMTD;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\$(OutDir)botrix.pdb</ProgramDatabaseFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>.\$(OutDir)botrix.map</MapFileName>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <ImportLibrary>.\$(OutDir)botrix.lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(OutDir)botrix.dll" "\Games\Steam\steamapps\common\Source SDK Base 2013 Multiplayer\borzhmod\bin"
+copy /Y "$(OutDir)botrix.pdb" "\Games\Steam\steamapps\common\Source SDK Base 2013 Multiplayer\borzhmod\bin"
+</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying dll to sourcemods.</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="good\aatree.h" />
+    <ClInclude Include="good\astar.h" />
+    <ClInclude Include="good\bitmatrix.h" />
+    <ClInclude Include="good\bitset.h" />
+    <ClInclude Include="good\circular_buffer.h" />
+    <ClInclude Include="good\defines.h" />
+    <ClInclude Include="good\file.h" />
+    <ClInclude Include="good\graph.h" />
+    <ClInclude Include="good\heap.h" />
+    <ClInclude Include="good\ini_file.h" />
+    <ClInclude Include="good\list.h" />
+    <ClInclude Include="good\map.h" />
+    <ClInclude Include="good\mutex.h" />
+    <ClInclude Include="good\priority_queue.h" />
+    <ClInclude Include="good\process.h" />
+    <ClInclude Include="good\set.h" />
+    <ClInclude Include="good\string.h" />
+    <ClInclude Include="good\string_buffer.h" />
+    <ClInclude Include="good\thread.h" />
+    <ClInclude Include="good\utility.h" />
+    <ClInclude Include="good\vector.h" />
+    <ClInclude Include="mods\borzh\bot_borzh.h" />
+    <ClInclude Include="mods\borzh\mod_borzh.h" />
+    <ClInclude Include="mods\borzh\planner.h" />
+    <ClInclude Include="mods\borzh\types_borzh.h" />
+    <ClInclude Include="mods\hl2dm\bot_hl2dm.h" />
+    <ClInclude Include="mods\hl2dm\types_hl2dm.h" />
+    <ClInclude Include="mods\css\event_css.h" />
+    <ClInclude Include="mods\css\types_css.h" />
+    <ClInclude Include="bot.h" />
+    <ClInclude Include="chat.h" />
+    <ClInclude Include="clients.h" />
+    <ClInclude Include="config.h" />
+    <ClInclude Include="console_commands.h" />
+    <ClInclude Include="event.h" />
+    <ClInclude Include="item.h" />
+    <ClInclude Include="mod.h" />
+    <ClInclude Include="players.h" />
+    <ClInclude Include="server_plugin.h" />
+    <ClInclude Include="source_engine.h" />
+    <ClInclude Include="type2string.h" />
+    <ClInclude Include="types.h" />
+    <ClInclude Include="waypoint.h" />
+    <ClInclude Include="waypoint_navigator.h" />
+    <ClInclude Include="weapon.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="good\file.cpp" />
+    <ClCompile Include="good\ini_file.cpp" />
+    <ClCompile Include="good\mutex.cpp" />
+    <ClCompile Include="good\process.cpp" />
+    <ClCompile Include="good\thread.cpp" />
+    <ClCompile Include="mods\borzh\bot_borzh.cpp" />
+    <ClCompile Include="mods\borzh\mod_borzh.cpp" />
+    <ClCompile Include="mods\borzh\planner.cpp" />
+    <ClCompile Include="mods\hl2dm\bot_hl2dm.cpp" />
+    <ClCompile Include="mods\css\event_css.cpp" />
+    <ClCompile Include="bot.cpp" />
+    <ClCompile Include="chat.cpp" />
+    <ClCompile Include="clients.cpp" />
+    <ClCompile Include="config.cpp" />
+    <ClCompile Include="console_commands.cpp" />
+    <ClCompile Include="event.cpp" />
+    <ClCompile Include="item.cpp" />
+    <ClCompile Include="mod.cpp" />
+    <ClCompile Include="players.cpp" />
+    <ClCompile Include="server_plugin.cpp" />
+    <ClCompile Include="source_engine.cpp" />
+    <ClCompile Include="type2string.cpp" />
+    <ClCompile Include="waypoint.cpp" />
+    <ClCompile Include="waypoint_navigator.cpp" />
+    <ClCompile Include="weapon.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -180,6 +180,7 @@ void CModBorzh::MapLoaded()
 	}
 
 	// Boxes.
+	m_aBoxes.clear();
 	const good::vector<CEntity>& aObjects = CItems::GetItems(EEntityTypeObject);
 	for ( TEntityIndex iObject = 0; iObject < aObjects.size(); ++iObject )
 	{

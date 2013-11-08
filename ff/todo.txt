@@ -1,5 +1,0 @@
-Areas !!!
-
-subplanes = abrir una puerta
-bots no saben de puertas ni botones
-

@@ -72,6 +72,8 @@ public: // Methods.
 	/// Emulate console command for bot.
 	void ConsoleCommand(const char* szFormat, ...);
 
+	/// Use say command.
+	void Say(bool bTeamOnly, const char* szFormat, ...);
 
 	//------------------------------------------------------------------------------------------------------------
 	// Next functions are mod dependent.

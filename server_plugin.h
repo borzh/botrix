@@ -138,9 +138,11 @@ public: // Methods.
 	virtual void FireGameEvent( IGameEvent *event );
 
 
+	// Generate say event.
+	void GenerateSayEvent( edict_t* pEntity, const char* szText, bool bTeamOnly );
+
 public: // Static methods.
 	static void HudTextMessage( edict_t* pEntity, char *szMsgName, char *szTitle, char *szMessage, Color colour, int level, int time );
-
 
 public: // Members.
 	good::string sGameFolder;             ///< Game folder, i.e. "counter-strike source"

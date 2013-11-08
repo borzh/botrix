@@ -99,7 +99,8 @@ protected: // Methods.
 	bool IsPlayerInDoorArea( TPlayerIndex iPlayer, const CEntity& cDoor )
 	{
 		TAreaId iArea = m_aPlayersAreas[iPlayer];
-		DebugAssert( iArea != EAreaIdInvalid );
+		if ( iArea == EAreaIdInvalid )
+			return false;
 		TWaypointId iWaypoint1 = cDoor.iWaypoint;
 		TWaypointId iWaypoint2 = (TWaypointId)cDoor.pArguments;
 		DebugAssert( iWaypoint1 != EWaypointIdInvalid && iWaypoint2 != EWaypointIdInvalid );

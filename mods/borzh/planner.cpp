@@ -11,6 +11,7 @@
 
 
 #define PRINT_MESSAGE(...) CUtil::PutMessageInQueue(__VA_ARGS__)
+//#define PRINT_MESSAGE(...) printf(__VA_ARGS__)
 //#define PRINT_MESSAGE(...)
 
 //----------------------------------------------------------------------------------------------------------------
@@ -198,11 +199,15 @@ void GeneratePddl( bool bFromBotBelief )
 		{
 			if ( bFromBotBelief )
 			{
-				fprintf(f, "		(at bot%d %s) (empty bot%d)", iPlayer, aAreas[ g_pBot->m_aPlayersAreas[iPlayer] ].c_str(), iPlayer);
-				if ( g_pBot->m_cPlayersWithPhyscannon.test(iPlayer) )
-					fprintf(f, " (has bot%d gravity-gun)", iPlayer);
-				if ( g_pBot->m_cPlayersWithCrossbow.test(iPlayer) )
-					fprintf(f, " (has bot%d crossbow)", iPlayer);
+				TAreaId iArea = g_pBot->m_aPlayersAreas[iPlayer];
+				if ( iArea != 0xFF )
+				{
+					fprintf(f, "		(at bot%d %s) (empty bot%d)", iPlayer, aAreas[iArea].c_str(), iPlayer);
+					if ( g_pBot->m_cPlayersWithPhyscannon.test(iPlayer) )
+						fprintf(f, " (has bot%d gravity-gun)", iPlayer);
+					if ( g_pBot->m_cPlayersWithCrossbow.test(iPlayer) )
+						fprintf(f, " (has bot%d crossbow)", iPlayer);
+				}
 			}
 			else
 				fprintf(f, "		(at bot%d %s) (empty bot%d)", iPlayer, aAreas[ CWaypoints::Get(pPlayer->iCurrentWaypoint).iAreaId ].c_str(), iPlayer);
@@ -296,7 +301,7 @@ void GeneratePddl( bool bFromBotBelief )
 			if ( cButtonTogglesDoor.any() )
 			{
 				int iDoorsCount = 0;
-				int iDoors[2] = { -1, -1};
+				int iDoors[2] = { -1, -1 };
 				for ( TEntityIndex iDoor = 0; iDoor < cDoors.size(); ++iDoor )
 					if ( cButtonTogglesDoor.test(iDoor) )
 						iDoors[iDoorsCount++] = iDoor;
@@ -546,7 +551,7 @@ void PlannerThreadFunc( void* pParameter )
 		// Finished correctly.
 		g_szPlannerBuffer[iTotalRead] = 0;
 		g_cPlan.clear();
-		PRINT_MESSAGE( "%s", g_szPlannerBuffer);
+		PRINT_MESSAGE(g_szPlannerBuffer);
 		if ( TransformPlannerOutput() )
 			g_pPlan = &g_cPlan;
 		else

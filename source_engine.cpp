@@ -472,13 +472,14 @@ bool CUtil::IsLineTouch3d(Vector const& amins, Vector const& amaxs, Vector const
 }
 
 //================================================================================================================
-char szMessageString[4096];
+char szMessageString[16*1024];
+const int iSplitSize = 4*1024;
 void CUtil::Message( edict_t* pEntity, const char* fmt, ... )
 {
 	va_list argptr;
 
 	va_start(argptr, fmt);
-	vsprintf(szMessageString, fmt, argptr); 
+	int iTotal = vsprintf(szMessageString, fmt, argptr); 
 	va_end(argptr); 
 
 	static char sTime[24];
@@ -492,7 +493,22 @@ void CUtil::Message( edict_t* pEntity, const char* fmt, ... )
 			CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, sTime);
 #endif
 		}
-		CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, szMessageString);
+		int i = 0;
+		while ( i < iTotal )
+		{
+			int iEnd = i + iSplitSize;
+			if ( iEnd < iTotal-1 )
+			{
+				char c = szMessageString[iEnd];
+				szMessageString[iEnd] = 0;
+				CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, &szMessageString[i]);
+				szMessageString[iEnd] = c;
+			}
+			else
+				CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, &szMessageString[i]);
+			i = iEnd;
+		}
+
 		CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, "\n");
 	}
 	else
@@ -505,7 +521,21 @@ void CUtil::Message( edict_t* pEntity, const char* fmt, ... )
 			Msg(sTime);
 #endif
 		}
-		Msg(szMessageString);
+		int i = 0;
+		while ( i < iTotal )
+		{
+			int iEnd = i + iSplitSize;
+			if ( iEnd < iTotal-1 )
+			{
+				char c = szMessageString[iEnd];
+				szMessageString[iEnd] = 0;
+				Msg(&szMessageString[i]);
+				szMessageString[iEnd] = c;
+			}
+			else
+				Msg(&szMessageString[i]);
+			i = iEnd;
+		}
 		Msg("\n");
 	}
 }
@@ -513,7 +543,7 @@ void CUtil::Message( edict_t* pEntity, const char* fmt, ... )
 //----------------------------------------------------------------------------------------------------------------
 good::mutex cMessagesMutex;
 int iQueueMessageStringSize = 0;
-char szQueueMessageString[4096];
+char szQueueMessageString[64*1024];
 
 void CUtil::PutMessageInQueue( const char* fmt, ... )
 {
@@ -528,7 +558,6 @@ void CUtil::PutMessageInQueue( const char* fmt, ... )
 
 	cMessagesMutex.unlock();
 	va_end(argptr); 
-
 }
 
 
@@ -537,17 +566,7 @@ void CUtil::PrintMessagesInQueue()
 {
 	if ( (iQueueMessageStringSize > 0) && cMessagesMutex.try_lock() )
 	{
-		if ( m_bMessageUseTag )
-		{
-			Msg("[Botrix] ");
-	#if (defined(DEBUG) || defined(_DEBUG)) && defined(MESSAGE_USE_TIME)
-			sprintf(sTime, "%.5f: ", CBotrixPlugin::fTime);
-			Msg(sTime);
-	#endif
-		}
-		Msg(szQueueMessageString);
-		Msg("\n");
-
+		Message(NULL, szQueueMessageString);
 		iQueueMessageStringSize = 0;
 		cMessagesMutex.unlock();
 	}

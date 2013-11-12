@@ -357,7 +357,6 @@ protected: // Members.
 	good::bitset m_cOpenedDoors;                            // Opened doors. Closed door means seen & !opened.
 	good::bitset m_cFalseOpenedDoors;                       // Used when checking a button.
 	good::bitset m_cCheckedDoors;                           // Useful bitset when checking doors.
-	good::bitset m_cUnknownDoors;                           // Doors with unknown status.
 
 	good::bitset m_cSeenButtons;                            // Seen buttons. Other bot could see it also.
 	good::bitset m_cPushedButtons;                          // Buttons pushed at least once.

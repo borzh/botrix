@@ -195,7 +195,7 @@ void CBot::Respawned()
 				continue;
 
 			float fDistSqr = vFoot.DistToSqr( pItem->CurrentPosition() );
-			if ( fDistSqr <= pItem->fRadiusSqr )
+			if ( fDistSqr <= pItem->fRadiusSqr*4 )
 				aNearest.push_back(i);
 			else if ( fDistSqr <= CUtil::iNearItemMaxDistanceSqr ) // Item is close.
 				aNear.push_back(i);

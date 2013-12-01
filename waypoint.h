@@ -278,18 +278,18 @@ protected:
 	static void DrawWaypointPaths( TWaypointId id, TPathDrawFlags iPathDrawFlags );
 
 	// Buckets are 3D areas that we will use to optimize nearest waypoints finding.
-	static const int BUCKETS_SIZE_X = 64;
-	static const int BUCKETS_SIZE_Y = 64;
-	static const int BUCKETS_SIZE_Z = 32;
+	static const int BUCKETS_SIZE_X = 128;
+	static const int BUCKETS_SIZE_Y = 128;
+	static const int BUCKETS_SIZE_Z = 128;
 
-	static const int BUCKETS_SPACE_X = CUtil::MAX_MAP_SIZE/BUCKETS_SIZE_X;
-	static const int BUCKETS_SPACE_Y = CUtil::MAX_MAP_SIZE/BUCKETS_SIZE_Y;
-	static const int BUCKETS_SPACE_Z = CUtil::MAX_MAP_SIZE/BUCKETS_SIZE_Z;
+	static const int BUCKETS_SPACE_X = CUtil::iMaxMapSize/BUCKETS_SIZE_X;
+	static const int BUCKETS_SPACE_Y = CUtil::iMaxMapSize/BUCKETS_SIZE_Y;
+	static const int BUCKETS_SPACE_Z = CUtil::iMaxMapSize/BUCKETS_SIZE_Z;
 
 	// Get bucket indexes in array of buckets.
-	static int GetBucketX(float fPositionX) { return (int)(fPositionX + CUtil::HALF_MAX_MAP_SIZE) / BUCKETS_SPACE_X; }
-	static int GetBucketY(float fPositionY) { return (int)(fPositionY + CUtil::HALF_MAX_MAP_SIZE) / BUCKETS_SPACE_Y; }
-	static int GetBucketZ(float fPositionZ) { return (int)(fPositionZ + CUtil::HALF_MAX_MAP_SIZE) / BUCKETS_SPACE_Z; }
+	static int GetBucketX(float fPositionX) { return (int)(fPositionX + CUtil::iHalfMaxMapSize) / BUCKETS_SPACE_X; }
+	static int GetBucketY(float fPositionY) { return (int)(fPositionY + CUtil::iHalfMaxMapSize) / BUCKETS_SPACE_Y; }
+	static int GetBucketZ(float fPositionZ) { return (int)(fPositionZ + CUtil::iHalfMaxMapSize) / BUCKETS_SPACE_Z; }
 
 	// Get adjacent buckets.
 	static void GetBuckets(int x, int y, int z, int& minX, int& minY, int& minZ, int& maxX, int& maxY, int& maxZ)

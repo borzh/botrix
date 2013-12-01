@@ -5,7 +5,8 @@
 
 //----------------------------------------------------------------------------------------------------------------
 CBot_HL2DM::CBot_HL2DM( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence iIntelligence ):
-	CBot(pEdict, iIndex, iIntelligence), m_cItemToSearch(-1, -1), m_aWaypoints(CWaypoints::Size())
+	CBot(pEdict, iIndex, iIntelligence), m_cItemToSearch(-1, -1), m_aWaypoints(CWaypoints::Size()), 
+	m_cSkipWeapons( CWeapons::Size() )
 {
 	CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(pEdict, "cl_autowepswitch", "0");	
 	CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(pEdict, "cl_defaultweapon", "weapon_smg1");	
@@ -19,9 +20,8 @@ void CBot_HL2DM::Respawned()
 	m_aWaypoints.reset();
 	m_iFailWaypoint = EWaypointIdInvalid;
 	
-	m_cCurrentTask = EBotTaskInvalid;
+	m_iCurrentTask = EBotTaskInvalid;
 	m_bNeedTaskCheck = true;
-	m_bCheckWeapon = CMod::HasMapItems(EEntityTypeWeapon);
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -101,7 +101,7 @@ bool CBot_HL2DM::DoWaypointAction()
 {
 	if ( iCurrentWaypoint == m_iTaskDestination )
 	{
-		m_cCurrentTask = EBotTaskInvalid;
+		m_iCurrentTask = EBotTaskInvalid;
 		m_bNeedTaskCheck = true;
 	}
 	return CBot::DoWaypointAction();
@@ -111,14 +111,15 @@ bool CBot_HL2DM::DoWaypointAction()
 void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 {
 	TBotTaskHL2DM iNewTask = EBotTaskInvalid;
-	bool bForce = bForceTaskChange || (m_cCurrentTask == EBotTaskInvalid);
+	bool bForce = bForceTaskChange || (m_iCurrentTask == EBotTaskInvalid);
 
 	const CWeapon* pWeapon = m_aWeapons[m_iBestWeapon].GetBaseWeapon();
 	TBotIntelligence iWeaponPreference = m_iIntelligence;
 
 	bool bNeedHealth = CMod::HasMapItems(EEntityTypeHealth) && ( m_pPlayerInfo->GetHealth() < CUtil::iPlayerMaxHealth );
-	bool bNeedHealthBad = CMod::HasMapItems(EEntityTypeHealth) && ( m_pPlayerInfo->GetHealth() < (CUtil::iPlayerMaxHealth/2) );
-	bool bAlmostDead = ( m_pPlayerInfo->GetHealth() < (CUtil::iPlayerMaxHealth/5) );
+	bool bNeedHealthBad = bNeedHealth && ( m_pPlayerInfo->GetHealth() < (CUtil::iPlayerMaxHealth/2) );
+	bool bAlmostDead = bNeedHealthBad && ( m_pPlayerInfo->GetHealth() < (CUtil::iPlayerMaxHealth/5) );
+	bool bNeedWeapon = CMod::HasMapItems(EEntityTypeWeapon), bNeedAmmo = CMod::HasMapItems(EEntityTypeAmmo);
 	
 	TWeaponId iWeapon;
 	bool bSecondary = false;
@@ -131,21 +132,33 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 		m_bFlee = true;
 	}
 
-	if ( bNeedHealthBad && CMod::HasMapItems(EEntityTypeHealth) ) // Need health pretty much.
+	int retries = 0;
+
+restart_find_task:
+	retries++;
+	if ( retries == 5 )
+	{
+		m_bNeedTaskCheck = true;
+		DebugAssert(m_iCurrentTask == EBotTaskInvalid);
+		BotMessage("%s -> No task, will continue to look for task on new frame.", GetName());
+		return;
+	}
+
+	if ( bNeedHealthBad ) // Need health pretty much.
 	{
 		iNewTask = EBotTaskFindHealth;
 		bForce = true;
 	}
-	else if ( m_bCheckWeapon && (pWeapon->iBotPreference < iWeaponPreference) ) // Need some weapon with higher preference.
+	else if ( bNeedWeapon && (pWeapon->iBotPreference < iWeaponPreference) ) // Need some weapon with higher preference.
 	{
 		iNewTask = EBotTaskFindWeapon;
 	}
-	else 
+	else if ( bNeedAmmo )
 	{
 		// Need ammunition.
-		bool bNeedAmmo0 = CMod::HasMapItems(EEntityTypeAmmo) && (m_aWeapons[m_iBestWeapon].ExtraBullets(0) < pWeapon->iClipSize[0]); // Has less than 1 extra clip.
-		bool bNeedAmmo1 = CMod::HasMapItems(EEntityTypeAmmo) && pWeapon->bHasSecondary && !pWeapon->bSecondaryUseSameBullets &&      // Has secondary function,
-		                 !m_aWeapons[m_iBestWeapon].HasAmmoInClip(1) && !m_aWeapons[m_iBestWeapon].HasAmmoExtra(1);                  // but no secondary bullets.
+		bool bNeedAmmo0 = (m_aWeapons[m_iBestWeapon].ExtraBullets(0) < pWeapon->iClipSize[0]); // Has less than 1 extra clip.
+		bool bNeedAmmo1 = pWeapon->bHasSecondary && !pWeapon->bSecondaryUseSameBullets &&      // Has secondary function, but no secondary bullets.
+		                  !m_aWeapons[m_iBestWeapon].HasAmmoInClip(1) && !m_aWeapons[m_iBestWeapon].HasAmmoExtra(1);
 
 		if ( bNeedAmmo0 || bNeedAmmo1 )
 		{
@@ -158,7 +171,7 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 			iNewTask = EBotTaskFindHealth;
 		else if ( CMod::HasMapItems(EEntityTypeArmor) && (m_pPlayerInfo->GetArmorValue() < CUtil::iPlayerMaxArmor) ) // Need armor.
 			iNewTask = EBotTaskFindArmor;
-		else if ( m_bCheckWeapon && (pWeapon->iBotPreference < EBotPro) ) // Check if can find a better weapon.
+		else if ( bNeedWeapon && (pWeapon->iBotPreference < EBotPro) ) // Check if can find a better weapon.
 		{
 			iNewTask = EBotTaskFindWeapon;
 			iWeaponPreference = pWeapon->iBotPreference+1;
@@ -180,10 +193,12 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 	switch(iNewTask)
 	{
 	case EBotTaskFindWeapon:
+		pEntityClass = NULL;
+
 		// Get weapon entity class to search for. Search for better weapons that actually have.
 		for ( TBotIntelligence iPreference = iWeaponPreference; iPreference < EBotIntelligenceTotal; ++iPreference )
 		{
-			iWeapon = CWeapons::GetRandomWeapon(iPreference);
+			iWeapon = CWeapons::GetRandomWeapon(iPreference, m_cSkipWeapons);
 			if ( iWeapon != -1 )
 			{
 				pEntityClass = CWeapons::Get(iWeapon)->pWeaponClass;
@@ -195,7 +210,7 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 			// None found, search for worst weapons.
 			for ( TBotIntelligence iPreference = iWeaponPreference-1; iPreference >= 0; --iPreference )
 			{
-				iWeapon = CWeapons::GetRandomWeapon(iPreference);
+				iWeapon = CWeapons::GetRandomWeapon(iPreference, m_cSkipWeapons);
 				if ( iWeapon != -1 )
 				{
 					pEntityClass = CWeapons::Get(iWeapon)->pWeaponClass;
@@ -203,7 +218,11 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 				}
 			}
 		}
-		DebugAssert( pEntityClass != NULL ); // No weapons/ammo on this map ??? Should not enter here.
+		if ( pEntityClass == NULL )
+		{
+			bNeedWeapon = false;
+			goto restart_find_task;
+		}
 		break;
 
 	case EBotTaskFindAmmo:
@@ -211,7 +230,7 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 		iWeapon = m_iBestWeapon;
 	
 		// Randomly search for weapon instead, as it gives same primary bullets.
-		if ( !bSecondary && CItems::ExistsOnMap(pWeapon->pWeaponClass) && (rand() & 1) )
+		if ( !bSecondary && bNeedWeapon && CItems::ExistsOnMap(pWeapon->pWeaponClass) && (rand() & 1) )
 		{
 			iNewTask = EBotTaskFindWeapon;
 			pEntityClass = pWeapon->pWeaponClass;
@@ -238,10 +257,9 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 	DebugAssert( iNewTask != EBotTaskInvalid );
 
 	// Check if need task switch.
-	if ( bForce || (m_cCurrentTask != iNewTask) )
+	if ( bForce || (m_iCurrentTask != iNewTask) )
 	{
-		m_cCurrentTask = iNewTask;
-
+		m_iCurrentTask = iNewTask;
 		if ( pEntityClass ) // Health, armor, weapon, ammo.
 		{
 			TEntityType iType = EEntityTypeHealth + (iNewTask - EBotTaskFindHealth);
@@ -249,13 +267,9 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 
 			if ( iItemToSearch == -1 )
 			{
-				m_aWaypoints.reset();
-				m_aWaypoints.set(iCurrentWaypoint);
-
-				// Try to get to waypoint with flags.
-				m_iTaskDestination = CWaypoints::GetNearestWaypoint( m_vHead, &m_aWaypoints, false, CUtil::MAX_MAP_SIZE, CWaypoint::GetFlagsFor(iType));
-				m_cItemToSearch.iType = -1;
-				m_cItemToSearch.iIndex = m_iTaskDestination;
+				m_cSkipWeapons.set(iWeapon);
+				m_iCurrentTask = EBotTaskInvalid;
+				goto restart_find_task;
 			}
 			else
 			{
@@ -264,7 +278,7 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 				m_cItemToSearch.iIndex = iItemToSearch;
 			}
 		}
-		else if (m_cCurrentTask == EBotTaskFindEnemy)
+		else if (m_iCurrentTask == EBotTaskFindEnemy)
 		{
 			// Just go to some random waypoint.
 			m_iTaskDestination = -1;
@@ -280,8 +294,8 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 		if ( (m_iTaskDestination == -1) || (m_iTaskDestination == iCurrentWaypoint) )
 		{
 			BotMessage( "%s -> task %s, invalid waypoint %d (current %d), recalculate task.", GetName(), 
-			            CTypeToString::BotTaskToString(m_cCurrentTask).c_str(), m_iTaskDestination, iCurrentWaypoint );
-			m_cCurrentTask = -1;
+			            CTypeToString::BotTaskToString(m_iCurrentTask).c_str(), m_iTaskDestination, iCurrentWaypoint );
+			m_iCurrentTask = -1;
 			m_bNeedTaskCheck = true; // Check new task in next frame.
 			m_bNeedMove = m_bUseNavigatorToMove = m_bDestinationChanged = false;
 
@@ -290,13 +304,14 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 		}
 		else
 		{
-			BotMessage( "%s -> new task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_cCurrentTask).c_str(),
+			BotMessage( "%s -> new task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
 			            pEntityClass ? pEntityClass->sClassName.c_str() : "", m_iTaskDestination, iCurrentWaypoint );
 
 			m_iDestinationWaypoint = m_iTaskDestination;
 			m_bNeedMove = m_bUseNavigatorToMove = m_bDestinationChanged = true;
 		}
 	}
+	m_cSkipWeapons.reset();
 }
 
 void CBot_HL2DM::TaskFinished()

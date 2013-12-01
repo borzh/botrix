@@ -250,6 +250,8 @@ bool CWaypoints::Load()
 		fread(&vOrigin, sizeof(Vector), 1, f);
 		fread(&iFlags, sizeof(TWaypointFlags), 1, f);
 		fread(&iAreaId, sizeof(TAreaId), 1, f);
+		if ( FLAG_CLEARED(WAYPOINT_FILE_FLAG_AREAS, header.iFlags) )
+			iAreaId = 0;
 		fread(&iArgument, sizeof(int), 1, f);
 
 		Add(vOrigin, iFlags, iArgument, iAreaId);
@@ -278,7 +280,7 @@ bool CWaypoints::Load()
 		}
 	}
 
-	if (header.iFlags & WAYPOINT_FILE_FLAG_AREAS)
+	if ( FLAG_SOME_SET(WAYPOINT_FILE_FLAG_AREAS, header.iFlags) )
 	{
 		// Read area names.
 		int iAreaNamesSize = 0;

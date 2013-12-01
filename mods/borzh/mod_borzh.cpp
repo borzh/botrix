@@ -130,9 +130,12 @@ void CModBorzh::MapLoaded()
 
 	// Waypoints for areas.
 	m_aAreasWaypoints.clear();
-	m_aAreasWaypoints.resize( aAreas.size() );
-	for ( TWaypointId iWaypoint = 0; iWaypoint < CWaypoints::Size(); ++iWaypoint )
-		m_aAreasWaypoints[ CWaypoints::Get(iWaypoint).iAreaId ].push_back( iWaypoint );
+	if ( aAreas.size() > 0 )
+	{
+		m_aAreasWaypoints.resize( aAreas.size() );
+		for ( TWaypointId iWaypoint = 0; iWaypoint < CWaypoints::Size(); ++iWaypoint )
+			m_aAreasWaypoints[ CWaypoints::Get(iWaypoint).iAreaId ].push_back( iWaypoint );
+	}
 
 	// Doors for areas.
 	m_aAreasDoors.clear();
@@ -148,51 +151,55 @@ void CModBorzh::MapLoaded()
 			m_aAreasDoors[ CWaypoints::Get(iDoorWaypoint2).iAreaId ].push_back( iDoor );
 	}
 
-	// Buttons for areas.
 	m_aAreasButtons.clear();
-	m_aAreasButtons.resize( aAreas.size() );
-	for ( TEntityIndex iButton = 0; iButton < aButtons.size(); ++iButton )
-	{
-		const CEntity& cButton = aButtons[iButton];
-		if ( cButton.iWaypoint != EWaypointIdInvalid )
-			m_aAreasButtons[ CWaypoints::Get(cButton.iWaypoint).iAreaId ].push_back( iButton );
-	}
-
-	// Shoot buttons waypoints, walls.
 	m_aShootButtonWaypoints.clear();
-	m_aShootButtonWaypoints.resize( aButtons.size() );
 	m_aWalls.clear();
-	m_aWalls.resize( aAreas.size() );
 	m_aFalls.clear();
-	m_aFalls.resize( aAreas.size() );
-	for ( TWaypointId iWaypoint = 0; iWaypoint < CWaypoints::Size(); ++iWaypoint )
-	{
-		const CWaypoints::WaypointNode& cNode = CWaypoints::GetNode(iWaypoint);
-		if ( FLAG_SOME_SET(FWaypointSeeButton, cNode.vertex.iFlags) )
-			m_aShootButtonWaypoints[ CWaypoint::GetButton(cNode.vertex.iArgument) - 1 ].push_back(iWaypoint);
-		for ( int i=0; i < cNode.neighbours.size(); ++i )
-			if ( FLAG_SOME_SET(FPathTotem, cNode.neighbours[i].edge.iFlags) )
-			{
-				TWaypointId iHigherWaypoint = cNode.neighbours[i].target;
-				m_aWalls[cNode.vertex.iAreaId].push_back( CWall(iWaypoint, iHigherWaypoint) );
-				m_aFalls[CWaypoints::Get(iHigherWaypoint).iAreaId].push_back( CWall(iWaypoint, iHigherWaypoint) );
-			}
-	}
-
-	// Boxes.
 	m_aBoxes.clear();
-	const good::vector<CEntity>& aObjects = CItems::GetItems(EEntityTypeObject);
-	for ( TEntityIndex iObject = 0; iObject < aObjects.size(); ++iObject )
-	{
-		const CEntity& cObject = aObjects[iObject];
-		if ( FLAG_SOME_SET(FObjectBox, cObject.iFlags) )
-		{
-			TWaypointId iBoxWaypoint = CWaypoints::GetNearestWaypoint( cObject.CurrentPosition() );
-			m_aBoxes.push_back( CBoxInfo(iObject, iBoxWaypoint, (iBoxWaypoint == EWaypointIdInvalid) ? EAreaIdInvalid : CWaypoints::Get(iBoxWaypoint).iAreaId) );
 
-			// Add box value.
-			sprintf(szInt, "%d", iObject+1);
-			CChat::AddVariableValue( iVarBox, good::string(szInt).duplicate() );
+	if ( aAreas.size() > 0 )
+	{
+		// Buttons for areas.
+		m_aAreasButtons.resize( aAreas.size() );
+		for ( TEntityIndex iButton = 0; iButton < aButtons.size(); ++iButton )
+		{
+			const CEntity& cButton = aButtons[iButton];
+			if ( cButton.iWaypoint != EWaypointIdInvalid )
+				m_aAreasButtons[ CWaypoints::Get(cButton.iWaypoint).iAreaId ].push_back( iButton );
+		}
+
+		// Shoot buttons waypoints, walls.
+		m_aShootButtonWaypoints.resize( aButtons.size() );
+		m_aWalls.resize( aAreas.size() );
+		m_aFalls.resize( aAreas.size() );
+		for ( TWaypointId iWaypoint = 0; iWaypoint < CWaypoints::Size(); ++iWaypoint )
+		{
+			const CWaypoints::WaypointNode& cNode = CWaypoints::GetNode(iWaypoint);
+			if ( FLAG_SOME_SET(FWaypointSeeButton, cNode.vertex.iFlags) )
+				m_aShootButtonWaypoints[ CWaypoint::GetButton(cNode.vertex.iArgument) - 1 ].push_back(iWaypoint);
+			for ( int i=0; i < cNode.neighbours.size(); ++i )
+				if ( FLAG_SOME_SET(FPathTotem, cNode.neighbours[i].edge.iFlags) )
+				{
+					TWaypointId iHigherWaypoint = cNode.neighbours[i].target;
+					m_aWalls[cNode.vertex.iAreaId].push_back( CWall(iWaypoint, iHigherWaypoint) );
+					m_aFalls[CWaypoints::Get(iHigherWaypoint).iAreaId].push_back( CWall(iWaypoint, iHigherWaypoint) );
+				}
+		}
+
+		// Boxes.
+		const good::vector<CEntity>& aObjects = CItems::GetItems(EEntityTypeObject);
+		for ( TEntityIndex iObject = 0; iObject < aObjects.size(); ++iObject )
+		{
+			const CEntity& cObject = aObjects[iObject];
+			if ( FLAG_SOME_SET(FObjectBox, cObject.iFlags) )
+			{
+				TWaypointId iBoxWaypoint = CWaypoints::GetNearestWaypoint( cObject.CurrentPosition() );
+				m_aBoxes.push_back( CBoxInfo(iObject, iBoxWaypoint, (iBoxWaypoint == EWaypointIdInvalid) ? EAreaIdInvalid : CWaypoints::Get(iBoxWaypoint).iAreaId) );
+
+				// Add box value.
+				sprintf(szInt, "%d", iObject+1);
+				CChat::AddVariableValue( iVarBox, good::string(szInt).duplicate() );
+			}
 		}
 	}
 

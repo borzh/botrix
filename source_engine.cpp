@@ -239,7 +239,7 @@ TReach CUtil::GetReachableInfoFromTo( Vector const& vSrc, Vector const& vDest, f
 
 	TReach iResult = EReachReachable;
 
-	Vector vMinZ(0, 0, -HALF_MAX_MAP_SIZE);
+	Vector vMinZ(0, 0, -iHalfMaxMapSize);
 	CTraceFilterWorldAndPropsOnly filter;
 
 	// Get ground positions.
@@ -278,7 +278,7 @@ TReach CUtil::GetReachableInfoFromTo( Vector const& vSrc, Vector const& vDest, f
 		{
 			// Trace from hit point to the floor.
 			vSrcGround = vHit;
-			vSrcGround.z = -CUtil::HALF_MAX_MAP_SIZE;
+			vSrcGround.z = -CUtil::iHalfMaxMapSize;
 			TraceLine(vHit, vSrcGround, MASK_SOLID_BRUSHONLY, &filter);
 			vSrcGround = TraceResult().endpos;
 
@@ -310,7 +310,7 @@ TReach CUtil::GetReachableInfoFromTo( Vector const& vSrc, Vector const& vDest, f
 
 			// Trace from jumped obstacle to the ground.
 			vSrcGround = vHit;
-			vSrcGround.z = -CUtil::HALF_MAX_MAP_SIZE;
+			vSrcGround.z = -CUtil::iHalfMaxMapSize;
 			TraceLine(vHit, vSrcGround, MASK_SOLID_BRUSHONLY, &filter);
 
 			CUtil::DrawLine(vStart, TraceResult().endpos, iTextTime, 0xFF, 0xFF, 0xFF);

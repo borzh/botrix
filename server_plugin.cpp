@@ -270,7 +270,8 @@ void CBotrixPlugin::GameFrame( bool simulating )
 
 	if ( bMapRunning )
 	{
-		CMod::pCurrentMod->Think();
+		if ( CMod::pCurrentMod )
+			CMod::pCurrentMod->Think();
 
 		// Show fps.
 		//m_iFramesCount++;

@@ -2,11 +2,13 @@
 #define __BOTRIX_WEAPON_H__
 
 
-#include "vector.h"
-
 #include "item.h"
 #include "mod.h"
 #include "server_plugin.h"
+
+#include "good/bitset.h"
+
+#include "public/mathlib/vector.h"
 
 
 //****************************************************************************************************************
@@ -372,7 +374,7 @@ public:
 	static TWeaponId GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aWeapons );
 
 	/// Get random weapon, based on bot intelligence.
-	static TWeaponId GetRandomWeapon( TBotIntelligence iIntelligence );
+	static TWeaponId GetRandomWeapon( TBotIntelligence iIntelligence, const good::bitset& cSkipWeapons );
 
 protected:
 	static good::vector< CWeaponWithAmmo > m_aWeapons; // Array of available weapons for this mod.

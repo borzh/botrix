@@ -581,17 +581,21 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 			int iOptionals = iFound-iRequired;
 			int iTotalOptionals = currPhrase.aWords.size() - iTotalRequired;
 			int iExtra = aWords.size() - iFound;
+			int iLeft = currPhrase.aWords.size() - iFound;
 
 			// Give more importance to requiered words (not optionals), and less to optionals and words order.
 			float fImportance = 0.0f;
+			//fImportance = (float)iFound/currPhrase.aWords.size() - (float)(iExtra+iLeft)/( aWords.size() + currPhrase.aWords.size() );
+			//fImportance *= 10.0f;
 			fImportance += 6*( (iTotalRequired) ? iRequired / (float)iTotalRequired : 0 );    // + Ratio of matched requered words.
 			fImportance += 1*( (iTotalOptionals) ? iOptionals / (float)iTotalOptionals : 1 ); // + Ratio of matched optional words.
-			fImportance += 2*( iOrdered / (float)currPhrase.aWords.size() );                  // + Ratio of matched ordered words.
-			fImportance += (chrEnd == currPhrase.chrPhraseEnd) ? 1 : 0;                       // + 1 if ends with same symbol as matching phrase (. ? !).
-			fImportance -= 4*( iExtra / (float)aWords.size() );                               // - Ratio of not matched words.
+			fImportance += 3*( iOrdered / (float)currPhrase.aWords.size() );                  // + Ratio of matched ordered words.
+			//fImportance += (chrEnd == currPhrase.chrPhraseEnd) ? 1 : 0;                       // + 1 if ends with same symbol as matching phrase (. ? !).
+
+			fImportance -= 4*( iExtra / iTotalRequired );                               // - Ratio of not matched words.
 
 			if ( fBestImportance < fImportance )
-			{
+			{  
 				fBestImportance = fImportance;
 				iBestFound = iFound;
 				iBestRequired = iRequired;
@@ -609,7 +613,7 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 
 	if ( fBestImportance > 0.0f )
 	{
-		//const CPhrase& cPhrase = m_aMatchPhrases[cCommand.iBotChat][iBestPhrase];
+		const CPhrase& cPhrase = m_aMatchPhrases[cCommand.iBotChat][iBestPhrase];
 		//ChatMessage( "Chat match: %s", PhraseToString(cPhrase).c_str() );
 		//ChatMessage( "Matching (from 0 to 10): %f.", fBestImportance );
 

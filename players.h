@@ -37,13 +37,13 @@ public:
 	bool IsAlive() const { return m_bAlive; }
 
 
-	/// Get edict of player.
+	/// Get entity index of player.
 	TPlayerIndex GetIndex() const { return m_iIndex; }
 
 	/// Get edict of player.
 	edict_t* GetEdict() const { return m_pEdict; }
 
-	/// Return bot's team.
+	/// Return player's team.
 	int GetTeam() { return m_pPlayerInfo->GetTeamIndex(); }
 
 	/// Get player's info.

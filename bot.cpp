@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "in_buttons.h"
+#include "good/string_buffer.h"
 
 #include "bot.h"
 #include "clients.h"
@@ -10,6 +10,8 @@
 #include "schedule.h"
 #include "server_plugin.h"
 
+#include "in_buttons.h"
+#include "public/irecipientfilter.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -27,7 +29,12 @@ int CBot::m_iCheckEntitiesPerFrame = 4;
 CBot::CBot( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence iIntelligence ):
 	CPlayer(pEdict, iIndex, true), m_aPickedItems(16),
 	m_aNearPlayers(CPlayers::Size()), m_aSeenEnemies(CPlayers::Size()), m_aEnemies(CPlayers::Size()),
-	m_iIntelligence(iIntelligence), r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ), m_bDebugging(true),
+	m_iIntelligence(iIntelligence), r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ),
+#if defined(DEBUG) || defined(_DEBUG)
+	m_bDebugging(true),
+#else
+	m_bDebugging(false),
+#endif
 	m_bDontBreakObjects(false), m_bDontThrowObjects(false)
 {
 	for ( TEntityType i=0; i < EEntityTypeTotal; ++i )
@@ -66,20 +73,74 @@ void CBot::ConsoleCommand(const char* szFormat, ...)
 {
 	va_list vaList;
 	va_start(vaList, szFormat);
-	vsprintf(szBotBuffer, szFormat, vaList); 
-	va_end(vaList); 
+	vsprintf(szBotBuffer, szFormat, vaList);
+	va_end(vaList);
 
 	CBotrixPlugin::pServerPluginHelpers->ClientCommand(m_pEdict, szBotBuffer);
 }
 
+//----------------------------------------------------------------------------------------------------------------
+// Class used to send say messages to server.
+//----------------------------------------------------------------------------------------------------------------
+class UserRecipientFilter: public IRecipientFilter
+{
+public:
+	UserRecipientFilter(int iUserIndex): m_iUserIndex(iUserIndex) {}
+
+	virtual bool	IsReliable( void ) const { return true; }
+	virtual bool	IsInitMessage( void ) const { return false; }
+
+	virtual int		GetRecipientCount( void ) const { return 1; }
+	virtual int		GetRecipientIndex( int slot ) const { return m_iUserIndex;}
+protected:
+	int m_iUserIndex;
+};
+
+//----------------------------------------------------------------------------------------------------------------
 void CBot::Say(bool bTeamOnly, const char* szFormat, ...)
 {
+	good::string_buffer sBuffer(szBotBuffer, 2048, false);
+	if ( bTeamOnly )
+		sBuffer.append("(TEAM) ");
+	sBuffer.append( GetName() );
+	sBuffer.append( ": " );
+	int iSize = sBuffer.size();
+
 	va_list vaList;
 	va_start(vaList, szFormat);
-	vsprintf(szBotBuffer, szFormat, vaList); 
-	va_end(vaList); 
+	vsprintf(&szBotBuffer[iSize], szFormat, vaList);
+	va_end(vaList);
 
-	CBotrixPlugin::instance->GenerateSayEvent(m_pEdict, szBotBuffer, bTeamOnly);
+	//CBotrixPlugin::pServerPluginHelpers->ClientCommand(m_pEdict, szBotBuffer);
+
+#ifndef BOTRIX_DONT_SEND_BOT_CHAT
+	for ( int i = 0; i <= CPlayers::GetPlayersCount(); i++ )
+	{
+		CPlayer* pPlayer = CPlayers::Get(i);
+
+		if ( !pPlayer || pPlayer->IsBot() )
+			continue;
+		
+		if ( bTeamOnly && (pPlayer->GetTeam() != 0) && (pPlayer->GetTeam() != GetTeam()) )
+			continue;
+
+		UserRecipientFilter user( pPlayer->GetIndex() + 1 );
+		bf_write* bf = CBotrixPlugin::pEngineServer->UserMessageBegin(&user, 3);
+		if ( bf )
+		{
+			bf->WriteByte( m_iIndex );
+			bf->WriteString( szBotBuffer );
+			bf->WriteByte( true );
+		}
+		CBotrixPlugin::pEngineServer->MessageEnd();
+	}
+
+	// Echo to server console.
+	if ( CBotrixPlugin::pEngineServer->IsDedicatedServer() )
+		 Msg( "%s", szBotBuffer );
+#endif
+
+	CBotrixPlugin::instance->GenerateSayEvent(m_pEdict, &szBotBuffer[iSize], bTeamOnly);
 }
 //----------------------------------------------------------------------------------------------------------------
 void CBot::Activated()
@@ -1065,6 +1126,11 @@ void CBot::EnemyAim()
 		m_vLook = vEnemyCenter;
 	else
 		m_vLook = m_pCurrentEnemy->GetHead();
+
+	//float fRand = fDistanceToEnemy / CUtil::iMaxMapSize;
+	m_vLook.x += 10 - (rand()%20); // -10 .. + 10
+	m_vLook.y += 10 - (rand()%20); // -10 .. + 10
+	m_vLook.z += 10 - (rand()%20); // -10 .. + 10
 
 	m_fEndAimTime = GetEndLookTime();
 

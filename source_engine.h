@@ -172,8 +172,8 @@ public: // Draw functions.
 
 
 public: // Members.
-	static const int MAX_MAP_SIZE = 32768;   ///< This is max map size for HL2 (-16384..16383).
-	static const int HALF_MAX_MAP_SIZE = MAX_MAP_SIZE/2;
+	static const int iMaxMapSize = 32768;   ///< This is max map size for HL2 (-16384..16383).
+	static const int iHalfMaxMapSize = iMaxMapSize/2;
 
 	// Mod dependant variables that should be set at plugin load.
 	// https://developer.valvesoftware.com/wiki/Dimensions

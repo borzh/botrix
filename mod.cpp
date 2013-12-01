@@ -92,8 +92,9 @@ void CMod::MapLoaded()
 		}
 	}
 
-	DebugAssert(pCurrentMod);
-	pCurrentMod->MapLoaded();
+	//DebugAssert(pCurrentMod);
+	if ( pCurrentMod )
+		pCurrentMod->MapLoaded();
 }
 
 //----------------------------------------------------------------------------------------------------------------

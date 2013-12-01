@@ -254,7 +254,7 @@ TWeaponId CWeapons::GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aW
 
 
 //----------------------------------------------------------------------------------------------------------------
-TWeaponId CWeapons::GetRandomWeapon( TBotIntelligence iIntelligence )
+TWeaponId CWeapons::GetRandomWeapon( TBotIntelligence iIntelligence, const good::bitset& cSkipWeapons )
 {
 	TWeaponId iIdx = rand() % Size();
 
@@ -263,14 +263,16 @@ TWeaponId CWeapons::GetRandomWeapon( TBotIntelligence iIntelligence )
 		CWeaponWithAmmo& cWeapon = m_aWeapons[i];
 		const CWeapon* pWeapon = cWeapon.GetBaseWeapon();
 		if ( cWeapon.IsRanged() && (iIntelligence <= pWeapon->iBotPreference) && CItems::ExistsOnMap(pWeapon->pWeaponClass))
-			return i;
+			if ( !cSkipWeapons.test(i) )
+				return i;
 	}
 	for ( TWeaponId i = iIdx; i >= 0; --i )
 	{
 		CWeaponWithAmmo& cWeapon = m_aWeapons[i];
 		const CWeapon* pWeapon = cWeapon.GetBaseWeapon();
 		if ( cWeapon.IsRanged() && (iIntelligence <= pWeapon->iBotPreference) && CItems::ExistsOnMap(pWeapon->pWeaponClass))
-			return i;
+			if ( !cSkipWeapons.test(i) )
+				return i;
 	}
 	
 	return -1;

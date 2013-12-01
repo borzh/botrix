@@ -61,19 +61,19 @@ protected:
 
 	good::bitset m_aWaypoints;                           // Waypoints, that bot can't use.
 
-	TBotTaskHL2DM m_cCurrentTask;                        // Current task.
+	TBotTaskHL2DM m_iCurrentTask;                        // Current task.
 	TWaypointId m_iTaskDestination;                      // Waypoint for task destination.
 	CPickedItem m_cItemToSearch;                         // Item, we are searching right now. If iType is -1 then iIndex
 	                                                     // is waypoint (found no items, so heading to waypoint of that type).
 
 	TWaypointId m_iFailWaypoint;                         // Waypoint id where bot stucks.
 	int m_iFailsCount;                                   // Times bot stucks at m_iFailWaypoint (at 3 times will change destination).
-
+	
+	good::bitset m_cSkipWeapons;
 
 protected: // Flags.
 
 	bool m_bNeedTaskCheck:1;                             // True if there is need to check for new tasks.
-	bool m_bCheckWeapon:1;                               // Check if need weapon.
 
 };
 

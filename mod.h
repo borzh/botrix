@@ -7,7 +7,6 @@
 #include "event.h"
 #include "item.h"
 
-
 //****************************************************************************************************************
 /// Mod interface.
 /**
@@ -126,7 +125,7 @@ public: // Methods.
 	}
 
 	/// Get random bot name from [General] section, key bot_names.
-	static const good::string& GetRandomBotName() { return m_aBotNames[rand() % m_aBotNames.size()]; }
+	static const good::string& GetRandomBotName();
 
 	/// Execute event.
 	static void ExecuteEvent( void* pEvent, TEventType iType );
@@ -142,6 +141,9 @@ public: // Static members.
 
 protected: // Methods.
 	friend class CConfiguration; // Give access to next protected methods.
+
+	// Returns true there is a player/bot with name cName.
+	static bool IsNameTaken(const good::string& cName);
 
 	// Set bot names.
 	static void SetBotNames( const StringVector& aBotNames ) { m_aBotNames = aBotNames; }

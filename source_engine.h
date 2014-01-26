@@ -172,6 +172,7 @@ public: // Draw functions.
 
 
 public: // Members.
+	static bool bLogMessageToFile;          ///< Set to true to log messages to botrix.log.
 	static const int iMaxMapSize = 32768;   ///< This is max map size for HL2 (-16384..16383).
 	static const int iHalfMaxMapSize = iMaxMapSize/2;
 

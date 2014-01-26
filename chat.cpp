@@ -1,3 +1,5 @@
+#ifdef BOTRIX_CHAT
+
 #include <stdlib.h> // rand()
 
 #include "good/string_buffer.h"
@@ -131,7 +133,7 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
 	int iCommand = CTypeToString::BotCommandFromString(sCommandName);
 	if ( iCommand == -1 )
 	{
-		ChatError("Error, unknown command: %s.", sKey.c_str());
+		ChatError("Error, unknown bot chat: %s.", sKey.c_str());
 		return false;
 	}
 
@@ -581,7 +583,7 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 			int iOptionals = iFound-iRequired;
 			int iTotalOptionals = currPhrase.aWords.size() - iTotalRequired;
 			int iExtra = aWords.size() - iFound;
-			int iLeft = currPhrase.aWords.size() - iFound;
+			//int iLeft = currPhrase.aWords.size() - iFound;
 
 			// Give more importance to requiered words (not optionals), and less to optionals and words order.
 			float fImportance = 0.0f;
@@ -591,8 +593,7 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 			fImportance += 1*( (iTotalOptionals) ? iOptionals / (float)iTotalOptionals : 1 ); // + Ratio of matched optional words.
 			fImportance += 3*( iOrdered / (float)currPhrase.aWords.size() );                  // + Ratio of matched ordered words.
 			//fImportance += (chrEnd == currPhrase.chrPhraseEnd) ? 1 : 0;                       // + 1 if ends with same symbol as matching phrase (. ? !).
-
-			fImportance -= 4*( iExtra / iTotalRequired );                               // - Ratio of not matched words.
+			fImportance -= 4*( iExtra / iTotalRequired );                                     // - Ratio of not matched words.
 
 			if ( fBestImportance < fImportance )
 			{  
@@ -613,7 +614,7 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 
 	if ( fBestImportance > 0.0f )
 	{
-		const CPhrase& cPhrase = m_aMatchPhrases[cCommand.iBotChat][iBestPhrase];
+		//const CPhrase& cPhrase = m_aMatchPhrases[cCommand.iBotChat][iBestPhrase];
 		//ChatMessage( "Chat match: %s", PhraseToString(cPhrase).c_str() );
 		//ChatMessage( "Matching (from 0 to 10): %f.", fBestImportance );
 
@@ -771,3 +772,5 @@ const good::vector<TBotChat>& CChat::PossibleAnswers( TBotChat iTalk )
 	DebugAssert( (0 <= iTalk) && (iTalk < EBotChatTotal) );
 	return cAnswers.aTalkAnswers[iTalk];
 }
+
+#endif // BOTRIX_CHAT

@@ -80,7 +80,7 @@ namespace good
 		// Read entire file into memory.
 		size_t fsize = file::file_size(name.c_str());
 
-		if (fsize < 0)
+		if (fsize == FILE_OPERATION_FAILED)
 			return IniFileNotFound;
 
 		if (fsize > MAX_INI_FILE_SIZE)

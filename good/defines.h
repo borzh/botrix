@@ -131,7 +131,7 @@
 /// Clear flag in flags.
 #define FLAG_CLEAR(flag, flags)         flags &= ~(flag)
 
-/// Get flags with cleared flag.
+/// To know if some flag is cleared.
 #define FLAG_CLEARED(flag, flags)       ( ((flags) & (flag)) == 0 )
 
 /// Return true if some flag is set.

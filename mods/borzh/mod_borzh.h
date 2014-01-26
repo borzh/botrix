@@ -1,3 +1,5 @@
+#ifdef BOTRIX_BORZH_MOD
+
 #ifndef __BOTRIX_MOD_BORZH_H__
 #define __BOTRIX_MOD_BORZH_H__
 
@@ -156,3 +158,5 @@ protected:
 };
 
 #endif // __BOTRIX_MOD_BORZH_H__
+
+#endif // BOTRIX_BORZH_MOD

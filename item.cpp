@@ -29,6 +29,11 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#if defined(DEBUG) || defined (_DEBUG)
+#	define ItemMessage(...) CUtil::Message(NULL, __VA_ARGS__)
+#else
+#	define ItemMessage(...)
+#endif
 
 extern IVDebugOverlay* pVDebugOverlay;
 
@@ -37,34 +42,39 @@ extern int iMainBufferSize;
 
 char szValueBuffer[16];
 
+#define BOTRIX_ENTITY_USE_KEY_VALUE
 
 //================================================================================================================
 inline int GetEntityFlags( IServerEntity* pServerEntity )
 {
-	// virtual bool GetKeyValue( const char *szKeyName, char *szValue, int iMaxLen );
-	// virtual int	ObjectCaps( void );
-	// GetMaxHealth
-	// IsAlive
+	// ObjectCaps(), GetMaxHealth(), IsAlive().
 	CBaseEntity* pEntity = pServerEntity->GetBaseEntity();
+#ifdef BOTRIX_ENTITY_USE_KEY_VALUE
 	pEntity->GetKeyValue("effects", szValueBuffer, 16);
 	int flags = atoi(szValueBuffer);
 	return flags;
-	//return pEntity->GetEffects();
+#else
+	return pEntity->GetEffects();
+#endif
 }
 
 inline int GetEntityHealth( IServerEntity* pServerEntity )
 {
 	CBaseEntity* pEntity = pServerEntity->GetBaseEntity();
+#ifdef BOTRIX_ENTITY_USE_KEY_VALUE
 	pEntity->GetKeyValue("health", szValueBuffer, 16);
 	int health = atoi(szValueBuffer);
 	return health;
-	//return pEntity->GetHealth();
+#else
+	return pEntity->GetHealth();
+#endif
 }
 
 inline bool IsEntityOnMap( IServerEntity* pServerEntity )
 {
-	 // EF_BONEMERGE is set for weapon, when picked up. Now appears that you don't need it.
-	return !FLAG_SOME_SET( EF_NODRAW | EF_BONEMERGE, GetEntityFlags(pServerEntity) );
+	 // EF_BONEMERGE is set for weapon, when picked up.
+	return FLAG_CLEARED( EF_NODRAW | EF_BONEMERGE, GetEntityFlags(pServerEntity) );
+	//return !FLAG_SOME_SET( EF_NODRAW | EF_BONEMERGE, GetEntityFlags(pServerEntity) );
 }
 
 inline bool IsEntityTaken( IServerEntity* pServerEntity )
@@ -355,8 +365,8 @@ void CItems::CheckNewEntity( edict_t* pEdict )
 		CEntity& cItem = m_aItems[iEntityType][iIndex];
 
 		const char* szWaypointFlags = CWaypoints::IsValid(cItem.iWaypoint) ? CTypeToString::WaypointFlagsToString( CWaypoints::Get(cItem.iWaypoint).iFlags ).c_str() : "";
-		CUtil::Message(NULL, "New item: %s %d (%s), waypoint %d (%s).", CTypeToString::EntityTypeToString(iEntityType).c_str(), iIndex,
-		               pEdict->GetClassName(), cItem.iWaypoint, szWaypointFlags);
+		ItemMessage("New item: %s %d (%s), waypoint %d (%s).", CTypeToString::EntityTypeToString(iEntityType).c_str(), iIndex,
+		            pEdict->GetClassName(), cItem.iWaypoint, szWaypointFlags);
 
 		if (  !m_bMapLoaded && FLAG_CLEARED(FTaken, cItem.iFlags) ) // Item should have waypoint near.
 		{

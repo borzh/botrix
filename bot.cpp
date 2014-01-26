@@ -27,7 +27,7 @@ int CBot::m_iCheckEntitiesPerFrame = 4;
 
 //----------------------------------------------------------------------------------------------------------------
 CBot::CBot( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence iIntelligence ):
-	CPlayer(pEdict, iIndex, true), m_aPickedItems(16),
+	CPlayer(pEdict, iIndex, true), m_aPickedItems(16), m_bPaused(false),
 	m_aNearPlayers(CPlayers::Size()), m_aSeenEnemies(CPlayers::Size()), m_aEnemies(CPlayers::Size()),
 	m_iIntelligence(iIntelligence), r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ),
 #if defined(DEBUG) || defined(_DEBUG)
@@ -150,17 +150,21 @@ void CBot::Activated()
 	m_pPlayerInfo = CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo(m_pEdict);
 	m_pController = CBotrixPlugin::pBotManager->GetBotController(m_pEdict);
 
+#ifndef BOTRIX_HL2DM_MOD
 	CBotrixPlugin::pEngineServer->SetFakeClientConVarValue( m_pEdict, "cl_team", "default" );
 	const good::string* sModel = CMod::GetRandomModel( m_pPlayerInfo->GetTeamIndex() );
 	if ( sModel )	
 		CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(m_pEdict, "cl_playermodel", sModel->c_str());
+#endif
 
 	m_bFirstRespawn = true;
 	
+#ifdef BOTRIX_CHAT
 	m_iPrevChatMate = m_iPrevTalk = -1;
 	m_bTalkStarted = false;
 
 	m_cChat.iSpeaker = m_iIndex;
+#endif
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -199,10 +203,15 @@ void CBot::Respawned()
 	// Check if bot has physcannon / manual weapon.
 	m_iPhyscannon = m_iManualWeapon = -1;
 	for ( int i=0; i < m_aWeapons.size(); ++i)
-		if ( m_aWeapons[i].IsPhysics() )
-			m_iPhyscannon = i;
-		else if ( m_aWeapons[i].IsManual() )
-			m_iManualWeapon = i;
+	{
+		if ( m_aWeapons[i].IsPresent() )
+		{
+			if ( m_aWeapons[i].IsPhysics() )
+				m_iPhyscannon = i;
+			else if ( m_aWeapons[i].IsManual() )
+				m_iManualWeapon = i;
+		}
+	}
 
 	// Set bot's best weapon.
 	m_iWeapon = CWeapons::GetBestRangedWeapon(m_aWeapons);
@@ -218,8 +227,10 @@ void CBot::Respawned()
 	DebugAssert( sWeaponName == m_pPlayerInfo->GetWeaponName() );
 
 	// Set default flags.
-	m_bObjectiveChanged = m_bPerformingRequest = false;
-	m_bUnderAttack = m_bDontAttack = m_bFlee = m_bNeedSetWeapon = m_bNeedReload = m_bAttackDuck = false;
+#ifdef BOTRIX_CHAT
+	m_bPerformingRequest = false;
+#endif
+	m_bObjectiveChanged = m_bUnderAttack = m_bDontAttack = m_bFlee = m_bNeedSetWeapon = m_bNeedReload = m_bAttackDuck = false;
 
 	m_bNeedAim = m_bUseSideLook = false;
 	m_bDontAttack = m_bDestinationChanged = m_bNeedMove = m_bLastNeedMove = m_bUseNavigatorToMove = m_bTest;
@@ -287,6 +298,7 @@ void CBot::PlayerDisconnect( int iPlayerIndex, CPlayer* pPlayer )
 }
 
 //----------------------------------------------------------------------------------------------------------------
+#ifdef BOTRIX_CHAT
 void CBot::ReceiveChatRequest( const CBotChat& cRequest )
 {
 	DebugAssert( (cRequest.iDirectedTo == m_iIndex) && (cRequest.iSpeaker != -1));
@@ -440,10 +452,14 @@ void CBot::EndPerformingChatRequest( bool bSayGoodbye )
 		DebugAssert(false); // Should not enter.
 	}
 }
+#endif // BOTRIX_CHAT
 
 //----------------------------------------------------------------------------------------------------------------
 void CBot::PreThink()
 {
+	if ( m_bPaused )
+		return;
+
 	if ( m_bFirstRespawn )
 	{
 		Respawned(); // Force respawn, as first time bot appeares on map, Respawned() is not called.
@@ -507,7 +523,7 @@ void CBot::PreThink()
 	}
 
 	m_pController->RunPlayerMove(&m_cCmd);
-#ifndef SOURCE_ENGINE_2013
+#ifndef BOTRIX_SOURCE_2013
 	m_pController->PostClientMessagesSent();
 #endif
 
@@ -661,6 +677,8 @@ void CBot::ApplyPathFlags()
 
 			CWaypointPath* pCurrentPath = CWaypoints::GetPath(iCurrentWaypoint, iNextWaypoint);
 			DebugAssert( pCurrentPath );
+			if ( pCurrentPath == NULL )
+				return;
 
 			m_bLadderMove = FLAG_ALL_SET(FPathLadder, pCurrentPath->iFlags);
 
@@ -785,6 +803,7 @@ void CBot::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex
 //================================================================================================================
 void CBot::Speak( bool bTeamSay )
 {
+#ifdef BOTRIX_CHAT
 	TPlayerIndex iPlayerIndex = m_cChat.iDirectedTo;
 	if ( iPlayerIndex == EPlayerIndexInvalid )
 		iPlayerIndex = m_iPrevChatMate;
@@ -793,17 +812,25 @@ void CBot::Speak( bool bTeamSay )
 	const good::string& sText = CChat::ChatToText(m_cChat);
 	CUtil::Message( NULL, "%s: %s %s", GetName(), bTeamSay? "say_team" : "say", sText.c_str() );
 	Say( bTeamSay, sText.c_str() );
+#endif
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
 bool CBot::IsVisible( CPlayer* pPlayer ) const
 {
-	// First check if other player is in bot's view cone.
-	static const float fFovHorizontal = 37.5f;              // Giving 75 degree of view horizontally.
-	static const float fFovVertical = fFovHorizontal * 3/4; // Normal monitor has 4:3 aspect ratio.
+	// Check PVS first. Get visible clusters from player's position.
 	Vector vAim(pPlayer->GetHead());
-	vAim -= m_vHead;
+
+	CUtil::SetPVSForVector(m_vHead);
+	if ( !CUtil::IsVisiblePVS(vAim) )
+		return false;
+
+	// First check if other player is in bot's view cone.
+	static const float fFovHorizontal = 60.0f;              // Giving 120 degree of view horizontally.
+	static const float fFovVertical = fFovHorizontal * 3/4; // Normal monitor has 4:3 aspect ratio.
+
+	vAim -= m_vHead; // vAim contains vector to enemy relative from bot.
 
 	QAngle angPlayer;
 	VectorAngles(vAim, angPlayer);
@@ -811,7 +838,7 @@ bool CBot::IsVisible( CPlayer* pPlayer ) const
 	CUtil::GetAngleDifference(angPlayer, m_cCmd.viewangles, angPlayer);
 	if ( (-fFovHorizontal <= angPlayer.x) && (angPlayer.x <= fFovHorizontal) &&
 		 (-fFovVertical <= angPlayer.y) && (angPlayer.y <= fFovVertical) )
-		 return CUtil::IsVisible( m_vHead, pPlayer->GetHead() );
+		 return CUtil::IsVisible( m_vHead, pPlayer->GetEdict() ); // CUtil::IsVisible( m_vHead, vAim, FVisibilityAll );
 	else
 		return false;
 }
@@ -834,7 +861,6 @@ float CBot::GetEndLookTime()
 		{ 0.40f, 0.45f, 0.50f, 0.55f, 0.60f },
 		{ 0.25f, 0.30f, 0.35f, 0.40f, 0.45f },
 	};
-
 
 	Vector vDestinationAim( m_vLook );
 	vDestinationAim -= m_vHead; // Get abs vector.
@@ -1223,14 +1249,15 @@ void CBot::SetActiveWeapon( int iIndex )
 	CWeaponWithAmmo& cNew = m_aWeapons[iIndex];
 	DebugAssert( cOld.IsPresent() && cNew.IsPresent() );
 
-	cOld.Holster( cNew );
-
 	const good::string& sWeaponName = cNew.GetName();
 	m_pController->SetActiveWeapon( sWeaponName.c_str() );
-	DebugAssert( sWeaponName == m_pPlayerInfo->GetWeaponName() );
-	BotMessage( "%s -> Set weapon %s", GetName(), sWeaponName.c_str() );
 
-	m_iWeapon = iIndex;
+	if ( sWeaponName == m_pPlayerInfo->GetWeaponName() )
+	{
+		cOld.Holster( cNew );
+		BotMessage( "%s -> Set weapon %s", GetName(), sWeaponName.c_str() );
+		m_iWeapon = iIndex;
+	}
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -1419,7 +1446,7 @@ bool CBot::ResolveStuckMove()
 			{
 				m_bStuckTryingSide = true;
 				m_bStuckTryGoLeft = !m_bStuckTryGoLeft;
-				BotMessage("Try going %s.", m_bStuckTryGoLeft ? "left" : "right");
+				BotMessage("%s -> try going %s.", GetName(), m_bStuckTryGoLeft ? "left" : "right");
 				m_bNeedJump = m_bNeedJumpDuck = true;
 				m_fStartActionTime = CBotrixPlugin::fTime + 0.75f;
 				m_fEndActionTime = CBotrixPlugin::fTime + 1.0f;

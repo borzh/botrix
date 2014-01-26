@@ -1,6 +1,7 @@
 #include "mods/css/event_css.h"
 #include "mods/borzh/mod_borzh.h"
 #include "mod.h"
+#include "players.h"
 #include "server_plugin.h"
 #include "type2string.h"
 #include "waypoint.h"
@@ -32,7 +33,11 @@ void CMod::Load( TModId iModId )
 	switch ( iModId )
 	{
 	case EModId_Borzh:
+#ifdef BOTRIX_BORZH_MOD
 		pCurrentMod = new CModBorzh();
+#else
+		DebugAssert(false);
+#endif
 		break;
 
 	case EModId_HL2DM:
@@ -98,6 +103,18 @@ void CMod::MapLoaded()
 }
 
 //----------------------------------------------------------------------------------------------------------------
+const good::string& CMod::GetRandomBotName()
+{
+	int iIdx = rand() % m_aBotNames.size();
+	for ( int i=iIdx; i<m_aBotNames.size(); ++i )
+		if ( !IsNameTaken(m_aBotNames[i]) )
+			return m_aBotNames[i];
+	for ( int i=iIdx-1; i>=0; --i )
+		if ( !IsNameTaken(m_aBotNames[i]) )
+			return m_aBotNames[i];
+	return m_aBotNames[iIdx];
+}
+//----------------------------------------------------------------------------------------------------------------
 void CMod::ExecuteEvent( void* pEvent, TEventType iType )
 {
 	IEventInterface *pInterface = CEvent::GetEventInterface(pEvent, iType);
@@ -106,7 +123,7 @@ void CMod::ExecuteEvent( void* pEvent, TEventType iType )
 
 	const char* szEventName = pInterface->GetName();
 
-	for (good::vector< good::auto_ptr<CEvent> >::iterator it = m_aEvents.begin(); it != m_aEvents.end(); ++it)
+	for ( good::vector< good::auto_ptr<CEvent> >::iterator it = m_aEvents.begin(); it != m_aEvents.end(); ++it )
 	{
 		if ( (*it)->GetName() == szEventName )	
 		{
@@ -117,3 +134,16 @@ void CMod::ExecuteEvent( void* pEvent, TEventType iType )
 
 	delete pInterface;
 }
+
+//----------------------------------------------------------------------------------------------------------------
+bool CMod::IsNameTaken(const good::string& cName)
+{
+	for ( TPlayerIndex iPlayer=0; iPlayer<CPlayers::Size(); ++iPlayer )
+	{
+		const CPlayer* pPlayer = CPlayers::Get(iPlayer);
+		if ( pPlayer && (cName == pPlayer->GetName()) )
+			return true;
+	}
+	return false;
+}
+

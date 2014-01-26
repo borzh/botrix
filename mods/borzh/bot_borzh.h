@@ -1,3 +1,5 @@
+#ifdef BOTRIX_BORZH_MOD
+
 #ifndef __BOTRIX_BOT_BORZHMOD__
 #define __BOTRIX_BOT_BORZHMOD__
 
@@ -393,3 +395,5 @@ protected: // Members.
 
 
 #endif // __BOTRIX_BOT_BORZHMOD__
+
+#endif // BOTRIX_BORZH_MOD

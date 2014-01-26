@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -70,7 +70,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\Source2013\mp\src\public;..\Source2013\mp\src\public\engine;..\Source2013\mp\src\public\tier0;..\Source2013\mp\src\public\tier1;..\Source2013\mp\src\public\game\server;..\Source2013\mp\src\public\mathlib;..\Source2013\mp\src\public\vstdlib;..\Source2013\mp\src\game\server;..\Source2013\mp\src\game\server\hl2;..\Source2013\mp\src\game\server\hl2mp;..\Source2013\mp\src\game\shared;..\Source2013\mp\src\;.</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;SOURCE_ENGINE_2013;_HAS_ITERATOR_DEBUGGING=0;_DEBUG;_WINDOWS;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_HAS_ITERATOR_DEBUGGING=0;_DEBUG;_WINDOWS;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;BOTRIX_SOURCE_2013;BOTRIX_HL2DM_MOD;INI_FILE_USE_ONLY_ONE_KEY_VALUE_SEPARATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -113,6 +113,10 @@
     <PostBuildEvent>
       <Command>copy /Y "$(OutDir)botrix.dll" "..\Source2013\mp\game\mod_hl2mp\bin"
 copy /Y "$(OutDir)botrix.pdb" "..\Source2013\mp\game\mod_hl2mp\bin"
+copy /Y "$(OutDir)botrix.dll" "F:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\bin"
+copy /Y "$(OutDir)botrix.pdb" "F:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\bin"
+copy /Y "$(OutDir)botrix.dll" "F:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\bin"
+copy /Y "$(OutDir)botrix.pdb" "F:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\bin"
 </Command>
     </PostBuildEvent>
     <PostBuildEvent>
@@ -141,7 +145,7 @@ copy /Y "$(OutDir)botrix.pdb" "..\Source2013\mp\game\mod_hl2mp\bin"
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>..\Source2013\mp\src\public;..\Source2013\mp\src\public\engine;..\Source2013\mp\src\public\tier0;..\Source2013\mp\src\public\tier1;..\Source2013\mp\src\public\game\server;..\Source2013\mp\src\public\mathlib;..\Source2013\mp\src\public\vstdlib;..\Source2013\mp\src\game\server;..\Source2013\mp\src\game\server\hl2;..\Source2013\mp\src\game\server\hl2mp;..\Source2013\mp\src\game\shared;..\Source2013\mp\src\;.</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;SOURCE_ENGINE_2013;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;VECTOR;GAME_DLL;HL2_DLL;HL2_EPISODIC;HL2_MP;MP_SDK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;VECTOR;GAME_DLL;HL2_DLL;HL2_EPISODIC;HL2_MP;MP_SDK;BOTRIX_SOURCE_2013;BOTRIX_HL2DM_MOD;INI_FILE_USE_ONLY_ONE_KEY_VALUE_SEPARATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -186,6 +190,10 @@ copy /Y "$(OutDir)botrix.pdb" "..\Source2013\mp\game\mod_hl2mp\bin"
     <PostBuildEvent>
       <Command>copy /Y "$(OutDir)botrix.dll" "..\Source2013\mp\game\mod_hl2mp\bin"
 copy /Y "$(OutDir)botrix.pdb" "..\Source2013\mp\game\mod_hl2mp\bin"
+copy /Y "$(OutDir)botrix.dll" "F:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\bin"
+copy /Y "$(OutDir)botrix.pdb" "F:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\bin"
+copy /Y "$(OutDir)botrix.dll" "F:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\bin"
+copy /Y "$(OutDir)botrix.pdb" "F:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\bin"
 </Command>
     </PostBuildEvent>
     <PostBuildEvent>
@@ -265,6 +273,10 @@ copy /Y "$(OutDir)botrix.pdb" "..\Source2013\mp\game\mod_hl2mp\bin"
     <ClCompile Include="waypoint.cpp" />
     <ClCompile Include="waypoint_navigator.cpp" />
     <ClCompile Include="weapon.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="mods\borzh\readme.txt" />
+    <None Include="mods\hl2dm\readme.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

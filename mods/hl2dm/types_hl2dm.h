@@ -1,3 +1,5 @@
+#ifdef BOTRIX_HL2DM_MOD
+
 #ifndef __BOTRIX_TYPES_HL2DM_H__
 #define __BOTRIX_TYPES_HL2DM_H__
 
@@ -23,3 +25,5 @@ typedef int TBotTaskHL2DM;                       ///< Bot task.
 
 
 #endif // __BOTRIX_TYPES_HL2DM_H__
+
+#endif // BOTRIX_HL2DM_MOD

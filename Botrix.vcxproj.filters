@@ -169,4 +169,12 @@
     <ClCompile Include="waypoint_navigator.cpp" />
     <ClCompile Include="weapon.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="mods\borzh\readme.txt">
+      <Filter>mods\borzh</Filter>
+    </None>
+    <None Include="mods\hl2dm\readme.txt">
+      <Filter>mods\hl2dm</Filter>
+    </None>
+  </ItemGroup>
 </Project>

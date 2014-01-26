@@ -43,31 +43,31 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 
 	m_iniFile.name = sFileName;
 	if ( m_iniFile.load() >= good::IniFileNotFound )
+	{
 		ConfigError("Error reading configuration file %s", m_iniFile.name.c_str());
+		return EModId_Invalid;
+	}
 
 	m_bModified = false;
 
 	// Process general section.
-	good::ini_file::iterator it = m_iniFile.find("Bots");
+	good::ini_file::iterator it = m_iniFile.find("General");
 	if ( it != m_iniFile.end() )
 	{
-		// Get bot names.
-		good::ini_section::iterator kv = it->find("names");
+		// Check if need to log to a file.
+		good::ini_section::iterator kv = it->find("log_to_file");
 		if ( kv != it->end() )
 		{
-			sbBuffer = kv->value;
-			sbBuffer.escape();
-			aBotNames = sbBuffer.split<good::vector>(',', true);
+			int iValue = CTypeToString::BoolFromString(kv->value);
+			if ( iValue == -1 )
+				CUtil::Message( NULL, "File \"%s\", section [%s]: invalid parameter %s for %s.", m_iniFile.name.c_str(),
+				                it->name.c_str(), kv->value.c_str(), kv->key.c_str() );
+			else
+			{
+				CUtil::bLogMessageToFile = (iValue != 0);
+				ConfigMessage("Log to file: %s.", kv->value.c_str());
+			}
 		}
-		else
-			ConfigError("File %s, section [%s]: missing bot_names.", m_iniFile.name.c_str(), it->name.c_str());
-		aBotNames.push_back("Botrix");
-
-#if defined(DEBUG) || defined(_DEBUG)
-		ConfigMessage("Bot names:");
-		for ( int i = 0; i < (int)aBotNames.size(); ++i )
-			ConfigMessage( "  %s", aBotNames[i].c_str() );
-#endif
 
 		// Check if need to show intelligence in it's name.
 		kv = it->find("name_with_intelligence");
@@ -75,7 +75,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 		{
 			int iValue = CTypeToString::BoolFromString(kv->value);
 			if ( iValue == -1 )
-				CUtil::Message( NULL, "File %s, section [%s]: invalid parameter %s for %s.", m_iniFile.name.c_str(),
+				CUtil::Message( NULL, "File \"%s\", section [%s]: invalid parameter %s for %s.", m_iniFile.name.c_str(),
 				                it->name.c_str(), kv->value.c_str(), kv->key.c_str() );
 			else
 			{
@@ -83,6 +83,22 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 				ConfigMessage("Intelligence in bot name: %s.", kv->value.c_str());
 			}
 		}
+
+		// Get bot names.
+		kv = it->find("names");
+		if ( kv == it->end() )
+			ConfigError("File \"%s\", section [%s]: missing bot_names.", m_iniFile.name.c_str(), it->name.c_str());
+		else
+		{
+			sbBuffer = kv->value;
+			sbBuffer.escape();
+			aBotNames = sbBuffer.split<good::vector>(',', true);
+		}
+
+		ConfigMessage("Bot names:");
+		for ( int i = 0; i < (int)aBotNames.size(); ++i )
+			ConfigMessage( "  %s", aBotNames[i].c_str() );
+
 	}
 	else
 		ConfigError("File %s, missing [%s] section.", m_iniFile.name.c_str(), it->name.c_str());
@@ -119,7 +135,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 									iModId = CTypeToString::ModFromString(bot->value);
 									if ( iModId == EModId_Invalid )
 									{
-										ConfigError("File %s, section [%s], invalid bot -> %s.", m_iniFile.name.c_str(), it->name.c_str(), bot->value.c_str());
+										ConfigError("File \"%s\", section [%s], invalid bot -> %s.", m_iniFile.name.c_str(), it->name.c_str(), bot->value.c_str());
 										ConfigError("Using default bot: hl2dm.");
 										iModId = EModId_HL2DM;
 									}
@@ -186,7 +202,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 				}
 			}
 			else
-				ConfigError("File %s, section [%s], invalid mod section (missing games/mods keys).", m_iniFile.name.c_str(), it->name.c_str());
+				ConfigError("File \"%s\", section [%s], invalid mod section (missing games/mods keys).", m_iniFile.name.c_str(), it->name.c_str());
 		}
 	}
 	mod_found:
@@ -232,7 +248,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 					int iFlag = CTypeToString::EntityClassFlagsFromString(aCurrent[0]);
 
 					if ( iFlag == -1 )
-						ConfigError("File %s, section [%s], invalid entity flag %s for %s.",  m_iniFile.name.c_str(), it->name.c_str(), aArguments[i].c_str(), itemIt->key.c_str());
+						ConfigError("File \"%s\", section [%s], invalid entity flag %s for %s.",  m_iniFile.name.c_str(), it->name.c_str(), aArguments[i].c_str(), itemIt->key.c_str());
 					else 
 					{
 						FLAG_SET(iFlag, cEntityClass.iFlags);
@@ -245,10 +261,10 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 								if ( iValue > 0 )
 									SET_2ND_WORD(iValue, cEntityClass.iFlags);
 								else
-									ConfigError("File %s, section [%s], invalid respawn time for: %s.",  m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str());
+									ConfigError("File \"%s\", section [%s], invalid respawn time for: %s.",  m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str());
 							}
 							else if ( aCurrent.size() > 2 )
-								ConfigError("File %s, section [%s], invalid arguments count for: %s.",  m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str());
+								ConfigError("File \"%s\", section [%s], invalid arguments count for: %s.",  m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str());
 						}*/
 					}
 				}
@@ -273,7 +289,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 				CItems::SetObjectFlagForModel(iValue, itemIt->key);
 			else
 			{
-				ConfigError("File %s, section [%s], invalid object model flag: %s.",  m_iniFile.name.c_str(), it->name.c_str(), itemIt->value.c_str());
+				ConfigError("File \"%s\", section [%s], invalid object model flag: %s.",  m_iniFile.name.c_str(), it->name.c_str(), itemIt->value.c_str());
 				ConfigError("Can be one of: %s", CTypeToString::EntityClassFlagsToString(FEntityAll).c_str());
 			}
 		}
@@ -306,7 +322,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 					TWeaponId iWeaponId = CWeapons::GetIdFromWeaponName( aCurrent[0] );
 					if ( iWeaponId == -1 )
 					{
-						ConfigError("File %s, section [%s], 'default' weapons: unknown weapon '%s', skipping.",
+						ConfigError("File \"%s\", section [%s], 'default' weapons: unknown weapon '%s', skipping.",
 						               m_iniFile.name.c_str(), it->name.c_str(), aCurrent[0].c_str());
 						continue;
 					}
@@ -320,7 +336,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 						iNeedArgument++;
 
 					if ( aCurrent.size() != iNeedArgument )
-						ConfigError("File %s, section [%s], 'default' weapons, weapon '%s': invalid parameters count.",
+						ConfigError("File \"%s\", section [%s], 'default' weapons, weapon '%s': invalid parameters count.",
 						               m_iniFile.name.c_str(), it->name.c_str(), aCurrent[0].c_str());
 
 					// Get primary extra ammo for this weapon.
@@ -329,7 +345,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 					{
 						sscanf( aCurrent[1].c_str(), "%u", &iExtra[0]);
 						if ( iExtra[0] < 0 )
-							ConfigError("File %s, section [%s], 'default' weapons, weapon '%s': invalid parameter %s.",
+							ConfigError("File \"%s\", section [%s], 'default' weapons, weapon '%s': invalid parameter %s.",
 							               m_iniFile.name.c_str(), it->name.c_str(), aCurrent[0].c_str(), aCurrent[1].c_str());
 					}
 
@@ -338,20 +354,20 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 					{
 						sscanf( aCurrent[2].c_str(), "%u", &iExtra[1]);
 						if ( iExtra[1] < 0 )
-							ConfigError("File %s, section [%s], 'default' weapons, weapon '%s': invalid parameter %s.",
+							ConfigError("File \"%s\", section [%s], 'default' weapons, weapon '%s': invalid parameter %s.",
 							               m_iniFile.name.c_str(), it->name.c_str(), aCurrent[0].c_str(), aCurrent[3].c_str());
 					}
 
 					if ( pWeapon->iClipSize[0] && (iExtra[0] < 0) )
 					{
 						iExtra[0] = pWeapon->iDefaultAmmo[0];
-						ConfigError("File %s, section [%s], 'default' weapons, weapon '%s': using default primary %u.",
+						ConfigError("File \"%s\", section [%s], 'default' weapons, weapon '%s': using default primary %u.",
 						               m_iniFile.name.c_str(), it->name.c_str(), aCurrent[0].c_str(), iExtra[0]);
 					}
 					if ( pWeapon->iClipSize[1] && (iExtra[1] < 0) )
 					{
 						iExtra[1] = pWeapon->iDefaultAmmo[1];
-						ConfigError("File %s, section [%s], 'default' weapons, weapon '%s': using default secondary %u.",
+						ConfigError("File \"%s\", section [%s], 'default' weapons, weapon '%s': using default secondary %u.",
 						               m_iniFile.name.c_str(), it->name.c_str(), aCurrent[0].c_str(), iExtra[1]);
 					}
 
@@ -385,7 +401,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 							pWeapon->bAddClip = true;						
 						else
 						{
-							ConfigError("File %s, section [%s], weapon %s, unknown keyword: %s or invalid parameters count.",
+							ConfigError("File \"%s\", section [%s], weapon %s, unknown keyword: %s or invalid parameters count.",
 								m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[0].c_str());
 							bError = true;
 							break;
@@ -398,7 +414,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 							int iType = CTypeToString::WeaponTypeFromString(aCurrent[1]);
 							if ( iType == -1 )
 							{
-								ConfigError("File %s, section [%s], weapon %s, invalid weapon type: %s.",
+								ConfigError("File \"%s\", section [%s], weapon %s, invalid weapon type: %s.",
 								               m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[1].c_str());
 								bError = true;
 								break;
@@ -425,7 +441,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 						{
 							iValue = CTypeToString::PreferenceFromString(aCurrent[1]);
 							if ( iValue == -1 )
-								ConfigError("File %s, section [%s], weapon %s, invalid preference: %s, using 'lowest'.",
+								ConfigError("File \"%s\", section [%s], weapon %s, invalid preference: %s, using 'lowest'.",
 								               m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[1].c_str());
 							else
 								pWeapon->iBotPreference = iValue;
@@ -435,7 +451,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 							iValue = CMod::GetTeamIndex(aCurrent[1]);
 							if ( iValue == -1 )
 							{
-								ConfigError("File %s, section [%s], weapon %s, invalid team: %s.",
+								ConfigError("File \"%s\", section [%s], weapon %s, invalid team: %s.",
 								               m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[1].c_str());
 								bError = true;
 								break;
@@ -452,7 +468,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 							sscanf(aCurrent[1].c_str(), "%u", &iValue);
 							if ( iValue < 0 )
 							{
-								ConfigError("File %s, section [%s], weapon %s, invalid number: %s for parameter %s.",
+								ConfigError("File \"%s\", section [%s], weapon %s, invalid number: %s for parameter %s.",
 								               m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(),
 											   aCurrent[1].c_str(), aCurrent[0].c_str());
 								bError = true;
@@ -497,7 +513,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 
 							else
 							{
-								ConfigError("File %s, section [%s], weapon %s, unknown keyword: %s or invalid parameters count.",
+								ConfigError("File \"%s\", section [%s], weapon %s, unknown keyword: %s or invalid parameters count.",
 								               m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[0].c_str());
 								bError = true;
 								break;
@@ -508,7 +524,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 					{
 						if ( (aCurrent.size() & 1) == 0 ) // Number must be odd.
 						{
-							ConfigError("File %s, section [%s], weapon %s: invalid parameters count for %s.",
+							ConfigError("File \"%s\", section [%s], weapon %s: invalid parameters count for %s.",
 							               m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[0].c_str());
 							bError = true;
 							break;
@@ -520,7 +536,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 							sscanf(aCurrent[i+1].c_str(), "%u", &iValue);
 							if ( iValue <= 0 ) // Ammo count can't be 0.
 							{
-								ConfigError("File %s, section [%s], weapon %s, invalid parameter for '%s' ammo's count: %s.",
+								ConfigError("File \"%s\", section [%s], weapon %s, invalid parameter for '%s' ammo's count: %s.",
 								               m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[i].c_str(), aCurrent[i+1].c_str());
 								bError = true;
 								break;
@@ -535,7 +551,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 					}
 					else
 					{
-						ConfigError("File %s, section [%s], weapon %s: unknown parameter %s.",
+						ConfigError("File \"%s\", section [%s], weapon %s: unknown parameter %s.",
 						               m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[0].c_str());
 						bError = true;
 						break;
@@ -574,6 +590,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 		}
 	}
 
+#ifdef BOTRIX_CHAT
 	// Load chat: synonims.
 	ConfigMessage("Loading chat synonims:");
 	it = m_iniFile.find( "Chat.replace" );
@@ -593,6 +610,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 		for ( good::ini_section::const_iterator wordIt = it->begin(); wordIt != it->end(); ++wordIt )
 			CChat::AddChat( wordIt->key, wordIt->value );
 	}
+#endif // BOTRIX_CHAT
 
 	return iModId;
 }
@@ -621,8 +639,7 @@ TCommandAccessFlags CConfiguration::ClientAccessLevel( const good::string& sStea
 	if ( kv == sect.end() )
 		return 0;
 	
-	int flags = CTypeToString::AccessFlagsFromString(kv->value);
-	return ( flags == -1 ) ? 0 : flags;
+	return CTypeToString::AccessFlagsFromString(kv->value);
 }
 
 void CConfiguration::SetClientAccessLevel( const good::string& sSteamId, TCommandAccessFlags iAccess )

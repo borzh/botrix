@@ -513,6 +513,19 @@ public:
 	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
+class CBotPauseCommand: public CConsoleCommand
+{
+public:
+	CBotPauseCommand()
+	{
+		m_sCommand = "pause";
+		m_sHelp = "pause/resume given or all bots";
+		m_iAccessLevel = FCommandAccessBot;
+	}
+
+	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
 class CBotTestPathCommand: public CConsoleCommand
 {
 public:
@@ -751,6 +764,7 @@ public:
 		Add(new CBotDebugCommand());
 		Add(new CBotDrawPathCommand());
 		Add(new CBotKickCommand());
+		Add(new CBotPauseCommand());
 		Add(new CBotTestPathCommand());
 		Add(new CBotWeaponCommand());
 	}

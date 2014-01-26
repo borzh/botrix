@@ -6,7 +6,7 @@
 
 
 //----------------------------------------------------------------------------------------------------------------
-good::vector<CWeaponWithAmmo> CWeapons::m_aWeapons;
+good::vector<CWeaponWithAmmo> CWeapons::m_aWeapons(16);
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -182,9 +182,15 @@ void CWeapons::GetRespawnWeapons( good::vector<CWeaponWithAmmo>& aWeapons, int i
 	}
 
 	// Remove default weapons that are not for that team.
-	for ( int i=0; i < m_aWeapons.size(); ++i )
-		if ( (iTeam != CMod::iUnassignedTeam) && (m_aWeapons[i].GetBaseWeapon()->iTeamOnly != iTeam) )
-			aWeapons[i].RemoveWeapon();
+	if (iTeam != CMod::iUnassignedTeam)
+	{
+		for ( int i=0; i < m_aWeapons.size(); ++i )
+		{
+			int iTeamOnly = m_aWeapons[i].GetBaseWeapon()->iTeamOnly;
+			if ( (iTeamOnly != CMod::iUnassignedTeam) && (iTeamOnly != iTeam) )
+				aWeapons[i].RemoveWeapon();
+		}
+	}
 }
 
 

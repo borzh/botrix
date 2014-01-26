@@ -1,3 +1,5 @@
+#ifdef BOTRIX_BORZH_MOD
+
 #include "good/string_buffer.h"
 #include "good/process.h"
 #include "good/thread.h"
@@ -568,3 +570,5 @@ planner_thread_end:
 	g_cPlannerProcess.dispose();
 	bIsPlannerRunning = false;
 }
+
+#endif // BOTRIX_BORZH_MOD

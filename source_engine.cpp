@@ -23,8 +23,7 @@ extern char* szMainBuffer;
 extern int iMainBufferSize;
 
 const int iTextTime = 10; // Time in seconds to show text in CUtil::GetReachableInfoFromTo().
-
-
+FILE* fLog = NULL;        // Log file.
 
 //----------------------------------------------------------------------------------------------------------------
 // If slope is less that 45 degrees (for HL2) then player can move forward (returns EReachReachable). 
@@ -94,6 +93,7 @@ bool CanPassOrJump( Vector& vStart, Vector& vGround, Vector& vHit, Vector& vDire
 
 
 //****************************************************************************************************************
+bool CUtil::bLogMessageToFile = false;
 int CUtil::iPlayerHeight = 72;
 int CUtil::iPlayerHeightCrouched = 36;
 int CUtil::iPlayerWidth = 36;
@@ -210,11 +210,12 @@ bool CUtil::IsVisible( Vector const& vSrc, Vector const& vDest, TVisibilityFlags
 //----------------------------------------------------------------------------------------------------------------
 bool CUtil::IsVisible( Vector const& vSrc, edict_t* pDest )
 {
-	CTraceFilterWorldAndPropsOnly filter;//	CTraceFilterHitAll filter;
+	//CTraceFilterHitAll filter;
+	CTraceFilterWorldAndPropsOnly filter;
 	Vector v;
 	EntityHead(pDest, v);
 	TraceLine(vSrc, v, MASK_SOLID_BRUSHONLY, &filter);
-	return !IsTraceHitSomething();
+	return m_TraceResult.fraction == 1.0f;
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -476,19 +477,40 @@ char szMessageString[16*1024];
 const int iSplitSize = 4*1024;
 void CUtil::Message( edict_t* pEntity, const char* fmt, ... )
 {
+	int iStart = 0;
+	if ( m_bMessageUseTag )
+	{
+		strcpy(szMessageString, "[Botrix] ");
+		iStart = 9; // 9 is length of "[Botrix ]".
+	}
+
 	va_list argptr;
 
 	va_start(argptr, fmt);
-	int iTotal = vsprintf(szMessageString, fmt, argptr); 
+	int iTotal = vsprintf(&szMessageString[iStart], fmt, argptr); 
 	va_end(argptr); 
+
+	// Log to file.
+	if ( bLogMessageToFile )
+	{
+		if ( fLog == NULL )
+		{
+			fLog = fopen("botrix.log", "a");
+			if ( fLog )
+				fprintf(fLog, "\n--------------------------------------------------------------------------------------------\n");
+		}
+		if ( fLog )
+		{
+			fprintf(fLog, "%s\n", szMessageString);
+		}
+	}
 
 	static char sTime[24];
 	if ( pEntity )
 	{
 		if ( m_bMessageUseTag )
 		{
-			CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, "[Botrix] ");
-#if (defined(DEBUG) || defined(_DEBUG)) && defined(MESSAGE_USE_TIME)
+#if (defined(DEBUG) || defined(_DEBUG)) && defined(BOTRIX_MESSAGE_USE_TIME)
 			sprintf(sTime, "%.5f: ", CBotrixPlugin::fTime);
 			CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, sTime);
 #endif
@@ -515,8 +537,7 @@ void CUtil::Message( edict_t* pEntity, const char* fmt, ... )
 	{
 		if ( m_bMessageUseTag )
 		{
-			Msg("[Botrix] ");
-#if (defined(DEBUG) || defined(_DEBUG)) && defined(MESSAGE_USE_TIME)
+#if (defined(DEBUG) || defined(_DEBUG)) && defined(BOTRIX_MESSAGE_USE_TIME)
 			sprintf(sTime, "%.5f: ", CBotrixPlugin::fTime);
 			Msg(sTime);
 #endif

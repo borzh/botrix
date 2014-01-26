@@ -66,6 +66,12 @@ public: // Methods.
 	/// Show or hide bot messages.
 	void SetDebugging( bool bOn ) { m_bDebugging = bOn; }
 
+	/// Return true if bot is paused.
+	bool IsPaused() { return m_bPaused; }
+
+	/// Pause/resume bot.
+	void SetPaused( bool bPause ) { m_bPaused = bPause; }
+
 	/// Bot is created for testing path between two waypoints. Will be kicked if fails, killed, or reaches destination.
 	void TestWaypoints( TWaypointId iFrom, TWaypointId iTo );
 
@@ -96,6 +102,7 @@ public: // Methods.
 	/// Called when enemy just shot this bot.
 	virtual void HurtBy( int iPlayerIndex, CPlayer* pPlayer , int iHealthNow ) = 0;
 
+#ifdef BOTRIX_CHAT
 	/// Called when chat arrives from other player.
 	virtual void ReceiveChat( int iPlayerIndex, CPlayer* pPlayer, bool bTeamOnly, const char* szText ) = 0;
 
@@ -107,7 +114,7 @@ public: // Methods.
 
 	/// Called when 30 seconds has passed.
 	virtual void EndPerformingChatRequest( bool bSayGoodbye );
-
+#endif
 
 private:
 	// Called every frame to evaluate next move. Note that this method is private, use Move() method in subclasses.
@@ -241,6 +248,7 @@ protected: // Bot flags.
 	bool m_bFirstRespawn:1;                                        // Spawn event is called before bot constructor returns. So first time we call Respawned() manually. TODO: dont create bot in bot constructor.
 	bool m_bTest:1;                                                // Bot was created only for testing purposes, it will be eliminated after reaching needed waypoint. 
 	bool m_bDebugging:1;                                           // Currently debugging this bot.
+	bool m_bPaused:1;                                              // Bot is paused. 
 
 	bool m_bAimChanged:1;                                          // True if need to change bot's angles (if false m_angLook has been calculated).
 	bool m_bNeedAim:1;                                             // True if need to change bot's angles. Will be set to false when finished aiming.
@@ -306,10 +314,12 @@ protected: // Bot flags.
 
 	bool m_bObjectiveChanged:1;                                    // If true, then objective was changed, recalculate next move.
 
+#ifdef BOTRIX_CHAT
 	bool m_bTalkStarted:1;                                         // Conversation started.
 	bool m_bHelpingMate:1;                                         // Helping teammate?
 	bool m_bPerformingRequest:1;                                   // Currently performing chat request.
 	bool m_bRequestTimeout:1;                                      // If true then end performing chat request after timeout.
+#endif
 
 protected: // Members.
 
@@ -374,8 +384,10 @@ protected: // Members.
 	TBotChat m_iPrevTalk;                                          // Last chat talk.
 	float m_fEndTalkActionTime;                                    // Time for bot to stop doing what other player asked (30 secs).
 
+#ifdef BOTRIX_CHAT
 	CBotChat m_cChat;                                              // Last spoken phrase.
 	TPlayerIndex m_iPrevChatMate;                                  // Previous chat mate.
+#endif
 };
 
 

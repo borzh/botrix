@@ -1,3 +1,5 @@
+#ifdef BOTRIX_CHAT
+
 #ifndef __BOTRIX_CHAT_H__
 #define __BOTRIX_CHAT_H__
 
@@ -193,3 +195,5 @@ protected:
 
 
 #endif // __BOTRIX_CHAT_H__
+
+#endif // BOTRIX_CHAT

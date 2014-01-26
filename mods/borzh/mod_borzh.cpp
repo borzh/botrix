@@ -1,3 +1,5 @@
+#ifdef BOTRIX_BORZH_MOD
+
 #include "chat.h"
 #include "console_commands.h"
 #include "event.h"
@@ -317,3 +319,5 @@ bool CModBorzh::IsWallClimbable( const CWall& cWall )
 	}
 	return false;
 }
+
+#endif // BOTRIX_BORZH_MOD

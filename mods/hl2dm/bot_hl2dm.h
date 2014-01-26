@@ -1,3 +1,5 @@
+#ifdef BOTRIX_HL2DM_MOD
+
 #ifndef __BOTRIX_BOT_HL2DM_H__
 #define __BOTRIX_BOT_HL2DM_H__
 
@@ -78,3 +80,5 @@ protected: // Flags.
 };
 
 #endif // __BOTRIX_BOT_HL2DM_H__
+
+#endif // BOTRIX_HL2DM_MOD

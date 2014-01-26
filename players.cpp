@@ -154,6 +154,11 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
 		return NULL;
 
 	TModId iModId = CMod::GetModId();
+	if ( iModId == EModId_Invalid )
+	{
+		CUtil::Message(NULL, "Error, can't create bot: unknown mod.");
+		return NULL;
+	}
 
 	const good::string& sName = CMod::GetRandomBotName();
 	const char* szName;
@@ -162,8 +167,10 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
 	{
 		good::string_buffer sbNameWithIntelligence(szMainBuffer, iMainBufferSize, false); // Don't deallocate.
 		sbNameWithIntelligence = sName;
-		sbNameWithIntelligence.append(" - ");
+		sbNameWithIntelligence.append(' ');
+		sbNameWithIntelligence.append('(');
 		sbNameWithIntelligence.append(CTypeToString::IntelligenceToString(iIntelligence));
+		sbNameWithIntelligence.append(')');
 		szName = sbNameWithIntelligence.c_str();
 	}
 	else
@@ -186,7 +193,11 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
 			pPlayer = new CBot_HL2DM(pEdict, iIdx, iIntelligence);
 			break;
 		case EModId_Borzh: 
+#ifdef BOTRIX_BORZH_MOD
 			pPlayer = new CBotBorzh(pEdict, iIdx, iIntelligence);
+#else
+			DebugAssert(false);
+#endif
 			break;
 		default:
 			DebugAssert(false);
@@ -198,12 +209,14 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
 	m_aPlayers[iIdx] = pPlayer;
 	m_iBotsCount++;
 
+#ifdef BOTRIX_CHAT
 	if ( CChat::iPlayerVar != EChatVariableInvalid )
 	{
 		good::string sName(pPlayer->GetName(), true, true); // Copy and deallocate.
 		sName.lower_case();
 		CChat::SetVariableValue( CChat::iPlayerVar, iIdx, sName );
 	}
+#endif
 
 	return pPlayer;
 }
@@ -294,12 +307,14 @@ void CPlayers::PlayerConnected( edict_t* pEdict )
 		m_aPlayers[iIdx] = pPlayer;
 		m_iClientsCount++;
 
+#ifdef BOTRIX_CHAT
 		if ( CChat::iPlayerVar != EChatVariableInvalid )
 		{
 			good::string sName(pPlayer->GetName(), true, true); // Copy and deallocate.
 			sName.lower_case();
 			CChat::SetVariableValue( CChat::iPlayerVar, iIdx, sName );
 		}
+#endif
 	}
 }
 
@@ -316,8 +331,10 @@ void CPlayers::PlayerDisconnected( edict_t* pEdict )
 	CPlayer* pPlayer = m_aPlayers[iIdx].get();
 	DebugAssert( pPlayer );
 
+#ifdef BOTRIX_CHAT
 	if ( CChat::iPlayerVar != EChatVariableInvalid )
 		CChat::SetVariableValue( CChat::iPlayerVar, iIdx, "" );
+#endif
 
 	// Notify bots that player is disconnected.
 	for ( int i=0; i < Size(); ++i)
@@ -390,6 +407,7 @@ void CPlayers::CheckForDebugging()
 //----------------------------------------------------------------------------------------------------------------
 void CPlayers::DeliverChat( edict_t* pFrom, bool bTeamOnly, const char* szText )
 {
+#ifdef BOTRIX_CHAT
 	int iTeam = 0;
 
 	int iIdx = CPlayers::Get(pFrom);
@@ -444,4 +462,5 @@ void CPlayers::DeliverChat( edict_t* pFrom, bool bTeamOnly, const char* szText )
 			}
 		}
 	}
+#endif // BOTRIX_CHAT
 }

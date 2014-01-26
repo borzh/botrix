@@ -47,7 +47,7 @@ enum TBotIntelligences
 	EBotSmart,                                   ///< Precise fire, fast reaction to damage.
 	EBotPro,                                     ///< Invincible.
 
-	EBotIntelligenceTotal                       ///< Amount of available intelligences.
+	EBotIntelligenceTotal                        ///< Amount of available intelligences.
 };
 typedef int TBotIntelligence;                    ///< Bot intelligence.
 

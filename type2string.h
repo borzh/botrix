@@ -155,6 +155,7 @@ public:
 	static const good::string& BotCommandToString( TBotChat iCommand );
 
 
+#ifdef BOTRIX_BORZH_MOD
 	//------------------------------------------------------------------------------------------------------------
 	/// Get bot action from string.
 	//------------------------------------------------------------------------------------------------------------
@@ -167,6 +168,7 @@ public:
 	/// Get string from borzh's task.
 	//------------------------------------------------------------------------------------------------------------
 	static const good::string& BorzhTaskToString( int iTask );
+#endif
 
 };
 

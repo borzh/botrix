@@ -280,10 +280,10 @@ bool CWaypoints::Load()
 		}
 	}
 
+	int iAreaNamesSize = 0;
 	if ( FLAG_SOME_SET(WAYPOINT_FILE_FLAG_AREAS, header.iFlags) )
 	{
 		// Read area names.
-		int iAreaNamesSize = 0;
 		fread(&iAreaNamesSize, sizeof(int), 1, f);
 		DebugAssert(iAreaNamesSize >= 0);
 
@@ -292,17 +292,26 @@ bool CWaypoints::Load()
 
 		for ( int i=0; i < iAreaNamesSize; i++ )
 		{
-			int iSize;
-			fread(&iSize, sizeof(int), 1, f);
+			int iStrSize;
+			fread(&iStrSize, sizeof(int), 1, f);
 
-			DebugAssert(0 < iSize && iSize < iMainBufferSize);
-			if (iSize > 0)
+			DebugAssert(0 < iStrSize && iStrSize < iMainBufferSize);
+			if (iStrSize > 0)
 			{
-				fread(szMainBuffer, sizeof(char), iSize+1, f); // Read also trailing 0.
-				good::string sArea(szMainBuffer, true, true, iSize);
+				fread(szMainBuffer, sizeof(char), iStrSize+1, f); // Read also trailing 0.
+				good::string sArea(szMainBuffer, true, true, iStrSize);
 				m_cAreas.push_back(sArea);
 			}
 		}
+	}
+	else
+		m_cAreas.push_back("default"); // New waypoints without area id will be put under this empty area id.
+
+	// Check for areas names.
+	for (TWaypointId i = 0; i < iSize; ++i)
+	{
+		if ( m_cGraph[i].vertex.iAreaId >= iAreaNamesSize )
+			m_cGraph[i].vertex.iAreaId = 0;
 	}
 /*
 	bool bHasVisibility = header.iFlags & WAYPOINT_FILE_FLAG_VISIBILITY;
@@ -503,7 +512,7 @@ TWaypointId CWaypoints::GetNearestWaypoint(Vector const& vOrigin, const good::bi
 						float distTo = vOrigin.DistToSqr(node.vertex.vOrigin);
 						if ( (distTo <= sqDist) && (distTo < sqMinDistance) )
 						{
-							if ( !bNeedVisible || CUtil::IsVisible(vOrigin, node.vertex.vOrigin) )
+							if ( !bNeedVisible || CUtil::IsVisible(vOrigin, node.vertex.vOrigin, FVisibilityWorld) )
 							{
 								result = iWaypoint;
 								sqMinDistance = distTo;

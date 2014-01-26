@@ -1,3 +1,5 @@
+#ifdef BOTRIX_HL2DM_MOD
+
 #include "bot_hl2dm.h"
 #include "clients.h"
 #include "type2string.h"
@@ -121,7 +123,7 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 	bool bAlmostDead = bNeedHealthBad && ( m_pPlayerInfo->GetHealth() < (CUtil::iPlayerMaxHealth/5) );
 	bool bNeedWeapon = CMod::HasMapItems(EEntityTypeWeapon), bNeedAmmo = CMod::HasMapItems(EEntityTypeAmmo);
 	
-	TWeaponId iWeapon;
+	TWeaponId iWeapon = EWeaponIdInvalid;
 	bool bSecondary = false;
 
 	const CEntityClass* pEntityClass = NULL; // Weapon or ammo class to search for.
@@ -199,7 +201,7 @@ restart_find_task:
 		for ( TBotIntelligence iPreference = iWeaponPreference; iPreference < EBotIntelligenceTotal; ++iPreference )
 		{
 			iWeapon = CWeapons::GetRandomWeapon(iPreference, m_cSkipWeapons);
-			if ( iWeapon != -1 )
+			if ( iWeapon != EWeaponIdInvalid )
 			{
 				pEntityClass = CWeapons::Get(iWeapon)->pWeaponClass;
 				break;
@@ -211,7 +213,7 @@ restart_find_task:
 			for ( TBotIntelligence iPreference = iWeaponPreference-1; iPreference >= 0; --iPreference )
 			{
 				iWeapon = CWeapons::GetRandomWeapon(iPreference, m_cSkipWeapons);
-				if ( iWeapon != -1 )
+				if ( iWeapon != EWeaponIdInvalid )
 				{
 					pEntityClass = CWeapons::Get(iWeapon)->pWeaponClass;
 					break;
@@ -267,7 +269,8 @@ restart_find_task:
 
 			if ( iItemToSearch == -1 )
 			{
-				m_cSkipWeapons.set(iWeapon);
+				if ( (m_iCurrentTask == EBotTaskFindWeapon) && (iWeapon != EWeaponIdInvalid) )
+					m_cSkipWeapons.set(iWeapon);
 				m_iCurrentTask = EBotTaskInvalid;
 				goto restart_find_task;
 			}
@@ -336,3 +339,5 @@ void CBot_HL2DM::TaskFinished()
 
 
 }
+
+#endif // BOTRIX_HL2DM_MOD

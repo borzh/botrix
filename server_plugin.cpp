@@ -166,7 +166,11 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 	srand( time(NULL) );
 
 	bIsLoaded = true;
-	CUtil::Message(NULL, "Botrix loaded. Current mod: %s.\n", CMod::sModName.c_str());
+	const char* sMod = CMod::sModName.c_str();
+	if ( CMod::sModName.size() == 0 )
+		sMod = "unknown";
+
+	CUtil::Message(NULL, "Botrix loaded. Current mod: %s.\n", sMod);
 
 	return true;
 }
@@ -238,8 +242,8 @@ void CBotrixPlugin::ServerActivate( edict_t* pEdictList, int edictCount, int cli
 	CItems::MapLoaded();
 	CMod::MapLoaded();
 
-	CUtil::Message(NULL, "Level \"%s\" has been loaded", sMapName.c_str());
-	CUtil::Message(NULL, "Max clients: %d\n", clientMax);
+	CUtil::Message(NULL, "Level \"%s\" has been loaded.", sMapName.c_str());
+	CUtil::Message(NULL, "Max clients: %d.\n", clientMax);
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -286,9 +290,6 @@ void CBotrixPlugin::GameFrame( bool simulating )
 		CItems::Update();
 		CPlayers::PreThink();
 		//CUtil::Message(NULL, "Players think time: %.5f", pEngineServer->Time() - fTime);
-
-		//if ( CWaypoints::NeedToWorkVisibility() )
-		//	CWaypoints::WorkVisibility();
 	}
 }
 

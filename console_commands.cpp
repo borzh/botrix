@@ -1547,8 +1547,7 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
 	if ( pClient == NULL )
 		return ECommandError;
 
-	// TODO: bot's intelligence, name.
-	TBotIntelligence iIntelligence = EBotIntelligenceTotal-1;//rand() % EBotIntelligenceTotal;
+	TBotIntelligence iIntelligence = rand() % EBotIntelligenceTotal; // EBotIntelligenceTotal-1;
 	CPlayer* pPlayer = CPlayers::AddBot(iIntelligence);
 	if ( pPlayer )
 	{
@@ -1556,10 +1555,7 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
 		return ECommandPerformed;
 	}
 	else
-	{
-		CUtil::Message(pClient->GetEdict(), "Error, couldn't create bot (check maxplayers).");
 		return ECommandError;
-	}
 }
 
 TCommandResult CBotKickCommand::Execute( CClient* pClient, int argc, const char** argv )
@@ -1689,6 +1685,69 @@ TCommandResult CBotDrawPathCommand::Execute( CClient* pClient, int argc, const c
 	CWaypointNavigator::iPathDrawFlags = iFlags;
 	CUtil::Message(pClient->GetEdict(), "Bot's path drawing is %s.", iFlags ? "on" : "off");
 	return ECommandPerformed;
+}
+
+TCommandResult CBotPauseCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+	if ( pClient == NULL )
+		return ECommandError;
+
+	if ( argc == 0 )
+	{
+		for ( int i=0; i < CPlayers::Size(); ++i )
+		{
+			CPlayer* pPlayer = CPlayers::Get(i);
+			if ( pPlayer && pPlayer->IsBot() )
+			{
+				((CBot*)pPlayer)->SetPaused( !((CBot*)pPlayer)->IsPaused() );
+			}
+		}
+		return ECommandPerformed;
+	}
+
+	if ( argc > 2 )
+	{
+		CUtil::Message( pClient->GetEdict(), "Error, invalid arguments count.");
+		return ECommandError;
+	}
+
+	good::string sName = argv[0];
+
+	CBot* pBot = NULL;
+	for ( int i=0; i < CPlayers::Size(); ++i )
+	{
+		CPlayer* pPlayer = CPlayers::Get(i);
+		if ( pPlayer && pPlayer->IsBot() )
+		{
+			good::string sBotName = pPlayer->GetName();
+			if ( sBotName.starts_with(sName) )
+			{
+				pBot = (CBot*)pPlayer;
+				break;
+			}
+		}
+	}
+
+	if ( pBot )
+	{
+		int bPaused = !pBot->IsPaused();
+		if ( argc == 2 )
+		{
+			bPaused = CTypeToString::BoolFromString(argv[1]);
+			if ( bPaused == -1 )
+			{
+				CUtil::Message( pClient->GetEdict(), "Error, unknown parameter %s, should be 'on' or 'off'.", argv[1] );
+				return ECommandError;
+			}
+		}
+		pBot->SetPaused(bPaused ? true : false);
+		return ECommandPerformed;
+	}
+	else
+	{
+		CUtil::Message( pClient->GetEdict(), "Error, no such bot: %s.", argv[0] );
+		return ECommandError;
+	}
 }
 
 TCommandResult CBotTestPathCommand::Execute( CClient* pClient, int argc, const char** argv )

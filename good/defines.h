@@ -17,6 +17,11 @@
 #endif
 
 
+#ifdef LINUX
+    typedef char Char;
+#endif
+
+
 #ifndef TIME_INFINITE
 #	define TIME_INFINITE                0xFFFFFFFF
 #endif
@@ -114,10 +119,10 @@
 
 
 /// Set first 16bits word of a number.
-#define SET_1ST_WORD(word, number)      number = ( (number & 0xFFFF0000) | (word & 0xFFFF) )
+#define SET_1ST_WORD(word, number)      number = ( (number & 0xFFFF0000) | ((word) & 0xFFFF) )
 
 /// Set second 16bits word of a number.
-#define SET_2ND_WORD(word, number)      number = ( (number & 0xFFFF) | ((word) << 16) )
+#define SET_2ND_WORD(word, number)      number = ( (number & 0xFFFF)     | ((word) << 16) )
 
 
 
@@ -159,7 +164,7 @@
 #	ifdef _WIN32
 #		define AsmBreak()          __asm { int 3 }
 #	else
-#		define AsmBreak()          {}
+#		define AsmBreak()          __asm __volatile( "pause" );
 #	endif
 #endif
 
@@ -174,11 +179,11 @@
 
 #	ifndef DebugAssert
 #		define DebugAssert(exp)\
-			if ( !(exp) )\
-			{\
-				DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
-				AsmBreak();\
-			}
+            if ( !(exp) )\
+            {\
+                DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
+                AsmBreak();\
+            }
 #	endif
 
 #else // if defined(DEBUG) || defined(_DEBUG)
@@ -190,11 +195,11 @@
 #	ifndef DebugAssert
 #		ifdef BETA_VERSION
 #			define DebugAssert(exp)\
-				if (!(exp))\
-				{\
-					DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
-					exit(1);\
-				}
+                if (!(exp))\
+                {\
+                    DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
+                    exit(1);\
+                }
 #		else
 #			define DebugAssert(...)
 #		endif

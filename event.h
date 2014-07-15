@@ -12,20 +12,23 @@ class IEventInterface
 {
 
 public:
-	/// Get event name.
-	virtual const char *GetName() = 0;
+    /// Virtual estructor.
+    virtual ~IEventInterface() {}
 
-	/// Get event bool value for key szKey. Return bDefaultValue if szKey not found.
-	virtual bool GetBool( const char *szKey, bool bDefaultValue = false ) = 0;
+    /// Get event name.
+    virtual const char *GetName() = 0;
 
-	/// Get event int value for key szKey. Return iDefaultValue if szKey not found.
-	virtual int GetInt( const char *szKey, int iDefaultValue = 0 ) = 0;
+    /// Get event bool value for key szKey. Return bDefaultValue if szKey not found.
+    virtual bool GetBool( const char *szKey, bool bDefaultValue = false ) = 0;
 
-	/// Get event float value for key szKey. Return fDefaultValue if szKey not found.
-	virtual float GetFloat( const char *szKey, float fDefaultValue = 0 ) = 0;
+    /// Get event int value for key szKey. Return iDefaultValue if szKey not found.
+    virtual int GetInt( const char *szKey, int iDefaultValue = 0 ) = 0;
 
-	/// Get event string value for key szKey. Return szDefaultValue if szKey not found.
-	virtual const char *GetString( const char *szKey, const char *szDefaultValue = NULL ) = 0;
+    /// Get event float value for key szKey. Return fDefaultValue if szKey not found.
+    virtual float GetFloat( const char *szKey, float fDefaultValue = 0 ) = 0;
+
+    /// Get event string value for key szKey. Return szDefaultValue if szKey not found.
+    virtual const char *GetString( const char *szKey, const char *szDefaultValue = NULL ) = 0;
 
 };
 
@@ -37,20 +40,23 @@ class CEvent
 {
 
 public:
-	/// Constructor.
-	CEvent( const char* szType ): m_sType(szType) {}
+    /// Constructor.
+    CEvent( const char* szType ): m_sType(szType) {}
 
-	/// Return name of this event.
-	const good::string& GetName() const { return m_sType; }
+    /// Destructor.
+    virtual ~CEvent() {}
 
-	/// Execute this event.
-	virtual void Execute( IEventInterface* pEvent ) = 0;
+    /// Return name of this event.
+    const good::string& GetName() const { return m_sType; }
 
-	/// Get event interface from event pEvent with type iType. You will need to delete it after use.
-	static IEventInterface* GetEventInterface( void* pEvent, TEventType iType );
+    /// Execute this event.
+    virtual void Execute( IEventInterface* pEvent ) = 0;
+
+    /// Get event interface from event pEvent with type iType. You will need to delete it after use.
+    static IEventInterface* GetEventInterface( void* pEvent, TEventType iType );
 
 protected:
-	good::string m_sType;
+    good::string m_sType;
 
 };
 
@@ -62,9 +68,9 @@ protected:
 class CPlayerActivateEvent: public CEvent
 {
 public:
-	CPlayerActivateEvent(): CEvent("player_activate") {}
+    CPlayerActivateEvent(): CEvent("player_activate") {}
 
-	void Execute( IEventInterface* pEvent );
+    void Execute( IEventInterface* pEvent );
 };
 
 
@@ -74,9 +80,9 @@ public:
 class CPlayerTeamEvent: public CEvent
 {
 public:
-	CPlayerTeamEvent(): CEvent("player_team") {}
+    CPlayerTeamEvent(): CEvent("player_team") {}
 
-	void Execute( IEventInterface* pEvent );
+    void Execute( IEventInterface* pEvent );
 };
 
 
@@ -86,9 +92,9 @@ public:
 class CPlayerSpawnEvent: public CEvent
 {
 public:
-	CPlayerSpawnEvent(): CEvent("player_spawn") {}
+    CPlayerSpawnEvent(): CEvent("player_spawn") {}
 
-	void Execute( IEventInterface* pEvent );
+    void Execute( IEventInterface* pEvent );
 };
 
 
@@ -98,9 +104,9 @@ public:
 class CPlayerChatEvent: public CEvent
 {
 public:
-	CPlayerChatEvent(): CEvent("player_say") {}
+    CPlayerChatEvent(): CEvent("player_say") {}
 
-	void Execute( IEventInterface* pEvent );
+    void Execute( IEventInterface* pEvent );
 };
 
 
@@ -110,9 +116,9 @@ public:
 class CPlayerHurtEvent: public CEvent
 {
 public:
-	CPlayerHurtEvent(): CEvent("player_hurt") {}
+    CPlayerHurtEvent(): CEvent("player_hurt") {}
 
-	void Execute( IEventInterface* pEvent );
+    void Execute( IEventInterface* pEvent );
 };
 
 
@@ -122,9 +128,9 @@ public:
 class CPlayerDeathEvent: public CEvent
 {
 public:
-	CPlayerDeathEvent(): CEvent("player_death") {}
+    CPlayerDeathEvent(): CEvent("player_death") {}
 
-	void Execute( IEventInterface* pEvent );
+    void Execute( IEventInterface* pEvent );
 };
 
 

@@ -14,22 +14,22 @@ namespace good
 {
 
 
-	//************************************************************************************************************
-	/// Set of unique elements of type T.
-	//************************************************************************************************************
-	template <
-		typename T,
-		typename Less = less<T>,
-		typename Alloc = allocator <T>
-	>
-	class set: public aatree<T, Less, Alloc>
-	{
-	public:
-		bool contains(T const& elem)
-		{
-			return find(elem) != end();
-		}
-	};
+    //************************************************************************************************************
+    /// Set of unique elements of type T.
+    //************************************************************************************************************
+    template <
+        typename T,
+        typename Less = less<T>,
+        typename Alloc = allocator <T>
+    >
+    class set: public aatree<T, Less, Alloc>
+    {
+    public:
+        bool contains(T const& elem)
+        {
+            return this->find(elem) != this->end();
+        }
+    };
 
 
 };

@@ -15,119 +15,121 @@ namespace good
 {
 
 
-	//************************************************************************************************************
-	/**
-	 * @brief Util class to perform binary operations between two elements of type pair<T1, T2>. 
-	 * Binary operation applies to first elements.
-	 */
-	//************************************************************************************************************
-	template <typename T, typename Op>
-	class pair_first_op
-	{
-	public:
-		/// Default operatorto compare 2 elements.
-		bool operator() ( const T& tLeft, const T& tRight ) const
-		{
-			return op(tLeft.first, tRight.first);
-		}
-	protected:
-		Op op;
-	};
+    //************************************************************************************************************
+    /**
+     * @brief Util class to perform binary operations between two elements of type pair<T1, T2>.
+     * Binary operation applies to first elements.
+     */
+    //************************************************************************************************************
+    template <typename T, typename Op>
+    class pair_first_op
+    {
+    public:
+        /// Default operatorto compare 2 elements.
+        bool operator() ( const T& tLeft, const T& tRight ) const
+        {
+            return op(tLeft.first, tRight.first);
+        }
+    protected:
+        Op op;
+    };
 
-	
-	//************************************************************************************************************
-	/// Map from Key to Value.
-	//************************************************************************************************************
-	template <
-		typename Key,
-		typename Value,
-		typename Less = less<Key>,
-		typename Alloc = allocator< pair<Key, Value> >
-	>
-	class map: public aatree<
-	                         pair<Key, Value>,
-	                         pair_first_op< pair<Key, Value>, Less >,
-	                         Alloc
-	                        >
-	{
-	public:
-		typedef pair<Key, Value> key_value_t;
 
-		//--------------------------------------------------------------------------------------------------------
-		/// Operator =. Note that this operator moves content, not copies it.
-		//--------------------------------------------------------------------------------------------------------
-		//map& operator= (map const& tOther)
-		//{
-		//	assign(tOther);
-		//	return *this;
-		//}
+    //************************************************************************************************************
+    /// Map from Key to Value.
+    //************************************************************************************************************
+    template <
+        typename Key,
+        typename Value,
+        typename Less = less<Key>,
+        typename Alloc = allocator< pair<Key, Value> >
+    >
+    class map: public aatree<
+                             pair<Key, Value>,
+                             pair_first_op< pair<Key, Value>, Less >,
+                             Alloc
+                            >
+    {
+    public:
+        typedef pair<Key, Value> key_value_t;
+        typedef aatree< pair<Key, Value>, pair_first_op<pair<Key, Value>, Less>, Alloc> base_class;
+        typedef typename base_class::node_t node_t;
 
-		//--------------------------------------------------------------------------------------------------------
-		/// Get constant iterator to a key.
-		//--------------------------------------------------------------------------------------------------------
-		const_iterator find( const Key& key ) const
-		{
-			return aatree::find( key_value_t(key, Value()) );
-		}
+        //--------------------------------------------------------------------------------------------------------
+        /// Operator =. Note that this operator moves content, not copies it.
+        //--------------------------------------------------------------------------------------------------------
+        //map& operator= (map const& tOther)
+        //{
+        //	assign(tOther);
+        //	return *this;
+        //}
 
-		//--------------------------------------------------------------------------------------------------------
-		/// Get iterator to a key.
-		//--------------------------------------------------------------------------------------------------------
-		iterator find( const Key& key )
-		{
-			return aatree::find( key_value_t(key, Value()) );
-		}
+        //--------------------------------------------------------------------------------------------------------
+        /// Get constant iterator to a key.
+        //--------------------------------------------------------------------------------------------------------
+        typename base_class::const_iterator find( const Key& key ) const
+        {
+            return this->find( key_value_t(key, Value()) );
+        }
 
-		//--------------------------------------------------------------------------------------------------------
-		/// Remove element at map iterator. Return next element.
-		//--------------------------------------------------------------------------------------------------------
-		iterator erase( iterator it )
-		{
-			return aatree::erase(it);
-		}
+        //--------------------------------------------------------------------------------------------------------
+        /// Get iterator to a key.
+        //--------------------------------------------------------------------------------------------------------
+        typename base_class::iterator find( const Key& key )
+        {
+            return this->find( key_value_t(key, Value()) );
+        }
 
-		//--------------------------------------------------------------------------------------------------------
-		/// Remove key->value association.
-		//--------------------------------------------------------------------------------------------------------
-		iterator erase( const Key& key )
-		{
-			node_t* succ;
-			int succDir;
-			node_t* cand = _search( m_pHead->parent, key_value_t(key, Value()), succ, succDir );
+        //--------------------------------------------------------------------------------------------------------
+        /// Remove element at map iterator. Return next element.
+        //--------------------------------------------------------------------------------------------------------
+        typename base_class::iterator erase( typename base_class::iterator it )
+        {
+            return this->erase(it);
+        }
 
-			if ( _is_nil(cand) )
-				return iterator(nil);
+        //--------------------------------------------------------------------------------------------------------
+        /// Remove key->value association.
+        //--------------------------------------------------------------------------------------------------------
+        typename base_class::iterator erase( const Key& key )
+        {
+            node_t* succ;
+            int succDir;
+            node_t* cand = _search( this->m_pHead->parent, key_value_t(key, Value()), succ, succDir );
 
-			// Found key->value.
-			return iterator( _erase( cand, cand->parent->child[1] == cand, succ, succDir ) );
-		}
+            if ( this->_is_nil(cand) )
+                return iterator(this->nil);
 
-		//--------------------------------------------------------------------------------------------------------
-		/// Get mutable value for a key.
-		/**
-		 * If key not found, insert (key, empty value) into map, returning reference to that value.
-		 * Use find() function if you need to know if key has some value.
-		 */
-		//--------------------------------------------------------------------------------------------------------
-		Value& operator[]( const Key& key )
-		{
-			key_value_t tmp( key, Value() );
-			iterator it = insert(tmp, false); // Insert if not exists but don't replace.
-			return it->second;
-		}
+            // Found key->value.
+            return iterator( _erase( cand, cand->parent->child[1] == cand, succ, succDir ) );
+        }
 
-		//--------------------------------------------------------------------------------------------------------
-		// Get const value for a key.  Use find() function if you need to know if key has some value. 
-		// TODO: why doesn't work.
-		//--------------------------------------------------------------------------------------------------------
-		//const Value& operator[]( const Key& key ) const
-		//{
-		//	key_value_t tmp( key, Value() );
-		//	const_iterator it = find(tmp);
-		//	return it->second;
-		//}
+        //--------------------------------------------------------------------------------------------------------
+        /// Get mutable value for a key.
+        /**
+         * If key not found, insert (key, empty value) into map, returning reference to that value.
+         * Use find() function if you need to know if key has some value.
+         */
+        //--------------------------------------------------------------------------------------------------------
+        Value& operator[]( const Key& key )
+        {
+            key_value_t tmp( key, Value() );
+            typename base_class::iterator it = insert(tmp, false); // Insert if not exists but don't replace.
+            return it->second;
+        }
 
-	};
+        //--------------------------------------------------------------------------------------------------------
+        // Get const value for a key.  Use find() function if you need to know if key has some value.
+        // TODO: why doesn't work.
+        //--------------------------------------------------------------------------------------------------------
+        //const Value& operator[]( const Key& key ) const
+        //{
+        //	key_value_t tmp( key, Value() );
+        //	const_iterator it = find(tmp);
+        //	return it->second;
+        //}
+
+    };
 
 
 };

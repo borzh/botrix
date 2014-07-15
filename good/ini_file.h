@@ -15,10 +15,10 @@
 //****************************************************************************************************************
 // Check out http://en.wikipedia.org/wiki/INI_file for details on ini file format.
 // Considerations:
-// - you may define all necesary defines below BEFORE including this file, so you don't need to modify 
+// - you may define all necesary defines below BEFORE including this file, so you don't need to modify
 //   this file.
 // - quote " character will be included in section name, key or value.
-// - you can use escape character to insert special characters in section name, key or value: 
+// - you can use escape character to insert special characters in section name, key or value:
 //   \a \b \0 \t \r \n \\ \; \# \= \:
 // - when reading ini file:
 //     * text on same line before and after section name is not processed (considered junk, i.e.
@@ -79,7 +79,7 @@
 // so it's actually saves memory and is fast (because it just saves pointers to strings).
 #ifndef INI_FILE_STRING_DEFINED
 #	include "good/string.h"
-	typedef good::string ini_string;
+    typedef good::string ini_string;
 #endif
 
 
@@ -90,268 +90,270 @@ namespace good
 
 
 
-	/// Type for errors returned by ini_file functions.
-	enum TIniFileErrors
-	{
-		IniFileNoError = 0, ///< Everything is ok.
-		IniFileBadSyntax,   ///< Ini file has bad syntax.
-		IniFileNotFound,    ///< Ini file doesn't exists or can't be created.
-		IniFileTooBig,      ///< Ini file exceedes MAX_INI_FILE_SIZE bytes.
-	};
-	typedef int TIniFileError;
+    /// Type for errors returned by ini_file functions.
+    enum TIniFileErrors
+    {
+        IniFileNoError = 0, ///< Everything is ok.
+        IniFileBadSyntax,   ///< Ini file has bad syntax.
+        IniFileNotFound,    ///< Ini file doesn't exists or can't be created.
+        IniFileTooBig,      ///< Ini file exceedes MAX_INI_FILE_SIZE bytes.
+    };
+    typedef int TIniFileError;
 
 
 
 
-	//************************************************************************************************************
-	/// Class that represents one section of ini file.
-	//************************************************************************************************************
-	class ini_section
-	{
+    //************************************************************************************************************
+    /// Class that represents one section of ini file.
+    //************************************************************************************************************
+    class ini_section
+    {
 
-	public: // Types.
+    public: // Types.
 
         /// One config is pair (key, value) + junk (comments, multiple ends of line, etc).
-		struct config
-		{
-			config(): key(), value(), junk(), junkIsComment(false), eolAterJunk(false) {}
+        struct config
+        {
+            config(): key(), value(), junk(), junkIsComment(false), eolAterJunk(false) {}
 
-			config( ini_string const& sKey, ini_string const& sValue, ini_string const& sJunk, bool bIsComment, bool bEOLAfterJunk )
-				:key(sKey), value(sValue), junk(sJunk), junkIsComment(bIsComment), eolAterJunk(bEOLAfterJunk) {}
+            config( ini_string const& sKey, ini_string const& sValue, ini_string const& sJunk, bool bIsComment, bool bEOLAfterJunk )
+                :key(sKey), value(sValue), junk(sJunk), junkIsComment(bIsComment), eolAterJunk(bEOLAfterJunk) {}
 
-			ini_string key;       ///< Key of this configuration.
-			ini_string value;     ///< Value of this configuration.
-			ini_string junk;      ///< Junk (comment, multiple ends of line, etc).
-			bool junkIsComment:1; ///< True if was read comment symbol (';' or '#') before junk of this config.
-			bool eolAterJunk:1;   ///< If true then end of line is needed after junk.
-		};
+            ini_string key;       ///< Key of this configuration.
+            ini_string value;     ///< Value of this configuration.
+            ini_string junk;      ///< Junk (comment, multiple ends of line, etc).
+            bool junkIsComment:1; ///< True if was read comment symbol (';' or '#') before junk of this config.
+            bool eolAterJunk:1;   ///< If true then end of line is needed after junk.
+        };
 
-		typedef list< struct config > configs;          ///< List of configurations of this ini file section.
-		typedef configs::const_iterator const_iterator; ///< Const iterator of list of configurations.
-		typedef configs::iterator iterator;             ///< Iterator of list of configurations.
-
-
-	public: // Members.
-		ini_string name;          ///< Section name (without brackets []).
-		ini_string junkAfterName; ///< Comments and new lines after section name. "\n" by default.
-		bool eolAfterJunk;        ///< If true, then there is end of line after junk (for correct syntax).
+        typedef list< struct config > configs;          ///< List of configurations of this ini file section.
+        typedef configs::const_iterator const_iterator; ///< Const iterator of list of configurations.
+        typedef configs::iterator iterator;             ///< Iterator of list of configurations.
 
 
-	public: // Methods.
-		//--------------------------------------------------------------------------------------------------------
-		/// Constructor.
-		//--------------------------------------------------------------------------------------------------------
-		ini_section(): name(""), junkAfterName(""), m_lKeyValues() {}
-
-		//--------------------------------------------------------------------------------------------------------
-		/// Constructor with name.
-		//--------------------------------------------------------------------------------------------------------
-		ini_section( ini_string const& sName ): name(sName), junkAfterName(""), m_lKeyValues() {}
-
-		//--------------------------------------------------------------------------------------------------------
-		/// Get count of key-values.
-		//--------------------------------------------------------------------------------------------------------
-		int size() const { return m_lKeyValues.size(); }
-
-		//--------------------------------------------------------------------------------------------------------
-		/** Add key, value and optionally junk, which is empty by default.
-		 *  If junk is not empty, when saving it, if bIsComment is true then ';' will be used before; and if bEOL
-		 *  is true then end of line will be used after junk. */
-		//--------------------------------------------------------------------------------------------------------
-		iterator add( ini_string const& sKey, ini_string const& sValue, ini_string const& sJunk = "", bool bIsComment = false, bool bEOLAfterJunk = false )
-		{
-			return m_lKeyValues.insert( m_lKeyValues.end(), config(sKey, sValue, sJunk, bIsComment, bEOLAfterJunk));
-		}
-
-		//--------------------------------------------------------------------------------------------------------
-		/// Get value for a key.
-		//--------------------------------------------------------------------------------------------------------
-		iterator find( ini_string const& sKey )
-		{
-			for (iterator it = m_lKeyValues.begin(); it != m_lKeyValues.end(); ++it)
-				if (it->key == sKey)
-					return it;
-			return m_lKeyValues.end();
-		}
-
-		//--------------------------------------------------------------------------------------------------------
-		/// Get value for a key. Insert empty value if not exists.
-		//--------------------------------------------------------------------------------------------------------
-		ini_string& operator[]( ini_string const& sKey )
-		{
-			iterator it = find(sKey);
-			if (it == end())
-				it = m_lKeyValues.insert(m_lKeyValues.end(), config(sKey, ini_string(""), ini_string(""), false, false));
-			return it->value;
-		}
-
-		//--------------------------------------------------------------------------------------------------------
-		/// Get junk for a key.
-		//--------------------------------------------------------------------------------------------------------
-		ini_string& junk( ini_string const& sKey )
-		{
-			iterator it = find(sKey);
-			return it->value;
-		}
-
-		//--------------------------------------------------------------------------------------------------------
-		/// Remove all junk (comments and stuff from incorrect syntax).
-		//--------------------------------------------------------------------------------------------------------
-		void remove_junk()
-		{
-			junkAfterName = "";
-			for (iterator it = m_lKeyValues.begin(); it != m_lKeyValues.end(); ++it)
-			{
-				it->junk = "";
-			}
-		}
-
-		//--------------------------------------------------------------------------------------------------------
-		// Erase key-value-junk configuration.
-		//--------------------------------------------------------------------------------------------------------
-		iterator erase(iterator elem)
-		{
-			return m_lKeyValues.erase(elem);
-		}
-
-		//--------------------------------------------------------------------------------------------------------
-		/// Get const iterator to first element of configurations.
-		//--------------------------------------------------------------------------------------------------------
-		const_iterator begin() const { return m_lKeyValues.begin(); }
-
-		//--------------------------------------------------------------------------------------------------------
-		/// Get const iterator to end of configurations.
-		//--------------------------------------------------------------------------------------------------------
-		const_iterator end() const { return m_lKeyValues.end(); }
-
-		//--------------------------------------------------------------------------------------------------------
-		/// Get iterator to first element of configurations.
-		//--------------------------------------------------------------------------------------------------------
-		iterator begin() { return m_lKeyValues.begin(); }
-
-		//--------------------------------------------------------------------------------------------------------
-		/// Get iterator to end of configurations.
-		//--------------------------------------------------------------------------------------------------------
-		iterator end() { return m_lKeyValues.end(); }
+    public: // Members.
+        ini_string name;          ///< Section name (without brackets []).
+        ini_string junkAfterName; ///< Comments and new lines after section name. "\n" by default.
+        bool eolAfterJunk;        ///< If true, then there is end of line after junk (for correct syntax).
 
 
-	protected: // Members.
-		configs m_lKeyValues;
+    public: // Methods.
+        //--------------------------------------------------------------------------------------------------------
+        /// Constructor.
+        //--------------------------------------------------------------------------------------------------------
+        ini_section(): name(""), junkAfterName(""), m_lKeyValues() {}
 
-	}; // ini_section
+        //--------------------------------------------------------------------------------------------------------
+        /// Constructor with name.
+        //--------------------------------------------------------------------------------------------------------
+        ini_section( ini_string const& sName ): name(sName), junkAfterName(""), m_lKeyValues() {}
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Get count of key-values.
+        //--------------------------------------------------------------------------------------------------------
+        int size() const { return m_lKeyValues.size(); }
+
+        //--------------------------------------------------------------------------------------------------------
+        /** Add key, value and optionally junk, which is empty by default.
+         *  If junk is not empty, when saving it, if bIsComment is true then ';' will be used before; and if bEOL
+         *  is true then end of line will be used after junk. */
+        //--------------------------------------------------------------------------------------------------------
+        iterator add( ini_string const& sKey, ini_string const& sValue, ini_string const& sJunk = "", bool bIsComment = false, bool bEOLAfterJunk = false )
+        {
+            return m_lKeyValues.insert( m_lKeyValues.end(), config(sKey, sValue, sJunk, bIsComment, bEOLAfterJunk));
+        }
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Get value for a key.
+        //--------------------------------------------------------------------------------------------------------
+        iterator find( ini_string const& sKey )
+        {
+            for (iterator it = m_lKeyValues.begin(); it != m_lKeyValues.end(); ++it)
+                if (it->key == sKey)
+                    return it;
+            return m_lKeyValues.end();
+        }
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Get value for a key. Insert empty value if not exists.
+        //--------------------------------------------------------------------------------------------------------
+        ini_string& operator[]( ini_string const& sKey )
+        {
+            iterator it = find(sKey);
+            if (it == end())
+                it = m_lKeyValues.insert(m_lKeyValues.end(), config(sKey, ini_string(""), ini_string(""), false, false));
+            return it->value;
+        }
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Get junk for a key.
+        //--------------------------------------------------------------------------------------------------------
+        ini_string& junk( ini_string const& sKey )
+        {
+            iterator it = find(sKey);
+            return it->value;
+        }
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Remove all junk (comments and stuff from incorrect syntax).
+        //--------------------------------------------------------------------------------------------------------
+        void remove_junk()
+        {
+            junkAfterName = "";
+            for (iterator it = m_lKeyValues.begin(); it != m_lKeyValues.end(); ++it)
+            {
+                it->junk = "";
+            }
+        }
+
+        //--------------------------------------------------------------------------------------------------------
+        // Erase key-value-junk configuration.
+        //--------------------------------------------------------------------------------------------------------
+        iterator erase(iterator elem)
+        {
+            return m_lKeyValues.erase(elem);
+        }
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Get const iterator to first element of configurations.
+        //--------------------------------------------------------------------------------------------------------
+        const_iterator begin() const { return m_lKeyValues.begin(); }
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Get const iterator to end of configurations.
+        //--------------------------------------------------------------------------------------------------------
+        const_iterator end() const { return m_lKeyValues.end(); }
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Get iterator to first element of configurations.
+        //--------------------------------------------------------------------------------------------------------
+        iterator begin() { return m_lKeyValues.begin(); }
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Get iterator to end of configurations.
+        //--------------------------------------------------------------------------------------------------------
+        iterator end() { return m_lKeyValues.end(); }
+
+
+    protected: // Members.
+        configs m_lKeyValues;
+
+    }; // ini_section
 
 
 
 
-	//************************************************************************************************************
-	/// Class that represents ini file.
-	//************************************************************************************************************
-	class ini_file
-	{
+    //************************************************************************************************************
+    /// Class that represents ini file.
+    //************************************************************************************************************
+    class ini_file
+    {
 
-	public: // Types.
+    public: // Types.
 
-		typedef list<ini_section> container_t;               ///< Type of container of sections.
-		typedef container_t::const_iterator const_iterator;  ///< Const iterator of sections.
-		typedef container_t::iterator iterator;              ///< Iterator of sections.
-
-
-	public: // Members.
-		ini_string name;               ///< File name.
-		ini_string junkBeforeSections; ///< Comments and new lines before first section. Normally empty.
+        typedef list<ini_section> container_t;               ///< Type of container of sections.
+        typedef container_t::const_iterator const_iterator;  ///< Const iterator of sections.
+        typedef container_t::iterator iterator;              ///< Iterator of sections.
 
 
-	public: // Methods.
-		//--------------------------------------------------------------------------------------------------------
-		/// Constructor with file name as parameter.
-		//--------------------------------------------------------------------------------------------------------
-		ini_file(): name(""), m_pBuffer(NULL), junkBeforeSections(), m_lSections() {}
+    public: // Members.
+        ini_string name;               ///< File name.
+        ini_string junkBeforeSections; ///< Comments and new lines before first section. Normally empty.
 
-		//--------------------------------------------------------------------------------------------------------
-		/// Destructor.
-		//--------------------------------------------------------------------------------------------------------
-		~ini_file() { if (m_pBuffer) free(m_pBuffer); }
 
-		//--------------------------------------------------------------------------------------------------------
-		/// Save ini file.
-		//--------------------------------------------------------------------------------------------------------
-		TIniFileError save() const;
+    public: // Methods.
+        //--------------------------------------------------------------------------------------------------------
+        /// Constructor with file name as parameter.
+        //--------------------------------------------------------------------------------------------------------
+        ini_file(): name(""), junkBeforeSections(), m_pBuffer(NULL), m_lSections() {}
 
-		//--------------------------------------------------------------------------------------------------------
-		/** Load ini file. Note that if no sections are present in the file, then it is assumed that there is only
-		 *  one "default" section. If there is any */
-		//--------------------------------------------------------------------------------------------------------
-		TIniFileError load();
+        //--------------------------------------------------------------------------------------------------------
+        /// Destructor.
+        //--------------------------------------------------------------------------------------------------------
+        ~ini_file() { if (m_pBuffer) free(m_pBuffer); }
 
-		//--------------------------------------------------------------------------------------------------------
-		/// Clear all memory.
-		//--------------------------------------------------------------------------------------------------------
-		void clear()
-		{
-			junkBeforeSections = "";
-			if (m_pBuffer)
-			{
-				free(m_pBuffer);
-				m_pBuffer = NULL;
-			}
-			m_lSections.clear();
-		}
+        //--------------------------------------------------------------------------------------------------------
+        /// Save ini file.
+        //--------------------------------------------------------------------------------------------------------
+        TIniFileError save() const;
 
-		//--------------------------------------------------------------------------------------------------------
-		/// Get section iterator from section name.
-		//--------------------------------------------------------------------------------------------------------
-		ini_section& operator[]( ini_string const& sSection )
-		{
-			for (iterator it = m_lSections.begin(); it != m_lSections.end(); ++it)
-				if (it->name == sSection)
-					return *it;
-			return *m_lSections.insert(m_lSections.end(), ini_section(sSection));;
-		}
+        //--------------------------------------------------------------------------------------------------------
+        /**
+         * Load ini file. Note that if no sections are present in the file, then it is assumed that there is only
+         * one "default" section.
+         */
+        //--------------------------------------------------------------------------------------------------------
+        TIniFileError load();
 
-		//--------------------------------------------------------------------------------------------------------
-		/// Get section iterator from section name.
-		//--------------------------------------------------------------------------------------------------------
-		iterator find( ini_string const& sSection )
-		{
-			for (iterator it = m_lSections.begin(); it != m_lSections.end(); ++it)
-				if (it->name == sSection)
-					return it;
-			return m_lSections.end();
-		}
+        //--------------------------------------------------------------------------------------------------------
+        /// Clear all memory.
+        //--------------------------------------------------------------------------------------------------------
+        void clear()
+        {
+            junkBeforeSections = "";
+            if (m_pBuffer)
+            {
+                free(m_pBuffer);
+                m_pBuffer = NULL;
+            }
+            m_lSections.clear();
+        }
 
-		//--------------------------------------------------------------------------------------------------------
-		// Erase section.
-		//--------------------------------------------------------------------------------------------------------
-		iterator erase(iterator elem)
-		{
-			return m_lSections.erase(elem);
-		}
+        //--------------------------------------------------------------------------------------------------------
+        /// Get section iterator from section name.
+        //--------------------------------------------------------------------------------------------------------
+        ini_section& operator[]( ini_string const& sSection )
+        {
+            for (iterator it = m_lSections.begin(); it != m_lSections.end(); ++it)
+                if (it->name == sSection)
+                    return *it;
+            return *m_lSections.insert(m_lSections.end(), ini_section(sSection));;
+        }
 
-		//--------------------------------------------------------------------------------------------------------
-		/// Get const iterator to first section.
-		//--------------------------------------------------------------------------------------------------------
-		const_iterator begin() const { return m_lSections.begin(); }
+        //--------------------------------------------------------------------------------------------------------
+        /// Get section iterator from section name.
+        //--------------------------------------------------------------------------------------------------------
+        iterator find( ini_string const& sSection )
+        {
+            for (iterator it = m_lSections.begin(); it != m_lSections.end(); ++it)
+                if (it->name == sSection)
+                    return it;
+            return m_lSections.end();
+        }
 
-		//--------------------------------------------------------------------------------------------------------
-		/// Get const iterator to the end of last section.
-		//--------------------------------------------------------------------------------------------------------
-		const_iterator end() const { return m_lSections.end(); }
+        //--------------------------------------------------------------------------------------------------------
+        // Erase section.
+        //--------------------------------------------------------------------------------------------------------
+        iterator erase(iterator elem)
+        {
+            return m_lSections.erase(elem);
+        }
 
-		//--------------------------------------------------------------------------------------------------------
-		/// Get iterator to first section.
-		//--------------------------------------------------------------------------------------------------------
-		iterator begin() { return m_lSections.begin(); }
+        //--------------------------------------------------------------------------------------------------------
+        /// Get const iterator to first section.
+        //--------------------------------------------------------------------------------------------------------
+        const_iterator begin() const { return m_lSections.begin(); }
 
-		//--------------------------------------------------------------------------------------------------------
-		/// Get iterator to the end of last section.
-		//--------------------------------------------------------------------------------------------------------
-		iterator end() { return m_lSections.end(); }
+        //--------------------------------------------------------------------------------------------------------
+        /// Get const iterator to the end of last section.
+        //--------------------------------------------------------------------------------------------------------
+        const_iterator end() const { return m_lSections.end(); }
 
-	protected: // Members.
-		container_t m_lSections; // Sections of ini file.
-		char* m_pBuffer;         // Buffer, that contains strings from read file.
+        //--------------------------------------------------------------------------------------------------------
+        /// Get iterator to first section.
+        //--------------------------------------------------------------------------------------------------------
+        iterator begin() { return m_lSections.begin(); }
 
-	}; // ini_file
+        //--------------------------------------------------------------------------------------------------------
+        /// Get iterator to the end of last section.
+        //--------------------------------------------------------------------------------------------------------
+        iterator end() { return m_lSections.end(); }
+
+    protected: // Members.
+        char* m_pBuffer;         // Buffer, that contains strings from read file.
+        container_t m_lSections; // Sections of ini file.
+
+    }; // ini_file
 
 
 } // namespace good

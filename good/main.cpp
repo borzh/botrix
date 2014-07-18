@@ -1,30 +1,29 @@
 #include <math.h>
 #include <list>
 #include <vector>
-#include <string>
+#include <good/string.h>
 #include <string.h>
 #include <map>
 #include <queue>
 
 #ifdef _WIN32
     #include <windows.h>
+#else
+    #include <unistd.h>
+    #define Sleep(x) usleep(x*1000)
 #endif
 
-#include "good/bitset.h"
-#include "good/list.h"
-#include "good/file.h"
-#include "good/ini_file.h"
-#include "good/string.h"
-#include "good/string_buffer.h"
-#include "good/vector.h"
-#include "good/map.h"
-#include "good/set.h"
-#include "good/heap.h"
-#include "good/priority_queue.h"
-#include "good/graph.h"
-#include "good/astar.h"
-#include "good/thread.h"
-#include "good/process.h"
+#include <good/bitset.h>
+#include <good/file.h>
+#include <good/ini_file.h>
+#include <good/map.h>
+#include <good/set.h>
+#include <good/heap.h>
+#include <good/priority_queue.h>
+#include <good/graph.h>
+#include <good/astar.h>
+#include <good/process.h>
+#include <good/memory.h>
 
 class MyClass
 {
@@ -42,6 +41,7 @@ protected:
 };
 
 //--------------------------------------------------------------------------------------
+#ifdef _WIN32
 bool bExit = false;
 void process_write_proc(void* param)
 {
@@ -68,11 +68,13 @@ void process_write_proc(void* param)
     cProcess->close_stdin();
     free(ss);
 }
+#endif // _WIN32
 
 void test_process()
 {
     printf("%s()\n\n", __FUNCTION__);
 
+#ifdef _WIN32
     bool bRedirect = true;
     bool bMakeInput = true;
     good::thread cThread;
@@ -140,6 +142,7 @@ void test_process()
         cThread.dispose();
         cProcess.dispose();
     }
+#endif // _WIN32
 }
 
 //--------------------------------------------------------------------------------------
@@ -147,14 +150,15 @@ void thread_proc(void* param)
 {
     for (int i=0; i<50; ++i)
     {
-        printf("Thread %d: %d\n", param, i);
+        printf("Thread %p: %d\n", param, i);
         Sleep(100);
     }
-    printf("Thread %d exited\n", param);
+    printf("Thread %p exited\n", param);
 }
 
 void test_threads()
 {
+#ifdef _WIN32
     printf("%s()\n\n", __FUNCTION__);
     const int threads_count = 10;
     good::thread pThreads[threads_count];
@@ -173,6 +177,7 @@ void test_threads()
     printf("Before join\n");
     pThreads[threads_count-1].join(10000);
     printf("After join\n");
+#endif // _WIN32
 }
 
 //--------------------------------------------------------------------------------------
@@ -187,15 +192,15 @@ void test_bitset()
             b.set(i);
 
     for ( int i=0; i<100; ++i )
-        if ( b.test(i) != (i % 3 == 0) )
-            printf("\nError at position %d\n", i);
-        else
-            printf("%d", b.test(i));
+    {
+        DebugAssert( b.test(i) == (i % 3 == 0) );
+        printf("%d", b.test(i));
+    }
     printf("\n");
 }
 
 //--------------------------------------------------------------------------------------
-void test_list()
+/*void test_list()
 {
     printf("%s()\n\n", __FUNCTION__);
     typedef good::list<MyClass> list_t;
@@ -258,7 +263,7 @@ void test_list()
 
     list_t l1(l);
     list_t l2; l2 = l;
-}
+}*/
 
 
 //--------------------------------------------------------------------------------------
@@ -276,7 +281,7 @@ void test_shared_ptr()
     printf("--------------------------------------------\n%s (must be 'hi there').\n\n", c->c_str());
 
     c.reset();
-    printf("--------------------------------------------\n%d (must be NULL).\n\n", c.get());
+    printf("--------------------------------------------\n%s (must be NULL).\n\n", c.get()?c->c_str():"NULL");
 }
 
 //--------------------------------------------------------------------------------------
@@ -293,22 +298,25 @@ void test_file()
     printf( "--------------------------------------------\n%s\n\n", buf );
     free(buf);
 
-    good::string_buffer path = "c:";
+    good::string path("c:");
     printf("\n");
 
-    good::file::append_path( path, "dir" );
+    path = good::file::append_path( path, "dir" );
     printf("\n");
 
-    good::file::append_path( path, "filename.ext" );
+    path = good::file::append_path( path, "filename.ext" );
     printf( "--------------------------------------------\n%s (must be 'c:\\dir\\filename.ext')\n\n", path.c_str() );
 
-    printf( "--------------------------------------------\ndir: %s, '%s' (must be c:\\dir, '')\n", good::file::file_dir(path).c_str(), good::file::file_dir("hello.txt").c_str() );
+    printf( "--------------------------------------------\ndir: %s, '%s' (must be c:\\dir, '')\n",
+            good::file::file_dir(path).c_str(), good::file::file_dir(good::string("hello.txt")).c_str() );
     printf("\n");
 
-    printf( "--------------------------------------------\nname: %s, '%s' (must be filename.ext, '')\n", good::file::file_name(path).c_str(), good::file::file_name("c:\\wtf\\").c_str() );
+    printf( "--------------------------------------------\nname: %s, '%s' (must be filename.ext, '')\n",
+            good::file::file_name(path).c_str(), good::file::file_name(good::string("c:\\wtf\\")).c_str() );
     printf("\n");
 
-    printf( "--------------------------------------------\next: %s, '%s' (must be ext, '')\n", good::file::file_ext(path).c_str(), good::file::file_ext("c:\\dir.ext\\file").c_str() );
+    printf( "--------------------------------------------\next: %s, '%s' (must be ext, '')\n",
+            good::file::file_ext(path).c_str(), good::file::file_ext(good::string("c:\\dir.ext\\file")).c_str() );
     printf("\n");
 }
 
@@ -351,28 +359,29 @@ void test_string()
     good::string s2 = s1 + " man"; // hello man, dynamic
     printf( "%s\n", s2.c_str() );
 
-    good::string s3 ;//= good::string::concatenate( s2.c_str(), " man" ); // hello man man, dynamic
+    good::string s3 = good::string::concatenate( s2.c_str(), " man" ); // hello man man, dynamic
     printf( "--------------------------------------------\n%s, starts with %s: %d; ends with man: %d; starts with man: %d, ends with hello: %d; starts with h: %d; ends with \\: %d\n",
-            s3.c_str(), s1.c_str(), s3.starts_with(s1), s3.ends_with("man"), s3.starts_with("man"), s3.ends_with(s1),
-            s3.starts_with('h'), s3.ends_with('\\')  );
+            s3.c_str(), s1.c_str(), good::starts_with(s3,s1), ends_with(s2,good::string("man")), starts_with(s3, good::string("man")),
+            ends_with(s3, s1), starts_with(s3, 'h'), ends_with(s3, '\\')  );
 
     printf( "--------------------------------------------\n%s != %s: %d; %s == %s: %d\n", s1.c_str(), s3.c_str(), s1 != s3, s1.c_str(), "hello", s1 == "hello" );
 
     s1 = s3;
     printf("\n");
 
-    good::list<good::string> h;
+    std::list<good::string> h;
     h.push_back(s2);
     printf("\n");
     h.push_back(s3);
     printf("\n--------------------------------------------\n");
-    for (good::list<good::string>::const_iterator it = h.begin(); it != h.end(); ++it)
+    for (std::list<good::string>::const_iterator it = h.begin(); it != h.end(); ++it)
         printf("'%s' ", it->c_str());
     printf("(must be 'hello man' '')\n");
 
     s1 = "\n \r\t\r     Hola  \n\r\t \t   ";
-    s2 = s1.duplicate(); s2.trim();
-    printf("'%s' trimmed '%s'\n", s1, s2);
+    s2 = s1.duplicate();
+    good::trim(s2);
+    printf("'%s' trimmed '%s'\n", s1.c_str(), s2.c_str());
 }
 
 //--------------------------------------------------------------------------------------
@@ -403,13 +412,13 @@ void test_string_buffer()
     }
     printf("\n");
 
-    good::list<good::string_buffer> h;
+    std::list<good::string_buffer> h;
     h.push_back(s2);
     printf("\n");
     h.push_back(s1);
     printf("\n");
 
-    good::string s3=s2; // steal buffer from s2.
+    good::string s3=s2.duplicate();
     s2 = "hello there";
     printf ( "--------------------------------------------\nstr s3='%s' ('hello man'), sb s2='%s' ('hello there')\n\n", s3.c_str(), s2.c_str() );
 
@@ -421,11 +430,11 @@ void test_string_buffer()
 }
 
 //--------------------------------------------------------------------------------------
-void test_vector()
+/*void test_vector()
 {
     printf("%s()\n\n", __FUNCTION__);
 
-    good::vector<MyClass> v;
+    std::vector<MyClass> v;
     {
         MyClass c(1);
 
@@ -439,7 +448,7 @@ void test_vector()
     }
 
     printf("--------------------------------------------\n");
-    for ( good::vector<MyClass>::const_iterator it = v.rbegin(); it != v.rend(); it-=1 )
+    for ( std::vector<MyClass>::const_iterator it = v.rbegin(); it != v.rend(); it-=1 )
         printf ( "%d ", it->GetArg() );
     printf("(must be from 32 to 0)\n\n");
 
@@ -452,10 +461,10 @@ void test_vector()
     v.pop_back();  printf("--------------------------------------------\nempty(): %d\n\n", v.empty());
 
 
-    good::list < good::vector<MyClass> > h;
+    std::list < std::vector<MyClass> > h;
     h.push_back(v);
     printf("\n");
-}
+}*/
 
 //--------------------------------------------------------------------------------------
 void test_map()
@@ -468,13 +477,13 @@ void test_map()
     map_t map;
     std_map_t std_map;
 
-    const int count = 65535;
+    //const int count = 65535;
 
     char buf[5];
     for (int i=0; i<10; ++i)
     {
         sprintf(buf, "%d", i);
-        map.insert(good::pair<int, good::string>(i, good::string(buf, true, true)));
+        map.insert(std::pair<int, good::string>(i, good::string(buf, true, true)));
     }
 
     printf("--------------------------------------------\n");
@@ -491,7 +500,7 @@ void test_map()
     printf("\n");
 
     const good::string& tmp = (/*(const map_t)*/map)[-1];
-    printf("goodbye? %s\n", tmp);
+    printf("goodbye? %s\n", tmp.c_str());
 
     map_t::iterator it = map.find(0);
     while ( it != map.end() )
@@ -601,8 +610,10 @@ void test_heap()
 //--------------------------------------------------------------------------------------
 void test_graph()
 {
+    printf("%s()\n\n", __FUNCTION__);
+
     #define sqr(x) ((x)*(x))
-    typedef good::pair<float, float> vertex_t;
+    typedef std::pair<float, float> vertex_t;
     typedef good::graph< vertex_t, float > graph_t;
 
     class dist
@@ -628,7 +639,7 @@ void test_graph()
     class can_use
     {
     public:
-        bool operator()(graph_t::node_t const& node) const
+        bool operator()(graph_t::node_t const& /*node*/) const
         {
             return true;
         }
@@ -640,11 +651,11 @@ void test_graph()
     //   |2    2     |2.2
     //   v     1     v
     //  "0 0"  ->  "1 0"
-    graph_t g;
-    graph_t::node_it nA = g.add_node(vertex_t(0,2));
-    graph_t::node_it nB = g.add_node(vertex_t(2,2));
-    graph_t::node_it nC = g.add_node(vertex_t(0,0));
-    graph_t::node_it nD = g.add_node(vertex_t(1,0));
+    graph_t g(4);
+    graph_t::node_it nA = g.add_node(vertex_t(0,2),2);
+    graph_t::node_it nB = g.add_node(vertex_t(2,2),1);
+    graph_t::node_it nC = g.add_node(vertex_t(0,0),1);
+    graph_t::node_it nD = g.add_node(vertex_t(1,0),0);
     g.add_arc(nA, nB, 2);
     g.add_arc(nA, nC, 2);
     g.add_arc(nB, nD, 2.2f);
@@ -658,7 +669,7 @@ void test_graph()
     for ( graph_t::const_node_it nodeIt = g.begin(); nodeIt != g.end(); ++nodeIt )
     {
         printf("Node: %f %f\n", nodeIt->vertex.first, nodeIt->vertex.second);
-        for ( graph_t::const_arc_it arcIt = nodeIt->neighbours.rbegin(); arcIt != nodeIt->neighbours.rend(); arcIt-- )
+        for ( graph_t::const_reverse_arc_it arcIt = nodeIt->neighbours.rbegin(); arcIt != nodeIt->neighbours.rend(); arcIt++ )
         {
             printf("  %d ---%f---> %d\n", nodeIt - g.begin(), arcIt->edge, arcIt->target);
         }
@@ -669,7 +680,7 @@ void test_graph()
     printf("\nFinished: %d, found path A->D: %d\n", b, a.has_path());
     for (astar_t::path_t::const_iterator it = a.path().begin(); it != a.path().end(); ++it )
         printf("%d -> ", *it);
-    printf("(must be 0 -> 2 -> 3)\n", b, a.has_path());
+    printf("(must be 0 -> 2 -> 3)\n");
 
     a.setup_search(3, 0, can_use());
     b = a.step();
@@ -677,65 +688,64 @@ void test_graph()
 
 }
 
-
 //--------------------------------------------------------------------------------------
-int main(int argc, char** argv)
+void stop()
 {
-    //test_process();
-    //system("pause");
-    //system("cls");
-
-    test_threads();
+#ifdef _WIN32
     system("pause");
     system("cls");
+#else
+    //system("bash -c 'read -p \"Press ENTER to continue...\" -n 1'");
+    //system("clear");
+    fflush(stdout);
+    //sleep(5);
+#endif
+}
 
-    //test_bitset();
-    //system("pause");
-    //system("cls");
-    //
-    //test_list();
-    //system("pause");
-    //system("cls");
-    //
-    //test_shared_ptr();
-    //system("pause");
-    //system("cls");
-    //
-    //test_file();
-    //system("pause");
-    //system("cls");
-    //
-    //test_ini_file();
-    //system("pause");
-    //system("cls");
-    //
-    //test_string();
-    //system("pause");
-    //system("cls");
-    //
-    //test_string_buffer();
-    //system("pause");
-    //system("cls");
-    //
-    //test_vector();
-    //system("pause");
-    //system("cls");
-    //
-    //test_map();
-    //system("pause");
-    //system("cls");
+//--------------------------------------------------------------------------------------
+int main(int, char**)
+{
+    test_process();
+    stop();
 
-    //test_set();
-    //system("pause");
-    //system("cls");
+    test_threads();
+    stop();
 
-    //test_heap();
-    //system("pause");
-    //system("cls");
+    test_bitset();
+    stop();
 
-    //test_graph();
-    //system("pause");
-    //system("cls");
+    /*test_list();
+    stop();*/
+
+    test_shared_ptr();
+    stop();
+
+    test_file();
+    stop();
+
+    test_ini_file();
+    stop();
+
+    test_string();
+    stop();
+
+    test_string_buffer();
+    stop();
+
+    /*test_vector();
+    stop();*/
+
+    test_map();
+    stop();
+
+    test_set();
+    stop();
+
+    test_heap();
+    stop();
+
+    test_graph();
+    stop();
 
     return 0;
 }

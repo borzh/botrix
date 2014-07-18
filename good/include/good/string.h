@@ -11,7 +11,7 @@
 #include <string.h>
 
 
-#include "good/utility.h"
+#include "good/memory.h"
 
 
 // Define this to see debug prints of string memory allocation and deallocation.
@@ -19,42 +19,37 @@
 
 
 // Disable obsolete warnings.
-#pragma warning(push)
-#pragma warning(disable: 4996)
+#ifdef _WIN32
+#   pragma warning(push)
+#   pragma warning(disable: 4996)
+#endif
 
 
 namespace good
 {
 
 
-    /*enum asdasd {
-        EStringCopy,      ///<
-        EStringMove,      ///<
-        EStringForceCopy, ///<
-        EStringForceMove, ///<
-    };
-    typedef int TStringasdasd;*/
-
     //************************************************************************************************************
-    /// Class that holds a string of characters.
-    /** Note that in this version of string assignment or copy constructor "steal" internal buffer so use
-     *  carefully (i.e. it behaves like std::auto_ptr). Use duplicate() to obtain newly allocated string.
-     *  Note that c_str() will never return NULL. */
+    /**
+     * @brief Class that represents secuence of characters.
+     */
     //************************************************************************************************************
     template <
-        typename Char = Char,
+        typename Char = TChar,
         typename Alloc = allocator<Char>
     >
     class base_string
     {
     public:
 
+        typedef Char value_type;      ///< Typedef for chara type.
+        typedef int size_type;        ///< Typedef for string size.
         static const int npos = -1;   ///< Invalid position in string.
 
         //--------------------------------------------------------------------------------------------------------
         /// Default constructor.
         //--------------------------------------------------------------------------------------------------------
-        base_string(): m_pBuffer((char*)""), m_iSize(), m_iStatic(1)
+        base_string(): m_pBuffer((char*)""), m_iSize(0), m_iStatic(1)
         {
 #ifdef DEBUG_STRING_PRINT
             DebugPrint( "base_string default constructor\n" );
@@ -62,33 +57,33 @@ namespace good
         }
 
         //--------------------------------------------------------------------------------------------------------
-        /// Copy constructor. Move all parameters into constructed string.
+        /// Copy constructor.
         //--------------------------------------------------------------------------------------------------------
-        base_string( const base_string& other, bool bCopy = false ): m_pBuffer(other.m_pBuffer), m_iSize(other.m_iSize), m_iStatic(other.m_iStatic)
+        base_string( const base_string& other ): m_iStatic(true)
+        {
+#ifdef DEBUG_STRING_PRINT
+            DebugPrint( "base_string copy constructor: %s.\n", other.c_str() );
+#endif
+            assign(other);
+        }
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Move constructor.
+        //--------------------------------------------------------------------------------------------------------
+        base_string( base_string&& other ):
+            m_pBuffer(other.m_pBuffer), m_iSize(other.m_iSize), m_iStatic(other.m_iStatic)
         {
 #ifdef DEBUG_STRING_PRINT
             DebugPrint( "base_string copy constructor: %s, copy %d.\n", other.c_str(), bCopy );
 #endif
-            if ( !m_iStatic )
-            {
-                if ( bCopy )
-                {
-                    m_iStatic = true; // Force not to deallocate other string.
-                    assign(other, true);
-                }
-                else
-                {
-                    ((base_string&)other).m_iSize = 0;
-                    ((base_string&)other).m_pBuffer = (char*)"";
-                    ((base_string&)other).m_iStatic = 1;
-                }
-            }
+            other.m_iStatic = 1; // Make other static to not deallocate.
         }
 
         //--------------------------------------------------------------------------------------------------------
         /// Constructor by 0-terminating string. Make sure that iSize reflects string size properly or is npos.
         //--------------------------------------------------------------------------------------------------------
-        base_string( const Char* szStr, bool bCopy = false, bool bDealloc = false, int iSize = npos )
+        base_string( const Char* szStr, bool bCopy = false, bool bDealloc = false, int iSize = npos ):
+            m_iStatic(true)
         {
 #ifdef DEBUG_STRING_PRINT
             DebugPrint( "base_string constructor: %s, copy %d, dealloc %d\n", szStr, bCopy, bDealloc );
@@ -255,9 +250,9 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get new string concatinating this string and sRight.
         //--------------------------------------------------------------------------------------------------------
-        base_string operator+ ( const base_string& sRight ) const
+        base_string& operator+= ( const base_string& sRight ) const
         {
-            return concat_with( sRight.c_str(), sRight.m_iSize );
+            return concat_with( sRight.c_str(), sRight.size() );
         }
 
         //--------------------------------------------------------------------------------------------------------
@@ -270,48 +265,34 @@ namespace good
         }
 
         //--------------------------------------------------------------------------------------------------------
-        /// Return true if this string starts with sStr.
+        /// Get new string concatinating this string and sRight.
         //--------------------------------------------------------------------------------------------------------
-        bool starts_with( const base_string& sStr ) const
+        base_string operator+ ( const base_string& sRight ) const
         {
-            return strncmp( c_str(), sStr.c_str(), MIN2(sStr.m_iSize, m_iSize) ) == 0;
+            return concat_with( sRight.c_str(), sRight.m_iSize );
         }
 
         //--------------------------------------------------------------------------------------------------------
-        /// Return true if this string starts with Char c.
+        /// Get new string concatinating this string and szRight.
         //--------------------------------------------------------------------------------------------------------
-        bool starts_with( Char c ) const
+        /*base_string operator+ ( const Char* szRight ) const
         {
-            DebugAssert( m_iSize > 0 );
-            return m_pBuffer[0] == c;
-        }
+            DebugAssert(szRight);
+            return concat_with( szRight, strlen(szRight) );
+        }*/
 
         //--------------------------------------------------------------------------------------------------------
-        /// Return true if this string ends with sStr.
+        /// Erase iCount characters from buffer at requiered position iPos.
         //--------------------------------------------------------------------------------------------------------
-        bool ends_with( const base_string& sStr ) const
+        base_string& erase( int iPos = 0, int iCount = npos )
         {
-            if (sStr.m_iSize > m_iSize) return false;
-            return strncmp( &m_pBuffer[m_iSize - sStr.m_iSize], sStr.c_str(), sStr.m_iSize ) == 0;
-        }
-
-        //--------------------------------------------------------------------------------------------------------
-        /// Return true if a string ends with Char c.
-        //--------------------------------------------------------------------------------------------------------
-        bool ends_with( Char c ) const
-        {
-            DebugAssert( m_iSize > 0 );
-            return m_pBuffer[m_iSize-1] == c;
-        }
-
-        //--------------------------------------------------------------------------------------------------------
-        /// Return lowercase string.
-        //--------------------------------------------------------------------------------------------------------
-        base_string& lower_case()
-        {
-            for ( int i = 0; i < m_iSize; ++i )
-                if ( ('A' <= m_pBuffer[i]) && (m_pBuffer[i] <= 'Z') )
-                    m_pBuffer[i] = m_pBuffer[i] - 'A' + 'a';
+            if (iCount == npos)
+                iCount = length() - iPos;
+            if (iCount == 0)
+                return *this;
+            DebugAssert( (iCount > 0) && (iPos < this->length()) && (iPos+iCount <= length()) );
+            memmove( &m_pBuffer[iPos], &m_pBuffer[iPos+iCount], (length() - iPos + 1) * sizeof(Char) );
+            m_iSize -= iCount;
             return *this;
         }
 
@@ -324,70 +305,6 @@ namespace good
             Char* buffer = m_cAlloc.allocate(len+1);
             strncpy( buffer, m_pBuffer, (len + 1) * sizeof(Char) );
             return base_string( buffer, false, true, len );
-        }
-
-        //--------------------------------------------------------------------------------------------------------
-        /// Remove leading and trailing whitespaces(space, tab, line feed - LF, carriage return - CR).
-        //--------------------------------------------------------------------------------------------------------
-        base_string& trim()
-        {
-            if (m_iSize == 0)
-                return *this;
-            int begin = 0, end = m_iSize - 1;
-
-            for (; begin <= end; ++begin)
-            {
-                Char c = m_pBuffer[begin];
-                if ( (c != ' ') && (c != '\t') && (c != '\n') && (c != '\r') )
-                    break;
-            }
-
-            for (; begin <= end; --end)
-            {
-                Char c = m_pBuffer[end];
-                if ( (c != ' ') && (c != '\t') && (c != '\n') && (c != '\r') )
-                    break;
-            }
-
-            m_iSize = end - begin + 1;
-            if (begin > 0)
-                memmove(m_pBuffer, &m_pBuffer[begin], m_iSize);
-            m_pBuffer[m_iSize] = 0;
-            return *this;
-        }
-
-        //--------------------------------------------------------------------------------------------------------
-        /// Process escape characters: \n, \r, \t, \0, else \ and next Char are transformed to that Char.
-        //--------------------------------------------------------------------------------------------------------
-        base_string& escape()
-        {
-            Char* buf = m_pBuffer;
-
-            // Skip start sequence.
-            int start = find('\\'), end = start, count = 0;
-            while ( 0 <= end && end < m_iSize)
-            {
-                end++;
-                count++;
-                if (buf[end] == 'n')
-                    buf[start] = '\n';
-                else if (buf[end] == 'r')
-                    buf[start] = '\r';
-                else if (buf[end] == 't')
-                    buf[start] = '\t';
-                else if (buf[end] == '0')
-                    buf[start] = 0;
-                else
-                    buf[start] = buf[end];
-
-                start++; end++;
-                while ( (end < m_iSize) && (buf[end] != '\\') )
-                    buf[start++] = buf[end++];
-            };
-
-            m_iSize -= count;
-            buf[m_iSize] = 0;
-            return *this;
         }
 
         //--------------------------------------------------------------------------------------------------------
@@ -456,68 +373,9 @@ namespace good
             }
         }
 
-        //--------------------------------------------------------------------------------------------------------
-        /// Split string into several strings by separator, optionally trimming resulting strings. Put result in given array.
-        //--------------------------------------------------------------------------------------------------------
-        template <template <typename, typename> class Container>
-        void split( Container<base_string, typename Alloc::template rebind<base_string>::other>& aContainer, Char separator = ' ', bool bTrim = false/*, bool bAlloc = true*/ ) const
-        {
-            int start = 0;
-            int end;
-            do
-            {
-                end = find(separator, start);
-                base_string s = substr(start, end - start);
-                if (bTrim)
-                    s.trim();
-                aContainer.push_back(s);
-                start = end+1;
-            } while ( end != npos );
-        }
-
-
-        //--------------------------------------------------------------------------------------------------------
-        /// Split string into several strings by separator, optionally trimming resulting strings.
-        //--------------------------------------------------------------------------------------------------------
-        template <template <typename, typename> class Container>
-        Container<base_string, typename Alloc::template rebind<base_string>::other> split( Char separator = ' ', bool bTrim = false/*, bool bAlloc = true*/ ) const
-        {
-            Container<base_string, typename Alloc::template rebind<base_string>::other> result;
-            split<Container>(result, separator, bTrim);
-            return result;
-        }
-
-
-        //--------------------------------------------------------------------------------------------------------
-        /// Split string into several strings by separators, optionally trimming resulting strings.
-        //--------------------------------------------------------------------------------------------------------
-        template <template <typename, typename> class Container>
-        Container<base_string, typename Alloc::template rebind<base_string>::other> split( const base_string& separators, bool bTrim/*, bool bAlloc = true*/ ) const
-        {
-            Container<base_string, typename Alloc::template rebind<base_string>::other> result;
-            int start = 0, end = 0;
-            while ( end < size() )
-            {
-                bool bFound = false;
-                for ( int i=0; i<separators.size(); ++i )
-                    if ( separators[i] == m_pBuffer[end] )
-                    {
-                        base_string s = substr(start, end - start);
-                        if (bTrim)
-                            s.trim();
-                        result.push_back(s);
-                        start = end+1;
-                        break;
-                    }
-                end++;
-            }
-            return result;
-        }
-
-
     public: // Static methods.
         //--------------------------------------------------------------------------------------------------------
-        /// Get string by adding two 0-terminating strings.
+        /// Get string by adding two strings.
         //--------------------------------------------------------------------------------------------------------
         static base_string concatenate( const base_string& s1, const base_string& s2 )
         {
@@ -545,7 +403,7 @@ namespace good
             DebugPrint( "base_string deallocate(): %s; free: %d\n", m_pBuffer?m_pBuffer:"null", !m_iStatic && m_pBuffer );
 #endif
             if ( !m_iStatic )
-                free(m_pBuffer);
+                free( m_pBuffer );
         }
 
         //--------------------------------------------------------------------------------------------------------
@@ -570,12 +428,12 @@ namespace good
         }
 
     protected:
-        typedef typename Alloc::template rebind<Char>::other alloc_t; // Allocator object for Char.
+        typedef typename Alloc::template rebind<Char>::other alloc_t; ///< Allocator object for Char.
 
-        alloc_t m_cAlloc;         // Allocator for Char.
-        Char* m_pBuffer;          // Allocated space is m_iSize+1 bytes (for trailing 0).
-        int m_iSize:31;           // String size.
-        int m_iStatic:1;          // If true, then base_string must NOT be deallocated.
+        alloc_t m_cAlloc; ///< Allocator for Char.
+        Char* m_pBuffer;  ///< Buffer. It contains an extra int before string (at position -1) which is a reference counter.
+        int m_iSize:31;   ///< String size.
+        int m_iStatic:1;  ///< If true, then base_string must NOT be deallocated.
     };
 
 
@@ -585,7 +443,9 @@ namespace good
 } // namespace good
 
 
-#pragma warning(pop) // Restore warnings.
+#ifdef _WIN32
+#   pragma warning(pop) // Restore warnings.
+#endif
 
 
 #endif // __GOOD_STRING_H__

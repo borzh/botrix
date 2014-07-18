@@ -1,15 +1,16 @@
+#include <good/string_buffer.h>
+#include <good/string_utils.h>
+
 #include "bot.h"
 #include "clients.h"
 #include "console_commands.h"
 #include "waypoint.h"
 
-#include "good/string_buffer.h"
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 
-good::auto_ptr<CMainCommand> CMainCommand::instance;
+std::auto_ptr<CMainCommand> CMainCommand::instance;
 
 const good::string sHelp("help"); // TODO: all commands.
 
@@ -85,10 +86,10 @@ int CConsoleCommand::AutoComplete( const char* partial, int partialLength, char 
                         maxLength = COMMAND_COMPLETION_ITEM_LENGTH - (charIndex + lastSpace) - 1; // Save one space for trailing 0.
                         if (maxLength > 0) // There is still space in autocomplete field.
                         {
-                            for (int i = 0; i < m_cAutoCompleteArguments.size(); ++i)
+                            for (size_t i = 0; i < m_cAutoCompleteArguments.size(); ++i)
                             {
                                 const good::string& arg = m_cAutoCompleteArguments[i];
-                                if (arg.starts_with(partArg))
+                                if (good::starts_with(arg, partArg))
                                 {
                                     strncpy( &commands[strIndex+result][charIndex], partial, lastSpace );
                                     strncpy( &commands[strIndex+result][charIndex+lastSpace], arg.c_str(), MIN2(maxLength, arg.size()+1) );
@@ -168,7 +169,7 @@ int CConsoleCommandContainer::AutoComplete( const char* partial, int partialLeng
 
             int charIdx = charIndex + command_size + 1; // 1 is for space
 
-            for ( int i = 0; i < m_commands.size(); i ++ )
+            for ( size_t i = 0; i < m_commands.size(); i ++ )
             {
                 int count = m_commands[i]->AutoComplete(partial, partialLength, commands, strIndex, charIdx);
                 for ( int j = 0; j < count; j ++ )
@@ -189,7 +190,7 @@ TCommandResult CConsoleCommandContainer::Execute( CClient* pClient, int argc, co
 {
     if (argc > 0)
     {
-        for ( int i = 0; i < m_commands.size(); i ++ )
+        for ( size_t i = 0; i < m_commands.size(); i ++ )
         {
             CConsoleCommand *pCommand = m_commands[i].get();
 
@@ -217,7 +218,7 @@ void CConsoleCommandContainer::PrintCommand( edict_t* pPrintTo, int indent )
     CUtil::SetMessageUseTag(false);
     CUtil::Message( pPrintTo, "%s[%s]", szMainBuffer, m_sCommand.c_str() );
 
-    for ( int i = 0; i < m_commands.size(); i ++ )
+    for ( size_t i = 0; i < m_commands.size(); i ++ )
         m_commands[i]->PrintCommand( pPrintTo, indent+1 );
 
     CUtil::SetMessageUseTag(false);
@@ -930,10 +931,7 @@ TCommandResult CWaypointAreaRemoveCommand::Execute( CClient* pClient, int argc, 
     }
 
     for ( int i=0; i < argc; ++i )
-    {
-        sbBuffer.append(argv[i]);
-        sbBuffer.append(' ');
-    }
+        sbBuffer << argv[i] << ' ';
     sbBuffer.erase( sbBuffer.size()-1, 1 ); // Erase last space.
 
     StringVector& cAreas = CWaypoints::GetAreas();
@@ -950,7 +948,7 @@ TCommandResult CWaypointAreaRemoveCommand::Execute( CClient* pClient, int argc, 
                     cWaypoint.iAreaId = 0; // Set to default.
             }
 
-            cAreas.erase(iArea);
+            cAreas.erase(cAreas.begin() + iArea);
             CUtil::Message( pClient->GetEdict(), "Deleted area '%s'.", sbBuffer.c_str() );
             return ECommandPerformed;
         }
@@ -974,23 +972,21 @@ TCommandResult CWaypointAreaRenameCommand::Execute( CClient* pClient, int argc, 
     }
 
     for ( int i=0; i < argc; ++i )
-    {
-        sbBuffer.append(argv[i]);
-        sbBuffer.append(' ');
-    }
+        sbBuffer << argv[i] << ' ';
     sbBuffer.erase( sbBuffer.size()-1, 1 ); // Erase last space.
 
     StringVector& cAreas = CWaypoints::GetAreas();
-    for ( int i=1; i < cAreas.size(); ++i ) // Do not take default area in account.
+    for ( size_t i=1; i < cAreas.size(); ++i ) // Do not take default area in account.
     {
-        if ( sbBuffer.starts_with(cAreas[i]) )
+        StringVector::value_type& sArea = cAreas[i];
+        if ( good::starts_with((good::string)sbBuffer, sArea) )
         {
-            sbBuffer.erase(0, cAreas[i].size());
-            sbBuffer.trim();
+            sbBuffer.erase(0, sArea.size());
+            good::trim(sbBuffer);
             if ( sbBuffer.size() > 0 )
             {
-                CUtil::Message( pClient->GetEdict(), "Renamed '%s' to '%s'.", cAreas[i].c_str(), sbBuffer.c_str() );
-                cAreas[i] = sbBuffer.duplicate();
+                CUtil::Message( pClient->GetEdict(), "Renamed '%s' to '%s'.", sArea.c_str(), sbBuffer.c_str() );
+                sArea = sbBuffer.duplicate();
                 return ECommandPerformed;
             }
             else
@@ -1038,11 +1034,8 @@ TCommandResult CWaypointAreaSetCommand::Execute( CClient* pClient, int argc, con
     // Concatenate all arguments.
     good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false); // Don't deallocate after use.
     for ( ; index < argc; ++index )
-    {
-        sbBuffer.append(argv[index]);
-        sbBuffer.append(' ');
-    }
-    sbBuffer.trim();
+        sbBuffer << argv[index] << ' ';
+    good::trim(sbBuffer);
 
     // Check if that area id already exists.
     TAreaId iAreaId = CWaypoints::GetAreaId(sbBuffer);
@@ -1061,12 +1054,8 @@ TCommandResult CWaypointAreaShowCommand::Execute( CClient* pClient, int /*argc*/
 
     good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false); // Don't deallocate after use.
 
-    for ( int i=0; i < CWaypoints::GetAreas().size(); ++i )
-    {
-        sbBuffer.append("   - ");
-        sbBuffer.append( CWaypoints::GetAreas()[i] );
-        sbBuffer.append('\n');
-    }
+    for ( size_t i=0; i < CWaypoints::GetAreas().size(); ++i )
+        sbBuffer << "   - " <<  CWaypoints::GetAreas()[i] << '\n';
     sbBuffer.erase( sbBuffer.size()-1, 1 ); // Erase last \n.
 
     CUtil::Message(pClient->GetEdict(), "Area names:\n%s", sbBuffer.c_str());
@@ -1600,7 +1589,7 @@ TCommandResult CBotDebugCommand::Execute( CClient* pClient, int argc, const char
         if ( pPlayer && pPlayer->IsBot() )
         {
             good::string sBotName = pPlayer->GetName();
-            if ( sBotName.starts_with(sName) )
+            if ( good::starts_with(sBotName, sName) )
             {
                 pBot = (CBot*)pPlayer;
                 break;
@@ -1720,7 +1709,7 @@ TCommandResult CBotPauseCommand::Execute( CClient* pClient, int argc, const char
         if ( pPlayer && pPlayer->IsBot() )
         {
             good::string sBotName = pPlayer->GetName();
-            if ( sBotName.starts_with(sName) )
+            if ( good::starts_with(sBotName, sName) )
             {
                 pBot = (CBot*)pPlayer;
                 break;

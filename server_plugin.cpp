@@ -2,6 +2,11 @@
 #include <stdlib.h> // rand().
 #include <time.h> // time()
 
+#include <good/string_buffer.h>
+
+// Good headers.
+#include <good/file.h>
+
 // Plugin headers.
 #include "bot.h"
 #include "clients.h"
@@ -15,10 +20,9 @@
 #include "mod.h"
 #include "waypoint.h"
 
-// Good headers.
-#include "good/file.h"
-
 // Source headers.
+// Ugly fix for ugly Source Engine.
+#include "public/minmax.h"
 #include "cbase.h"
 #include "filesystem.h"
 #include "interface.h"
@@ -144,16 +148,17 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     int gamePos = sGameFolder.rfind(PATH_SEPARATOR);
     szMainBuffer[gamePos] = 0;
     sGameFolder = good::string(&szMainBuffer[gamePos+1], true, true);
-    sGameFolder.lower_case();
+    good::lower_case(sGameFolder);
 
-    sBotrixPath = good::file::append_path(szMainBuffer, "botrix");
+    sBotrixPath = szMainBuffer;
+    sBotrixPath = good::file::append_path( sBotrixPath, good::string("botrix") );
 
     // Load configuration file.
-    good::string iniName( good::file::append_path(sBotrixPath, "config.ini") );
+    good::string iniName( good::file::append_path(sBotrixPath, good::string("config.ini") ) );
     TModId iModId = CConfiguration::Load(iniName, sGameFolder, sModFolder);
 
     // Create console command instance.
-    CMainCommand::instance = new CMainCommand();
+    CMainCommand::instance = std::auto_ptr<CMainCommand>( new CMainCommand() );
 
     // Load mod configuration.
     CMod::Load(iModId);
@@ -433,25 +438,15 @@ void CBotrixPlugin::FireGameEvent( KeyValues* event )
     {
         KeyValues* copy = event->MakeCopy(); // Source bug? Heap corrupted if iterate directly on event.
 
-        sbBuffer.append("Event: ");
-        sbBuffer.append(type);
-        sbBuffer.append('\n');
+        sbBuffer << "Event: " << type << '\n';
 
         for ( KeyValues *pk = copy->GetFirstTrueSubKey(); pk; pk = pk->GetNextTrueSubKey() )
-        {
-            sbBuffer.append(pk->GetName());
-            sbBuffer.append('\n');
-        }
+            sbBuffer << pk->GetName() << '\n';
 
         for ( KeyValues *pk = copy->GetFirstValue(); pk; pk = pk->GetNextValue() )
-        {
-            sbBuffer.append(pk->GetName());
-            sbBuffer.append(" = ");
-            sbBuffer.append(pk->GetString());
-            sbBuffer.append('\n');
-        }
+            sbBuffer << pk->GetName() << " = " << pk->GetString() << '\n';
 
-        CPlayers::DebugEvent(sbBuffer.c_str());
+        CPlayers::DebugEvent(szMainBuffer);
 
         copy->deleteThis();
     }

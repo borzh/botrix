@@ -58,13 +58,13 @@ class CConsoleCommandContainer: public CConsoleCommand
 public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 
-    void Add( CConsoleCommand* newCommand ) { m_commands.push_back(newCommand); }
+    void Add( CConsoleCommand* newCommand ) { m_commands.push_back( std::auto_ptr<CConsoleCommand>(newCommand) ); }
 
     virtual int AutoComplete( const char* partial, int partialLength, char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ], int strIndex, int charIndex );
     virtual void PrintCommand( edict_t* pPrintTo, int indent = 0);
 
 protected:
-    good::vector< good::auto_ptr<CConsoleCommand> > m_commands;
+    std::vector< std::auto_ptr<CConsoleCommand> > m_commands;
 };
 
 
@@ -798,7 +798,7 @@ public:
     CMainCommand();
     ~CMainCommand();
 
-    static good::auto_ptr<CMainCommand> instance; ///< Singleton of this class.
+    static std::auto_ptr<CMainCommand> instance; ///< Singleton of this class.
 };
 
 #endif // __BOTRIX_CONSOLE_COMMANDS_H__

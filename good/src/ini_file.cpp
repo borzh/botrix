@@ -5,7 +5,9 @@
 
 
 // Disable obsolete warnings.
+#ifdef _WIN32
 #pragma warning(disable: 4996)
+#endif
 
 
 namespace good
@@ -40,19 +42,20 @@ namespace good
                 fprintf(f, "\n");
             for (ini_section::const_iterator confIt = it->begin(); confIt != it->end(); ++confIt)
             {
-#ifdef INI_FILE_DONT_TRIM_STRINGS
-                fprintf(f, "%s=%s", confIt->key.c_str(), confIt->value.c_str());
-#else
-                fprintf(f, "%s = %s", confIt->key.c_str(), confIt->value.c_str());
-#endif
+                if ( bTrimStrings )
+                    fprintf(f, "%s = %s", confIt->key.c_str(), confIt->value.c_str());
+                else
+                    fprintf(f, "%s=%s", confIt->key.c_str(), confIt->value.c_str());
+
                 if (confIt->junk.size() > 0)
                 {
                     if (confIt->junkIsComment)
-#ifdef INI_FILE_DONT_TRIM_STRINGS
-                        fprintf(f, " ;");
-#else
-                        fprintf(f, ";");
-#endif
+                    {
+                        if ( bTrimStrings )
+                            fprintf(f, " ;");
+                        else
+                            fprintf(f, ";");
+                    }
                     else
                         fprintf(f, "\n");
                     fprintf(f, "%s", confIt->junk.c_str());
@@ -232,10 +235,12 @@ namespace good
                         }
 
                         ini_string Key(key), Value(value);
-#ifndef INI_FILE_DONT_TRIM_STRINGS
-                        Key.trim();
-                        Value.trim();
-#endif
+                        if ( bTrimStrings )
+                        {
+                            good::trim(Key);
+                            good::trim(Value);
+                        }
+
                         currentSection->add(Key, Value, junk, junkIsComment, false);
                         key = value = junk = NULL;
                         junkIsComment = false;
@@ -244,9 +249,10 @@ namespace good
 
                     buf[pos] = 0;
                     ini_string Section(section);
-#ifndef INI_FILE_DONT_TRIM_STRINGS
-                    Section.trim();
-#endif
+
+                    if ( bTrimStrings )
+                        good::trim(Section);
+
                     if ( m_lSections.empty() )
                         junkBeforeSections = first_junk;
 
@@ -315,10 +321,12 @@ namespace good
                             }
 
                             ini_string Key(key), Value(value);
-#ifndef INI_FILE_DONT_TRIM_STRINGS
-                            Key.trim();
-                            Value.trim();
-#endif
+                            if ( bTrimStrings )
+                            {
+                                good::trim(Key);
+                                good::trim(Value);
+                            }
+
                             currentSection->add(Key, Value, junk, junkIsComment, true);
 
                             buf[pos] = 0;
@@ -369,10 +377,12 @@ namespace good
             }
 
             ini_string Key(key), Value(value);
-#ifndef INI_FILE_DONT_TRIM_STRINGS
-            Key.trim();
-            Value.trim();
-#endif
+            if ( bTrimStrings )
+            {
+                good::trim(Key);
+                good::trim(Value);
+            }
+
             currentSection->add(Key, Value, junk, junkIsComment, false);
         }
 

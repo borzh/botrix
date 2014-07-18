@@ -1,10 +1,12 @@
+#include <algorithm>
+
 #include "clients.h"
 #include "item.h"
 #include "server_plugin.h"
 #include "type2string.h"
 #include "waypoint.h"
 
-#include "good/string_buffer.h"
+#include <good/string_buffer.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -346,7 +348,7 @@ TWaypointId CWaypoints::Add( Vector const& vOrigin, TWaypointFlags iFlags, int i
 
     // lol, this is not working because m_cGraph.begin() is called first. wtf?
     // TWaypointId id = m_cGraph.add_node(w) - m_cGraph.begin();
-    CWaypoints::WaypointNodeIt it = m_cGraph.add_node(w);
+    CWaypoints::WaypointNodeIt it( m_cGraph.add_node(w) );
     TWaypointId id = it - m_cGraph.begin();
 
     AddLocation(id, vOrigin);
@@ -540,6 +542,14 @@ TWaypointId CWaypoints::GetAnyWaypoint(TWaypointFlags iFlags)
         if ( FLAG_SOME_SET(iFlags, CWaypoints::Get(i).iFlags) )
             return i;
     return EWaypointIdInvalid;
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+TAreaId CWaypoints::GetAreaId( const good::string& sName )
+{
+    StringVector::const_iterator it( std::find(m_cAreas.begin(), m_cAreas.end(), sName) );
+    return ( it == m_cAreas.end() )  ?  EAreaIdInvalid  :  ( it - m_cAreas.begin() );
 }
 
 

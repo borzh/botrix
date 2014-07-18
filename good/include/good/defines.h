@@ -8,64 +8,66 @@
 
 
 #ifndef abstract
-#	define abstract
+#    define abstract
 #endif
 
 
 #ifndef NULL
-#	define NULL                         0
+#    define NULL                         0
 #endif
 
 
-#ifdef LINUX
-    typedef char Char;
+#ifdef _WIN32
+    typedef Char TChar;
+#else
+    typedef char TChar;
 #endif
 
 
 #ifndef TIME_INFINITE
-#	define TIME_INFINITE                0xFFFFFFFF
+#    define TIME_INFINITE                0xFFFFFFFF
 #endif
 
 
 #ifndef MAX_UINT32
 /// Max of unsigned 32bit int.
-#	define MAX_UINT32                   0xFFFFFFFF
+#    define MAX_UINT32                   0xFFFFFFFF
 #endif
 
 
 #ifndef MAX_INT32
 /// Max of signed 32bit int.
-#	define MAX_INT32                    0x7FFFFFFF
+#    define MAX_INT32                    0x7FFFFFFF
 #endif
 
 
 #ifndef MAX_UINT16
 /// Max of unsigned 16bit short.
-#	define MAX_UINT16                   0xFFFF
+#    define MAX_UINT16                   0xFFFF
 #endif
 
 
 #ifndef MAX_INT16
 /// Max of signed 16bit short.
-#	define MAX_INT16                    0x7FFF
+#    define MAX_INT16                    0x7FFF
 #endif
 
 
 #ifndef MAX2
 /// Max of two numbers.
-#	define MAX2(a, b)                   ((a)>=(b)?(a):(b))
+#    define MAX2(a, b)                   ((a)>=(b)?(a):(b))
 #endif
 
 
 #ifndef MIN2
 /// Min of two numbers.
-#	define MIN2(a, b)                   ((a)<=(b)?(a):(b))
+#    define MIN2(a, b)                   ((a)<=(b)?(a):(b))
 #endif
 
 
 #ifndef SQR
 /// Square of a number.
-#	define SQR(x)                       ((x)*(x))
+#    define SQR(x)                       ((x)*(x))
 #endif
 
 
@@ -161,49 +163,54 @@
 
 /// Debug break, stopping execution.
 #ifndef BreakDebugger
-#	ifdef _WIN32
-#		define AsmBreak()          __asm { int 3 }
-#	else
-#		define AsmBreak()          __asm __volatile( "pause" );
-#	endif
+#   ifdef _WIN32
+#       define AsmBreak()          __asm { int 3 }
+#   else
+#       define AsmBreak()          __asm __volatile( "pause" );
+#   endif
 #endif
 
 
 /// Debug asserts. Will produce debug break, allowing debugging if exp is false.
 #if defined(DEBUG) || defined(_DEBUG)
 
-#	ifndef DebugPrint
-#		include <stdio.h>
-#		define DebugPrint printf
-#	endif
+#   ifndef DebugPrint
+#       include <stdio.h>
+#       define DebugPrint(...) { printf(__VA_ARGS__); fflush(stdout); }
+#   endif
 
-#	ifndef DebugAssert
-#		define DebugAssert(exp)\
+#   ifndef DebugAssert
+#       ifdef _WIN32
+#           define DebugAssert(exp)\
             if ( !(exp) )\
             {\
                 DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
                 AsmBreak();\
             }
-#	endif
+#       else
+#           include <assert.h>
+#           define DebugAssert assert
+#       endif
+#   endif
 
 #else // if defined(DEBUG) || defined(_DEBUG)
 
-#	ifndef DebugPrint
-#		define DebugPrint(...)
-#	endif
+#   ifndef DebugPrint
+#       define DebugPrint(...)
+#   endif
 
-#	ifndef DebugAssert
-#		ifdef BETA_VERSION
-#			define DebugAssert(exp)\
-                if (!(exp))\
-                {\
-                    DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
-                    exit(1);\
-                }
-#		else
-#			define DebugAssert(...)
-#		endif
-#	endif
+#   ifndef DebugAssert
+#       ifdef BETA_VERSION
+#           define DebugAssert(exp)\
+               if (!(exp))\
+               {\
+                   DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
+                   exit(1);\
+               }
+#       else
+#           define DebugAssert(...)
+#       endif
+#   endif
 
 #endif
 

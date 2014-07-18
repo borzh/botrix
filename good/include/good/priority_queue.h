@@ -7,8 +7,10 @@
 #define __GOOD_PRIORITY_QUEUE_H__
 
 
+#include <vector>
+#include <algorithm>    // std::find
+
 #include "good/heap.h"
-#include "good/vector.h"
 
 
 namespace good
@@ -19,10 +21,10 @@ namespace good
      * Implementation of priority queue with binary heap.
      */
     template <
-        typename T,                                             ///< Type to save in prority queue.
-        typename Less = less<T>,                                ///< Type to compare elements of type T.
-        typename Alloc = allocator<T>,                          ///< Allocator for T.
-        template <typename, typename> class Container = vector  ///< Must be random access.
+        typename T,                                                 ///< Type to save in prority queue.
+        typename Less = std::less<T>,                               ///< Type to compare elements of type T.
+        typename Alloc = allocator<T>,                         ///< Allocator for T.
+        template <typename, typename> class Container = std::vector ///< Must be random access.
     >
     class priority_queue
     {
@@ -97,7 +99,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         void modify( const T& elem )
         {
-            typename container_t::iterator it = find(m_cContainer.begin(), m_cContainer.end(), elem);
+            typename container_t::iterator it = std::find(m_cContainer.begin(), m_cContainer.end(), elem);
             DebugAssert(it != m_cContainer.end());
 
             good::heap_modify(&*m_cContainer.begin(), &*it - &*m_cContainer.begin(), size(), m_cLess);

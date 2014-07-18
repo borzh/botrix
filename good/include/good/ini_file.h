@@ -7,9 +7,8 @@
 #define __GOOD_INI_FILE_H__
 
 
-#include "good/list.h"
-#include "good/string.h"
-#include "good/utility.h"
+#include <list>
+#include <good/string.h>
 
 
 //****************************************************************************************************************
@@ -33,7 +32,7 @@
 //****************************************************************************************************************
 
 
-// Define this to have maximum files size. Don't undef it, because 1Gb of memory for ini file is too much,
+// Define this to have maximum files size. Don't undef it, because 1Mb of memory for ini file is too much,
 // don't you think?
 #ifndef MAX_INI_FILE_SIZE
 #	define MAX_INI_FILE_SIZE 1*1024*1024 // 1Mb.
@@ -42,10 +41,6 @@
 
 // Define this to stop processing ini file if there was syntax error.
 //#define INI_FILE_STOP_ON_ERROR
-
-
-// Define this to not to trim key, values and section names after reading file.
-//#define INI_FILE_DONT_TRIM_STRINGS
 
 
 // Define this if you want to change key-value separator. By default it is '='.
@@ -74,11 +69,11 @@
 #endif
 
 
-// Define this and typedef ini_string to say, std::string before including this file.
+// Define this and typedef ini_string to say, good::string before including this file.
 // But note that implementation with ini_string doesn't copies strings from file buffer
 // so it's actually saves memory and is fast (because it just saves pointers to strings).
 #ifndef INI_FILE_STRING_DEFINED
-#	include "good/string.h"
+#	include <good/string.h>
     typedef good::string ini_string;
 #endif
 
@@ -126,7 +121,7 @@ namespace good
             bool eolAterJunk:1;   ///< If true then end of line is needed after junk.
         };
 
-        typedef list< struct config > configs;          ///< List of configurations of this ini file section.
+        typedef std::list< struct config > configs;     ///< List of configurations of this ini file section.
         typedef configs::const_iterator const_iterator; ///< Const iterator of list of configurations.
         typedef configs::iterator iterator;             ///< Iterator of list of configurations.
 
@@ -251,7 +246,7 @@ namespace good
 
     public: // Types.
 
-        typedef list<ini_section> container_t;               ///< Type of container of sections.
+        typedef std::list<ini_section> container_t;          ///< Type of container of sections.
         typedef container_t::const_iterator const_iterator;  ///< Const iterator of sections.
         typedef container_t::iterator iterator;              ///< Iterator of sections.
 
@@ -259,13 +254,14 @@ namespace good
     public: // Members.
         ini_string name;               ///< File name.
         ini_string junkBeforeSections; ///< Comments and new lines before first section. Normally empty.
+        bool bTrimStrings;             ///< Set to true to trim keys/values.
 
 
     public: // Methods.
         //--------------------------------------------------------------------------------------------------------
         /// Constructor with file name as parameter.
         //--------------------------------------------------------------------------------------------------------
-        ini_file(): name(""), junkBeforeSections(), m_pBuffer(NULL), m_lSections() {}
+        ini_file(): name(""), junkBeforeSections(), bTrimStrings(true), m_pBuffer(NULL), m_lSections() {}
 
         //--------------------------------------------------------------------------------------------------------
         /// Destructor.

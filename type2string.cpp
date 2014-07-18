@@ -2,7 +2,8 @@
 #include "type2string.h"
 #include "mods/borzh/types_borzh.h"
 
-#include "good/string_buffer.h"
+#include <good/string_buffer.h>
+#include <good/string_utils.h>
 
 good::string sUnknown("unknown");
 good::string sEmpty("");
@@ -14,59 +15,57 @@ extern int iMainBufferSize;
 //================================================================================================================
 const good::string& EnumToString( int iEnum, int iEnumCount, const good::string aStrings[], const good::string& sDefault )
 {
-	return (0 <= iEnum && iEnum < iEnumCount) ? aStrings[iEnum] : sDefault;
+    return (0 <= iEnum && iEnum < iEnumCount) ? aStrings[iEnum] : sDefault;
 }
 
 int EnumFromString( const good::string& s, int iEnumCount, const good::string aStrings[] )
 {
-	for ( int i=0; i < iEnumCount; ++i )
-		if ( s == aStrings[i] )
-			return i;
-	return -1;
+    for ( int i=0; i < iEnumCount; ++i )
+        if ( s == aStrings[i] )
+            return i;
+    return -1;
 }
 
 
 //================================================================================================================
 const good::string& FlagsToString( int iFlags, int iFlagsCount, const good::string aStrings[] )
 {
-	if ( iFlags == 0 )
-		return sEmpty;
+    if ( iFlags == 0 )
+        return sEmpty;
 
-	static good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
-	sbBuffer.erase();
+    static good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
+    sbBuffer.erase();
 
-	for ( int i=0; i < iFlagsCount; ++i )
-		if ( FLAG_ALL_SET(1<<i, iFlags) )
-		{
-			sbBuffer.append( aStrings[i] );
-			sbBuffer.append(' ');
-		}
+    for ( int i=0; i < iFlagsCount; ++i )
+        if ( FLAG_ALL_SET(1<<i, iFlags) )
+            sbBuffer <<  aStrings[i] << ' ';
 
-	sbBuffer.erase(sbBuffer.length()-1, 1); // Erase last space.
-	return sbBuffer;
+    sbBuffer.erase(sbBuffer.length()-1, 1); // Erase last space.
+    return sbBuffer;
 }
 
 int FlagsFromString( const good::string& s, int iFlagsCount, const good::string aStrings[] )
 {
-	int iResult = 0;
-	StringVector aFlags( s.split<good::vector>(' ', true) );
+    int iResult = 0;
+    StringVector aFlags;
+    good::split(s, aFlags, ' ', true);
 
-	for ( int i=0; i < (int)aFlags.size(); ++i )
-	{
-		int j;
-		for ( j=0; j < iFlagsCount; ++j )
-		{
-			if ( aFlags[i] == aStrings[j] )
-			{
-				FLAG_SET( 1<<j, iResult );
-				break;
-			}
-		}
-		if ( j == iFlagsCount ) // Couldn't find flag in array of strings, return an error.
-			return -1;
-	}
-	
-	return iResult;
+    for ( int i=0; i < (int)aFlags.size(); ++i )
+    {
+        int j;
+        for ( j=0; j < iFlagsCount; ++j )
+        {
+            if ( aFlags[i] == aStrings[j] )
+            {
+                FLAG_SET( 1<<j, iResult );
+                break;
+            }
+        }
+        if ( j == iFlagsCount ) // Couldn't find flag in array of strings, return an error.
+            return -1;
+    }
+
+    return iResult;
 }
 
 
@@ -76,34 +75,31 @@ int FlagsFromString( const good::string& s, int iFlagsCount, const good::string 
 //****************************************************************************************************************
 const good::string& CTypeToString::StringVectorToString( const StringVector& aStrings )
 {
-	static good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
-	sbBuffer.erase();
+    static good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
+    sbBuffer.erase();
 
-	for ( StringVector::const_iterator it = aStrings.begin(); it != aStrings.end(); ++it )
-	{
-		sbBuffer.append(*it);
-		sbBuffer.append(' ');
-	}
+    for ( StringVector::const_iterator it = aStrings.begin(); it != aStrings.end(); ++it )
+        sbBuffer << *it << ' ';
 
-	return sbBuffer;
+    return sbBuffer;
 }
 
-	
+
 //----------------------------------------------------------------------------------------------------------------
 good::string aBools[2] =
 {
-	"off",
-	"on"
+    "off",
+    "on"
 };
 
 int CTypeToString::BoolFromString( const good::string& sBool )
 {
-	return EnumFromString( sBool, 2, aBools );
+    return EnumFromString( sBool, 2, aBools );
 }
 
 const good::string& CTypeToString::BoolToString( bool b )
 {
-	return aBools[b];
+    return aBools[b];
 }
 
 
@@ -112,19 +108,19 @@ const good::string& CTypeToString::BoolToString( bool b )
 //----------------------------------------------------------------------------------------------------------------
 good::string aMods[EModId_Total] =
 {
-	"hl2dm",
-	"css",
-	"borzh"
+    "hl2dm",
+    "css",
+    "borzh"
 };
 
 int CTypeToString::ModFromString( const good::string& sMod )
 {
-	return EnumFromString( sMod, EModId_Total, aMods );
+    return EnumFromString( sMod, EModId_Total, aMods );
 }
 
 const good::string& CTypeToString::ModToString( TModId iMod )
 {
-	return EnumToString( iMod, EModId_Total, aMods, sUnknown );
+    return EnumToString( iMod, EModId_Total, aMods, sUnknown );
 }
 
 
@@ -133,19 +129,19 @@ const good::string& CTypeToString::ModToString( TModId iMod )
 //----------------------------------------------------------------------------------------------------------------
 good::string aAccessFlags[FCommandAccessTotal] =
 {
-	"waypoint",
-	"bot",
-	"config",
+    "waypoint",
+    "bot",
+    "config",
 };
 
 int CTypeToString::AccessFlagsFromString( const good::string& sFlags )
 {
-	return FlagsFromString( sFlags, FCommandAccessTotal, aAccessFlags );
+    return FlagsFromString( sFlags, FCommandAccessTotal, aAccessFlags );
 }
 
 const good::string& CTypeToString::AccessFlagsToString( TCommandAccessFlags iFlags )
 {
-	return FlagsToString( iFlags, FCommandAccessTotal, aAccessFlags );
+    return FlagsToString( iFlags, FCommandAccessTotal, aAccessFlags );
 }
 
 
@@ -154,27 +150,27 @@ const good::string& CTypeToString::AccessFlagsToString( TCommandAccessFlags iFla
 //----------------------------------------------------------------------------------------------------------------
 good::string aWaypointFlags[FWaypointTotal] =
 {
-	"stop",
-	"camper",
-	"sniper",
-	"weapon",
-	"ammo",
-	"health",
-	"armor",
-	"health_machine",
-	"armor_machine",
-	"button",
-	"see_button",
+    "stop",
+    "camper",
+    "sniper",
+    "weapon",
+    "ammo",
+    "health",
+    "armor",
+    "health_machine",
+    "armor_machine",
+    "button",
+    "see_button",
 };
 
 int CTypeToString::WaypointFlagsFromString( const good::string& sFlags )
 {
-	return FlagsFromString( sFlags, FWaypointTotal, aWaypointFlags ); 
+    return FlagsFromString( sFlags, FWaypointTotal, aWaypointFlags );
 }
 
 const good::string& CTypeToString::WaypointFlagsToString(TWaypointFlags iFlags)
 {
-	return FlagsToString( iFlags, FWaypointTotal, aWaypointFlags );
+    return FlagsToString( iFlags, FWaypointTotal, aWaypointFlags );
 }
 
 
@@ -183,27 +179,27 @@ const good::string& CTypeToString::WaypointFlagsToString(TWaypointFlags iFlags)
 //----------------------------------------------------------------------------------------------------------------
 good::string aPathFlags[FPathTotal] =
 {
-	"crouch",
-	"jump",
-	"break",
-	"sprint",
-	"ladder",
-	"stop",
-	"damage",
-	"flashlight",
-	"door",
-	"totem",
+    "crouch",
+    "jump",
+    "break",
+    "sprint",
+    "ladder",
+    "stop",
+    "damage",
+    "flashlight",
+    "door",
+    "totem",
 };
 
 
 int CTypeToString::PathFlagsFromString( const good::string& sFlags )
 {
-	return FlagsFromString( sFlags, FPathTotal, aPathFlags );
+    return FlagsFromString( sFlags, FPathTotal, aPathFlags );
 }
 
 const good::string& CTypeToString::PathFlagsToString( TPathFlags iFlags )
 {
-	return FlagsToString( iFlags, FPathTotal, aPathFlags );
+    return FlagsToString( iFlags, FPathTotal, aPathFlags );
 }
 
 
@@ -212,31 +208,31 @@ const good::string& CTypeToString::PathFlagsToString( TPathFlags iFlags )
 //----------------------------------------------------------------------------------------------------------------
 good::string aDrawTypeFlags[FWaypointDrawTotal] =
 {
-	"line",
-	"beam",
-	"box",
-	"text",
+    "line",
+    "beam",
+    "box",
+    "text",
 };
 
 int CTypeToString::WaypointDrawFlagsFromString( const good::string& sFlags )
 {
-	return FlagsFromString( sFlags, FWaypointDrawTotal, aDrawTypeFlags ); 
+    return FlagsFromString( sFlags, FWaypointDrawTotal, aDrawTypeFlags );
 }
 
 const good::string& CTypeToString::WaypointDrawFlagsToString( TWaypointDrawFlags iFlags )
 {
-	return FlagsToString( iFlags, FWaypointDrawTotal, aDrawTypeFlags );
+    return FlagsToString( iFlags, FWaypointDrawTotal, aDrawTypeFlags );
 }
 
 
 int CTypeToString::PathDrawFlagsFromString( const good::string& sFlags )
 {
-	return FlagsFromString( sFlags, FPathDrawTotal, aDrawTypeFlags ); 
+    return FlagsFromString( sFlags, FPathDrawTotal, aDrawTypeFlags );
 }
 
 const good::string& CTypeToString::PathDrawFlagsToString( TPathDrawFlags iFlags )
 {
-	return FlagsToString( iFlags, FPathDrawTotal, aDrawTypeFlags );
+    return FlagsToString( iFlags, FPathDrawTotal, aDrawTypeFlags );
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -244,35 +240,35 @@ const good::string& CTypeToString::PathDrawFlagsToString( TPathDrawFlags iFlags 
 //----------------------------------------------------------------------------------------------------------------
 good::string aItemTypes[EEntityTypeTotal+1] =
 {
-	"health",
-	"armor",
-	"weapon",
-	"ammo",
-	"button",
-	"door",
-	"object",
-	"other",
+    "health",
+    "armor",
+    "weapon",
+    "ammo",
+    "button",
+    "door",
+    "object",
+    "other",
 };
 
 
 int CTypeToString::EntityTypeFromString( const good::string& sType )
 {
-	return EnumFromString( sType, EEntityTypeTotal+1, aItemTypes ); 
+    return EnumFromString( sType, EEntityTypeTotal+1, aItemTypes );
 }
 
 const good::string& CTypeToString::EntityTypeToString( TEntityType iType )
 {
-	return EnumToString( iType, EEntityTypeTotal+1, aItemTypes, sUnknown );
+    return EnumToString( iType, EEntityTypeTotal+1, aItemTypes, sUnknown );
 }
 
 int CTypeToString::EntityTypeFlagsFromString( const good::string& sFlags )
 {
-	return FlagsFromString( sFlags, EEntityTypeTotal+1, aItemTypes ); 
+    return FlagsFromString( sFlags, EEntityTypeTotal+1, aItemTypes );
 }
 
 const good::string& CTypeToString::EntityTypeFlagsToString( TEntityTypeFlags iItemTypeFlags )
 {
-	return FlagsToString( iItemTypeFlags, EEntityTypeTotal+1, aItemTypes );
+    return FlagsToString( iItemTypeFlags, EEntityTypeTotal+1, aItemTypes );
 }
 
 
@@ -281,28 +277,28 @@ const good::string& CTypeToString::EntityTypeFlagsToString( TEntityTypeFlags iIt
 //----------------------------------------------------------------------------------------------------------------
 good::string aEntityClassFlags[FEntityTotal] =
 {
-	"use",
-	"respawnable",
-	"explosive",
-	"heavy",
-	"box",
+    "use",
+    "respawnable",
+    "explosive",
+    "heavy",
+    "box",
 };
 const good::string sNone("none");
 
 int CTypeToString::EntityClassFlagsFromString( const good::string& sFlags )
 {
-	if ( sFlags == sNone )
-		return 0;
-	else
-		return FlagsFromString( sFlags, FEntityTotal, aEntityClassFlags ); 
+    if ( sFlags == sNone )
+        return 0;
+    else
+        return FlagsFromString( sFlags, FEntityTotal, aEntityClassFlags );
 }
 
 const good::string& CTypeToString::EntityClassFlagsToString( TEntityFlags iItemFlags )
 {
-	if ( iItemFlags == 0 )
-		return sNone;
-	else
-		return FlagsToString( iItemFlags, FEntityTotal, aEntityClassFlags );
+    if ( iItemFlags == 0 )
+        return sNone;
+    else
+        return FlagsToString( iItemFlags, FEntityTotal, aEntityClassFlags );
 }
 
 
@@ -311,19 +307,19 @@ const good::string& CTypeToString::EntityClassFlagsToString( TEntityFlags iItemF
 //----------------------------------------------------------------------------------------------------------------
 good::string aItemDrawFlags[EItemDrawTotal] =
 {
-	"name",
-	"box",
-	"waypoint",
+    "name",
+    "box",
+    "waypoint",
 };
 
 int CTypeToString::ItemDrawFlagsFromString( const good::string& sFlags )
 {
-	return FlagsFromString( sFlags, EItemDrawTotal, aItemDrawFlags ); 
+    return FlagsFromString( sFlags, EItemDrawTotal, aItemDrawFlags );
 }
 
 const good::string& CTypeToString::ItemDrawFlagsToString( TItemDrawFlags iFlags )
 {
-	return FlagsToString( iFlags, EItemDrawTotal, aItemDrawFlags );
+    return FlagsToString( iFlags, EItemDrawTotal, aItemDrawFlags );
 }
 
 
@@ -332,27 +328,27 @@ const good::string& CTypeToString::ItemDrawFlagsToString( TItemDrawFlags iFlags 
 //----------------------------------------------------------------------------------------------------------------
 good::string aWeaponTypes[EWeaponTotal] =
 {
-	"physics",
-	"manual",
-	"grenade",
-	"flash",
-	"smoke",
-	"remote",
-	"pistol",
-	"shotgun",
-	"rifle",
-	"sniper",
-	"rocket",
+    "physics",
+    "manual",
+    "grenade",
+    "flash",
+    "smoke",
+    "remote",
+    "pistol",
+    "shotgun",
+    "rifle",
+    "sniper",
+    "rocket",
 };
 
 int CTypeToString::WeaponTypeFromString( const good::string& sType )
 {
-	return EnumFromString( sType, EWeaponTotal, aWeaponTypes );
+    return EnumFromString( sType, EWeaponTotal, aWeaponTypes );
 }
 
 const good::string& CTypeToString::WeaponTypeToString( TWeaponType iType )
 {
-	return EnumToString( iType, EWeaponTotal, aWeaponTypes, sUnknown );
+    return EnumToString( iType, EWeaponTotal, aWeaponTypes, sUnknown );
 }
 
 
@@ -361,21 +357,21 @@ const good::string& CTypeToString::WeaponTypeToString( TWeaponType iType )
 //----------------------------------------------------------------------------------------------------------------
 good::string aPreferences[EBotIntelligenceTotal] =
 {
-	"lowest",
-	"lowest",
-	"normal",
-	"high",
-	"highest",
+    "lowest",
+    "lowest",
+    "normal",
+    "high",
+    "highest",
 };
 
 int CTypeToString::PreferenceFromString( const good::string& sPreference )
 {
-	return EnumFromString( sPreference, EBotIntelligenceTotal, aPreferences );
+    return EnumFromString( sPreference, EBotIntelligenceTotal, aPreferences );
 }
 
 const good::string& CTypeToString::PreferenceToString( TBotIntelligence iPreference )
 {
-	return EnumToString( iPreference, EBotIntelligenceTotal, aPreferences, sUnknown );
+    return EnumToString( iPreference, EBotIntelligenceTotal, aPreferences, sUnknown );
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -383,16 +379,16 @@ const good::string& CTypeToString::PreferenceToString( TBotIntelligence iPrefere
 //----------------------------------------------------------------------------------------------------------------
 good::string aIntelligences[EBotIntelligenceTotal] =
 {
-	"fool",
-	"stupied",
-	"normal",
-	"smart",
-	"pro",
+    "fool",
+    "stupied",
+    "normal",
+    "smart",
+    "pro",
 };
 
 const good::string& CTypeToString::IntelligenceToString( TBotIntelligence iIntelligence )
 {
-	return EnumToString( iIntelligence, EBotIntelligenceTotal, aIntelligences, sUnknown );
+    return EnumToString( iIntelligence, EBotIntelligenceTotal, aIntelligences, sUnknown );
 }
 
 
@@ -401,17 +397,17 @@ const good::string& CTypeToString::IntelligenceToString( TBotIntelligence iIntel
 //----------------------------------------------------------------------------------------------------------------
 good::string aBotTasks[EBotTasksTotal] =
 {
-	"find health",
-	"find armor",
-	"find weapon",
-	"find ammo",
-	"chase enemy",
-	"find enemy",
+    "find health",
+    "find armor",
+    "find weapon",
+    "find ammo",
+    "chase enemy",
+    "find enemy",
 };
 
 const good::string& CTypeToString::BotTaskToString( TBotTaskHL2DM iBotTask )
 {
-	return EnumToString( iBotTask, EBotTasksTotal, aBotTasks, sUnknown );
+    return EnumToString( iBotTask, EBotTasksTotal, aBotTasks, sUnknown );
 }
 
 
@@ -420,99 +416,99 @@ const good::string& CTypeToString::BotTaskToString( TBotTaskHL2DM iBotTask )
 //----------------------------------------------------------------------------------------------------------------
 good::string aBotCommands[EBotChatTotal] =
 {
-	"error",
-	"greeting",
-	"bye",
-	"busy",
-	"affirmative",
-	"negative",
-	"affirm",
-	"negate",
-	"call",
-	"call response",
-	"help",
-	"stop",
-	"come",
-	"follow",
-	"attack",
-	"no kill",
-	"sit down",
-	"stand up",
-	"jump",
-	"leave",
-	"dont hurt",
+    "error",
+    "greeting",
+    "bye",
+    "busy",
+    "affirmative",
+    "negative",
+    "affirm",
+    "negate",
+    "call",
+    "call response",
+    "help",
+    "stop",
+    "come",
+    "follow",
+    "attack",
+    "no kill",
+    "sit down",
+    "stand up",
+    "jump",
+    "leave",
+    "dont hurt",
 
-	"ok",
-	"done",
-	"wait",
-	"no moves",
-	"think",
-	"explore",
-	"explore new",
-	"finish explore",
+    "ok",
+    "done",
+    "wait",
+    "no moves",
+    "think",
+    "explore",
+    "explore new",
+    "finish explore",
 
-	"new area",
-	"change area",
+    "new area",
+    "change area",
 
-	"weapon found",
+    "weapon found",
 
-	"door found",
-	"door change",
-	"door no change",
+    "door found",
+    "door change",
+    "door no change",
 
-	"button see",
-	"button can push",
-	"button cant push",
+    "button see",
+    "button can push",
+    "button cant push",
 
-	"box found",
-	"box lost",
-	"gravity gun have",
-	"gravity gun need",
+    "box found",
+    "box lost",
+    "gravity gun have",
+    "gravity gun need",
 
-	"wall found",
-	"box need",
-	
-	"box try",
-	"box i take",
-	"box you take",
-	"box i drop",
-	"box you drop",
+    "wall found",
+    "box need",
 
-	"button weapon",
-	"button no weapon",
+    "box try",
+    "box i take",
+    "box you take",
+    "box i drop",
+    "box you drop",
 
-	"door try",
-	"button try",
-	"button try go",
-	"button door",
-	"button toggles",
-	"button no toggles",
+    "button weapon",
+    "button no weapon",
 
-	"button i push",
-	"button you push",
-	"button i shoot",
-	"button you shoot",
-	
-	"area go",
-	"area cant go",
-	"door go",
-	"button go",
+    "door try",
+    "button try",
+    "button try go",
+    "button door",
+    "button toggles",
+    "button no toggles",
 
-	"cancel task",
-	"better idea",
+    "button i push",
+    "button you push",
+    "button i shoot",
+    "button you shoot",
 
-	"found plan",
+    "area go",
+    "area cant go",
+    "door go",
+    "button go",
+
+    "cancel task",
+    "better idea",
+
+    "found plan",
 };
 
 int CTypeToString::BotCommandFromString( const good::string& sCommand )
 {
-	return EnumFromString( sCommand, EBotChatTotal, aBotCommands );
+    return EnumFromString( sCommand, EBotChatTotal, aBotCommands );
 }
 
 
 const good::string& CTypeToString::BotCommandToString( TBotChat iCommand )
 {
-	return EnumToString( iCommand, EBotChatTotal, aBotCommands, sUnknown );
+    return EnumToString( iCommand, EBotChatTotal, aBotCommands, sUnknown );
 }
 
 #ifdef BOTRIX_BORZH_MOD
@@ -522,24 +518,24 @@ const good::string& CTypeToString::BotCommandToString( TBotChat iCommand )
 //----------------------------------------------------------------------------------------------------------------
 good::string aBotActions[EBotActionTotal] =
 {
-	"MOVE",
-	"PUSH-BUTTON",
-	"SHOOT-BUTTON",
-	"CARRY-BOX",
-	"CARRY-BOX-FAR",
-	"DROP-BOX",
-	"CLIMB-BOX",
-	"FALL",
+    "MOVE",
+    "PUSH-BUTTON",
+    "SHOOT-BUTTON",
+    "CARRY-BOX",
+    "CARRY-BOX-FAR",
+    "DROP-BOX",
+    "CLIMB-BOX",
+    "FALL",
 };
 
 int CTypeToString::BotActionFromString( const good::string& sAction )
 {
-	return EnumFromString( sAction, EBotActionTotal, aBotActions );
+    return EnumFromString( sAction, EBotActionTotal, aBotActions );
 }
 
 const good::string& CTypeToString::BotActionToString( int iAction )
 {
-	return EnumToString( iAction, EBotActionTotal, aBotActions, sUnknown );
+    return EnumToString( iAction, EBotActionTotal, aBotActions, sUnknown );
 }
 
 
@@ -548,38 +544,38 @@ const good::string& CTypeToString::BotActionToString( int iAction )
 //----------------------------------------------------------------------------------------------------------------
 good::string aBorzhTasks[EBorzhTaskTotal] =
 {
-	"EBorzhTaskWait",                              ///< Wait for timer to expire. Used during/after talk. Argument is time to wait in msecs.
-	"EBorzhTaskLook",                              ///< Look at door/button/box.
-	"EBorzhTaskMove",                              ///< Move to given waypoint.
-	"EBorzhTaskMoveAndCarry",                      ///< Move to given waypoint carrying a box.
-	"EBorzhTaskSpeak",                             ///< Speak about something. Argument represents door/button/box/weapon, etc.
+    "EBorzhTaskWait",                              ///< Wait for timer to expire. Used during/after talk. Argument is time to wait in msecs.
+    "EBorzhTaskLook",                              ///< Look at door/button/box.
+    "EBorzhTaskMove",                              ///< Move to given waypoint.
+    "EBorzhTaskMoveAndCarry",                      ///< Move to given waypoint carrying a box.
+    "EBorzhTaskSpeak",                             ///< Speak about something. Argument represents door/button/box/weapon, etc.
 
-	"EBorzhTaskPushButton",                        ///< Push a button.
-	"EBorzhTaskWeaponSet",                         ///< Set current weapon. Argument can be 0xFF for crowbar or CModBorzh::iVarValueWeapon*.
-	"EBorzhTaskWeaponZoom",                        ///< Zoom weapon.
-	"EBorzhTaskWeaponRemoveZoom",                  ///< Remove zoom from weapon.
-	"EBorzhTaskWeaponShoot",                       ///< Shoot weapon.
+    "EBorzhTaskPushButton",                        ///< Push a button.
+    "EBorzhTaskWeaponSet",                         ///< Set current weapon. Argument can be 0xFF for crowbar or CModBorzh::iVarValueWeapon*.
+    "EBorzhTaskWeaponZoom",                        ///< Zoom weapon.
+    "EBorzhTaskWeaponRemoveZoom",                  ///< Remove zoom from weapon.
+    "EBorzhTaskWeaponShoot",                       ///< Shoot weapon.
 
-	"EBorzhTaskCarryBox",                          ///< Start carrying box. Argument is box number.
-	"EBorzhTaskDropBox",                           ///< Drop box at needed position in an area. Arguments are box number and area number.
+    "EBorzhTaskCarryBox",                          ///< Start carrying box. Argument is box number.
+    "EBorzhTaskDropBox",                           ///< Drop box at needed position in an area. Arguments are box number and area number.
 
-	"EBorzhTaskWaitAnswer",                        ///< Wait for other player to accept/reject task.
-	"EBorzhTaskWaitPlanner",                       ///< Wait for planner to finish.
-	"EBorzhTaskWaitPlayer",                        ///< Wait for other player to do something. The bot will say "done" phrase when it finishes.
-	"EBorzhTaskWaitButton",                        ///< Wait for other player to push a button. The other player must say "i will push button now".
-	"EBorzhTaskWaitDoor",                          ///< Wait for other player to check a door. The other player must say "the door is opened/closed".
-	"EBorzhTaskWaitIndications",                   ///< Wait for commands of other player.
+    "EBorzhTaskWaitAnswer",                        ///< Wait for other player to accept/reject task.
+    "EBorzhTaskWaitPlanner",                       ///< Wait for planner to finish.
+    "EBorzhTaskWaitPlayer",                        ///< Wait for other player to do something. The bot will say "done" phrase when it finishes.
+    "EBorzhTaskWaitButton",                        ///< Wait for other player to push a button. The other player must say "i will push button now".
+    "EBorzhTaskWaitDoor",                          ///< Wait for other player to check a door. The other player must say "the door is opened/closed".
+    "EBorzhTaskWaitIndications",                   ///< Wait for commands of other player.
 
-	// Next tasks are tasks that consist of several atomic tasks. Ordered by priority, i.e. explore has higher priority than try button.
-	"EBorzhTaskButtonTryDoors",                    ///< Check which doors opens a button. Argument: index is button, type is bool (already pushed or still not).
-	"EBorzhTaskBringBox",                          ///< Put box near a wall to climb it.
-	"EBorzhTaskExplore",                           ///< Exploring new area.
-	"EBorzhTaskGoToGoal",                          ///< Performing go to goal task.
+    // Next tasks are tasks that consist of several atomic tasks. Ordered by priority, i.e. explore has higher priority than try button.
+    "EBorzhTaskButtonTryDoors",                    ///< Check which doors opens a button. Argument: index is button, type is bool (already pushed or still not).
+    "EBorzhTaskBringBox",                          ///< Put box near a wall to climb it.
+    "EBorzhTaskExplore",                           ///< Exploring new area.
+    "EBorzhTaskGoToGoal",                          ///< Performing go to goal task.
 };
 
 const good::string& CTypeToString::BorzhTaskToString( int iTask )
 {
-	return EnumToString( iTask, EBorzhTaskTotal, aBorzhTasks, sUnknown );
+    return EnumToString( iTask, EBorzhTaskTotal, aBorzhTasks, sUnknown );
 }
 
 #endif // BOTRIX_BORZH_MOD

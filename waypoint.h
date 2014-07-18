@@ -2,12 +2,12 @@
 #define __BOTRIX_WAYPOINT_H__
 
 
-#include "vector.h"
+#include <good/graph.h>
 
 #include "source_engine.h"
 #include "types.h"
 
-#include "good/astar.h"
+#include "public/mathlib/vector.h"
 
 
 //****************************************************************************************************************
@@ -175,7 +175,7 @@ class CWaypoints
 
 public: // Types and constants.
     /// Graph that represents graph of waypoints.
-    typedef good::graph< CWaypoint, CWaypointPath, good::vector, good::vector > WaypointGraph;
+    typedef good::graph< CWaypoint, CWaypointPath, std::vector, std::vector > WaypointGraph;
     typedef WaypointGraph::node_t WaypointNode;     ///< Node of waypoint graph.
     typedef WaypointGraph::arc_t WaypointArc;       ///< Graph arc, i.e. path between two waypoints.
     typedef WaypointGraph::node_it WaypointNodeIt;  ///< Node iterator.
@@ -253,11 +253,7 @@ public: // Methods.
     static StringVector& GetAreas() { return m_cAreas; }
 
     /// Get area id from name.
-    static TAreaId GetAreaId( const good::string& sName )
-    {
-        StringVector::const_iterator it( good::find(m_cAreas.begin(), m_cAreas.end(), sName) );
-        return ( it == m_cAreas.end() )  ?  EAreaIdInvalid  :  ( it - m_cAreas.begin() );
-    }
+    static TAreaId GetAreaId( const good::string& sName );
 
     /// Add new area name.
     static TAreaId AddAreaName( const good::string& sName ) { m_cAreas.push_back(sName); return m_cAreas.size()-1; }
@@ -321,7 +317,7 @@ protected:
                     m_cBuckets[x][y][z].clear();
     }
 
-    typedef good::vector<TWaypointId> Bucket;
+    typedef std::vector<TWaypointId> Bucket;
     static Bucket m_cBuckets[BUCKETS_SIZE_X][BUCKETS_SIZE_Y][BUCKETS_SIZE_Z]; // 3D hash table of arrays of waypoint IDs.
 
     static StringVector m_cAreas;      // Areas names.

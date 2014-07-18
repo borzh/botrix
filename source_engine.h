@@ -2,15 +2,14 @@
 #define __BOTRIX_UTIL_H__
 
 
+#include "types.h"
+
+#include "server_plugin.h"
+
 #include "public/edict.h"
 #include "public/eiface.h"
 #include "public/engine/IEngineTrace.h"
 
-#include "good/mutex.h"
-
-#include "types.h"
-
-#include "server_plugin.h"
 
 
 /// Useful enum to know if one map position can be reached from another one.
@@ -220,9 +219,8 @@ protected:
     static bool m_bMessageUseTag;
     static trace_t m_TraceResult;
 
-    static good::mutex m_cMessagesMutex;
-    static good::vector<char*> m_aMessages;
-    static good::vector<edict_t*> m_aMessagesEntities;
+    static std::vector<char*> m_aMessages;
+    static std::vector<edict_t*> m_aMessagesEntities;
 
 };
 

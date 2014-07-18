@@ -1,18 +1,21 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "good/string_buffer.h"
+#include <good/string.h>
+#include <good/string_buffer.h>
 
-#include "bot.h"
 #include "clients.h"
 #include "chat.h"
 #include "waypoint_navigator.h"
 #include "server_plugin.h"
 
-#include "in_buttons.h"
+#include "bot.h"
+
+#include "game/shared/in_buttons.h"
 #include "public/irecipientfilter.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
-#include "tier0/memdbgon.h"
+#include "public/tier0/memdbgon.h"
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -29,7 +32,6 @@ CBot::CBot( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence iIntelligence
     CPlayer(pEdict, iIndex, true),
     m_iIntelligence(iIntelligence), r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ),
     m_aNearPlayers(CPlayers::Size()), m_aSeenEnemies(CPlayers::Size()), m_aEnemies(CPlayers::Size()),
-    m_aPickedItems(16),
     m_bPaused(false),
 #if defined(DEBUG) || defined(_DEBUG)
     m_bDebugging(true),
@@ -38,6 +40,7 @@ CBot::CBot( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence iIntelligence
 #endif
     m_bDontBreakObjects(false), m_bDontThrowObjects(false)
 {
+    m_aPickedItems.reserve(16);
     for ( TEntityType i=0; i < EEntityTypeTotal; ++i )
     {
         int iSize = CItems::GetItems(i).size() >> 4;
@@ -102,9 +105,7 @@ void CBot::Say(bool bTeamOnly, const char* szFormat, ...)
 {
     good::string_buffer sBuffer(szBotBuffer, 2048, false);
     if ( bTeamOnly )
-        sBuffer.append("(TEAM) ");
-    sBuffer.append( GetName() );
-    sBuffer.append( ": " );
+        sBuffer << "(TEAM) " << GetName() << ": ";
     int iSize = sBuffer.size();
 
     va_list vaList;
@@ -203,7 +204,7 @@ void CBot::Respawned()
 
     // Check if bot has physcannon / manual weapon.
     m_iPhyscannon = m_iManualWeapon = -1;
-    for ( int i=0; i < m_aWeapons.size(); ++i)
+    for ( size_t i=0; i < m_aWeapons.size(); ++i)
     {
         if ( m_aWeapons[i].IsPresent() )
         {
@@ -253,14 +254,14 @@ void CBot::Respawned()
     Vector vFoot = m_pController->GetLocalOrigin();
     for ( TEntityType iType = 0; iType < EEntityTypeObject; ++iType )
     {
-        good::vector<TEntityIndex>& aNear = m_aNearItems[iType];
-        good::vector<TEntityIndex>& aNearest = m_aNearestItems[iType];
+        std::vector<TEntityIndex>& aNear = m_aNearItems[iType];
+        std::vector<TEntityIndex>& aNearest = m_aNearestItems[iType];
 
-        const good::vector<CEntity>& aItems = CItems::GetItems(iType);
+        const std::vector<CEntity>& aItems = CItems::GetItems(iType);
         if ( aItems.size() == 0)
             continue;
 
-        for ( TEntityIndex i = 0; i < aItems.size(); ++i )
+        for ( TEntityIndex i = 0; i < (int)aItems.size(); ++i )
         {
             const CEntity* pItem = &aItems[i];
 
@@ -330,7 +331,7 @@ void CBot::ReceiveChatRequest( const CBotChat& cRequest )
         if ( m_iPrevTalk == -1 ) // This is a request from other player, generate response.
         {
             // We want to know what bot can answer.
-            const good::vector<TBotChat>& aPossibleAnswers = CChat::PossibleAnswers(cRequest.iBotChat);
+            const std::vector<TBotChat>& aPossibleAnswers = CChat::PossibleAnswers(cRequest.iBotChat);
             if ( aPossibleAnswers.size() == 1 )
                 cResponse.iBotChat = aPossibleAnswers[0];
             else if ( aPossibleAnswers.size() > 0 )
@@ -504,15 +505,15 @@ void CBot::PreThink()
                 m_fNextDrawNearObjectsTime = CBotrixPlugin::fTime + fDrawNearObjectsTime;
                 for ( TEntityType iType=0; iType < EEntityTypeTotal; ++iType)
                 {
-                    const good::vector<CEntity>& aItems = CItems::GetItems(iType);
-                    for ( int i=0; i < m_aNearItems[iType].size(); ++i) // Draw near items with white color.
+                    const std::vector<CEntity>& aItems = CItems::GetItems(iType);
+                    for ( size_t i=0; i < m_aNearItems[iType].size(); ++i) // Draw near items with white color.
                     {
                         ICollideable* pCollide = aItems[ m_aNearItems[iType][i] ].pEdict->GetCollideable();
                         CUtil::DrawBox(pCollide->GetCollisionOrigin(), pCollide->OBBMins(), pCollide->OBBMaxs(),
                                        fDrawNearObjectsTime, 0xFF, 0xFF, 0xFF, pCollide->GetCollisionAngles());
                     }
 
-                    for ( int i=0; i < m_aNearestItems[iType].size(); ++i) // Draw nearest items with red color.
+                    for ( size_t i=0; i < m_aNearestItems[iType].size(); ++i) // Draw nearest items with red color.
                     {
                         ICollideable* pCollide = aItems[ m_aNearestItems[iType][i] ].pEdict->GetCollideable();
                         CUtil::DrawBox(pCollide->GetCollisionOrigin(), pCollide->OBBMins(), pCollide->OBBMaxs(),
@@ -900,7 +901,7 @@ void CBot::UpdateWorld()
     if ( m_aPickedItems.size() )
     {
         if ( CBotrixPlugin::fTime >= m_aPickedItems[m_iCurrentPickedItem].fRemoveTime )
-            m_aPickedItems.erase(m_iCurrentPickedItem);
+            m_aPickedItems.erase(m_aPickedItems.begin() + m_iCurrentPickedItem);
         else
             ++m_iCurrentPickedItem;
         if ( m_iCurrentPickedItem >= m_aPickedItems.size() )
@@ -919,14 +920,14 @@ void CBot::UpdateWorld()
     Vector vFoot = m_pController->GetLocalOrigin();
     for ( TEntityType iType=0; iType < EEntityTypeTotal; ++iType )
     {
-        const good::vector<CEntity>& aItems = CItems::GetItems(iType);
+        const std::vector<CEntity>& aItems = CItems::GetItems(iType);
         if ( aItems.size() == 0)
             continue;
 
-        good::vector<TEntityIndex>& aNearest = m_aNearestItems[iType];
+        std::vector<TEntityIndex>& aNearest = m_aNearestItems[iType];
         int iNearestSize = aNearest.size();
 
-        good::vector<TEntityIndex>& aNear = m_aNearItems[iType];
+        std::vector<TEntityIndex>& aNear = m_aNearItems[iType];
         int iNearSize = aNear.size();
 
         // Update nearest items.
@@ -935,19 +936,19 @@ void CBot::UpdateWorld()
             const CEntity& cItem = aItems[ aNearest[i] ];
             if ( cItem.IsFree() ) // Remove object if it is removed from game.
             {
-                aNearest.erase(i);
+                aNearest.erase(aNearest.begin() + i);
                 --iNearestSize;
             }
             else if ( !cItem.IsOnMap() ) // Was on map before, but disappeared, bot could grab it or break it.
             {
                 PickItem( cItem, iType, aNearest[i] );
-                aNearest.erase(i);
+                aNearest.erase(aNearest.begin() + i);
                 --iNearestSize;
             }
             else if ( vFoot.DistToSqr(cItem.CurrentPosition()) > cItem.fRadiusSqr ) // Item becomes far.
             {
                 aNear.push_back(aNearest[i]);
-                aNearest.erase(i);
+                aNearest.erase(aNearest.begin() + i);
                 --iNearestSize;
             }
             else
@@ -960,7 +961,7 @@ void CBot::UpdateWorld()
             const CEntity& cItem = aItems[ aNear[i] ];
             if ( cItem.IsFree() || !cItem.IsOnMap() )
             {
-                aNear.erase(i);
+                aNear.erase(aNear.begin() + i);
                 --iNearSize;
             }
             else
@@ -969,7 +970,7 @@ void CBot::UpdateWorld()
 
                 if ( fDistSqr > CUtil::iNearItemMaxDistanceSqr ) // Item becomes far.
                 {
-                    aNear.erase(i);
+                    aNear.erase(aNear.begin() + i);
                     --iNearSize;
                 }
                 else
@@ -977,7 +978,7 @@ void CBot::UpdateWorld()
                     if ( fDistSqr <= cItem.fRadiusSqr ) // Can pick up.
                     {
                         aNearest.push_back(aNear[i]);
-                        aNear.erase(i);
+                        aNear.erase(aNear.begin() + i);
                         --iNearSize;
                     }
                     else
@@ -987,11 +988,11 @@ void CBot::UpdateWorld()
         }
 
         // Check if bot becomes close to items to consider them near (m_iCheckEntitiesPerFrame items max).
-        int iCheckTo = m_iNextNearItem[iType] + m_iCheckEntitiesPerFrame;
+        size_t iCheckTo = m_iNextNearItem[iType] + m_iCheckEntitiesPerFrame;
         if ( iCheckTo > aItems.size() )
             iCheckTo = aItems.size();
 
-        for ( int i = m_iNextNearItem[iType]; i < iCheckTo; ++i )
+        for ( size_t i = m_iNextNearItem[iType]; i < iCheckTo; ++i )
         {
             const CEntity* pItem = &aItems[i];
 
@@ -1206,7 +1207,7 @@ void CBot::CheckWeapon()
         }
 
         int iIdx = -1;
-        for ( int i=0; i < m_aWeapons.size(); ++i )
+        for ( size_t i = 0; i < m_aWeapons.size(); ++i )
             if ( m_aWeapons[i].IsPresent() && (m_aWeapons[i].NeedReload(0) || m_aWeapons[i].NeedReload(1)) )
             {
                 iIdx = i;

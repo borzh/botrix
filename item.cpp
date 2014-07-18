@@ -1,5 +1,9 @@
 #include "cbase.h"
 
+// Ugly fix for ugly Source Engine.
+#undef MINMAX_H
+#undef min
+#undef max
 #include "bot.h"
 #include "clients.h"
 #include "item.h"
@@ -109,32 +113,32 @@ bool CEntity::IsBreakable() const
 
 
 //================================================================================================================
-good::vector<CEntity> CItems::m_aItems[EEntityTypeTotal];            // Array of items.
-good::vector<CEntityClass> CItems::m_aItemClasses[EEntityTypeTotal]; // Array of item classes.
+std::vector<CEntity> CItems::m_aItems[EEntityTypeTotal];            // Array of items.
+std::vector<CEntityClass> CItems::m_aItemClasses[EEntityTypeTotal]; // Array of item classes.
 TEntityIndex CItems::m_iFreeIndex[EEntityTypeTotal];                 // First free weapon index.
 int CItems::m_iFreeEntityCount[EEntityTypeTotal];                    // Count of unused entities.
 
-good::vector<edict_t*> CItems::m_aOthers(1024);                      // Array of other entities.
+std::vector<edict_t*> CItems::m_aOthers(1024);                      // Array of other entities.
 
 #ifndef SOURCE_ENGINE_2006
-good::vector<edict_t*> CItems::m_aNewEntities(16);
+std::vector<edict_t*> CItems::m_aNewEntities(16);
 #endif
 
-good::vector< good::pair<good::string, TEntityFlags> > CItems::m_aObjectFlagsForModels(4);
+std::vector< std::pair<good::string, TEntityFlags> > CItems::m_aObjectFlagsForModels(4);
 good::bitset CItems::m_aUsedItems(MAX_EDICTS);
 int CItems::m_iCurrentEntity;
 bool CItems::m_bMapLoaded = false;
 
 
 //----------------------------------------------------------------------------------------------------------------
-TEntityIndex CItems::GetNearestItem( TEntityType iEntityType, const Vector& vOrigin, const good::vector<CPickedItem>& aSkip, const CEntityClass* pClass )
+TEntityIndex CItems::GetNearestItem( TEntityType iEntityType, const Vector& vOrigin, const std::vector<CPickedItem>& aSkip, const CEntityClass* pClass )
 {
-    good::vector<CEntity>& aItems = m_aItems[iEntityType];
+    std::vector<CEntity>& aItems = m_aItems[iEntityType];
 
     TEntityIndex iResult = -1;
     float fSqrDistResult = 0.0f;
 
-    for ( int i = 0; i < aItems.size(); ++i )
+    for ( size_t i = 0; i < aItems.size(); ++i )
     {
         CEntity& cItem = aItems[i];
         if ( (cItem.pEdict == NULL) || !CWaypoint::IsValid(cItem.iWaypoint) )
@@ -181,8 +185,8 @@ void CItems::Freed( const edict_t* pEdict )
         return;
 
     m_aUsedItems.reset(iIndex);
-    good::vector<CEntity>& aWeapons = m_aItems[EEntityTypeWeapon];
-    for ( TEntityIndex i=0; i < aWeapons.size(); ++i )
+    std::vector<CEntity>& aWeapons = m_aItems[EEntityTypeWeapon];
+    for ( TEntityIndex i=0; i < (int)aWeapons.size(); ++i )
         if ( aWeapons[i].pEdict == pEdict )
         {
             aWeapons[i].pEdict = NULL;
@@ -198,13 +202,13 @@ void CItems::MapUnloaded()
 {
     for ( TEntityType iEntityType = 0; iEntityType < EEntityTypeTotal; ++iEntityType )
     {
-        good::vector<CEntityClass>& aClasses = m_aItemClasses[iEntityType];
-        good::vector<CEntity>& aItems = m_aItems[iEntityType];
+        std::vector<CEntityClass>& aClasses = m_aItemClasses[iEntityType];
+        std::vector<CEntity>& aItems = m_aItems[iEntityType];
 
         aItems.clear();
         m_iFreeIndex[iEntityType] = -1;      // Invalidate free entity index.
 
-        for ( int i = 0; i < aClasses.size(); ++i )
+        for ( size_t i = 0; i < aClasses.size(); ++i )
         {
             aClasses[i].szEngineName = NULL; // Invalidate class name, because it was loaded in previous map.
             aItems.reserve(64);              // At least.
@@ -246,7 +250,7 @@ void CItems::Update()
     // Source engine 2007 uses IServerPluginCallbacks::OnEdictAllocated instead of checking all array of edicts.
 
     // Update weapons we have in items array.
-    good::vector<CEntity>& aWeapons = m_aItems[EEntityTypeWeapon];
+    std::vector<CEntity>& aWeapons = m_aItems[EEntityTypeWeapon];
     for ( TEntityIndex i = 0; i < aWeapons.size(); ++i )
     {
         CEntity& cEntity = aWeapons[i];
@@ -305,7 +309,7 @@ void CItems::Update()
     }
     m_iCurrentEntity = (iTo == iCount) ? CPlayers::Size()+1: iTo;
 #else
-    for ( int i = 0; i < m_aNewEntities.size(); ++i )
+    for ( size_t i = 0; i < m_aNewEntities.size(); ++i )
         CheckNewEntity( m_aNewEntities[i] );
     m_aNewEntities.clear();
 #endif // SOURCE_ENGINE_2006
@@ -317,9 +321,9 @@ TEntityType CItems::GetEntityType( const char* szClassName, CEntityClass* & pEnt
 {
     for ( TEntityType iEntityType = iFrom; iEntityType < iTo; ++iEntityType )
     {
-        good::vector<CEntityClass>& aItemClasses = m_aItemClasses[iEntityType];
+        std::vector<CEntityClass>& aItemClasses = m_aItemClasses[iEntityType];
 
-        for ( int j = 0; j < aItemClasses.size(); ++j )
+        for ( size_t j = 0; j < aItemClasses.size(); ++j )
         {
             CEntityClass& cEntityClass = aItemClasses[j];
 
@@ -397,7 +401,7 @@ void CItems::CheckNewEntity( edict_t* pEdict )
 //----------------------------------------------------------------------------------------------------------------
 TEntityIndex CItems::InsertEntity( int iEntityType, const CEntity& cEntity )
 {
-    good::vector<CEntity>& aItems = m_aItems[iEntityType];
+    std::vector<CEntity>& aItems = m_aItems[iEntityType];
 
     if ( m_bMapLoaded ) // Check if there are free space in items array.
     {
@@ -409,7 +413,7 @@ TEntityIndex CItems::InsertEntity( int iEntityType, const CEntity& cEntity )
             return iIndex;
         }
 
-        for ( TEntityIndex i=0; i < aItems.size(); ++i ) // TODO: add free count.
+        for ( size_t i=0; i < aItems.size(); ++i ) // TODO: add free count.
             if ( aItems[i].pEdict == NULL )
             {
                 aItems[i] = cEntity;
@@ -520,7 +524,7 @@ void CItems::AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServ
     if ( m_aObjectFlagsForModels.size() )
     {
         good::string sModel = STRING( pServerEntity->GetModelName() );
-        for ( int i = 0; i < m_aObjectFlagsForModels.size(); ++i )
+        for ( size_t i = 0; i < m_aObjectFlagsForModels.size(); ++i )
             if ( sModel.find( m_aObjectFlagsForModels[i].first ) != good::string::npos )
             {
                 FLAG_SET(m_aObjectFlagsForModels[i].second, iFlags);
@@ -528,7 +532,7 @@ void CItems::AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServ
             }
     }
 
-    good::vector<CEntity>& aItems = m_aItems[EEntityTypeObject];
+    std::vector<CEntity>& aItems = m_aItems[EEntityTypeObject];
     CEntity cObject( pEdict, iFlags, fMaxsRadiusSqr, pObjectClass, pCollidable->GetCollisionOrigin(), -1 );
     if ( m_bMapLoaded ) // Check if there are free space in items array.
     {
@@ -540,7 +544,7 @@ void CItems::AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServ
             return;
         }
 
-        for ( TEntityIndex i=0; i < aItems.size(); ++i )
+        for ( size_t i=0; i < aItems.size(); ++i )
             if ( aItems[i].pEdict == NULL )
             {
                 aItems[i] = cObject;
@@ -659,9 +663,9 @@ void CItems::WaypointDeleted( TWaypointId id )
 {
     for ( int iEntityType = 0; iEntityType < EEntityTypeTotal; ++iEntityType )
     {
-        good::vector<CEntity>& aItems = m_aItems[iEntityType];
+        std::vector<CEntity>& aItems = m_aItems[iEntityType];
 
-        for ( int i = 0; i < aItems.size(); ++i )
+        for ( size_t i = 0; i < aItems.size(); ++i )
         {
             CEntity& cItem = aItems[i];
             if ( cItem.iWaypoint == id )

@@ -2,7 +2,7 @@
 #define __BOTRIX_ITEM_H__
 
 
-#include "good/bitset.h"
+#include <good/bitset.h>
 
 #include "types.h"
 
@@ -113,10 +113,10 @@ public:
     }
 
     /// Get array of items of needed type.
-    static const good::vector<CEntity>& GetItems( TEntityType iEntityType ) { return m_aItems[iEntityType]; }
+    static const std::vector<CEntity>& GetItems( TEntityType iEntityType ) { return m_aItems[iEntityType]; }
 
     /// Get nearest item for a class (for example some item_battery or item_suitcharger for armor), skipping picked items in aSkip array.
-    static TEntityIndex GetNearestItem( TEntityType iEntityType, const Vector& vOrigin, const good::vector<CPickedItem>& aSkip, const CEntityClass* pClass = NULL );
+    static TEntityIndex GetNearestItem( TEntityType iEntityType, const Vector& vOrigin, const std::vector<CPickedItem>& aSkip, const CEntityClass* pClass = NULL );
 
     /// Return true if at least one entity of this class exists on current map.
     static bool ExistsOnMap( const CEntityClass* pEntityClass ) { return pEntityClass->szEngineName != NULL; }
@@ -139,7 +139,7 @@ public:
     /// Set object flags for given model.
     static void SetObjectFlagForModel( TEntityFlags iItemFlag, const good::string& sModel )
     {
-        m_aObjectFlagsForModels.push_back( good::pair<good::string, TEntityFlags>(sModel, iItemFlag) );
+        m_aObjectFlagsForModels.push_back( std::pair<good::string, TEntityFlags>(sModel, iItemFlag) );
     }
 
 #ifndef SOURCE_ENGINE_2006
@@ -188,25 +188,25 @@ protected:
     friend class CWaypoints; // Give access to WaypointDeleted().
     static void WaypointDeleted( TWaypointId id );
 
-    static good::vector<CEntity> m_aItems[EEntityTypeTotal];            // Array of items.
-    static good::vector<CEntityClass> m_aItemClasses[EEntityTypeTotal]; // Array of item classes.
+    static std::vector<CEntity> m_aItems[EEntityTypeTotal];            // Array of items.
+    static std::vector<CEntityClass> m_aItemClasses[EEntityTypeTotal]; // Array of item classes.
     static TEntityIndex m_iFreeIndex[EEntityTypeTotal];                 // First free entity index.
     static int m_iFreeEntityCount[EEntityTypeTotal];                    // Free entities count. TODO:
 
-    static good::vector<edict_t*> m_aOthers;                            // Array of other entities.
+    static std::vector<edict_t*> m_aOthers;                            // Array of other entities.
 
     static TEntityIndex m_iCurrentEntity;                               // Current entity index to check.
     static const int m_iCheckEntitiesPerFrame = 32;
 
     // This one is to have models specific flags (for example car model with 'heavy' flag, or barrel model with 'explosive' flag).
-    static good::vector< good::pair<good::string, TEntityFlags> > m_aObjectFlagsForModels;
+    static std::vector< std::pair<good::string, TEntityFlags> > m_aObjectFlagsForModels;
 
     static good::bitset m_aUsedItems; // To know which items are already in m_aItems.
 
     static bool m_bMapLoaded; // Will be set to true at MapLoaded() and to false at Clear().
 
 #ifndef SOURCE_ENGINE_2006
-    static good::vector<edict_t*> m_aNewEntities; // When Allocated() is called, new entity still has no IServerEntity, check at next frame.
+    static std::vector<edict_t*> m_aNewEntities; // When Allocated() is called, new entity still has no IServerEntity, check at next frame.
 #endif
 };
 

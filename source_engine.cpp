@@ -1,10 +1,12 @@
+#include <mutex>
+
+#include <good/file.h>
+
 #include "clients.h"
 #include "console_commands.h"
 #include "server_plugin.h"
 #include "source_engine.h"
 #include "waypoint.h"
-
-#include "good/file.h"
 
 #include "cbase.h"
 #include "IEffects.h"
@@ -565,7 +567,7 @@ void CUtil::Message( edict_t* pEntity, const char* fmt, ... )
 }
 
 //----------------------------------------------------------------------------------------------------------------
-good::mutex cMessagesMutex;
+std::mutex cMessagesMutex;
 int iQueueMessageStringSize = 0;
 char szQueueMessageString[64*1024];
 
@@ -616,19 +618,11 @@ const good::string& CUtil::BuildFileName( const good::string& sFolder, const goo
     static good::string_buffer sbResult(szMainBuffer, iMainBufferSize, false);
     sbResult.erase();
 
-    sbResult.append(CBotrixPlugin::instance->sBotrixPath);
-    if ( sFolder.length() > 0 )
-        good::file::append_path(sbResult, sFolder);
-
-    good::file::append_path(sbResult, CBotrixPlugin::instance->sGameFolder);
-    good::file::append_path(sbResult, CBotrixPlugin::instance->sModFolder);
-    good::file::append_path(sbResult, sFile);
+    sbResult << CBotrixPlugin::instance->sBotrixPath << PATH_SEPARATOR << sFolder << CBotrixPlugin::instance->sGameFolder
+             << CBotrixPlugin::instance->sModFolder << sFile;
 
     if ( sExtension.length() )
-    {
-        sbResult.append(".");
-        sbResult.append(sExtension);
-    }
+        sbResult << "." << sExtension;
 
     return sbResult;
 }

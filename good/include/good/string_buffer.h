@@ -5,7 +5,7 @@
 
 #ifndef __GOOD_STRING_BUFFER_H__
 #define __GOOD_STRING_BUFFER_H__
-#define DEBUG_STRING_PRINT
+
 
 #include "good/string.h"
 
@@ -14,8 +14,10 @@
 
 
 // Disable obsolete warnings.
-#pragma warning(push)
-#pragma warning(disable: 4996)
+#ifdef _WIN32
+#   pragma warning(push)
+#   pragma warning(disable: 4996)
+#endif
 
 
 namespace good
@@ -33,7 +35,8 @@ namespace good
     class base_string_buffer: public base_string<Char, Alloc>
     {
     public:
-        typedef string base_class;
+        typedef base_string<Char, Alloc> base_class;
+        typedef typename base_class::value_type value_type;
 
 
 
@@ -50,9 +53,23 @@ namespace good
         }
 
         //--------------------------------------------------------------------------------------------------------
+        /// Move contents from other string buffer.
+        //--------------------------------------------------------------------------------------------------------
+        base_string_buffer( const base_string_buffer& sbOther ): base_string<Char, Alloc>()
+        {
+#ifdef DEBUG_STRING_PRINT
+            printf( "base_string_buffer copy constructor, sbOther: %s\n", sOther.c_str() );
+#endif
+            Init( MAX2(sbOther.length()+1, DEFAULT_STRING_BUFFER_ALLOC) );
+            copy_contents( sbOther.c_str(), sbOther.length() );
+            this->m_pBuffer[sbOther.length()] = 0;
+            this->m_iSize = sbOther.length();
+        }
+
+        //--------------------------------------------------------------------------------------------------------
         /// Constructor giving buffer with capacity.
         //--------------------------------------------------------------------------------------------------------
-        base_string_buffer( const Char* sbBuffer, int iCapacity, bool bDeallocate, bool bUseAsString = false ):
+        base_string_buffer( const Char* sbBuffer, int iCapacity, bool bDeallocate, bool bClear = true ):
             base_string<Char, Alloc>()
         {
 #ifdef DEBUG_STRING_PRINT
@@ -63,14 +80,14 @@ namespace good
             m_iCapacity = iCapacity;
             this->m_iStatic = !bDeallocate;
             this->m_pBuffer = (Char*)sbBuffer;
-            if ( bUseAsString )
-            {
-                this->m_iSize = strlen(sbBuffer);
-            }
-            else
+            if ( bClear )
             {
                 this->m_iSize = 0;
                 this->m_pBuffer[0] = 0;
+            }
+            else
+            {
+                this->m_iSize = strlen(sbBuffer);
             }
         }
 
@@ -92,6 +109,24 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Operator =. Copy other string contents into buffer.
         //--------------------------------------------------------------------------------------------------------
+        base_string_buffer& operator=( const base_string_buffer& sOther )
+        {
+#ifdef DEBUG_STRING_PRINT
+            printf( "base_string_buffer operator=, %s\n", sOther.c_str() );
+#endif
+            assign(sOther);
+            return *this;
+        }
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Operator <<.
+        //--------------------------------------------------------------------------------------------------------
+        template <typename T>
+        base_string_buffer& operator<<( T s ) { return append(s); }
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Operator =. Copy other string contents into buffer.
+        //--------------------------------------------------------------------------------------------------------
         base_string_buffer& operator=( const string& sOther )
         {
 #ifdef DEBUG_STRING_PRINT
@@ -102,12 +137,21 @@ namespace good
         }
 
         //--------------------------------------------------------------------------------------------------------
+        /// Copy other string buffer contents into buffer.
+        //--------------------------------------------------------------------------------------------------------
+        void assign( const base_string_buffer& sbOther )
+        {
+            assign( sbOther.c_str(), sbOther.length() );
+        }
+
+        //--------------------------------------------------------------------------------------------------------
         /// Copy other string contents into buffer.
         //--------------------------------------------------------------------------------------------------------
         void assign( const string& sOther )
         {
             assign( sOther.c_str(), sOther.length() );
         }
+
 
         //--------------------------------------------------------------------------------------------------------
         /// Copy other string contents into buffer.
@@ -119,7 +163,7 @@ namespace good
 
             if ( this->m_iStatic )
             {
-                DebugAssert( iOtherSize <= m_iCapacity+1 );
+                DebugAssert( m_iCapacity >= iOtherSize+1 );
             }
             else
             {
@@ -140,7 +184,7 @@ namespace good
         int capacity() const { return m_iCapacity; }
 
         //--------------------------------------------------------------------------------------------------------
-        /// Append string to buffer.
+        /// Append character to buffer.
         //--------------------------------------------------------------------------------------------------------
         base_string_buffer& append( Char c )
         {
@@ -153,12 +197,22 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Append string to buffer.
         //--------------------------------------------------------------------------------------------------------
-        base_string_buffer& append( const string& sOther )
+        base_string_buffer& append( const Char* szStr, int len = base_class::npos )
         {
-            increment( sOther.length() );
-            copy_contents( sOther.c_str(), sOther.length(), this->m_iSize);
+            if ( len == base_class::npos )
+                len = strlen(szStr);
+            increment( len );
+            copy_contents( szStr, len, this->m_iSize );
             this->m_pBuffer[ this->m_iSize ] = 0;
             return *this;
+        }
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Append string to buffer.
+        //--------------------------------------------------------------------------------------------------------
+        base_string_buffer& append( const string& sOther )
+        {
+            return append(sOther.c_str(), sOther.size());
         }
 
         //--------------------------------------------------------------------------------------------------------
@@ -174,22 +228,6 @@ namespace good
             this->m_pBuffer[ this->m_iSize ] = 0;
             return *this;
         }
-
-        //--------------------------------------------------------------------------------------------------------
-        /// Erase iCount characters from buffer at requiered position iPos.
-        //--------------------------------------------------------------------------------------------------------
-        base_string_buffer& erase( int iPos = 0, int iCount = base_string<Char, Alloc>::npos )
-        {
-            if (iCount == base_string<Char, Alloc>::npos)
-                iCount = this->length() - iPos;
-            if (iCount == 0)
-                return *this;
-            DebugAssert( (iCount > 0) && (iPos < this->length()) && (iPos+iCount <= this->length()) );
-            memmove( &this->m_pBuffer[iPos], &this->m_pBuffer[iPos+iCount], (this->length() - iPos + 1) * sizeof(Char) );
-            this->m_iSize -= iCount;
-            return *this;
-        }
-
 
         //--------------------------------------------------------------------------------------------------------
         /// Replace all occurencies of string sFrom in buffer by sTo.
@@ -306,7 +344,9 @@ namespace good
 } // namespace good
 
 
-#pragma warning(pop) // Restore warnings.
+#ifdef _WIN32
+#   pragma warning(pop) // Restore warnings.
+#endif
 
 
 #endif // __GOOD_STRING_BUFFER_H__

@@ -7,83 +7,11 @@
 #define __GOOD_HEAP_H__
 
 
-#include "good/utility.h"
+#include <functional>   // std::less
 
 
 namespace good
 {
-
-    //************************************************************************************************************
-    /// Restore order in subtree from iPos.
-    /**
-     * This function walks down the tree, making sure that the heap property is met,
-     * swapping parent with max child that are out of order.
-     */
-    //************************************************************************************************************
-    template < typename T >
-    void heap_adjust_down( T* aHeap, int iPos, int iSize )
-    {
-        heap_adjust_down( aHeap, iPos, iSize, good::less<T>() );
-    }
-
-    //------------------------------------------------------------------------------------------------------------
-    /// Restore order up to tree from iPos.
-    /**
-     * This function swaps element from iPos with its parents until heap
-     * property is restored.
-     */
-    //------------------------------------------------------------------------------------------------------------
-    template < typename T >
-    void heap_adjust_up( T* aHeap, int iPos )
-    {
-        heap_adjust_up( aHeap, iPos, good::less<T>() );
-    }
-
-    //------------------------------------------------------------------------------------------------------------
-    /// Restore heap property after modifying element at position iPos.
-    //------------------------------------------------------------------------------------------------------------
-    template < typename T >
-    void heap_modify( T* aHeap, int iPos, int iSize )
-    {
-        heap_modify( aHeap, iPos, good::less<T>() );
-    }
-
-    //------------------------------------------------------------------------------------------------------------
-    /// This function will add new element to heap. Make sure that array aHeap has space to add new element.
-    //------------------------------------------------------------------------------------------------------------
-    template < typename T >
-    void heap_push( T* aHeap, const T& tElem, int iSize )
-    {
-        heap_push( aHeap, tElem, iSize, good::less<T>() );
-    }
-
-    //------------------------------------------------------------------------------------------------------------
-    /// Remove max element from heap and destroy it.
-    //------------------------------------------------------------------------------------------------------------
-    template < typename T >
-    void heap_pop( T* aHeap, int iSize )
-    {
-        heap_pop( aHeap, iSize, good::less<T>() );
-    }
-
-    //------------------------------------------------------------------------------------------------------------
-    /// Make heap from array.
-    //------------------------------------------------------------------------------------------------------------
-    template < typename T >
-    void heap_make( T* aHeap, int iSize )
-    {
-        heap_make( aHeap, iSize, good::less<T>() );
-    }
-
-    //------------------------------------------------------------------------------------------------------------
-    /// Sort array that must be valid heap using heapsort algorithm.
-    //------------------------------------------------------------------------------------------------------------
-    template < typename T >
-    void heap_sort( T* aHeap, int iSize )
-    {
-        heap_sort( aHeap, iSize, good::less<T>() );
-    }
-
 
 
     //************************************************************************************************************
@@ -200,9 +128,87 @@ namespace good
         // Now we have a valid heap.
         while ( --iSize > 0 )
         {
-            good::swap( aHeap[0], aHeap[iSize] );
+            std::swap( aHeap[0], aHeap[iSize] );
             heap_adjust_down( aHeap, 0, iSize, cLess );
         }
+    }
+
+
+
+
+    //************************************************************************************************************
+    // Without less.
+    //************************************************************************************************************
+
+    //************************************************************************************************************
+    /// Restore order in subtree from iPos.
+    /**
+     * This function walks down the tree, making sure that the heap property is met,
+     * swapping parent with max child that are out of order.
+     */
+    //************************************************************************************************************
+    template < typename T >
+    void heap_adjust_down( T* aHeap, int iPos, int iSize )
+    {
+        heap_adjust_down( aHeap, iPos, iSize, std::less<T>() );
+    }
+
+    //------------------------------------------------------------------------------------------------------------
+    /// Restore order up to tree from iPos.
+    /**
+     * This function swaps element from iPos with its parents until heap
+     * property is restored.
+     */
+    //------------------------------------------------------------------------------------------------------------
+    template < typename T >
+    void heap_adjust_up( T* aHeap, int iPos )
+    {
+        heap_adjust_up( aHeap, iPos, std::less<T>() );
+    }
+
+    //------------------------------------------------------------------------------------------------------------
+    /// Restore heap property after modifying element at position iPos.
+    //------------------------------------------------------------------------------------------------------------
+    template < typename T >
+    void heap_modify( T* aHeap, int iPos, int iSize )
+    {
+        heap_modify( aHeap, iPos, std::less<T>() );
+    }
+
+    //------------------------------------------------------------------------------------------------------------
+    /// This function will add new element to heap. Make sure that array aHeap has space to add new element.
+    //------------------------------------------------------------------------------------------------------------
+    template < typename T >
+    void heap_push( T* aHeap, const T& tElem, int iSize )
+    {
+        heap_push( aHeap, tElem, iSize, std::less<T>() );
+    }
+
+    //------------------------------------------------------------------------------------------------------------
+    /// Remove max element from heap and destroy it.
+    //------------------------------------------------------------------------------------------------------------
+    template < typename T >
+    void heap_pop( T* aHeap, int iSize )
+    {
+        heap_pop( aHeap, iSize, std::less<T>() );
+    }
+
+    //------------------------------------------------------------------------------------------------------------
+    /// Make heap from array.
+    //------------------------------------------------------------------------------------------------------------
+    template < typename T >
+    void heap_make( T* aHeap, int iSize )
+    {
+        heap_make( aHeap, iSize, std::less<T>() );
+    }
+
+    //------------------------------------------------------------------------------------------------------------
+    /// Sort array that must be valid heap using heapsort algorithm.
+    //------------------------------------------------------------------------------------------------------------
+    template < typename T >
+    void heap_sort( T* aHeap, int iSize )
+    {
+        heap_sort( aHeap, iSize, std::less<T>() );
     }
 
 

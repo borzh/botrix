@@ -2,11 +2,13 @@
 #define __BOTRIX_PLAYERS_H__
 
 
-#include "edict.h"
-#include "iplayerinfo.h"
+#include <memory> // auto_ptr
 
 #include "source_engine.h"
 #include "types.h"
+
+#include "edict.h"
+#include "iplayerinfo.h"
 
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -120,6 +122,7 @@ protected:
 
 };
 
+typedef std::unique_ptr<CPlayer> CPlayerPtr; ///< Typedef for unique_ptr of CPlayer.
 
 
 
@@ -211,16 +214,14 @@ public:
 
 
 protected:
-    typedef good::vector< good::auto_ptr<CPlayer> > PlayersArray;
-
-    static PlayersArray m_aPlayers;
+    static std::vector<CPlayerPtr> m_aPlayers;
     static CClient* m_pListenServerClient;                  // Client that created listen server (not dedicated server).
     static bool m_bClientDebuggingEvents;                   // True if some client is debugging event messages.
 
     static int m_iClientsCount;                             // Total amount of clients on this server.
     static int m_iBotsCount;                                // Total amount of bots on this server.
 
-    static good::vector< good::vector<bool> > m_iChatPairs; // 2D array representing who chats with whom.
+    static std::vector< std::vector<bool> > m_iChatPairs; // 2D array representing who chats with whom.
 };
 
 #endif // __BOTRIX_PLAYERS_H__

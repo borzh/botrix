@@ -1,6 +1,13 @@
+# windows files
 Debug
 Release
 Debug2006
 Release2006
 *.suo
 *.ncb
+
+# linux files
+build
+good/build
+CMakeLists.txt.user
+good/CMakeLists.txt.user

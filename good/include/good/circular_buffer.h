@@ -2,7 +2,7 @@
 #define __GOOD_CIRCULAR_BUFFER_H__
 
 
-#include "good/vector.h"
+#include <vector>
 
 
 namespace good {
@@ -243,9 +243,9 @@ namespace good {
         void assign( const vector& aOther )
         {
             clear();
-            good::swap(m_pBuffer, ((vector&)aOther).m_pBuffer);
-            good::swap(m_iCapacity, ((vector&)aOther).m_iCapacity);
-            good::swap(m_iSize, ((vector&)aOther).m_iSize);
+            std::swap(m_pBuffer, ((vector&)aOther).m_pBuffer);
+            std::swap(m_iCapacity, ((vector&)aOther).m_iCapacity);
+            std::swap(m_iSize, ((vector&)aOther).m_iSize);
         }
 
         //--------------------------------------------------------------------------------------------------------

@@ -7,10 +7,14 @@
 #define __GOOD_AATREE_H__
 
 
-#include "good/utility.h"
-
-
 #define DEBUG_TREE_ITERATOR // Define it to show paths when incrementing iterator.
+
+#ifdef DEBUG_TREE_ITERATOR
+#   define AATreeDebugPrint        DebugPrint
+#else
+#   define AATreeDebugPrint(...)
+#endif
+
 
 namespace good
 {
@@ -40,9 +44,9 @@ namespace good
     // And if condition is false == 0, then x = choice[0] = z
     //************************************************************************************************************
     template <
-        typename T,                            ///< Type to store in tree.
-        typename Less = less<T>,               ///< Operation to know order of elements.
-        typename Alloc = allocator<T>          ///< Allocator for T.
+        typename T,                         ///< Type to store in tree.
+        typename Less = std::less<T>,       ///< Operation to know order of elements.
+        typename Alloc = allocator<T>  ///< Allocator for T.
     >
     class aatree
     {
@@ -160,9 +164,9 @@ namespace good
         void assign(aatree const& tOther)
         {
             clear();
-            good::swap(nil, ((aatree&)tOther).nil);
-            good::swap(m_pHead, ((aatree&)tOther).m_pHead);
-            good::swap(m_iSize, ((aatree&)tOther).m_iSize);
+            std::swap(nil, ((aatree&)tOther).nil);
+            std::swap(m_pHead, ((aatree&)tOther).m_pHead);
+            std::swap(m_iSize, ((aatree&)tOther).m_iSize);
         }
 
 
@@ -313,7 +317,7 @@ namespace good
             while ( !_is_nil(n->child[dir]) )
             {
 #ifdef DEBUG_TREE_ITERATOR
-                DebugPrint("%s", dir?"\\":"/");
+                AATreeDebugPrint("%s", dir?"\\":"/");
 #endif
                 n = n->child[dir];
             }
@@ -344,7 +348,7 @@ namespace good
         static node_t* _get_next( node_t* n, const int dir )
         {
 #ifdef DEBUG_TREE_ITERATOR
-            DebugPrint(".%d", (int)n->level);
+            AATreeDebugPrint(".%d", (int)n->level);
 #endif
             if (_is_nil(n))
             {
@@ -358,20 +362,20 @@ namespace good
                 if ( !_is_nil(aux) )
                 {
 #ifdef DEBUG_TREE_ITERATOR
-                    DebugPrint("%s", dir?"\\":"/");
+                    AATreeDebugPrint("%s", dir?"\\":"/");
 #endif
                     return _get_leaf( aux, !dir ); // Get smallest/largest of the right/left subtree.
                 }
                 else
                 {
 #ifdef DEBUG_TREE_ITERATOR
-                    DebugPrint("^");
+                    AATreeDebugPrint("^");
 #endif
                     // Climb looking for first available right/left subtree.
                     while ( (!_is_nil(aux = n->parent)) && (aux->child[dir] == n) )
                     {
 #ifdef DEBUG_TREE_ITERATOR
-                        DebugPrint("^");
+                        AATreeDebugPrint("^");
 #endif
                         n = aux;
                     }

@@ -1,13 +1,13 @@
-#include "good/defines.h"
-#include "good/mutex.h"
-
-
 #ifdef _WIN32
     #include "windows.h"
 #else
     #include <pthread.h>
     #include <string.h>
 #endif
+
+
+#include "good/defines.h"
+#include "good/mutex.h"
 
 
 namespace good

@@ -1,3 +1,6 @@
+#include <good/string_buffer.h>
+#include <good/string_utils.h>
+
 #include "chat.h"
 #include "clients.h"
 #include "mod.h"
@@ -8,14 +11,12 @@
 #include "mods/borzh/bot_borzh.h"
 #include "mods/hl2dm/bot_hl2dm.h"
 
-#include "good/string_buffer.h"
-
 extern char* szMainBuffer;
 extern int iMainBufferSize;
 
 
 //----------------------------------------------------------------------------------------------------------------
-CPlayers::PlayersArray CPlayers::m_aPlayers(16);
+std::vector<CPlayerPtr> CPlayers::m_aPlayers(16);
 CClient* CPlayers::m_pListenServerClient = NULL;
 
 int CPlayers::m_iClientsCount = 0;
@@ -36,7 +37,7 @@ void CPlayer::Activated()
 {
     m_pPlayerInfo = CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo( m_pEdict );
     m_sName.assign(GetName(), good::string::npos, true);
-    m_sName.lower_case();
+    good::lower_case(m_sName);
     DebugAssert( m_pPlayerInfo );
 }
 
@@ -206,7 +207,7 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
 
     pPlayer->Activated(); // Event active is not created for bots.
 
-    m_aPlayers[iIdx] = pPlayer;
+    m_aPlayers[iIdx] = CPlayerPtr(pPlayer);
     m_iBotsCount++;
 
 #ifdef BOTRIX_CHAT
@@ -304,7 +305,7 @@ void CPlayers::PlayerConnected( edict_t* pEdict )
             ((CClient*)pPlayer)->iCommandAccessFlags = FCommandAccessAll;
         }
 
-        m_aPlayers[iIdx] = pPlayer;
+        m_aPlayers[iIdx] = CPlayerPtr(pPlayer);
         m_iClientsCount++;
 
 #ifdef BOTRIX_CHAT
@@ -365,7 +366,7 @@ void CPlayers::PlayerDisconnected( edict_t* pEdict )
 //----------------------------------------------------------------------------------------------------------------
 void CPlayers::PreThink()
 {
-    for (PlayersArray::iterator it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it)
+    for (std::vector<CPlayerPtr>::iterator it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it)
         if ( it->get() )
             it->get()->PreThink();
 }
@@ -380,7 +381,7 @@ void CPlayers::DebugEvent( const char *szFormat, ... )
     vsprintf(buffer, szFormat, args);
     va_end(args);
 
-    for (PlayersArray::const_iterator it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it)
+    for ( std::vector<CPlayerPtr>::const_iterator it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it )
     {
         const CPlayer* pPlayer = it->get();
         if ( pPlayer  &&  !pPlayer->IsBot()  &&  ((CClient*)pPlayer)->bDebuggingEvents )
@@ -393,7 +394,7 @@ void CPlayers::DebugEvent( const char *szFormat, ... )
 void CPlayers::CheckForDebugging()
 {
     m_bClientDebuggingEvents = false;
-    for (PlayersArray::iterator it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it)
+    for (std::vector<CPlayerPtr>::iterator it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it)
     {
         const CPlayer* pPlayer = it->get();
         if ( pPlayer  &&  !pPlayer->IsBot()  &&  ((CClient*)pPlayer)->bDebuggingEvents )

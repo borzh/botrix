@@ -7,7 +7,8 @@
 #define __GOOD_MAP_H__
 
 
-#include "good/utility.h"
+#include <utility>
+
 #include "good/aatree.h"
 
 
@@ -41,18 +42,18 @@ namespace good
     template <
         typename Key,
         typename Value,
-        typename Less = less<Key>,
-        typename Alloc = allocator< pair<Key, Value> >
+        typename Less = std::less<Key>,
+        typename Alloc = allocator< std::pair<Key, Value> >
     >
     class map: public aatree<
-                             pair<Key, Value>,
-                             pair_first_op< pair<Key, Value>, Less >,
+                             std::pair<Key, Value>,
+                             pair_first_op< std::pair<Key, Value>, Less >,
                              Alloc
                             >
     {
     public:
-        typedef pair<Key, Value> key_value_t;
-        typedef aatree< pair<Key, Value>, pair_first_op<pair<Key, Value>, Less>, Alloc> base_class;
+        typedef std::pair<Key, Value> key_value_t;
+        typedef aatree< std::pair<Key, Value>, pair_first_op<std::pair<Key, Value>, Less>, Alloc> base_class;
         typedef typename base_class::node_t node_t;
 
         //--------------------------------------------------------------------------------------------------------
@@ -77,7 +78,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         typename base_class::iterator find( const Key& key )
         {
-            return this->find( key_value_t(key, Value()) );
+            return base_class::find( key_value_t(key, Value()) );
         }
 
         //--------------------------------------------------------------------------------------------------------
@@ -85,7 +86,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         typename base_class::iterator erase( typename base_class::iterator it )
         {
-            return this->erase(it);
+            return base_class::erase(it);
         }
 
         //--------------------------------------------------------------------------------------------------------
@@ -95,13 +96,13 @@ namespace good
         {
             node_t* succ;
             int succDir;
-            node_t* cand = _search( this->m_pHead->parent, key_value_t(key, Value()), succ, succDir );
+            node_t* cand = this->_search( this->m_pHead->parent, key_value_t(key, Value()), succ, succDir );
 
             if ( this->_is_nil(cand) )
-                return iterator(this->nil);
+                return typename base_class::iterator(this->nil);
 
             // Found key->value.
-            return iterator( _erase( cand, cand->parent->child[1] == cand, succ, succDir ) );
+            return typename base_class::iterator( this->_erase( cand, cand->parent->child[1] == cand, succ, succDir ) );
         }
 
         //--------------------------------------------------------------------------------------------------------
@@ -114,7 +115,7 @@ namespace good
         Value& operator[]( const Key& key )
         {
             key_value_t tmp( key, Value() );
-            typename base_class::iterator it = insert(tmp, false); // Insert if not exists but don't replace.
+            typename base_class::iterator it = this->insert(tmp, false); // Insert if not exists but don't replace.
             return it->second;
         }
 

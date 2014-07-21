@@ -194,7 +194,7 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
             pPlayer = new CBot_HL2DM(pEdict, iIdx, iIntelligence);
             break;
         case EModId_Borzh:
-#ifdef BOTRIX_BORZH_MOD
+#ifdef BOTRIX_MOD_BORZH
             pPlayer = new CBotBorzh(pEdict, iIdx, iIntelligence);
 #else
             DebugAssert(false);

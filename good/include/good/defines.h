@@ -17,6 +17,17 @@
 #endif
 
 
+// Library definitions.
+#ifdef _WIN32
+#   define GOOD_DLL_PUBLIC               __declspec(dllexport)
+#   define GOOD_DLL_LOCAL                __declspec(dllimport)
+#else
+#   define GOOD_DLL_PUBLIC               __attribute__ ((visibility("default")))
+#   define GOOD_DLL_LOCAL                __attribute__ ((visibility("hidden")))
+#endif
+
+
+// Char type.
 #ifdef _WIN32
     typedef Char TChar;
 #else

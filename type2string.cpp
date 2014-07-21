@@ -511,7 +511,7 @@ const good::string& CTypeToString::BotCommandToString( TBotChat iCommand )
     return EnumToString( iCommand, EBotChatTotal, aBotCommands, sUnknown );
 }
 
-#ifdef BOTRIX_BORZH_MOD
+#ifdef BOTRIX_MOD_BORZH
 
 //----------------------------------------------------------------------------------------------------------------
 // Ordered by TBotAction.
@@ -578,4 +578,4 @@ const good::string& CTypeToString::BorzhTaskToString( int iTask )
     return EnumToString( iTask, EBorzhTaskTotal, aBorzhTasks, sUnknown );
 }
 
-#endif // BOTRIX_BORZH_MOD
+#endif // BOTRIX_MOD_BORZH

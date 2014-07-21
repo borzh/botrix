@@ -1,6 +1,6 @@
 #include "cbase.h"
 
-// Ugly fix for ugly Source Engine.
+// Ugly fix for Source Engine.
 #undef MINMAX_H
 #undef min
 #undef max

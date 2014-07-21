@@ -1,5 +1,9 @@
-#include "mods/css/event_css.h"
-#include "mods/borzh/mod_borzh.h"
+#ifdef BOTRIX_MOD_CSS
+#   include "mods/css/event_css.h"
+#elif BOTRIX_MOD_BORZH
+#   include "mods/borzh/mod_borzh.h"
+#endif
+
 #include "mod.h"
 #include "players.h"
 #include "server_plugin.h"
@@ -33,7 +37,7 @@ void CMod::Load( TModId iModId )
     switch ( iModId )
     {
     case EModId_Borzh:
-#ifdef BOTRIX_BORZH_MOD
+#ifdef BOTRIX_MOD_BORZH
         pCurrentMod = new CModBorzh();
 #else
         DebugAssert(false);
@@ -52,6 +56,7 @@ void CMod::Load( TModId iModId )
         AddEvent(new CPlayerChatEvent());
         break;
 
+#ifdef BOTRIX_MOD_CSS
     case EModId_CSS:
         AddEvent(new CRoundStartEvent());
         AddEvent(new CWeaponFireEvent());
@@ -60,6 +65,11 @@ void CMod::Load( TModId iModId )
         AddEvent(new CBombDroppedEvent());
         AddEvent(new CBombPickupEvent());
         break;
+#endif
+
+    default:
+        CUtil::Message(NULL, "Error: unknown mod.");
+        DebugAssert(false);
     }
 }
 

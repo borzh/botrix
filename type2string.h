@@ -155,7 +155,7 @@ public:
 	static const good::string& BotCommandToString( TBotChat iCommand );
 
 
-#ifdef BOTRIX_BORZH_MOD
+#ifdef BOTRIX_MOD_BORZH
 	//------------------------------------------------------------------------------------------------------------
 	/// Get bot action from string.
 	//------------------------------------------------------------------------------------------------------------

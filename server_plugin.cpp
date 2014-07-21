@@ -21,7 +21,7 @@
 #include "waypoint.h"
 
 // Source headers.
-// Ugly fix for ugly Source Engine.
+// Ugly fix for Source Engine.
 #include "public/minmax.h"
 #include "cbase.h"
 #include "filesystem.h"

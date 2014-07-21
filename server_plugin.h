@@ -2,6 +2,8 @@
 #define __BOTRIX_SERVER_PLUGIN_H__
 
 
+#include <good/defines.h>
+
 #include "item.h"
 
 #include "public/engine/iserverplugin.h"
@@ -27,7 +29,7 @@ class ICvar;
 //****************************************************************************************************************
 /// Plugin class.
 //****************************************************************************************************************
-class CBotrixPlugin : public IServerPluginCallbacks, public IGameEventListener, public IGameEventListener2
+class GOOD_DLL_PUBLIC CBotrixPlugin : public IServerPluginCallbacks, public IGameEventListener, public IGameEventListener2
 {
 
 public: // Static members.
@@ -48,79 +50,79 @@ public: // Methods.
     //------------------------------------------------------------------------------------------------------------
     /// Constructor.
     //------------------------------------------------------------------------------------------------------------
-    CBotrixPlugin();
+    GOOD_DLL_PUBLIC CBotrixPlugin();
 
     /// Destructor.
-    ~CBotrixPlugin();
+    GOOD_DLL_PUBLIC ~CBotrixPlugin();
 
     //------------------------------------------------------------------------------------------------------------
     // IServerPluginCallbacks implementation.
     //------------------------------------------------------------------------------------------------------------
     /// Initialize the plugin to run
     /// Return false if there is an error during startup.
-    virtual bool			Load(	CreateInterfaceFn interfaceFactory, CreateInterfaceFn gameServerFactory  );
+    GOOD_DLL_PUBLIC virtual bool Load(	CreateInterfaceFn interfaceFactory, CreateInterfaceFn gameServerFactory  );
 
     /// Called when the plugin should be shutdown
-    virtual void			Unload( void );
+    GOOD_DLL_PUBLIC virtual void Unload( void );
 
     /// called when a plugins execution is stopped but the plugin is not unloaded
-    virtual void			Pause( void );
+    GOOD_DLL_PUBLIC virtual void Pause( void );
 
     /// called when a plugin should start executing again (sometime after a Pause() call)
-    virtual void			UnPause( void );
+    GOOD_DLL_PUBLIC virtual void UnPause( void );
 
     /// Returns string describing current plugin.  e.g., Admin-Mod.
-    virtual const char     *GetPluginDescription( void );
+    GOOD_DLL_PUBLIC virtual const char     *GetPluginDescription( void );
 
     /// Called any time a new level is started (after GameInit() also on level transitions within a game)
-    virtual void			LevelInit( char const *pMapName );
+    GOOD_DLL_PUBLIC virtual void LevelInit( char const *pMapName );
 
     /// The server is about to activate
-    virtual void			ServerActivate( edict_t *pEdictList, int edictCount, int clientMax );
+    GOOD_DLL_PUBLIC virtual void ServerActivate( edict_t *pEdictList, int edictCount, int clientMax );
 
     /// The server should run physics/think on all edicts
-    virtual void			GameFrame( bool simulating );
+    GOOD_DLL_PUBLIC virtual void GameFrame( bool simulating );
 
     /// Called when a level is shutdown (including changing levels)
-    virtual void			LevelShutdown( void );
+    GOOD_DLL_PUBLIC virtual void LevelShutdown( void );
 
     /// Client is going active
-    virtual void			ClientActive( edict_t *pEntity );
+    GOOD_DLL_PUBLIC virtual void ClientActive( edict_t *pEntity );
 
     /// Client is disconnecting from server
-    virtual void			ClientDisconnect( edict_t *pEntity );
+    GOOD_DLL_PUBLIC virtual void ClientDisconnect( edict_t *pEntity );
 
     /// Client is connected and should be put in the game
-    virtual void			ClientPutInServer( edict_t *pEntity, char const *playername );
+    GOOD_DLL_PUBLIC virtual void ClientPutInServer( edict_t *pEntity, char const *playername );
 
     /// Sets the client index for the client who typed the command into their console
-    virtual void			SetCommandClient( int index );
+    GOOD_DLL_PUBLIC virtual void SetCommandClient( int index );
 
     /// A player changed one/several replicated cvars (name etc)
-    virtual void			ClientSettingsChanged( edict_t *pEdict );
+    GOOD_DLL_PUBLIC virtual void ClientSettingsChanged( edict_t *pEdict );
 
     /// Client is connecting to server ( set retVal to false to reject the connection )
     ///	You can specify a rejection message by writing it into reject
-    virtual PLUGIN_RESULT	ClientConnect( bool *bAllowConnect, edict_t *pEntity, const char *pszName, const char *pszAddress, char *reject, int maxrejectlen );
+    GOOD_DLL_PUBLIC virtual PLUGIN_RESULT ClientConnect( bool *bAllowConnect, edict_t *pEntity, const char *pszName, const char *pszAddress, char *reject, int maxrejectlen );
 
     /// A user has had their network id setup and validated
-    virtual PLUGIN_RESULT	NetworkIDValidated( const char *pszUserName, const char *pszNetworkID );
+    GOOD_DLL_PUBLIC virtual PLUGIN_RESULT NetworkIDValidated( const char *pszUserName, const char *pszNetworkID );
 
 #ifdef SOURCE_ENGINE_2006
     // The client has typed a command at the console
-    virtual PLUGIN_RESULT	ClientCommand( edict_t *pEntity );
+    GOOD_DLL_PUBLIC virtual PLUGIN_RESULT ClientCommand( edict_t *pEntity );
 #else
     /// The client has typed a command at the console
-    virtual PLUGIN_RESULT	ClientCommand( edict_t *pEntity, const CCommand &args );
+    GOOD_DLL_PUBLIC virtual PLUGIN_RESULT ClientCommand( edict_t *pEntity, const CCommand &args );
 
     /// This is called when a query from IServerPluginHelpers::StartQueryCvarValue is finished.
     /// iCookie is the value returned by IServerPluginHelpers::StartQueryCvarValue.
     /// Added with version 2 of the interface.
-    virtual void			OnQueryCvarValueFinished( QueryCvarCookie_t, edict_t*, EQueryCvarValueStatus, const char*, const char* ) {}
+    GOOD_DLL_PUBLIC virtual void OnQueryCvarValueFinished( QueryCvarCookie_t, edict_t*, EQueryCvarValueStatus, const char*, const char* ) {}
 
     /// added with version 3 of the interface.
-    virtual void			OnEdictAllocated( edict_t *edict ) { if ( bMapRunning ) CItems::Allocated(edict); }
-    virtual void			OnEdictFreed( const edict_t *edict  ) { if ( bMapRunning ) CItems::Freed(edict); }
+    GOOD_DLL_PUBLIC virtual void OnEdictAllocated( edict_t *edict ) { if ( bMapRunning ) CItems::Allocated(edict); }
+    GOOD_DLL_PUBLIC virtual void OnEdictFreed( const edict_t *edict  ) { if ( bMapRunning ) CItems::Freed(edict); }
 #endif
 
     //------------------------------------------------------------------------------------------------------------
@@ -128,14 +130,14 @@ public: // Methods.
     //------------------------------------------------------------------------------------------------------------
     // FireEvent is called by EventManager if event just occured
     // KeyValue memory will be freed by manager if not needed anymore
-    virtual void FireGameEvent( KeyValues * event);
+    GOOD_DLL_PUBLIC virtual void FireGameEvent( KeyValues * event);
 
     //------------------------------------------------------------------------------------------------------------
     // IGameEventListener2 implementation.
     //------------------------------------------------------------------------------------------------------------
     // FireEvent is called by EventManager if event just occured
     // IGameEvent memory will be freed by manager if not needed anymore
-    virtual void FireGameEvent( IGameEvent *event );
+    GOOD_DLL_PUBLIC virtual void FireGameEvent( IGameEvent *event );
 
 
     // Generate say event.

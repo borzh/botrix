@@ -1,4 +1,4 @@
-#ifdef BOTRIX_BORZH_MOD
+#ifdef BOTRIX_MOD_BORZH
 
 #ifndef __BOTRIX_PLANNER_H__
 #define __BOTRIX_PLANNER_H__
@@ -14,16 +14,16 @@
 class CAction
 {
 public:
-	CAction(TBotAction iAction, TPlayerIndex iExecutioner, int iArgument):
-		iAction(iAction), iExecutioner(iExecutioner), iArgument(iArgument) {}
+    CAction(TBotAction iAction, TPlayerIndex iExecutioner, int iArgument):
+        iAction(iAction), iExecutioner(iExecutioner), iArgument(iArgument) {}
 
-	bool operator ==( CAction iOther ) const { return iAction == iOther.iAction; }
-	bool operator ==( TBotAction iOther ) const { return iAction == iOther; }
+    bool operator ==( CAction iOther ) const { return iAction == iOther.iAction; }
+    bool operator ==( TBotAction iOther ) const { return iAction == iOther; }
 
-	TBotAction iAction;                  ///< Action: move, shoot, push button, climb bot one on another etc.
-	TPlayerIndex iExecutioner;           ///< Bot who must perform action.
-	TPlayerIndex iHelper;                ///< Bot who helps.
-	int iArgument;                       ///< Task argument.
+    TBotAction iAction;                  ///< Action: move, shoot, push button, climb bot one on another etc.
+    TPlayerIndex iExecutioner;           ///< Bot who must perform action.
+    TPlayerIndex iHelper;                ///< Bot who helps.
+    int iArgument;                       ///< Task argument.
 };
 
 
@@ -34,35 +34,35 @@ class CBotBorzh; // Forward declaration.
 class CPlanner
 {
 public:
-	typedef good::vector<CAction> CPlan; ///< Plan is just secuence of actions.
+    typedef good::vector<CAction> CPlan; ///< Plan is just secuence of actions.
 
-	/// Return true if planner is currently locked.
-	static bool IsLocked() { return m_bLocked; }
+    /// Return true if planner is currently locked.
+    static bool IsLocked() { return m_bLocked; }
 
-	/// Lock the planner. Lock it while you are using planner and GetPlan() result.
-	static void Lock( const CBotBorzh* pBot ) { DebugAssert( !m_bLocked ); m_bLocked = true; m_pBot = pBot; }
+    /// Lock the planner. Lock it while you are using planner and GetPlan() result.
+    static void Lock( const CBotBorzh* pBot ) { DebugAssert( !m_bLocked ); m_bLocked = true; m_pBot = pBot; }
 
-	/// Unlock the planner.
-	static void Unlock( const CBotBorzh* m_pBot ) { DebugAssert( m_bLocked && (m_pBot == m_pBot) ); m_bLocked = false; }
+    /// Unlock the planner.
+    static void Unlock( const CBotBorzh* m_pBot ) { DebugAssert( m_bLocked && (m_pBot == m_pBot) ); m_bLocked = false; }
 
-	/// Return true if planner is currently running.
-	static bool IsRunning();
+    /// Return true if planner is currently running.
+    static bool IsRunning();
 
-	/// Generate PDDL from bot's beliefs and execute planner with generated pddl.
-	static void Start( const CBotBorzh* pBot );
-	
-	/// Stop planner if planner is currently running.
-	static void Stop();
+    /// Generate PDDL from bot's beliefs and execute planner with generated pddl.
+    static void Start( const CBotBorzh* pBot );
 
-	/// Return NULL in case of failure. Empty plan if no action is needed.
-	static const CPlan* GetPlan();
+    /// Stop planner if planner is currently running.
+    static void Stop();
+
+    /// Return NULL in case of failure. Empty plan if no action is needed.
+    static const CPlan* GetPlan();
 
 protected:
-	static bool m_bLocked;
-	static const CBotBorzh* m_pBot;
+    static bool m_bLocked;
+    static const CBotBorzh* m_pBot;
 };
 
 
 #endif // __BOTRIX_PLANNER_H__
 
-#endif // BOTRIX_BORZH_MOD
+#endif // BOTRIX_MOD_BORZH

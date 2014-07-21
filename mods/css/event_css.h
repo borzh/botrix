@@ -1,3 +1,5 @@
+#ifdef BOTRIX_MOD_CSS
+
 #ifndef __BOTRIX_EVENT_CSS_H__
 #define __BOTRIX_EVENT_CSS_H__
 
@@ -11,9 +13,9 @@
 class CRoundStartEvent: public CEvent
 {
 public:
-	CRoundStartEvent(): CEvent("round_start") {}
+    CRoundStartEvent(): CEvent("round_start") {}
 
-	void Execute( IEventInterface* pEvent );
+    void Execute( IEventInterface* pEvent );
 };
 
 
@@ -23,9 +25,9 @@ public:
 class CRoundEndEvent: public CEvent
 {
 public:
-	CRoundEndEvent(): CEvent("round_end") {}
+    CRoundEndEvent(): CEvent("round_end") {}
 
-	void Execute( IEventInterface* pEvent );
+    void Execute( IEventInterface* pEvent );
 };
 
 
@@ -35,9 +37,9 @@ public:
 class CBombPickupEvent: public CEvent
 {
 public:
-	CBombPickupEvent(): CEvent("bomb_pickup") {}
+    CBombPickupEvent(): CEvent("bomb_pickup") {}
 
-	void Execute( IEventInterface* pEvent );
+    void Execute( IEventInterface* pEvent );
 };
 
 
@@ -47,9 +49,9 @@ public:
 class CPlayerFootstepEvent: public CEvent
 {
 public:
-	CPlayerFootstepEvent(): CEvent("player_footstep") {}
+    CPlayerFootstepEvent(): CEvent("player_footstep") {}
 
-	void Execute( IEventInterface* pEvent );
+    void Execute( IEventInterface* pEvent );
 };
 
 
@@ -59,9 +61,9 @@ public:
 class CPlayerShootEvent: public CEvent
 {
 public:
-	CPlayerShootEvent(): CEvent("player_shoot") {}
+    CPlayerShootEvent(): CEvent("player_shoot") {}
 
-	void Execute( IEventInterface* pEvent );
+    void Execute( IEventInterface* pEvent );
 };
 
 
@@ -72,9 +74,9 @@ public:
 class CBombDroppedEvent: public CEvent
 {
 public:
-	CBombDroppedEvent(): CEvent("bomb_dropped") {}
+    CBombDroppedEvent(): CEvent("bomb_dropped") {}
 
-	void Execute( IEventInterface* pEvent );
+    void Execute( IEventInterface* pEvent );
 };
 
 
@@ -84,9 +86,9 @@ public:
 class CWeaponFireEvent: public CEvent
 {
 public:
-	CWeaponFireEvent(): CEvent("weapon_fire") {}
+    CWeaponFireEvent(): CEvent("weapon_fire") {}
 
-	void Execute( IEventInterface* pEvent );
+    void Execute( IEventInterface* pEvent );
 };
 
 
@@ -96,10 +98,12 @@ public:
 class CBulletImpactEvent: public CEvent
 {
 public:
-	CBulletImpactEvent(): CEvent("bullet_impact") {}
+    CBulletImpactEvent(): CEvent("bullet_impact") {}
 
-	void Execute( IEventInterface* pEvent );
+    void Execute( IEventInterface* pEvent );
 };
 
 
 #endif // __BOTRIX_EVENT_CSS_H__
+
+#endif // BOTRIX_MOD_CSS

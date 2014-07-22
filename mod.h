@@ -3,7 +3,7 @@
 
 
 #include <stdlib.h> // rand()
-#include <memory> // auto_ptr
+#include <good/memory.h> // auto_ptr
 
 #include "event.h"
 #include "item.h"
@@ -161,8 +161,8 @@ protected: // Methods.
 protected: // Members.
     static TModId m_iModId;                                  // Mod id.
     static StringVector m_aBotNames;                         // Available bot names.
-    static std::vector<StringVector> m_aModels;              // Available models for teams.
-    static std::vector<CEventPtr> m_aEvents;                 // Events this mod handles.
+    static good::vector<StringVector> m_aModels;              // Available models for teams.
+    static good::vector<CEventPtr> m_aEvents;                 // Events this mod handles.
     static bool m_bMapHas[EEntityTypeTotal-1];               // To check if map has items or waypoints of types: health, armor, weapon, ammo.
 };
 

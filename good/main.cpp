@@ -1,6 +1,6 @@
 #include <math.h>
-#include <list>
-#include <vector>
+#include "good/list.h"
+#include "good/vector.h"
 #include <good/string.h>
 #include <string.h>
 #include <map>
@@ -204,7 +204,7 @@ void test_bitset()
 {
     printf("%s()\n\n", __FUNCTION__);
     typedef good::list<MyClass> list_t;
-    //typedef std::list<MyClass> list_t;
+    //typedef good::list<MyClass> list_t;
 
     MyClass c(0);
 
@@ -369,12 +369,12 @@ void test_string()
     s1 = s3;
     printf("\n");
 
-    std::list<good::string> h;
+    good::list<good::string> h;
     h.push_back(s2);
     printf("\n");
     h.push_back(s3);
     printf("\n--------------------------------------------\n");
-    for (std::list<good::string>::const_iterator it = h.begin(); it != h.end(); ++it)
+    for (good::list<good::string>::const_iterator it = h.begin(); it != h.end(); ++it)
         printf("'%s' ", it->c_str());
     printf("(must be 'hello man' '')\n");
 
@@ -412,7 +412,7 @@ void test_string_buffer()
     }
     printf("\n");
 
-    std::list<good::string_buffer> h;
+    good::list<good::string_buffer> h;
     h.push_back(s2);
     printf("\n");
     h.push_back(s1);
@@ -434,7 +434,7 @@ void test_string_buffer()
 {
     printf("%s()\n\n", __FUNCTION__);
 
-    std::vector<MyClass> v;
+    good::vector<MyClass> v;
     {
         MyClass c(1);
 
@@ -448,7 +448,7 @@ void test_string_buffer()
     }
 
     printf("--------------------------------------------\n");
-    for ( std::vector<MyClass>::const_iterator it = v.rbegin(); it != v.rend(); it-=1 )
+    for ( good::vector<MyClass>::const_iterator it = v.rbegin(); it != v.rend(); it-=1 )
         printf ( "%d ", it->GetArg() );
     printf("(must be from 32 to 0)\n\n");
 
@@ -461,7 +461,7 @@ void test_string_buffer()
     v.pop_back();  printf("--------------------------------------------\nempty(): %d\n\n", v.empty());
 
 
-    std::list < std::vector<MyClass> > h;
+    good::list < good::vector<MyClass> > h;
     h.push_back(v);
     printf("\n");
 }*/
@@ -472,7 +472,7 @@ void test_map()
     printf("%s()\n\n", __FUNCTION__);
 
     typedef good::map<int, good::string> map_t;
-    typedef std::map<int, good::string> std_map_t;
+    typedef good::map<int, good::string> std_map_t;
 
     map_t map;
     std_map_t std_map;
@@ -483,7 +483,7 @@ void test_map()
     for (int i=0; i<10; ++i)
     {
         sprintf(buf, "%d", i);
-        map.insert(std::pair<int, good::string>(i, good::string(buf, true, true)));
+        map.insert(good::pair<int, good::string>(i, good::string(buf, true, true)));
     }
 
     printf("--------------------------------------------\n");
@@ -613,7 +613,7 @@ void test_graph()
     printf("%s()\n\n", __FUNCTION__);
 
     #define sqr(x) ((x)*(x))
-    typedef std::pair<float, float> vertex_t;
+    typedef good::pair<float, float> vertex_t;
     typedef good::graph< vertex_t, float > graph_t;
 
     class dist

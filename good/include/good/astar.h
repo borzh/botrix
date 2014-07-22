@@ -29,9 +29,9 @@ namespace good
         typename Heuristic,                                               ///< Heuristic functor, 2 vertices as argument.
         typename EdgeLength,                                              ///< Edge length functor, Edge as argument.
         typename CanUse,                                                  ///< Functor to know if can use certain node in search. Vertex as argument.
-        template <typename, typename> class NodesContainer = std::vector, ///< Container for arcs of a graph node.
-        template <typename, typename> class ArcsContainer = std::vector,  ///< Container for graph nodes.
-        typename Alloc = std::allocator<Vertex>                           ///< Memory allocator.
+        template <typename, typename> class NodesContainer = good::vector, ///< Container for arcs of a graph node.
+        template <typename, typename> class ArcsContainer = good::vector,  ///< Container for graph nodes.
+        typename Alloc = good::allocator<Vertex>                           ///< Memory allocator.
     >
     class astar
     {
@@ -49,7 +49,7 @@ namespace good
 
         typedef typename graph_t::node_id node_id;                                 ///< Index of graph node in nodes array.
 
-        typedef std::vector<node_id, Alloc> path_t;                                ///< Type for path of nodes.
+        typedef good::vector<node_id, Alloc> path_t;                                ///< Type for path of nodes.
 
     protected:
 
@@ -68,7 +68,7 @@ namespace good
         };
 
         typedef typename Alloc::template rebind<astar_node_t>::other alloc_anode_t; ///< Type for allocator for A* node.
-        typedef std::vector< astar_node_t, alloc_anode_t > anode_container_t;       ///< Type for container of A* nodes.
+        typedef good::vector< astar_node_t, alloc_anode_t > anode_container_t;       ///< Type for container of A* nodes.
 
         typedef typename anode_container_t::iterator anode_it;                      ///< Type for A* node iterator.
         typedef typename anode_container_t::const_iterator const_anode_it;          ///< Type for A* node const iterator.

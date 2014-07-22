@@ -7,6 +7,7 @@
 #define __GOOD_LIST_H__
 
 
+#include "good/memory.h"
 #include "good/utility.h"
 
 

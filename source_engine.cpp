@@ -1,5 +1,4 @@
-#include <mutex>
-
+#include <good/mutex.h>
 #include <good/file.h>
 
 #include "clients.h"
@@ -567,7 +566,7 @@ void CUtil::Message( edict_t* pEntity, const char* fmt, ... )
 }
 
 //----------------------------------------------------------------------------------------------------------------
-std::mutex cMessagesMutex;
+good::mutex cMessagesMutex;
 int iQueueMessageStringSize = 0;
 char szQueueMessageString[64*1024];
 

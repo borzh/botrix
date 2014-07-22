@@ -2,7 +2,7 @@
 #define __BOTRIX_EVENT_H__
 
 
-#include <memory>
+#include <good/memory.h>
 
 #include "types.h"
 
@@ -62,7 +62,7 @@ protected:
 
 };
 
-typedef std::unique_ptr<CEvent> CEventPtr; ///< Typedef for unique_ptr of CEvent.
+typedef good::shared_ptr<CEvent> CEventPtr; ///< Typedef for unique_ptr of CEvent.
 
 
 //================================================================================================================

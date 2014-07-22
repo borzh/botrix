@@ -7,7 +7,7 @@
 #define __GOOD_GRAPH_H__
 
 
-#include <vector>
+#include "good/vector.h"
 
 
 namespace good
@@ -20,9 +20,9 @@ namespace good
     template <
         typename Vertex,                                                  ///< Vertex can be any type.
         typename Edge,                                                    ///< Edge can be any type.
-        template <typename, typename> class NodesContainer = std::vector, ///< Random access for fast operations.
-        template <typename, typename> class ArcsContainer = std::vector,  ///< Any container class.
-        typename Alloc = std::allocator<Vertex>                           ///< Memory allocator.
+        template <typename, typename> class NodesContainer = good::vector, ///< Random access for fast operations.
+        template <typename, typename> class ArcsContainer = good::vector,  ///< Any container class.
+        typename Alloc = good::allocator<Vertex>                           ///< Memory allocator.
     >
     class graph
     {

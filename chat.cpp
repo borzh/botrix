@@ -62,13 +62,13 @@ const good::string& PhraseToString( const CPhrase& cPhrase )
 //----------------------------------------------------------------------------------------------------------------
 TChatVariable CChat::iPlayerVar = EChatVariableInvalid;
 
-std::vector<CPhrase> CChat::m_aMatchPhrases[EBotChatTotal]; // Phrases for commands used for matching.
-std::vector<CPhrase> CChat::m_aPhrases[EBotChatTotal];      // Phrases for commands used for generation of commands.
+good::vector<CPhrase> CChat::m_aMatchPhrases[EBotChatTotal]; // Phrases for commands used for matching.
+good::vector<CPhrase> CChat::m_aPhrases[EBotChatTotal];      // Phrases for commands used for generation of commands.
 
-std::vector<StringVector> CChat::m_aSynonims;               // Available synonims.
+good::vector<StringVector> CChat::m_aSynonims;               // Available synonims.
 
 StringVector CChat::m_aVariables;                            // Available variable names ($player, $door, $button, etc).
-std::vector<StringVector> CChat::m_aVariableValues;         // Available variable values (1, 2, opened, closed, weapon_...).
+good::vector<StringVector> CChat::m_aVariableValues;         // Available variable values (1, 2, opened, closed, weapon_...).
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -115,7 +115,7 @@ void CChat::AddSynonims( const good::string& sKey, const good::string& sValue )
     good::string sOthers(sValue, true);
     sOthers.escape();
     sOthers.lower_case();
-    sOthers.split<std::vector>(aSynonims, '.', true);
+    sOthers.split<good::vector>(aSynonims, '.', true);
 
     ChatMessage( "  %s", CTypeToString::StringVectorToString(aSynonims).c_str() );
 
@@ -147,8 +147,8 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
     if ( !sbCommands.ends_with('.') )
         sbCommands.append('.'); // Force to end with '.'
 
-    std::vector<CPhrase> aPhrases;
-    std::vector<CPhrase> aMatchPhrases;
+    good::vector<CPhrase> aPhrases;
+    good::vector<CPhrase> aMatchPhrases;
 
     // Example:  1 2 3/4 <5 6>/<7 8 (9)>
     int iBegin = 0, iFirstPhrase = 0;          // First frase index, for multiples '.'
@@ -499,7 +499,7 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 
     StringVector& aWords = aPhrases[0]; // TODO: detect 2+ commands in one sentence.
 
-    std::vector<bool> cFounded; // To know if word is in the matching phrase.
+    good::vector<bool> cFounded; // To know if word is in the matching phrase.
     cFounded.resize( aWords.size() );
 
     CChatVariablesMap cMatchMap(4);
@@ -532,7 +532,7 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
                 int iVarNumber = 0;
                 if ( cPhraseWord.sWord.starts_with('$') )
                 {
-                    std::pair<TChatVariable, int> pair = GetVariableAndIndex( cPhraseWord.sWord );
+                    good::pair<TChatVariable, int> pair = GetVariableAndIndex( cPhraseWord.sWord );
                     iVar = pair.first;
                     iVarNumber = pair.second;
                     DebugAssert( iVar != EChatVariableInvalid );
@@ -693,7 +693,7 @@ const good::string& CChat::ChatToText( const CBotChat& cCommand )
 
             if ( cWord.sWord.starts_with('$') )
             {
-                std::pair<TChatVariable, int> iVarIndex = GetVariableAndIndex( cWord.sWord );
+                good::pair<TChatVariable, int> iVarIndex = GetVariableAndIndex( cWord.sWord );
                 DebugAssert( iVarIndex.first != EChatVariableInvalid );
 
                 bool bFound = false;
@@ -747,7 +747,7 @@ public:
         aTalkAnswers[EBotChatLeave].push_back(EBotChatBye);
     };
 
-    std::vector<TBotChat> aTalkAnswers[EBotChatTotal];
+    good::vector<TBotChat> aTalkAnswers[EBotChatTotal];
 };
 /*
     // EBotChatError         { -1 },
@@ -773,7 +773,7 @@ public:
 };
 */
 
-const std::vector<TBotChat>& CChat::PossibleAnswers( TBotChat iTalk )
+const good::vector<TBotChat>& CChat::PossibleAnswers( TBotChat iTalk )
 {
     static CAnswers cAnswers;
     DebugAssert( (0 <= iTalk) && (iTalk < EBotChatTotal) );

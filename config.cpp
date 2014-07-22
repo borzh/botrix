@@ -125,9 +125,9 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
                     {
                         sbBuffer = mods->value;
                         good::escape(sbBuffer);
-                        std::list<good::string> aModsDirs;
+                        good::list<good::string> aModsDirs;
                         good::split( (good::string)sbBuffer, aModsDirs, ',', true );
-                        for ( std::list<good::string>::const_iterator modDirsIt = aModsDirs.begin(); modDirsIt != aModsDirs.end(); ++modDirsIt )
+                        for ( good::list<good::string>::const_iterator modDirsIt = aModsDirs.begin(); modDirsIt != aModsDirs.end(); ++modDirsIt )
                         {
                             if ( *modDirsIt == sModDir )
                             {
@@ -248,7 +248,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
                 for ( size_t i=0; i < aArguments.size(); ++i )
                 {
                     StringVector aCurrent;
-                    good::split<std::vector>(aArguments[i], aCurrent);
+                    good::split<good::vector>(aArguments[i], aCurrent);
 
                     int iFlag = CTypeToString::EntityClassFlagsFromString(aCurrent[0]);
 
@@ -317,7 +317,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 
             StringVector aParams;
             good::split((good::string)sbBuffer, aParams, ',', true);
-            std::vector<CEntityClass> aAmmos[2];
+            good::vector<CEntityClass> aAmmos[2];
 
             if ( itemIt->key == "default" ) // Default weapons.
             {

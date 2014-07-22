@@ -254,10 +254,10 @@ void CBot::Respawned()
     Vector vFoot = m_pController->GetLocalOrigin();
     for ( TEntityType iType = 0; iType < EEntityTypeObject; ++iType )
     {
-        std::vector<TEntityIndex>& aNear = m_aNearItems[iType];
-        std::vector<TEntityIndex>& aNearest = m_aNearestItems[iType];
+        good::vector<TEntityIndex>& aNear = m_aNearItems[iType];
+        good::vector<TEntityIndex>& aNearest = m_aNearestItems[iType];
 
-        const std::vector<CEntity>& aItems = CItems::GetItems(iType);
+        const good::vector<CEntity>& aItems = CItems::GetItems(iType);
         if ( aItems.size() == 0)
             continue;
 
@@ -331,7 +331,7 @@ void CBot::ReceiveChatRequest( const CBotChat& cRequest )
         if ( m_iPrevTalk == -1 ) // This is a request from other player, generate response.
         {
             // We want to know what bot can answer.
-            const std::vector<TBotChat>& aPossibleAnswers = CChat::PossibleAnswers(cRequest.iBotChat);
+            const good::vector<TBotChat>& aPossibleAnswers = CChat::PossibleAnswers(cRequest.iBotChat);
             if ( aPossibleAnswers.size() == 1 )
                 cResponse.iBotChat = aPossibleAnswers[0];
             else if ( aPossibleAnswers.size() > 0 )
@@ -505,7 +505,7 @@ void CBot::PreThink()
                 m_fNextDrawNearObjectsTime = CBotrixPlugin::fTime + fDrawNearObjectsTime;
                 for ( TEntityType iType=0; iType < EEntityTypeTotal; ++iType)
                 {
-                    const std::vector<CEntity>& aItems = CItems::GetItems(iType);
+                    const good::vector<CEntity>& aItems = CItems::GetItems(iType);
                     for ( size_t i=0; i < m_aNearItems[iType].size(); ++i) // Draw near items with white color.
                     {
                         ICollideable* pCollide = aItems[ m_aNearItems[iType][i] ].pEdict->GetCollideable();
@@ -920,14 +920,14 @@ void CBot::UpdateWorld()
     Vector vFoot = m_pController->GetLocalOrigin();
     for ( TEntityType iType=0; iType < EEntityTypeTotal; ++iType )
     {
-        const std::vector<CEntity>& aItems = CItems::GetItems(iType);
+        const good::vector<CEntity>& aItems = CItems::GetItems(iType);
         if ( aItems.size() == 0)
             continue;
 
-        std::vector<TEntityIndex>& aNearest = m_aNearestItems[iType];
+        good::vector<TEntityIndex>& aNearest = m_aNearestItems[iType];
         int iNearestSize = aNearest.size();
 
-        std::vector<TEntityIndex>& aNear = m_aNearItems[iType];
+        good::vector<TEntityIndex>& aNear = m_aNearItems[iType];
         int iNearSize = aNear.size();
 
         // Update nearest items.

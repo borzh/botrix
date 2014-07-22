@@ -12,7 +12,7 @@ TPathDrawFlags CWaypointNavigator::iPathDrawFlags = FPathDrawNone;
 
 //----------------------------------------------------------------------------------------------------------------
 bool CWaypointNavigator::SearchSetup( TWaypointId iFrom, TWaypointId iTo,
-                                      std::vector<TAreaId> const& aAvoidAreas, int iMaxWaypointsInLoop )
+                                      good::vector<TAreaId> const& aAvoidAreas, int iMaxWaypointsInLoop )
 {
     DebugAssert( CWaypoint::IsValid(iFrom) && CWaypoint::IsValid(iTo) );
 

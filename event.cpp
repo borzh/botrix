@@ -1,3 +1,7 @@
+// Ugly fix for ugly Source Engine.
+#undef MINMAX_H
+#undef min
+#undef max
 #include "bot.h"
 #include "clients.h"
 #include "event.h"

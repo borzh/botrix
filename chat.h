@@ -40,7 +40,7 @@ public:
     TChatVariableValue iValue;
 };
 
-typedef std::vector< CChatVarValue > CChatVariablesMap; ///< Map from chat variables to their values.
+typedef good::vector< CChatVarValue > CChatVariablesMap; ///< Map from chat variables to their values.
 
 
 
@@ -82,7 +82,7 @@ class CPhrase
 public:
     CPhrase(): aWords(16), chrPhraseEnd('.') {}
 
-    std::vector<CPhraseWord> aWords;      ///< Array of words.
+    good::vector<CPhraseWord> aWords;      ///< Array of words.
     char chrPhraseEnd;                     ///< One of '.', '?' or '!'.
 };
 
@@ -128,7 +128,7 @@ public: // Methods.
     }
 
     /// Get chat variable index and it's index from string (i.e. for $player1 returns <index of $player, 1>).
-    static std::pair<TChatVariable, int> GetVariableAndIndex( const good::string& sVarIndex )
+    static good::pair<TChatVariable, int> GetVariableAndIndex( const good::string& sVarIndex )
     {
         for ( StringVector::const_iterator it = m_aVariables.begin(); it != m_aVariables.end(); ++it )
         {
@@ -138,11 +138,11 @@ public: // Methods.
                 if ( (*szRest == 0) || ( ('0' <= *szRest) && (*szRest <= '9') ) ) // Must follow a number.
                 {
                     int iIndex = atoi(szRest);
-                    return std::pair<TChatVariable, int>( it - m_aVariables.begin(), iIndex );
+                    return good::pair<TChatVariable, int>( it - m_aVariables.begin(), iIndex );
                 }
             }
         }
-        return std::pair<TChatVariable, int>( EChatVariableInvalid, -1 );
+        return good::pair<TChatVariable, int>( EChatVariableInvalid, -1 );
     }
 
     /// Get variable value for variable index iVar, value index iValue.
@@ -177,19 +177,19 @@ public: // Methods.
 
 
     /// Get possible answers to a chat request.
-    static const std::vector<TBotChat>& PossibleAnswers( TBotChat iTalk );
+    static const good::vector<TBotChat>& PossibleAnswers( TBotChat iTalk );
 
 protected:
     static const good::string& GetSynonim( const good::string& sWord );
 
 
-    static std::vector<CPhrase> m_aMatchPhrases[EBotChatTotal]; // Phrases for commands used for matching.
-    static std::vector<CPhrase> m_aPhrases[EBotChatTotal];      // Phrases for commands used for generation of commands.
+    static good::vector<CPhrase> m_aMatchPhrases[EBotChatTotal]; // Phrases for commands used for matching.
+    static good::vector<CPhrase> m_aPhrases[EBotChatTotal];      // Phrases for commands used for generation of commands.
 
-    static std::vector<StringVector> m_aSynonims;               // Available synonims.
+    static good::vector<StringVector> m_aSynonims;               // Available synonims.
 
     static StringVector m_aVariables;                            // Available variable names ($player, $door, $button, etc).
-    static std::vector<StringVector> m_aVariableValues;         // Available variable values (1, 2, opened, closed, weapon_...).
+    static good::vector<StringVector> m_aVariableValues;         // Available variable values (1, 2, opened, closed, weapon_...).
 
 };
 

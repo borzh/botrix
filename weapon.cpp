@@ -6,7 +6,7 @@
 
 
 //----------------------------------------------------------------------------------------------------------------
-std::vector<CWeaponWithAmmo> CWeapons::m_aWeapons;
+good::vector<CWeaponWithAmmo> CWeapons::m_aWeapons;
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -165,7 +165,7 @@ void CWeaponWithAmmo::EndReload()
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CWeapons::GetRespawnWeapons( std::vector<CWeaponWithAmmo>& aWeapons, int iTeam )
+void CWeapons::GetRespawnWeapons( good::vector<CWeaponWithAmmo>& aWeapons, int iTeam )
 {
     DebugAssert( (aWeapons.size() == 0) || (aWeapons.size() == m_aWeapons.size()) );
 
@@ -195,7 +195,7 @@ void CWeapons::GetRespawnWeapons( std::vector<CWeaponWithAmmo>& aWeapons, int iT
 
 
 //----------------------------------------------------------------------------------------------------------------
-TWeaponId CWeapons::GetBestRangedWeapon( const std::vector<CWeaponWithAmmo>& aWeapons )
+TWeaponId CWeapons::GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aWeapons )
 {
     // Choose best weapon. Skip grenades.
     bool bCanKill = false, bOneBullet = false;

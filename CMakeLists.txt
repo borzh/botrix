@@ -1,13 +1,13 @@
 #sudo apt-get install gcc-multilib gcc-4.7-multilib g++-4.7-multilib ia32-libs
 
-#set(CMAKE_C_COMPILER "gcc-4.6")
-#set(CMAKE_CXX_COMPILER "g++-4.6")
+#set(CMAKE_C_COMPILER "gcc-4.7")
+#set(CMAKE_CXX_COMPILER "g++-4.7")
 
 project( Botrix )
 
 cmake_minimum_required( VERSION 2.6 )
 
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -std=c++11 -Wall -Wextra" ) # -Wno-unknown-pragmas
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -std=c++11 -Wall -Wextra -O0 -g -ggdb3" ) # -Wno-unknown-pragmas
 set( CMAKE_BUILD_TYPE Debug )
 
 add_subdirectory ( good )
@@ -72,12 +72,12 @@ find_library( VALVE_TIER1   NAMES tier1.a       PATHS ${VALVE_LIB_DIR} )
 #find_library( VALVE_TIER2   NAMES tier2.a       PATHS ${VALVE_LIB_DIR} )
 
 set( BOTRIX_LINK_LIBS
-    debug good
-    debug ${VALVE_MATHLIB}
-    debug ${VALVE_TIER0}
-    debug ${VALVE_TIER1}
-    debug ${VALVE_TIER2}
-    debug ${VALVE_VSTDLIB}
+    good
+    ${VALVE_MATHLIB}
+    ${VALVE_TIER0}
+    ${VALVE_TIER1}
+    ${VALVE_TIER2}
+    ${VALVE_VSTDLIB}
 )
 
 set( OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/game/mod_hl2mp/bin" )

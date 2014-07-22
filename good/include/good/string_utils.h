@@ -8,10 +8,9 @@
 
 
 #include <stdlib.h>
-#include <string.h> // strncmp()
-
 
 #include "good/defines.h"
+#include "good/string.h"
 
 
 #ifdef _WIN32

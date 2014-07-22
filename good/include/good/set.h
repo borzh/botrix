@@ -19,7 +19,7 @@ namespace good
     //************************************************************************************************************
     template <
         typename T,
-        typename Less = std::less<T>,
+        typename Less = good::less<T>,
         typename Alloc = allocator <T>
     >
     class set: public aatree<T, Less, Alloc>

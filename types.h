@@ -3,7 +3,7 @@
 
 
 #include <good/string.h>
-#include <vector>
+#include "good/vector.h"
 
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -475,7 +475,7 @@ enum TWaitConditions
 typedef int TWaitCondition;                      ///< Wait conditions for bot commands.
 
 
-typedef std::vector<good::string> StringVector; ///< Useful typedef.
+typedef good::vector<good::string> StringVector; ///< Useful typedef.
 
 
 #endif // __BOTRIX_TYPES_H__

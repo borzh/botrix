@@ -175,7 +175,7 @@ class CWaypoints
 
 public: // Types and constants.
     /// Graph that represents graph of waypoints.
-    typedef good::graph< CWaypoint, CWaypointPath, std::vector, std::vector > WaypointGraph;
+    typedef good::graph< CWaypoint, CWaypointPath, good::vector, good::vector > WaypointGraph;
     typedef WaypointGraph::node_t WaypointNode;     ///< Node of waypoint graph.
     typedef WaypointGraph::arc_t WaypointArc;       ///< Graph arc, i.e. path between two waypoints.
     typedef WaypointGraph::node_it WaypointNodeIt;  ///< Node iterator.
@@ -317,7 +317,7 @@ protected:
                     m_cBuckets[x][y][z].clear();
     }
 
-    typedef std::vector<TWaypointId> Bucket;
+    typedef good::vector<TWaypointId> Bucket;
     static Bucket m_cBuckets[BUCKETS_SIZE_X][BUCKETS_SIZE_Y][BUCKETS_SIZE_Z]; // 3D hash table of arrays of waypoint IDs.
 
     static StringVector m_cAreas;      // Areas names.

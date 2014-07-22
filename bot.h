@@ -281,10 +281,10 @@ protected: // Members.
     unsigned char r, g, b;                                         // Bot's path color.
 
     CWaypointNavigator m_pNavigator;                               // Waypoint navigator.
-    std::vector<TAreaId> m_aAvoidAreas;                           // Array of areas waypoint navigator must avoid.
+    good::vector<TAreaId> m_aAvoidAreas;                           // Array of areas waypoint navigator must avoid.
 
-    std::vector<TEntityIndex> m_aNearestItems[EEntityTypeTotal];  // Nearest items from m_aNearItems that are checked every frame (to know if bot picked them up).
-    std::vector<TEntityIndex> m_aNearItems[EEntityTypeTotal];     // Items in close range.
+    good::vector<TEntityIndex> m_aNearestItems[EEntityTypeTotal];  // Nearest items from m_aNearItems that are checked every frame (to know if bot picked them up).
+    good::vector<TEntityIndex> m_aNearItems[EEntityTypeTotal];     // Items in close range.
     int m_iNextNearItem[EEntityTypeTotal];                         // Next item to check if close (index in array CItems::GetItems()).
 
     good::bitset m_aNearPlayers;                                   // Bitset of players near (to know if bot can stuck with them).
@@ -295,10 +295,10 @@ protected: // Members.
     CPlayer* m_pCurrentEnemy;                                      // Current enemy.
     float m_fDistanceSqrToEnemy;                                   // If m_pCurrentEnemy is not NULL, squared distance to it.
 
-    std::vector<CPickedItem>::size_type m_iCurrentPickedItem;      // Index in m_aPickedItems to check next frame.
-    std::vector<CPickedItem> m_aPickedItems;                       // Picked items (like health or weapon), for bot to know which items are available to pick on map.
+    good::vector<CPickedItem>::size_type m_iCurrentPickedItem;      // Index in m_aPickedItems to check next frame.
+    good::vector<CPickedItem> m_aPickedItems;                       // Picked items (like health or weapon), for bot to know which items are available to pick on map.
 
-    std::vector<CWeaponWithAmmo> m_aWeapons;                       // Weapons that bot actually has.
+    good::vector<CWeaponWithAmmo> m_aWeapons;                       // Weapons that bot actually has.
     TWeaponId m_iWeapon, m_iBestWeapon;                            // Current / previous / best weapon.
     TWeaponId m_iPhyscannon, m_iManualWeapon;                      // Index of gravity gun / manual gun, -1 if bot doesn't have it.
 

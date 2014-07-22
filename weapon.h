@@ -68,7 +68,7 @@ public:
 
     TBotIntelligence iBotPreference;             ///< Smart bots will prefer weapons with higher preference.
 
-    std::vector<const CEntityClass*> aAmmos[2]; ///< Ammo item classes.
+    good::vector<const CEntityClass*> aAmmos[2]; ///< Ammo item classes.
 };
 
 
@@ -326,7 +326,7 @@ public:
     }
 
     /// Get default weapons with which player respawns.
-    static void GetRespawnWeapons( std::vector<CWeaponWithAmmo>& aWeapons, int iTeam );
+    static void GetRespawnWeapons( good::vector<CWeaponWithAmmo>& aWeapons, int iTeam );
 
     /// Get weapon from weapon name.
     static TWeaponId GetIdFromWeaponName( const good::string& sName )
@@ -372,13 +372,13 @@ public:
     static void Forbid( TWeaponId iWeaponId ) { ((CWeapon*)m_aWeapons[iWeaponId].GetBaseWeapon())->bForbidden = true; }
 
     /// Get best ranged weapon.
-    static TWeaponId GetBestRangedWeapon( const std::vector<CWeaponWithAmmo>& aWeapons );
+    static TWeaponId GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aWeapons );
 
     /// Get random weapon, based on bot intelligence.
     static TWeaponId GetRandomWeapon( TBotIntelligence iIntelligence, const good::bitset& cSkipWeapons );
 
 protected:
-    static std::vector< CWeaponWithAmmo > m_aWeapons; // Array of available weapons for this mod.
+    static good::vector< CWeaponWithAmmo > m_aWeapons; // Array of available weapons for this mod.
 };
 
 

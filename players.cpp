@@ -16,7 +16,7 @@ extern int iMainBufferSize;
 
 
 //----------------------------------------------------------------------------------------------------------------
-std::vector<CPlayerPtr> CPlayers::m_aPlayers(16);
+good::vector<CPlayerPtr> CPlayers::m_aPlayers(16);
 CClient* CPlayers::m_pListenServerClient = NULL;
 
 int CPlayers::m_iClientsCount = 0;
@@ -366,7 +366,7 @@ void CPlayers::PlayerDisconnected( edict_t* pEdict )
 //----------------------------------------------------------------------------------------------------------------
 void CPlayers::PreThink()
 {
-    for (std::vector<CPlayerPtr>::iterator it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it)
+    for (good::vector<CPlayerPtr>::iterator it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it)
         if ( it->get() )
             it->get()->PreThink();
 }
@@ -381,7 +381,7 @@ void CPlayers::DebugEvent( const char *szFormat, ... )
     vsprintf(buffer, szFormat, args);
     va_end(args);
 
-    for ( std::vector<CPlayerPtr>::const_iterator it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it )
+    for ( good::vector<CPlayerPtr>::const_iterator it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it )
     {
         const CPlayer* pPlayer = it->get();
         if ( pPlayer  &&  !pPlayer->IsBot()  &&  ((CClient*)pPlayer)->bDebuggingEvents )
@@ -394,7 +394,7 @@ void CPlayers::DebugEvent( const char *szFormat, ... )
 void CPlayers::CheckForDebugging()
 {
     m_bClientDebuggingEvents = false;
-    for (std::vector<CPlayerPtr>::iterator it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it)
+    for (good::vector<CPlayerPtr>::iterator it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it)
     {
         const CPlayer* pPlayer = it->get();
         if ( pPlayer  &&  !pPlayer->IsBot()  &&  ((CClient*)pPlayer)->bDebuggingEvents )

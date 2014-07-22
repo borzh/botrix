@@ -3,9 +3,9 @@
 
 
 #include <string.h> // memset()
-#include <vector>
 
 #include "good/memory.h"
+#include "good/vector.h"
 
 
 namespace good
@@ -19,7 +19,7 @@ namespace good
     class base_bitset
     {
     public:
-        typedef std::vector< unsigned char, Alloc > container_t;
+        typedef good::vector< unsigned char, Alloc > container_t;
 
         /// Constructor with optional size of set.
         base_bitset( int iSize = 0 ): m_iSize(iSize) { m_cContainer.resize(BIT_ARRAY_SIZE(iSize)); }

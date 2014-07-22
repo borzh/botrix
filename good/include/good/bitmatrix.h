@@ -1,3 +1,5 @@
+#error not implemented
+
 #include <good/bitset.h"
 
 
@@ -13,7 +15,7 @@ namespace good
 	{
 	public:
 		typedef good::base_bitset<Alloc> row_container_t;  ///< typedef for row container.
-		typedef std::vector<row_container_t> container_t; ///< Bit matrix container.
+		typedef good::vector<row_container_t> container_t; ///< Bit matrix container.
 
 		/// Constructor with optional size argument.
 		base_bitmatrix( int size = 0 );

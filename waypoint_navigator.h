@@ -25,7 +25,7 @@ public:
     CWaypointNavigator(): m_bSearchStarted(false), m_bSearchEnded(false), m_iPathIndex(-1) {}
 
     /// Setup searching a path between given waypoints, avoiding certain areas, and setting search step size (iMaxWaypointsInLoop).
-    bool SearchSetup( TWaypointId iFrom, TWaypointId iTo, std::vector<TAreaId> const& aAvoidAreas, int iMaxWaypointsInLoop = MAX_WAYPOINTS_IN_LOOP );
+    bool SearchSetup( TWaypointId iFrom, TWaypointId iTo, good::vector<TAreaId> const& aAvoidAreas, int iMaxWaypointsInLoop = MAX_WAYPOINTS_IN_LOOP );
 
     /// Resume searching path. Returns true if finished finding path.
     bool SearchStep()
@@ -83,7 +83,7 @@ protected:
     {
     public:
         // Constructor.
-        CCanUseWaypoint(std::vector<TAreaId> const& aAvoidedAreas): m_cAvoidAreas(aAvoidedAreas) {}
+        CCanUseWaypoint(good::vector<TAreaId> const& aAvoidedAreas): m_cAvoidAreas(aAvoidedAreas) {}
 
         // Default operator to know if can use waypoint.
         bool operator()( CWaypoints::WaypointNode const& w ) const
@@ -92,7 +92,7 @@ protected:
         }
 
     protected:
-        std::vector<TAreaId> const& m_cAvoidAreas; // Array of areas to avoid.
+        good::vector<TAreaId> const& m_cAvoidAreas; // Array of areas to avoid.
     };
 
     //------------------------------------------------------------------------------------------------------------

@@ -17,8 +17,8 @@ good::string CMod::sModName;
 IMod* CMod::pCurrentMod = NULL;
 
 StringVector CMod::m_aBotNames;
-std::vector<StringVector> CMod::m_aModels;
-std::vector<CEventPtr> CMod::m_aEvents;
+good::vector<StringVector> CMod::m_aModels;
+good::vector<CEventPtr> CMod::m_aEvents;
 
 bool CMod::m_bMapHas[EEntityTypeTotal-1]; // Health, armor, weapon, ammo.
 
@@ -133,7 +133,7 @@ void CMod::ExecuteEvent( void* pEvent, TEventType iType )
 
     const char* szEventName = pInterface->GetName();
 
-    for ( std::vector<CEventPtr>::iterator it = m_aEvents.begin(); it != m_aEvents.end(); ++it )
+    for ( good::vector<CEventPtr>::iterator it = m_aEvents.begin(); it != m_aEvents.end(); ++it )
     {
         if ( (*it)->GetName() == szEventName )
         {

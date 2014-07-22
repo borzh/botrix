@@ -7,7 +7,7 @@
 #define __GOOD_INI_FILE_H__
 
 
-#include <list>
+#include "good/list.h"
 #include <good/string.h>
 
 
@@ -121,7 +121,7 @@ namespace good
             bool eolAterJunk:1;   ///< If true then end of line is needed after junk.
         };
 
-        typedef std::list< struct config > configs;     ///< List of configurations of this ini file section.
+        typedef good::list< struct config > configs;    ///< List of configurations of this ini file section.
         typedef configs::const_iterator const_iterator; ///< Const iterator of list of configurations.
         typedef configs::iterator iterator;             ///< Iterator of list of configurations.
 
@@ -246,7 +246,7 @@ namespace good
 
     public: // Types.
 
-        typedef std::list<ini_section> container_t;          ///< Type of container of sections.
+        typedef good::list<ini_section> container_t;          ///< Type of container of sections.
         typedef container_t::const_iterator const_iterator;  ///< Const iterator of sections.
         typedef container_t::iterator iterator;              ///< Iterator of sections.
 

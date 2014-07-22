@@ -158,7 +158,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     TModId iModId = CConfiguration::Load(iniName, sGameFolder, sModFolder);
 
     // Create console command instance.
-    CMainCommand::instance = std::auto_ptr<CMainCommand>( new CMainCommand() );
+    CMainCommand::instance = good::auto_ptr<CMainCommand>( new CMainCommand() );
 
     // Load mod configuration.
     CMod::Load(iModId);

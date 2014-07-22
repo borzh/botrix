@@ -7,9 +7,6 @@
 #define __GOOD_HEAP_H__
 
 
-#include <functional>   // std::less
-
-
 namespace good
 {
 
@@ -128,7 +125,7 @@ namespace good
         // Now we have a valid heap.
         while ( --iSize > 0 )
         {
-            std::swap( aHeap[0], aHeap[iSize] );
+            good::swap( aHeap[0], aHeap[iSize] );
             heap_adjust_down( aHeap, 0, iSize, cLess );
         }
     }
@@ -150,7 +147,7 @@ namespace good
     template < typename T >
     void heap_adjust_down( T* aHeap, int iPos, int iSize )
     {
-        heap_adjust_down( aHeap, iPos, iSize, std::less<T>() );
+        heap_adjust_down( aHeap, iPos, iSize, good::less<T>() );
     }
 
     //------------------------------------------------------------------------------------------------------------
@@ -163,7 +160,7 @@ namespace good
     template < typename T >
     void heap_adjust_up( T* aHeap, int iPos )
     {
-        heap_adjust_up( aHeap, iPos, std::less<T>() );
+        heap_adjust_up( aHeap, iPos, good::less<T>() );
     }
 
     //------------------------------------------------------------------------------------------------------------
@@ -172,7 +169,7 @@ namespace good
     template < typename T >
     void heap_modify( T* aHeap, int iPos, int iSize )
     {
-        heap_modify( aHeap, iPos, std::less<T>() );
+        heap_modify( aHeap, iPos, good::less<T>() );
     }
 
     //------------------------------------------------------------------------------------------------------------
@@ -181,7 +178,7 @@ namespace good
     template < typename T >
     void heap_push( T* aHeap, const T& tElem, int iSize )
     {
-        heap_push( aHeap, tElem, iSize, std::less<T>() );
+        heap_push( aHeap, tElem, iSize, good::less<T>() );
     }
 
     //------------------------------------------------------------------------------------------------------------
@@ -190,7 +187,7 @@ namespace good
     template < typename T >
     void heap_pop( T* aHeap, int iSize )
     {
-        heap_pop( aHeap, iSize, std::less<T>() );
+        heap_pop( aHeap, iSize, good::less<T>() );
     }
 
     //------------------------------------------------------------------------------------------------------------
@@ -199,7 +196,7 @@ namespace good
     template < typename T >
     void heap_make( T* aHeap, int iSize )
     {
-        heap_make( aHeap, iSize, std::less<T>() );
+        heap_make( aHeap, iSize, good::less<T>() );
     }
 
     //------------------------------------------------------------------------------------------------------------
@@ -208,7 +205,7 @@ namespace good
     template < typename T >
     void heap_sort( T* aHeap, int iSize )
     {
-        heap_sort( aHeap, iSize, std::less<T>() );
+        heap_sort( aHeap, iSize, good::less<T>() );
     }
 
 

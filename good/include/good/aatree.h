@@ -44,9 +44,9 @@ namespace good
     // And if condition is false == 0, then x = choice[0] = z
     //************************************************************************************************************
     template <
-        typename T,                         ///< Type to store in tree.
-        typename Less = std::less<T>,       ///< Operation to know order of elements.
-        typename Alloc = allocator<T>  ///< Allocator for T.
+        typename T,                          ///< Type to store in tree.
+        typename Less = good::less<T>,       ///< Operation to know order of elements.
+        typename Alloc = good::allocator<T>  ///< Allocator for T.
     >
     class aatree
     {
@@ -164,9 +164,9 @@ namespace good
         void assign(aatree const& tOther)
         {
             clear();
-            std::swap(nil, ((aatree&)tOther).nil);
-            std::swap(m_pHead, ((aatree&)tOther).m_pHead);
-            std::swap(m_iSize, ((aatree&)tOther).m_iSize);
+            good::swap(nil, ((aatree&)tOther).nil);
+            good::swap(m_pHead, ((aatree&)tOther).m_pHead);
+            good::swap(m_iSize, ((aatree&)tOther).m_iSize);
         }
 
 

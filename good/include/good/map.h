@@ -7,8 +7,6 @@
 #define __GOOD_MAP_H__
 
 
-#include <utility>
-
 #include "good/aatree.h"
 
 
@@ -42,18 +40,18 @@ namespace good
     template <
         typename Key,
         typename Value,
-        typename Less = std::less<Key>,
-        typename Alloc = allocator< std::pair<Key, Value> >
+        typename Less = good::less<Key>,
+        typename Alloc = allocator< good::pair<Key, Value> >
     >
     class map: public aatree<
-                             std::pair<Key, Value>,
-                             pair_first_op< std::pair<Key, Value>, Less >,
+                             good::pair<Key, Value>,
+                             pair_first_op< good::pair<Key, Value>, Less >,
                              Alloc
                             >
     {
     public:
-        typedef std::pair<Key, Value> key_value_t;
-        typedef aatree< std::pair<Key, Value>, pair_first_op<std::pair<Key, Value>, Less>, Alloc> base_class;
+        typedef good::pair<Key, Value> key_value_t;
+        typedef aatree< good::pair<Key, Value>, pair_first_op<good::pair<Key, Value>, Less>, Alloc> base_class;
         typedef typename base_class::node_t node_t;
 
         //--------------------------------------------------------------------------------------------------------

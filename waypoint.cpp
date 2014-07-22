@@ -1,5 +1,3 @@
-#include <algorithm>
-
 #include "clients.h"
 #include "item.h"
 #include "server_plugin.h"
@@ -548,7 +546,7 @@ TWaypointId CWaypoints::GetAnyWaypoint(TWaypointFlags iFlags)
 //----------------------------------------------------------------------------------------------------------------
 TAreaId CWaypoints::GetAreaId( const good::string& sName )
 {
-    StringVector::const_iterator it( std::find(m_cAreas.begin(), m_cAreas.end(), sName) );
+    StringVector::const_iterator it( good::find(m_cAreas.begin(), m_cAreas.end(), sName) );
     return ( it == m_cAreas.end() )  ?  EAreaIdInvalid  :  ( it - m_cAreas.begin() );
 }
 

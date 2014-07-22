@@ -1,3 +1,6 @@
+#set(CMAKE_C_COMPILER "gcc-4.7")
+#set(CMAKE_CXX_COMPILER "g++-4.7")
+
 project( good )
 
 cmake_minimum_required( VERSION 2.6 )

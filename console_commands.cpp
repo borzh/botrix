@@ -10,7 +10,7 @@
 #include "tier0/memdbgon.h"
 
 
-std::auto_ptr<CMainCommand> CMainCommand::instance;
+good::auto_ptr<CMainCommand> CMainCommand::instance;
 
 const good::string sHelp("help"); // TODO: all commands.
 

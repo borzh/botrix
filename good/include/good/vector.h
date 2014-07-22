@@ -9,6 +9,7 @@
 
 #include <string.h>
 
+#include "good/memory.h"
 #include "good/utility.h"
 
 
@@ -33,6 +34,9 @@ namespace good
     class vector
     {
     public:
+
+        typedef T value_type; ///< Typedef to value type.
+        typedef size_t size_type; ///< Typedef to size type.
 
         //========================================================================================================
         /// Const iterator of vector.
@@ -68,14 +72,14 @@ namespace good
             int operator- ( const const_iterator& itOther ) const { DebugAssert(m_pCurrent); return m_pCurrent - itOther.m_pCurrent; }
 
             /// Operator +.
-            const_iterator operator+ ( int iOffset ) const { DebugAssert(m_pCurrent); return const_iterator(m_pCurrent + iOffset); }
+            const_iterator operator+ ( size_type iOffset ) const { DebugAssert(m_pCurrent); return const_iterator(m_pCurrent + iOffset); }
             /// Operator +=.
-            const_iterator& operator+= ( int iOffset ) { DebugAssert(m_pCurrent); m_pCurrent += iOffset; return *this; }
+            const_iterator& operator+= ( size_type iOffset ) { DebugAssert(m_pCurrent); m_pCurrent += iOffset; return *this; }
 
             /// Operator -.
-            const_iterator operator- ( int iOffset ) const { DebugAssert(m_pCurrent); return const_iterator(m_pCurrent - iOffset); }
+            const_iterator operator- ( size_type iOffset ) const { DebugAssert(m_pCurrent); return const_iterator(m_pCurrent - iOffset); }
             /// Operator -=.
-            const_iterator& operator-= ( int iOffset ) { DebugAssert(m_pCurrent); m_pCurrent -= iOffset; return *this; }
+            const_iterator& operator-= ( size_type iOffset ) { DebugAssert(m_pCurrent); m_pCurrent -= iOffset; return *this; }
 
             /// Pre-increment.
             const_iterator& operator++() {DebugAssert(m_pCurrent);  m_pCurrent++; return *this; }
@@ -115,17 +119,17 @@ namespace good
             iterator( iterator const& itOther ): base_class(itOther) {}
 
             /// Operator +.
-            iterator operator+ ( int iOffset ) const { DebugAssert(this->m_pCurrent); return iterator(this->m_pCurrent + iOffset); }
+            iterator operator+ ( size_type iOffset ) const { DebugAssert(this->m_pCurrent); return iterator(this->m_pCurrent + iOffset); }
             /// Operator +=.
-            iterator& operator+= ( int iOffset ) { DebugAssert(this->m_pCurrent); this->m_pCurrent += iOffset; return *this; }
+            iterator& operator+= ( size_type iOffset ) { DebugAssert(this->m_pCurrent); this->m_pCurrent += iOffset; return *this; }
 
             /// Operator -.
             int operator- ( const iterator& other ) const { DebugAssert(this->m_pCurrent); return (this->m_pCurrent - other.m_pCurrent); }
 
             /// Operator -.
-            iterator operator- ( int iOffset ) const { DebugAssert(this->m_pCurrent); return iterator(this->m_pCurrent - iOffset); }
+            iterator operator- ( size_type iOffset ) const { DebugAssert(this->m_pCurrent); return iterator(this->m_pCurrent - iOffset); }
             /// Operator -=.
-            iterator& operator-= ( int iOffset ) { DebugAssert(this->m_pCurrent); this->m_pCurrent -= iOffset; return *this; }
+            iterator& operator-= ( size_type iOffset ) { DebugAssert(this->m_pCurrent); this->m_pCurrent -= iOffset; return *this; }
 
             /// Pre-increment.
             iterator& operator++() { DebugAssert(this->m_pCurrent); this->m_pCurrent++; return *this; }
@@ -146,7 +150,7 @@ namespace good
         };
 
         typedef util_reverse_iterator<const_iterator> const_reverse_iterator; ///< Reverse const iterator of a vector.
-        typedef util_reverse_iterator<iterator> reverse_iterator;             ///< Reverse iterator of a vector.
+        typedef util_reverse_iterator<iterator> reverse_iterator; ///< Reverse iterator of a vector.
 
 
         //--------------------------------------------------------------------------------------------------------
@@ -260,12 +264,12 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get vector size, that is, count of elements.
         //--------------------------------------------------------------------------------------------------------
-        int size() const { return m_iSize; }
+        size_type size() const { return m_iSize; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Get vector capacity.
         //--------------------------------------------------------------------------------------------------------
-        int capacity() const { return m_iCapacity; }
+        size_type capacity() const { return m_iCapacity; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Assignment.
@@ -284,7 +288,7 @@ namespace good
                 {
                     clear();
                     m_iSize = aOther.m_iSize;
-                    for ( int i=0; i < m_iSize; ++i )
+                    for ( size_t i=0; i < m_iSize; ++i )
                         m_pBuffer[i] = aOther.m_pBuffer[i];
                 }
             }
@@ -312,22 +316,22 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Array subscript.
         //--------------------------------------------------------------------------------------------------------
-        T& operator[] ( int iIndex ) { DebugAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
+        T& operator[] ( size_type iIndex ) { DebugAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Array subscript const.
         //--------------------------------------------------------------------------------------------------------
-        T const& operator[] ( int iIndex ) const { DebugAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
+        T const& operator[] ( size_type iIndex ) const { DebugAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Element at index.
         //--------------------------------------------------------------------------------------------------------
-        T& at( int iIndex ) { DebugAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
+        T& at( size_type iIndex ) { DebugAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Element at index.
         //--------------------------------------------------------------------------------------------------------
-        T const& at( int iIndex ) const { DebugAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
+        T const& at( size_type iIndex ) const { DebugAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Get first array element.
@@ -362,7 +366,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Insert element tElem at vector position iPos.
         //--------------------------------------------------------------------------------------------------------
-        iterator insert( int iPos, const T& tElem )
+        iterator insert( size_type iPos, const T& tElem )
         {
             DebugAssert( iPos <= m_iSize );
             increment(1);
@@ -386,7 +390,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Insert element tElem at vector position iPos. Return iterator pointing to next element.
         //--------------------------------------------------------------------------------------------------------
-        iterator erase( int iPos )
+        iterator erase( size_type iPos )
         {
             DebugAssert( iPos < m_iSize );
             m_cAlloc.destroy(&m_pBuffer[iPos]);
@@ -411,7 +415,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         void clear()
         {
-            for ( int i=0; i<m_iSize; ++i )
+            for ( size_t i=0; i<m_iSize; ++i )
                 m_cAlloc.destroy(&m_pBuffer[i]);
             m_iSize = 0;
         }
@@ -419,7 +423,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Reserve buffer size.
         //--------------------------------------------------------------------------------------------------------
-        void reserve( int iCapacity )
+        void reserve( size_type iCapacity )
         {
             if ( m_iCapacity >= iCapacity ) return;
             m_pBuffer = m_cAlloc.reallocate( m_pBuffer, iCapacity, m_iCapacity );
@@ -432,17 +436,17 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Resize array.
         //--------------------------------------------------------------------------------------------------------
-        void resize( int iSize, T const& elem = T() )
+        void resize( size_type iSize, T const& elem = T() )
         {
             if (iSize >= m_iSize)
             {
                 reserve(iSize);
-                for (int i=m_iSize; i<iSize; ++i)
+                for (size_t i=m_iSize; i<iSize; ++i)
                     m_cAlloc.construct(&m_pBuffer[i], elem);
             }
             else
             {
-                for (int i=iSize; i<m_iSize; ++i)
+                for (size_t i=iSize; i<m_iSize; ++i)
                     m_cAlloc.destroy(&m_pBuffer[i]);
             }
             m_iSize = iSize;
@@ -451,9 +455,9 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Increment buffer size.
         //--------------------------------------------------------------------------------------------------------
-        void increment( int iBySize = 1 )
+        void increment( size_type iBySize = 1 )
         {
-            int desired = m_iSize + iBySize;
+            size_t desired = m_iSize + iBySize;
             if ( desired > m_iCapacity )
             {
                 iBySize = m_iCapacity;
@@ -472,8 +476,8 @@ namespace good
         alloc_t m_cAlloc;         // Allocator for T.
 
         T* m_pBuffer;             // Array of T.
-        int m_iCapacity;          // Allocated size.
-        int m_iSize;              // Used size.
+        size_type m_iCapacity;    // Allocated size.
+        size_type m_iSize;        // Used size.
     };
 
 } // namespace good

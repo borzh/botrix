@@ -109,6 +109,7 @@ CBotrixPlugin::~CBotrixPlugin() {}
 //----------------------------------------------------------------------------------------------------------------
 bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn pGameServerFactory )
 {
+#ifndef DONT_USE_VALVE_FUNCTIONS
     LOAD_GAME_SERVER_INTERFACE(pPlayerInfoManager,IPlayerInfoManager,INTERFACEVERSION_PLAYERINFOMANAGER);
 
     //pGlobalVars = pPlayerInfoManager->GetGlobalVars();
@@ -133,8 +134,15 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     LOAD_INTERFACE(pCvar, ICvar, CVAR_INTERFACE_VERSION);
 #endif
 
+#endif // DONT_USE_VALVE_FUNCTIONS
+
+
     // Get game/mod directories.
+#ifdef DONT_USE_VALVE_FUNCTIONS
+    strcpy(szMainBuffer, "/home/pccorar09/svn/source-sdk-2013/mp/game/mod_hl2mp");
+#else
     pEngineServer->GetGameDir(szMainBuffer, iMainBufferSize);
+#endif
     sModFolder = szMainBuffer;
     int modPos = sModFolder.rfind(PATH_SEPARATOR);
     sModFolder = good::string(&szMainBuffer[modPos+1], true, true);
@@ -158,7 +166,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     TModId iModId = CConfiguration::Load(iniName, sGameFolder, sModFolder);
 
     // Create console command instance.
-    CMainCommand::instance = good::auto_ptr<CMainCommand>( new CMainCommand() );
+    CMainCommand::instance = good::unique_ptr<CMainCommand>( new CMainCommand() );
 
     // Load mod configuration.
     CMod::Load(iModId);
@@ -228,13 +236,16 @@ void CBotrixPlugin::LevelInit( const char* pMapName )
     sMapName = pMapName;
     bMapRunning = true;
 
+#ifndef DONT_USE_VALVE_FUNCTIONS
     ConVar *pTeamplay = pCvar->FindVar("mp_teamplay");
     bTeamPlay = pTeamplay ? pTeamplay->GetBool() : false;
 
     pGameEventManager->AddListener( this, true );
 
-    CWaypoints::Load();
     CWaypoint::iWaypointTexture = CBotrixPlugin::pEngineServer->PrecacheModel( "sprites/lgtning.vmt" );
+#endif
+
+    CWaypoints::Load();
 }
 
 //----------------------------------------------------------------------------------------------------------------

@@ -38,7 +38,10 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 {
     TModId iModId = EModId_Invalid;
 
-    StringVector aBotNames(0), aModels(0), aTeams(4);
+    StringVector aBotNames, aModels, aTeams;
+    aBotNames.reserve(32);
+    aModels.reserve(32);
+    aTeams.reserve(4);
 
     good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
 
@@ -462,7 +465,8 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
                             if ( iValue == -1 )
                             {
                                 ConfigError("File \"%s\", section [%s], weapon %s, invalid team: %s.",
-                                               m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[1].c_str());
+                                            m_iniFile.name.c_str(), it->name.c_str(),
+                                            itemIt->key.c_str(), aCurrent[1].c_str());
                                 bError = true;
                                 break;
                             }

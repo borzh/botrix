@@ -10,7 +10,7 @@
 #include "tier0/memdbgon.h"
 
 
-good::auto_ptr<CMainCommand> CMainCommand::instance;
+good::unique_ptr<CMainCommand> CMainCommand::instance;
 
 const good::string sHelp("help"); // TODO: all commands.
 
@@ -2009,16 +2009,18 @@ CMainCommand::CMainCommand()
     Add(new CBotChatCommand);
     Add(new CConfigCommand);
 
+#ifndef DONT_USE_VALVE_FUNCTIONS
 #ifdef SOURCE_ENGINE_2006
     CBotrixPlugin::pCvar->RegisterConCommandBase( &botrix );
 #else
     CBotrixPlugin::pCvar->RegisterConCommand( &botrix );
+#endif
 #endif
 }
 
 CMainCommand::~CMainCommand()
 {
 #ifndef SOURCE_ENGINE_2006
-    CBotrixPlugin::pCvar->UnregisterConCommand( &botrix );
+    //CBotrixPlugin::pCvar->UnregisterConCommand( &botrix );
 #endif
 }

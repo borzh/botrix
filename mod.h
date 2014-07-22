@@ -3,7 +3,7 @@
 
 
 #include <stdlib.h> // rand()
-#include <good/memory.h> // auto_ptr
+#include <good/memory.h> // unique_ptr
 
 #include "event.h"
 #include "item.h"

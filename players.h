@@ -2,7 +2,7 @@
 #define __BOTRIX_PLAYERS_H__
 
 
-#include <good/memory.h> // auto_ptr
+#include <good/memory.h> // unique_ptr
 
 #include "source_engine.h"
 #include "types.h"

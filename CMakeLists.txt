@@ -7,7 +7,7 @@ project( Botrix )
 
 cmake_minimum_required( VERSION 2.6 )
 
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -std=c++11 -Wall -Wextra -O0 -g -ggdb3" ) # -Wno-unknown-pragmas
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -std=c++11 -Wall -Wextra -O0 -g -ggdb3" ) #  -Wno-unknown-pragmas
 set( CMAKE_BUILD_TYPE Debug )
 
 add_subdirectory ( good )
@@ -80,7 +80,7 @@ set( BOTRIX_LINK_LIBS
     ${VALVE_VSTDLIB}
 )
 
-set( OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/game/mod_hl2mp/bin" )
+set( OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/game/mod_hl2mp/addons" )
 
 add_library( botrix SHARED ${MY_SRCS} )
 target_link_libraries( botrix ${BOTRIX_LINK_LIBS} )

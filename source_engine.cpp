@@ -617,8 +617,9 @@ const good::string& CUtil::BuildFileName( const good::string& sFolder, const goo
     static good::string_buffer sbResult(szMainBuffer, iMainBufferSize, false);
     sbResult.erase();
 
-    sbResult << CBotrixPlugin::instance->sBotrixPath << PATH_SEPARATOR << sFolder << CBotrixPlugin::instance->sGameFolder
-             << CBotrixPlugin::instance->sModFolder << sFile;
+    sbResult << CBotrixPlugin::instance->sBotrixPath << PATH_SEPARATOR << sFolder << PATH_SEPARATOR
+             << CBotrixPlugin::instance->sGameFolder << PATH_SEPARATOR
+             << CBotrixPlugin::instance->sModFolder  << PATH_SEPARATOR << sFile;
 
     if ( sExtension.length() )
         sbResult << "." << sExtension;

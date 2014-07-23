@@ -32,7 +32,7 @@ CBot::CBot( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence iIntelligence
     CPlayer(pEdict, iIndex, true),
     m_iIntelligence(iIntelligence), r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ),
     m_aNearPlayers(CPlayers::Size()), m_aSeenEnemies(CPlayers::Size()), m_aEnemies(CPlayers::Size()),
-    m_bPaused(false),
+    m_bTest(false), m_bPaused(false),
 #if defined(DEBUG) || defined(_DEBUG)
     m_bDebugging(true),
 #else
@@ -2038,7 +2038,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
     {
         DebugAssert( m_bTest || !m_bUnderAttack );
 
-        if ( (m_iWeapon != m_iManualWeapon) && m_aWeapons[m_iWeapon].CanChange() )
+        if ( CWeapon::IsValid(m_iManualWeapon) && (m_iWeapon != m_iManualWeapon) && m_aWeapons[m_iWeapon].CanChange() )
             SetActiveWeapon(m_iManualWeapon);
 
         if ( CBotrixPlugin::fTime >= m_fStartActionTime )

@@ -1,15 +1,16 @@
 #ifndef __BOTRIX_CONSOLE_COMMANDS_H__
 #define __BOTRIX_CONSOLE_COMMANDS_H__
 
-
-#include "public/tier1/convar.h"
-#include "public/edict.h"
+#include <good/memory.h>
 
 #include "types.h"
 
 #include "clients.h"
 #include "item.h"
 #include "type2string.h"
+
+#include "public/tier1/convar.h"
+#include "public/edict.h"
 
 
 //****************************************************************************************************************

@@ -19,7 +19,6 @@
 #include "public/mathlib/vector.h"
 #include "public/eiface.h"
 #include "game/shared/in_buttons.h"
-//#include "game/shared/usercmd.h"
 
 
 #define BotMessage(...)             { if ( m_bDebugging ) CUtil::Message(NULL, __VA_ARGS__); }

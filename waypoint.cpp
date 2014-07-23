@@ -213,7 +213,10 @@ bool CWaypoints::Load()
 
     FILE *f = CUtil::OpenFile(sFileName, "rb");
     if ( f == NULL )
+    {
+        CUtil::Message(NULL, "No waypoints for map %s", CBotrixPlugin::instance->sMapName.c_str());
         return false;
+    }
 
     struct waypoint_header header;
     fread(&header, sizeof(struct waypoint_header), 1, f);
@@ -224,7 +227,7 @@ bool CWaypoints::Load()
         fclose(f);
         return false;
     }
-    if (header.iVersion > WAYPOINT_VERSION)
+    if ( (header.iVersion <= 0) || (header.iVersion > WAYPOINT_VERSION) )
     {
         CUtil::Message(NULL, "Error loading waypoints: version mismatch.");
         fclose(f);

@@ -7,14 +7,21 @@ project( Botrix )
 
 cmake_minimum_required( VERSION 2.6 )
 
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -std=c++11 -Wall -Wextra -O0 -g -ggdb3" ) #  -Wno-unknown-pragmas
-set( CMAKE_BUILD_TYPE Debug )
+#set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -std=c++11 -Wall -Wextra -O0 -g -ggdb3" ) #  -Wno-unknown-pragmas
+#set( CMAKE_BUILD_TYPE Debug )
+
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -std=c++11 -Wall -Wextra -O2 -falign-functions=16 -falign-loops=16" ) #  -Wno-unknown-pragmas
+set( CMAKE_BUILD_TYPE Release )
 
 add_subdirectory ( good )
 
 add_definitions(
     -DVPC
     -DPOSIX=1
+#    -D_DEBUG=1
+#    -DDEBUG=1
+    -D_NDEBUG=1
+    -DNDEBUG=1
     -DGNUC=1
     -DCOMPILER_GCC
     -DLINUX=1

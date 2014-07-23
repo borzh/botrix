@@ -187,17 +187,19 @@
 
 #   ifndef DebugPrint
 #       include <stdio.h>
-#       define DebugPrint(...) { printf(__VA_ARGS__); fflush(stdout); }
+#       define DebugPrint(...) do { printf(__VA_ARGS__); fflush(stdout); } while (false)
 #   endif
 
 #   ifndef DebugAssert
 #       ifdef _WIN32
 #           define DebugAssert(exp)\
-            if ( !(exp) )\
-            {\
-                DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
-                AsmBreak();\
-            }
+                do {\
+                    if ( !(exp) )\
+                    {\
+                        DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
+                        AsmBreak();\
+                    }\
+                while (false)
 #       else
 #           include <assert.h>
 #           define DebugAssert assert
@@ -213,11 +215,13 @@
 #   ifndef DebugAssert
 #       ifdef BETA_VERSION
 #           define DebugAssert(exp)\
-               if (!(exp))\
-               {\
-                   DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
-                   exit(1);\
-               }
+                do {\
+                   if (!(exp))\
+                   {\
+                       DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
+                       exit(1);\
+                   }\
+                while (false)
 #       else
 #           define DebugAssert(...)
 #       endif

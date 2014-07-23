@@ -17,6 +17,10 @@
 // Define this to see debug prints of string memory allocation and deallocation.
 //#define DEBUG_STRING_PRINT
 
+// Define this so strings are moved around instead of copy. But don't define it if -std=c++11.
+#ifndef __GXX_EXPERIMENTAL_CXX0X__
+#   define STRING_MOVE
+#endif
 
 // Disable obsolete warnings.
 #ifdef _WIN32
@@ -29,20 +33,18 @@ namespace good
 {
 
 
-    //************************************************************************************************************
     /**
      * @brief Class that represents secuence of characters.
      */
-    //************************************************************************************************************
     template <
         typename Char = TChar,
-        typename Alloc = allocator<Char>
+        typename Alloc = good::allocator<Char>
     >
     class base_string
     {
     public:
 
-        typedef Char value_type;      ///< Typedef for chara type.
+        typedef Char value_type;      ///< Typedef for char type.
         typedef int size_type;        ///< Typedef for string size.
         static const int npos = -1;   ///< Invalid position in string.
 
@@ -59,7 +61,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Copy constructor.
         //--------------------------------------------------------------------------------------------------------
-        base_string( const base_string& other ): m_iStatic(true)
+        base_string( const base_string& other ): m_pBuffer((char*)""), m_iSize(0), m_iStatic(1)
         {
 #ifdef DEBUG_STRING_PRINT
             DebugPrint( "base_string copy constructor: %s.\n", other.c_str() );
@@ -67,6 +69,7 @@ namespace good
             assign(other);
         }
 
+#ifdef __GXX_EXPERIMENTAL_CXX0X__
         //--------------------------------------------------------------------------------------------------------
         /// Move constructor.
         //--------------------------------------------------------------------------------------------------------
@@ -74,10 +77,11 @@ namespace good
             m_pBuffer(other.m_pBuffer), m_iSize(other.m_iSize), m_iStatic(other.m_iStatic)
         {
 #ifdef DEBUG_STRING_PRINT
-            DebugPrint( "base_string copy constructor: %s, copy %d.\n", other.c_str(), bCopy );
+            DebugPrint( "base_string move constructor: %s.\n", other.c_str() );
 #endif
             other.m_iStatic = 1; // Make other static to not deallocate.
         }
+#endif
 
         //--------------------------------------------------------------------------------------------------------
         /// Constructor by 0-terminating string. Make sure that iSize reflects string size properly or is npos.
@@ -389,6 +393,7 @@ namespace good
             base_string result;
             result.m_pBuffer = buffer;
             result.m_iSize = len3;
+            result.m_iStatic = false;
             return result;
         }
 
@@ -399,11 +404,13 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         void deallocate()
         {
-#ifdef DEBUG_STRING_PRINT
-            DebugPrint( "base_string deallocate(): %s; free: %d\n", m_pBuffer?m_pBuffer:"null", !m_iStatic && m_pBuffer );
-#endif
             if ( !m_iStatic )
+            {
+#ifdef DEBUG_STRING_PRINT
+                DebugPrint( "base_string deallocate(): %s; free: %d\n", (m_iSize?m_pBuffer:"null"), !m_iStatic && m_pBuffer );
+#endif
                 free( m_pBuffer );
+            }
         }
 
         //--------------------------------------------------------------------------------------------------------

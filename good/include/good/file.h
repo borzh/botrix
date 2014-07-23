@@ -16,8 +16,14 @@
 
 #ifdef _WIN32
 // Disable obsolete warnings.
-#pragma warning(push)
-#pragma warning(disable: 4996)
+#   pragma warning(push)
+#   pragma warning(disable: 4996)
+
+#	define PATH_SEPARATOR '\\'
+#	define PATH_SEPARATOR_STRING "\\"
+#else
+#	define PATH_SEPARATOR '/'
+#	define PATH_SEPARATOR_STRING "/"
 #endif
 
 
@@ -31,12 +37,6 @@ namespace good
     {
     public:
 
-
-#ifdef _WIN32
-#	define PATH_SEPARATOR '\\'
-#else
-#	define PATH_SEPARATOR '/'
-#endif
 
         //--------------------------------------------------------------------------------------------------------
         /// Get file size. Returns FILE_OPERATION_FAILED if file doesn't exists.
@@ -83,7 +83,7 @@ namespace good
         /// Get file directory (characters before last path separator).
         //--------------------------------------------------------------------------------------------------------
         template <typename String = good::string>
-        static String file_dir( const String& sPath )
+        static String dir( const String& sPath )
         {
             typename String::size_type pos = sPath.rfind(PATH_SEPARATOR);
             if ( pos == String::npos )
@@ -96,7 +96,7 @@ namespace good
         /// Get file name (characters after last path separator).
         //--------------------------------------------------------------------------------------------------------
         template <typename String = good::string>
-        static String file_name( const String& sPath )
+        static String fname( const String& sPath )
         {
             typename String::size_type pos = sPath.rfind(PATH_SEPARATOR);
             if ( pos == String::npos )
@@ -109,7 +109,7 @@ namespace good
         /// Get file extension (characters after last '.').
         //--------------------------------------------------------------------------------------------------------
         template <typename String = good::string>
-        static String file_ext( const String& sPath )
+        static String ext( const String& sPath )
         {
             typename String::size_type posExt = sPath.rfind('.');
             if ( posExt == String::npos )

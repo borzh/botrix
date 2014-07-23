@@ -5,7 +5,7 @@ project( good )
 
 cmake_minimum_required( VERSION 2.6 )
 
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++0x -Wall -Wextra -Wno-unknown-pragmas" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -Wall -Wextra -Wno-unknown-pragmas" )
 set( CMAKE_BUILD_TYPE Debug )
 
 add_definitions(

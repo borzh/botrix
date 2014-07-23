@@ -14,7 +14,7 @@
 
 
 #define DEFAULT_VECTOR_BUFFER_ALLOC  16      ///< Size of vector buffer allocated by default.
-#define DEBUG_VECTOR_PRINT
+//#define DEBUG_VECTOR_PRINT
 
 
 namespace good

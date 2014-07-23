@@ -58,7 +58,7 @@ namespace good
         base_string_buffer( const base_string_buffer& sbOther ): base_string<Char, Alloc>()
         {
 #ifdef DEBUG_STRING_PRINT
-            printf( "base_string_buffer copy constructor, sbOther: %s\n", sOther.c_str() );
+            printf( "base_string_buffer copy constructor, sbOther: %s\n", sbOther.c_str() );
 #endif
             Init( MAX2(sbOther.length()+1, DEFAULT_STRING_BUFFER_ALLOC) );
             copy_contents( sbOther.c_str(), sbOther.length() );
@@ -122,7 +122,7 @@ namespace good
         /// Operator <<.
         //--------------------------------------------------------------------------------------------------------
         template <typename T>
-        base_string_buffer& operator<<( T s ) { return append(s); }
+        base_string_buffer& operator<<( const T& s ) { return append(s); }
 
         //--------------------------------------------------------------------------------------------------------
         /// Operator =. Copy other string contents into buffer.

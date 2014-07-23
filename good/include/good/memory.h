@@ -80,29 +80,29 @@ public:
 /// Class that holds pointer that is erased at destructor.
 //************************************************************************************************************
 template < typename T >
-class auto_ptr
+class unique_ptr
 {
 
 public:
     //--------------------------------------------------------------------------------------------------------
     /// Default contructor (null pointer).
     //--------------------------------------------------------------------------------------------------------
-    auto_ptr(): ptr(NULL) {}
+    unique_ptr(): ptr(NULL) {}
 
     //--------------------------------------------------------------------------------------------------------
     /// Contructor by copy, other looses pointer.
     //--------------------------------------------------------------------------------------------------------
-    auto_ptr(const auto_ptr& other): ptr(other.ptr) { ((auto_ptr&)(other)).ptr = NULL; }
+    unique_ptr(const unique_ptr& other): ptr(other.ptr) { ((unique_ptr&)(other)).ptr = NULL; }
 
     //--------------------------------------------------------------------------------------------------------
     /// Contructor using existing pointer.
     //--------------------------------------------------------------------------------------------------------
-    auto_ptr(T* p): ptr(p) {}
+    unique_ptr(T* p): ptr(p) {}
 
     //--------------------------------------------------------------------------------------------------------
     /// Destructor. If decrementing m_iCounter gives 0, will free current pointer.
     //--------------------------------------------------------------------------------------------------------
-    ~auto_ptr() { reset(NULL); }
+    ~unique_ptr() { reset(NULL); }
 
     //--------------------------------------------------------------------------------------------------------
     /// Get true if current pointer is not NULL.
@@ -142,7 +142,7 @@ public:
     //--------------------------------------------------------------------------------------------------------
     /// Copy operator.
     //--------------------------------------------------------------------------------------------------------
-    auto_ptr& operator=( T* p )
+    unique_ptr& operator=( T* p )
     {
         reset( p );
         return *this;
@@ -151,10 +151,10 @@ public:
     //--------------------------------------------------------------------------------------------------------
     /// Copy operator.
     //--------------------------------------------------------------------------------------------------------
-    auto_ptr& operator=( const auto_ptr& other )
+    unique_ptr& operator=( const unique_ptr& other )
     {
         reset( other.ptr );
-        ((auto_ptr&)(other)).ptr = NULL;
+        ((unique_ptr&)(other)).ptr = NULL;
         return *this;
     }
 
@@ -243,12 +243,12 @@ public:
     //--------------------------------------------------------------------------------------------------------
     /// Perform operation on pointer. Assertion is used to ensure that pointer is valid.
     //--------------------------------------------------------------------------------------------------------
-    pointer_t operator->() { DebugAssert(m_pPtr); return m_pPtr; }
+    reference_t operator*() const { DebugAssert(m_pPtr); return *m_pPtr; }
 
     //--------------------------------------------------------------------------------------------------------
     /// Perform operation on pointer. Assertion is used to ensure that pointer is valid.
     //--------------------------------------------------------------------------------------------------------
-    const_pointer_t operator->() const { DebugAssert(m_pPtr); return m_pPtr; }
+    pointer_t operator->() const { DebugAssert(m_pPtr); return m_pPtr; }
 
     //--------------------------------------------------------------------------------------------------------
     /// Copy operator.

@@ -145,8 +145,8 @@ namespace good
             //----------------------------------------------------------------------------
             else if (c == '\\')
             {
-                if (buf[pos+1] == 'x') // Unicode character (\x002B). Still not supported.
-                    pos +=3;
+                /*if (buf[pos+1] == 'x') // Unicode character (example \x002B). Still not supported.
+                    pos +=5;*/
                 if (buf[pos+1] == '\r') // "\\r\n"
                     pos +=2;
                 else // One of the following: \a \b \0 \t \r \n \\ \; \# \= \:

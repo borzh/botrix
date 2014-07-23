@@ -45,6 +45,18 @@ namespace good
     }
 
     //--------------------------------------------------------------------------------------------------------
+    /// Return true if string sStr ends with sEnd.
+    //--------------------------------------------------------------------------------------------------------
+    template <typename String = good::string>
+    bool starts_with( const String& sStr, const typename String::value_type* szStart )
+    {
+        String sStart(szStart);
+        if ( sStart.size() > sStr.size() )
+            return false;
+        return strncmp( sStr.c_str(), sStart.c_str(), sStart.size() ) == 0; // TODO: use compare
+    }
+
+    //--------------------------------------------------------------------------------------------------------
     /// Return true if string @p sStr ends with char @p c.
     //--------------------------------------------------------------------------------------------------------
     template <typename String = good::string>
@@ -64,7 +76,6 @@ namespace good
         return strncmp( &sStr[ sStr.size() - sEnd.size() ], sEnd.c_str(), sEnd.size() ) == 0;
     }
 
-
     //--------------------------------------------------------------------------------------------------------
     /// Return true if string sStr ends with sEnd.
     //--------------------------------------------------------------------------------------------------------
@@ -76,7 +87,6 @@ namespace good
             return false;
         return strncmp( &sStr[ sStr.size() - sEnd.size() ], sEnd.c_str(), sEnd.size() ) == 0;
     }
-
 
     //--------------------------------------------------------------------------------------------------------
     /// Return lowercase string.
@@ -132,7 +142,7 @@ namespace good
         }
 
         ++end;
-        if ( end < sStr.size()-1 )
+        if ( end < sStr.size() )
             sStr.erase(end);
 
         return sStr;

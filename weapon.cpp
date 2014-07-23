@@ -11,9 +11,9 @@ good::vector<CWeaponWithAmmo> CWeapons::m_aWeapons;
 
 //----------------------------------------------------------------------------------------------------------------
 void CWeaponWithAmmo::GetLook( const Vector& vAim, float fDistance, bool bDuck,
-                                 TBotIntelligence iBotIntelligence, bool m_bSecondary, QAngle& angResult )
+                               TBotIntelligence iBotIntelligence, bool m_bSecondary, QAngle& angResult )
 {
-    DebugAssert( m_pWeapon->bHasSecondary || !m_bSecondary );
+    DebugAssert( m_pWeapon->bHasSecondary || !m_bSecondary, return );
 
     Vector v(vAim);
     if ( iBotIntelligence < EBotSmart ) // Aim at body instead of head.
@@ -108,7 +108,7 @@ void CWeaponWithAmmo::GameFrame()
 //----------------------------------------------------------------------------------------------------------------
 void CWeaponWithAmmo::Shoot( bool bSecondary )
 {
-    DebugAssert( CanUse() && (HasAmmoInClip(bSecondary) || ( IsManual() || IsPhysics() ) ) );
+    DebugAssert( CanUse() && (HasAmmoInClip(bSecondary) || ( IsManual() || IsPhysics() ) ), return );
     if ( bSecondary && m_pWeapon->bSecondaryUseSameBullets )
         m_iBulletsInClip[0] -= m_pWeapon->iAttackBullets[bSecondary]; // Shotgun type: uses same bullets for primary and secondary attack.
     else
@@ -122,7 +122,7 @@ void CWeaponWithAmmo::Shoot( bool bSecondary )
 //----------------------------------------------------------------------------------------------------------------
 void CWeaponWithAmmo::Holster( CWeaponWithAmmo& cSwitchTo )
 {
-    DebugAssert( !m_bShooting );
+    DebugAssert( !m_bShooting, return );
 
     m_bChanging = m_bReloading = m_bChangingZoom = m_bUsingZoom = false;
     m_fEndTime = CBotrixPlugin::fTime; // Save time when switched weapon.
@@ -142,7 +142,8 @@ void CWeaponWithAmmo::Holster( CWeaponWithAmmo& cSwitchTo )
 //----------------------------------------------------------------------------------------------------------------
 void CWeaponWithAmmo::EndReload()
 {
-    DebugAssert( m_bReloading && m_iBulletsInClip[m_bSecondary] < m_pWeapon->iClipSize[m_bSecondary] );
+    DebugAssert( m_bReloading && (m_iBulletsInClip[m_bSecondary] < m_pWeapon->iClipSize[m_bSecondary]) );
+
     if ( m_pWeapon->iType == EWeaponShotgun ) // Reload one bullet.
     {
         ++m_iBulletsInClip[m_bSecondary];
@@ -167,16 +168,17 @@ void CWeaponWithAmmo::EndReload()
 //----------------------------------------------------------------------------------------------------------------
 void CWeapons::GetRespawnWeapons( good::vector<CWeaponWithAmmo>& aWeapons, int iTeam )
 {
-    DebugAssert( (aWeapons.size() == 0) || (aWeapons.size() == m_aWeapons.size()) );
+    DebugAssert( (aWeapons.size() == 0) || (aWeapons.size() == m_aWeapons.size()), aWeapons.clear() );
 
     aWeapons.reserve( m_aWeapons.size() );
 
     if ( aWeapons.size() == 0 )
+    {
         for ( size_t i=0; i < m_aWeapons.size(); ++i )
             aWeapons.push_back( m_aWeapons[i] );
+    }
     else
     {
-        DebugAssert( m_aWeapons.size() == aWeapons.size() );
         for ( size_t i=0; i < m_aWeapons.size(); ++i )
             aWeapons[i] = m_aWeapons[i];
     }

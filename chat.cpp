@@ -643,12 +643,12 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 //----------------------------------------------------------------------------------------------------------------
 const good::string& CChat::ChatToText( const CBotChat& cCommand )
 {
-    DebugAssert( (EBotChatUnknown < cCommand.iBotChat) && (cCommand.iBotChat < EBotChatTotal) );
-
     static good::string_buffer sbBuffer;
     sbBuffer.rdbuf()->pubsetbuf(szMainBuffer, iMainBufferSize);
 
     sbBuffer.erase();
+
+    DebugAssert( (EBotChatUnknown < cCommand.iBotChat) && (cCommand.iBotChat < EBotChatTotal), return sbBuffer );
 
     if ( m_aPhrases[cCommand.iBotChat].size() == 0 )
     {
@@ -660,7 +660,7 @@ const good::string& CChat::ChatToText( const CBotChat& cCommand )
     int iRand = rand() % m_aPhrases[cCommand.iBotChat].size();
     const CPhrase& cPhrase = m_aPhrases[cCommand.iBotChat][iRand];
 
-    DebugAssert( cPhrase.aWords.size() );
+    DebugAssert( cPhrase.aWords.size(), return sbBuffer );
 
     // Get phrase into buffer replacing variables by their values.
     bool bNextOptional = false, bUseOptional = false;
@@ -701,7 +701,7 @@ const good::string& CChat::ChatToText( const CBotChat& cCommand )
                     if ( (cCommand.cMap[i].iVar == iVarIndex.first) && (cCommand.cMap[i].iVarIndex == iVarIndex.second) )
                     {
                         bFound = true;
-                        sbBuffer <<  GetVariableValue(iVarIndex.first, cCommand.cMap[i].iValue) );
+                        sbBuffer << GetVariableValue(iVarIndex.first, cCommand.cMap[i].iValue) );
                     }
                 DebugAssert(bFound); // You need to add pair <var, value> to the map.
             }
@@ -775,6 +775,7 @@ public:
 
 const good::vector<TBotChat>& CChat::PossibleAnswers( TBotChat iTalk )
 {
+    // TODO: finish
     static CAnswers cAnswers;
     DebugAssert( (0 <= iTalk) && (iTalk < EBotChatTotal) );
     return cAnswers.aTalkAnswers[iTalk];

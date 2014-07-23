@@ -136,12 +136,12 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 
     int retries = 0;
 
-restart_find_task:
+restart_find_task: // TODO: remove gotos.
     retries++;
     if ( retries == 5 )
     {
         m_bNeedTaskCheck = true;
-        DebugAssert(m_iCurrentTask == EBotTaskInvalid);
+        DebugAssert(m_iCurrentTask == EBotTaskInvalid, m_iCurrentTask = EBotTaskInvalid);
         BotMessage("%s -> No task, will continue to look for task on new frame.", GetName());
         return;
     }
@@ -256,7 +256,7 @@ restart_find_task:
         break;
     }
 
-    DebugAssert( iNewTask != EBotTaskInvalid );
+    DebugAssert( iNewTask != EBotTaskInvalid, return );
 
     // Check if need task switch.
     if ( bForce || (m_iCurrentTask != iNewTask) )

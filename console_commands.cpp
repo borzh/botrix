@@ -119,7 +119,7 @@ void CConsoleCommand::PrintCommand( edict_t* pPrintTo, int indent )
     {
         int iIdx = CPlayers::Get( pPrintTo );
         CPlayer* pPlayer = CPlayers::Get( iIdx );
-        DebugAssert( pPlayer && !pPlayer->IsBot() );
+        DebugAssert( pPlayer && !pPlayer->IsBot(), return );
         CClient* pClient = (CClient*)pPlayer;
         bHasAccess = HasAccess(pClient);
     }
@@ -616,7 +616,7 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
     pClient->GetEyeAngles(angClient);
     CUtil::DeNormalizeAngle(angClient.x);
     CUtil::DeNormalizeAngle(angClient.y);
-    DebugAssert( -90.0f <= angClient.x && angClient.x <= 90.0f);
+    DebugAssert( -90.0f <= angClient.x && angClient.x <= 90.0f, return ECommandError );
 
     for ( int i=0; i < argc; ++i )
     {
@@ -1770,7 +1770,7 @@ TCommandResult CBotTestPathCommand::Execute( CClient* pClient, int argc, const c
     CPlayer* pPlayer = CPlayers::AddBot();
     if ( pPlayer )
     {
-        DebugAssert( pPlayer->IsBot() );
+        DebugAssert( pPlayer->IsBot(), return ECommandError );
         ((CBot*)pPlayer)->TestWaypoints(iPathFrom, iPathTo);
         CUtil::Message(pClient->GetEdict(), "Bot added: %s. Testing path from %d to %d.", pPlayer->GetName(), iPathFrom, iPathTo);
         return ECommandPerformed;

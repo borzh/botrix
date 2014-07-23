@@ -407,7 +407,7 @@ bool CUtil::IsNetworkable( edict_t* pEntity )
 void CUtil::EntityCenter( edict_t* pEntity, Vector& v )
 {
     static float* fOrigin;
-    DebugAssert( IsNetworkable(pEntity) );
+    DebugAssert( IsNetworkable(pEntity), return );
     fOrigin = pEntity->GetIServerEntity()->GetNetworkable()->GetPVSInfo()->m_vCenter;
 
     v.x = fOrigin[0]; v.y = fOrigin[1]; v.z = fOrigin[2];
@@ -578,7 +578,7 @@ void CUtil::PutMessageInQueue( const char* fmt, ... )
     cMessagesMutex.lock();
 
     int iSize = vsprintf( &szQueueMessageString[iQueueMessageStringSize], fmt, argptr );
-    DebugAssert( iSize >= 0 );
+    DebugAssert( iSize >= 0, szQueueMessageString[iQueueMessageStringSize] = 0; return );
     iQueueMessageStringSize += iSize;
 
     cMessagesMutex.unlock();

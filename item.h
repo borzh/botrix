@@ -108,7 +108,7 @@ public:
     /// Get random item clas for given entity type.
     static const CEntityClass* GetRandomItemClass( TEntityType iEntityType )
     {
-        DebugAssert( !m_aItemClasses[iEntityType].empty() );
+        DebugAssert( !m_aItemClasses[iEntityType].empty(), return NULL );
         return &m_aItemClasses[iEntityType][ rand() % m_aItemClasses[iEntityType].size() ];
     }
 

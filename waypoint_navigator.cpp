@@ -14,7 +14,7 @@ TPathDrawFlags CWaypointNavigator::iPathDrawFlags = FPathDrawNone;
 bool CWaypointNavigator::SearchSetup( TWaypointId iFrom, TWaypointId iTo,
                                       good::vector<TAreaId> const& aAvoidAreas, int iMaxWaypointsInLoop )
 {
-    DebugAssert( CWaypoint::IsValid(iFrom) && CWaypoint::IsValid(iTo) );
+    DebugAssert( CWaypoint::IsValid(iFrom) && CWaypoint::IsValid(iTo), return false );
 
     m_cAstar.set_graph(CWaypoints::m_cGraph);
     m_cAstar.setup_search(iFrom, iTo, CCanUseWaypoint(aAvoidAreas), iMaxWaypointsInLoop);

@@ -35,7 +35,7 @@ public:
             m_bSearchEnded = m_cAstar.step();
             if ( m_bSearchEnded )
             {
-                DebugAssert( !m_cAstar.has_path() || (m_cAstar.path().size() >= 2) );
+                BreakDebuggerIf( m_cAstar.has_path() && (m_cAstar.path().size() < 2) ); // Should not happen.
                 m_iPathIndex = 0;
             }
         }

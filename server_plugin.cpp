@@ -384,7 +384,7 @@ PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity )
 PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &args )
 #endif
 {
-    DebugAssert( pEntity && !pEntity->IsFree() );
+    DebugAssert( pEntity && !pEntity->IsFree(), return PLUGIN_CONTINUE ); // Valve check.
 
 #ifdef SOURCE_ENGINE_2006
     int argc = MIN2(CBotrixPlugin::pEngineServer->Cmd_Argc(), 16);
@@ -400,14 +400,14 @@ PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &ar
     const char** argv = args.ArgV();
 
     if ( (argc == 0) || !CMainCommand::instance->IsCommand( argv[0] ) )
-        return PLUGIN_CONTINUE;
+        return PLUGIN_CONTINUE; // Not a "botrix" command.
 #endif
 
     int iIdx = CPlayers::Get(pEntity);
-    DebugAssert(iIdx >= 0);
+    DebugAssert(iIdx >= 0, return PLUGIN_CONTINUE);
 
     CPlayer* pPlayer = CPlayers::Get(iIdx);
-    DebugAssert( pPlayer && !pPlayer->IsBot() );
+    DebugAssert(pPlayer && !pPlayer->IsBot(), return PLUGIN_CONTINUE); // Valve check.
 
     CClient* pClient = (CClient*)pPlayer;
 
@@ -471,11 +471,7 @@ void CBotrixPlugin::FireGameEvent( IGameEvent * event )
 void CBotrixPlugin::GenerateSayEvent( edict_t* pEntity, const char* szText, bool bTeamOnly )
 {
     int iUserId = pEngineServer->GetPlayerUserId(pEntity);
-    if (iUserId == -1)
-    {
-        DebugAssert(false);
-        return;
-    }
+    DebugAssert(iUserId != -1, return);
 
 #define USE_GAME_EVENT_MANAGER2
 #ifdef USE_GAME_EVENT_MANAGER2
@@ -493,16 +489,14 @@ void CBotrixPlugin::GenerateSayEvent( edict_t* pEntity, const char* szText, bool
     KeyValues* pEvent = pGameEventManager->GetEvent("player_say", true);
     if (pEvent)
     {
-        DebugAssert(strcmp(pEvent->GetName(), "player_say") == 0);
+        DebugAssert( strcmp(pEvent->GetName(), "player_say") ); // Valve check.
         pEvent->SetInt("userid", iUserId);
         pEvent->SetString("text", szText);
         pEvent->SetBool("teamonly", bTeamOnly);
         pGameEventManager->FireEvent(pEvent);
-        //pEvent->deleteThis();
+        //pEvent->deleteThis(); // TODO: need to delete?
     }
 #endif
-    else
-        CUtil::Message(NULL, "Error creating event player_say: %s.", szText);
 }
 
 void CBotrixPlugin::HudTextMessage( edict_t* pEntity, char */*szTitle*/, char *szMessage, Color colour, int level, int time )

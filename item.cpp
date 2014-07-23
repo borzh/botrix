@@ -234,8 +234,6 @@ void CItems::MapLoaded()
         if ( (pEdict == NULL) || pEdict->IsFree() )
             continue;
 
-        DebugAssert(i < iCount);
-
         // Check items and objects.
         CheckNewEntity(pEdict);
     }
@@ -366,6 +364,7 @@ void CItems::CheckNewEntity( edict_t* pEdict )
     else
     {
         TEntityIndex iIndex = AddItem( iEntityType, pEdict, pItemClass, pServerEntity );
+        DebugAssert(iIndex >= 0, return);
         CEntity& cItem = m_aItems[iEntityType][iIndex];
 
         const char* szWaypointFlags = CWaypoints::IsValid(cItem.iWaypoint) ? CTypeToString::WaypointFlagsToString( CWaypoints::Get(cItem.iWaypoint).iFlags ).c_str() : "";
@@ -472,7 +471,7 @@ void CItems::AutoWaypointPathFlagsForEntity( TEntityType iEntityType, TEntityInd
 TEntityIndex CItems::AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityClass* pItemClass, IServerEntity* pServerEntity )
 {
     ICollideable* pCollidable = pServerEntity->GetCollideable();
-    DebugAssert( pCollidable );
+    DebugAssert( pCollidable, return -1 );
 
     const Vector& vItemOrigin = pCollidable->GetCollisionOrigin();
 
@@ -559,17 +558,12 @@ bool CItems::IsDoorOpened( TEntityIndex iDoor )
 {
     const CEntity& cDoor = m_aItems[EEntityTypeDoor][iDoor];
     TWaypointId w1 = cDoor.iWaypoint, w2 = (TWaypointId)cDoor.pArguments;
-    if ( CWaypoints::IsValid(w1) && CWaypoints::IsValid(w2) )
-    {
-        const Vector& v1 = CWaypoints::Get(w1).vOrigin;
-        const Vector& v2 = CWaypoints::Get(w2).vOrigin;
-        return !CUtil::IsRayHitsEntity(cDoor.pEdict, v1, v2);
-    }
-    else
-    {
-        //DebugAssert(false); // Door should have two waypoints from each side.
-        return false;
-    }
+
+    DebugAssert( CWaypoints::IsValid(w1) && CWaypoints::IsValid(w2), return false); // Door should have two waypoints from each side.
+
+    const Vector& v1 = CWaypoints::Get(w1).vOrigin;
+    const Vector& v2 = CWaypoints::Get(w2).vOrigin;
+    return !CUtil::IsRayHitsEntity(cDoor.pEdict, v1, v2);
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -600,7 +594,7 @@ void CItems::Draw( CClient* pClient )
                 continue;
 
             IServerEntity* pServerEntity = pEdict->GetIServerEntity();
-            DebugAssert( pServerEntity );
+            DebugAssert( pServerEntity, continue );
 
             if ( IsEntityTaken(pServerEntity) )
                 continue;

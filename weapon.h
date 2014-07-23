@@ -189,7 +189,7 @@ public:
     /// Return true if need to use zoom.
     bool ShouldZoom( float fDistanceToEnemySqr ) const
     {
-        DebugAssert( IsSniper() );
+        DebugAssert( IsSniper(), return false );
         return fDistanceToEnemySqr >= m_pWeapon->fMinDistanceSqr[1];
     }
 
@@ -211,7 +211,7 @@ public:
     /// Start to reload weapon.
     void Reload( bool bSecondary )
     {
-        DebugAssert( NeedReload(bSecondary) && CanUse() );
+        DebugAssert( NeedReload(bSecondary) && CanUse(), return );
         m_bReloading = true;
         m_bSecondary = bSecondary;
         m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadTime[bSecondary];
@@ -256,7 +256,7 @@ public:
     /// Zoom in.
     void ZoomIn()
     {
-        DebugAssert( IsSniper() );
+        DebugAssert( IsSniper() && !m_bUsingZoom, return );
         m_bChangingZoom = true;
         m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fShotTime[1];
         m_bUsingZoom = true;
@@ -265,7 +265,7 @@ public:
     /// Zoom out.
     void ZoomOut()
     {
-        DebugAssert( IsSniper() );
+        DebugAssert( IsSniper() && m_bUsingZoom, return );
         m_bChangingZoom = true;
         m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fShotTime[1];
         m_bUsingZoom = false;
@@ -346,7 +346,7 @@ public:
         return -1;
     }
 
-    /// Get weapon, ammo's count from weapon ammo's name.
+    /// Get weapon, ammo's count from weapon's ammo.
     static TWeaponId GetIdFromAmmo( const CEntityClass* pAmmoClass, bool& bSecondary, int& iAmmoCount )
     {
         for ( size_t i=0; i < m_aWeapons.size(); ++i )

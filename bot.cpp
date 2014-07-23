@@ -54,7 +54,7 @@ CBot::CBot( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence iIntelligence
 //----------------------------------------------------------------------------------------------------------------
 void CBot::TestWaypoints( TWaypointId iFrom, TWaypointId iTo )
 {
-    DebugAssert( CWaypoints::IsValid(iFrom) && CWaypoints::IsValid(iTo) );
+    DebugAssert( CWaypoints::IsValid(iFrom) && CWaypoints::IsValid(iTo), CPlayers::KickBot(this) );
     CWaypoint& wFrom = CWaypoints::Get(iFrom);
 
     Vector vSetOrigin = wFrom.vOrigin;
@@ -303,7 +303,7 @@ void CBot::PlayerDisconnect( int iPlayerIndex, CPlayer* pPlayer )
 #ifdef BOTRIX_CHAT
 void CBot::ReceiveChatRequest( const CBotChat& cRequest )
 {
-    DebugAssert( (cRequest.iDirectedTo == m_iIndex) && (cRequest.iSpeaker != -1));
+    DebugAssert( (cRequest.iDirectedTo == m_iIndex) && (cRequest.iSpeaker != -1), return);
     if (iChatMate == -1)
         iChatMate = cRequest.iSpeaker;
 
@@ -590,11 +590,10 @@ void CBot::CurrentWaypointJustChanged()
 //----------------------------------------------------------------------------------------------------------------
 bool CBot::DoWaypointAction()
 {
-    if ( !m_bNeedMove )
+    if ( !m_bNeedMove || !m_bUseNavigatorToMove )
         return false;
 
-    DebugAssert( m_bUseNavigatorToMove );
-    DebugAssert( CWaypoint::IsValid(iCurrentWaypoint) );
+    DebugAssert( CWaypoint::IsValid(iCurrentWaypoint), return false );
     CWaypoint& w = CWaypoints::Get(iCurrentWaypoint);
 
     if ( m_bAlreadyUsed )
@@ -651,7 +650,7 @@ bool CBot::DoWaypointAction()
 //----------------------------------------------------------------------------------------------------------------
 void CBot::ApplyPathFlags()
 {
-    //DebugAssert( m_bNeedMove && m_bUseNavigatorToMove );
+    DebugAssert( m_bNeedMove && m_bUseNavigatorToMove, return );
     //BotMessage("%s -> waypoint %d", m_pPlayerInfo->GetName(), iCurrentWaypoint);
 
     // Release buttons and locks.
@@ -678,9 +677,7 @@ void CBot::ApplyPathFlags()
             m_vForward = wNext.vOrigin;
 
             CWaypointPath* pCurrentPath = CWaypoints::GetPath(iCurrentWaypoint, iNextWaypoint);
-            DebugAssert( pCurrentPath );
-            if ( pCurrentPath == NULL )
-                return;
+            DebugAssert( pCurrentPath, return );
 
             m_bLadderMove = FLAG_ALL_SET(FPathLadder, pCurrentPath->iFlags);
 
@@ -712,12 +709,12 @@ void CBot::ApplyPathFlags()
 //----------------------------------------------------------------------------------------------------------------
 void CBot::DoPathAction()
 {
-    DebugAssert( CWaypoint::IsValid(iCurrentWaypoint) );
+    DebugAssert( CWaypoint::IsValid(iCurrentWaypoint), return );
 
     if ( CWaypoint::IsValid(iNextWaypoint) && (iCurrentWaypoint != iNextWaypoint) )
     {
         CWaypointPath* pCurrentPath = CWaypoints::GetPath(iCurrentWaypoint, iNextWaypoint);
-        DebugAssert( pCurrentPath );
+        DebugAssert( pCurrentPath, return );
 
         if ( FLAG_ALL_SET(FPathBreak, pCurrentPath->iFlags) )
             m_bNeedAttack = true;
@@ -757,7 +754,7 @@ void CBot::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex
     case EEntityTypeWeapon:
     {
         TWeaponId iWeaponId = CWeapons::GetIdFromWeaponName(cItem.pItemClass->sClassName);
-        DebugAssert( iWeaponId >= 0 );
+        DebugAssert( iWeaponId >= 0, return );
         m_aWeapons[iWeaponId].AddWeapon();
 
         BotMessage("%s -> Picked %s (%d, %d).", GetName(), cItem.pItemClass->sClassName.c_str(), m_aWeapons[iWeaponId].ExtraBullets(0), m_aWeapons[iWeaponId].ExtraBullets(1));
@@ -770,7 +767,7 @@ void CBot::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex
         bool bSec;
         int iAmmo;
         TWeaponId iWeaponId = CWeapons::GetIdFromAmmo(cItem.pItemClass, bSec, iAmmo);
-        DebugAssert( iWeaponId >= 0 );
+        DebugAssert( iWeaponId >= 0, return );
         m_aWeapons[iWeaponId].AddBullets(iAmmo, bSec);
 
         BotMessage("%s -> Picked %s (%d, %d).", GetName(), cItem.pItemClass->sClassName.c_str(), m_aWeapons[iWeaponId].ExtraBullets(0), m_aWeapons[iWeaponId].ExtraBullets(1));
@@ -782,8 +779,7 @@ void CBot::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex
         BotMessage("%s -> Breaked object %s", GetName(), cItem.pItemClass->sClassName.c_str());
         break;
     default:
-        DebugAssert(0);
-        break;
+        DebugAssert(false);
     }
 
     if ( iEntityType != EEntityTypeObject )
@@ -880,14 +876,13 @@ float CBot::GetEndLookTime()
     iPitch /= iAngDiff;
     iYaw /= iAngDiff;
 
-    DebugAssert( iPitch <= iEndAimSize );
-    DebugAssert( iYaw <= iEndAimSize );
+    DebugAssert( (iPitch <= iEndAimSize) && (iYaw <= iEndAimSize), return 0.0f );
 
     if ( iPitch < iYaw)
         iPitch = iYaw; // iPitch = MAX2( iPitch, iYaw );
 
     float fAimTime = aEndAimTime[m_iIntelligence][iPitch];
-    DebugAssert( fAimTime < 2.0f );
+    DebugAssert( fAimTime < 2.0f, return 2.0f );
 
     return fAimTime;
     //return CBotrixPlugin::fTime + iPitch * aAimSpeed[m_iIntelligence] / 180.0f;
@@ -1075,7 +1070,7 @@ void CBot::UpdateWorld()
 //----------------------------------------------------------------------------------------------------------------
 void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility )
 {
-    DebugAssert( m_pCurrentEnemy != this );
+    DebugAssert( m_pCurrentEnemy != this, return );
 
     if ( m_bDontAttack )
     {
@@ -1146,7 +1141,7 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
 //----------------------------------------------------------------------------------------------------------------
 void CBot::EnemyAim()
 {
-    DebugAssert( m_pCurrentEnemy );
+    DebugAssert( m_pCurrentEnemy, return );
     //Vector vOldLook(m_vLook);
 
     Vector vEnemyCenter;
@@ -1249,9 +1244,11 @@ void CBot::SetActiveWeapon( int iIndex )
     if ( iIndex == m_iWeapon )
         return;
 
+    DebugAssert( CWeapon::IsValid(iIndex) && CWeapon::IsValid(m_iWeapon), return );
+
     CWeaponWithAmmo& cOld = m_aWeapons[m_iWeapon];
     CWeaponWithAmmo& cNew = m_aWeapons[iIndex];
-    DebugAssert( cOld.IsPresent() && cNew.IsPresent() );
+    DebugAssert( cOld.IsPresent() && cNew.IsPresent(), return );
 
     const good::string& sWeaponName = cNew.GetName();
     m_pController->SetActiveWeapon( sWeaponName.c_str() );
@@ -1267,8 +1264,9 @@ void CBot::SetActiveWeapon( int iIndex )
 //----------------------------------------------------------------------------------------------------------------
 void CBot::Shoot( bool bSecondary )
 {
+    DebugAssert( CWeapon::IsValid(m_iWeapon), return );
     CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
-    DebugAssert( cWeapon.IsPresent() );
+    DebugAssert( cWeapon.IsPresent(), return );
 
     if ( !cWeapon.CanUse() )
         return;
@@ -1549,7 +1547,8 @@ bool CBot::NavigatorMove()
         m_bDestinationChanged = false;
         m_pNavigator.Stop();
 
-        DebugAssert( CWaypoint::IsValid(iCurrentWaypoint) && CWaypoint::IsValid(m_iDestinationWaypoint) && (m_iDestinationWaypoint != iCurrentWaypoint) );
+        DebugAssert( CWaypoint::IsValid(iCurrentWaypoint) && CWaypoint::IsValid(m_iDestinationWaypoint) &&
+                     (m_iDestinationWaypoint != iCurrentWaypoint), return true );
         m_bMoveFailure = !m_pNavigator.SearchSetup( iCurrentWaypoint, m_iDestinationWaypoint, m_aAvoidAreas );
         iPrevWaypoint = iCurrentWaypoint;
     }
@@ -1595,10 +1594,12 @@ bool CBot::NavigatorMove()
             }
             else
             {
-                DebugAssert( m_pNavigator.PathFound() && m_pNavigator.HasMoreCoords() );
+                DebugAssert( m_pNavigator.PathFound() && m_pNavigator.HasMoreCoords(), m_bMoveFailure=true; return true );
                 m_pNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
                 ApplyPathFlags();
-                DebugAssert( iCurrentWaypoint == iNextWaypoint ); // First coord in path must be current waypoint.
+
+                // First coord in path must be current waypoint.
+                DebugAssert( iCurrentWaypoint == iNextWaypoint, m_bMoveFailure=true; return true );
 
                 // If lost and iCurrentWaypoint == iNextWaypoint, perform waypoint 'touch'.
                 if ( CWaypoints::Get(iNextWaypoint).IsTouching(m_vHead, m_bLadderMove) )
@@ -1847,7 +1848,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
         {
             if ( m_pCurrentEnemy )
             {
-                DebugAssert( m_pCurrentEnemy != this );
+                DebugAssert( m_pCurrentEnemy != this, return );
                 if ( !m_bNeedAim )
                 {
                     // Aim again.
@@ -1972,7 +1973,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
     // Aim at object (at m_fStartActionTime), press ATTACK2 (physcannon) for a second, aim back, press ATTACK1 once.
     if ( m_bStuckUsePhyscannon )
     {
-        DebugAssert( m_bTest || !m_bUnderAttack );
+        DebugAssert( m_bTest || !m_bUnderAttack, return );
 
         const CEntity* pObject = NULL;
         if ( m_aNearestItems[EEntityTypeObject].size() )
@@ -2036,7 +2037,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
     // Start holding attack after m_fStartActionTime until break object or object moves far away.
     else if ( m_bStuckBreakObject )
     {
-        DebugAssert( m_bTest || !m_bUnderAttack );
+        DebugAssert( m_bTest || !m_bUnderAttack, return );
 
         if ( CWeapon::IsValid(m_iManualWeapon) && (m_iWeapon != m_iManualWeapon) && m_aWeapons[m_iWeapon].CanChange() )
             SetActiveWeapon(m_iManualWeapon);

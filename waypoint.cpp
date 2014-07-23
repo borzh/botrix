@@ -28,10 +28,10 @@ struct waypoint_header
     int          iNumWaypoints;
     int          iFlags;
 };
-#pragma pack(pop)
-
 
 static const char WAYPOINT_FILE_HEADER_ID[4] = {'B','t','x','W'}; // Botrix's Waypoints.
+#pragma pack(pop)
+
 static const int WAYPOINT_VERSION = 1;                            // Waypoints file version.
 static const int WAYPOINT_FILE_FLAG_VISIBILITY = 1<<0;            // Flag for waypoint visibility table.
 static const int WAYPOINT_FILE_FLAG_AREAS = 2<<0;                 // Flag for area names.
@@ -187,8 +187,9 @@ bool CWaypoints::Save()
         }
     }
 
-    DebugAssert( m_cAreas.size() > 0 );
     int iAreaNamesSize = m_cAreas.size() - 1;
+    DebugAssert( iAreaNamesSize >= 0, iAreaNamesSize=0 );
+
     fwrite(&iAreaNamesSize, sizeof(int), 1, f); // Save area names size.
 
     for ( int i=1; i < iAreaNamesSize+1; i++ ) // First area name is always empty, for new waypoints.
@@ -219,7 +220,8 @@ bool CWaypoints::Load()
     }
 
     struct waypoint_header header;
-    fread(&header, sizeof(struct waypoint_header), 1, f);
+    int iRead = fread(&header, sizeof(struct waypoint_header), 1, f);
+    DebugAssert(iRead == sizeof(struct waypoint_header), return false);
 
     if (*((int*)&WAYPOINT_FILE_HEADER_ID[0]) != header.szFileType)
     {
@@ -288,7 +290,7 @@ bool CWaypoints::Load()
     {
         // Read area names.
         fread(&iAreaNamesSize, sizeof(int), 1, f);
-        DebugAssert(iAreaNamesSize >= 0);
+        DebugAssert(iAreaNamesSize >= 0, Clear(); return false);
 
         m_cAreas.reserve(iAreaNamesSize + 1);
         m_cAreas.push_back("default"); // New waypoints without area id will be put under this empty area id.
@@ -298,7 +300,7 @@ bool CWaypoints::Load()
             int iStrSize;
             fread(&iStrSize, sizeof(int), 1, f);
 
-            DebugAssert(0 < iStrSize && iStrSize < iMainBufferSize);
+            DebugAssert(0 < iStrSize && iStrSize < iMainBufferSize, Clear(); return false);
             if (iStrSize > 0)
             {
                 fread(szMainBuffer, sizeof(char), iStrSize+1, f); // Read also trailing 0.
@@ -399,7 +401,7 @@ bool CWaypoints::RemovePath( TWaypointId iFrom, TWaypointId iTo )
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoints::CreatePathsWithAutoFlags( TWaypointId iWaypoint1, TWaypointId iWaypoint2, bool bIsCrouched )
 {
-    DebugAssert( CWaypoints::IsValid(iWaypoint1) && CWaypoints::IsValid(iWaypoint2) );
+    DebugAssert( CWaypoints::IsValid(iWaypoint1) && CWaypoints::IsValid(iWaypoint2), return );
 
     WaypointNode& w1 = m_cGraph[iWaypoint1];
     WaypointNode& w2 = m_cGraph[iWaypoint2];
@@ -464,7 +466,7 @@ void CWaypoints::CreateAutoPaths( TWaypointId id, bool bIsCrouched )
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoints::RemoveLocation( TWaypointId id )
 {
-    DebugAssert( CWaypoint::IsValid(id) );
+    DebugAssert( CWaypoint::IsValid(id), return );
 
     // Shift waypoints indexes, all waypoints with index > id.
     for (int x=0; x<BUCKETS_SIZE_X; ++x)
@@ -669,7 +671,7 @@ void CWaypoints::GetPathColor( TPathFlags iFlags, unsigned char& r, unsigned cha
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoints::DrawWaypointPaths( TWaypointId id, TPathDrawFlags iPathDrawFlags )
 {
-    DebugAssert( iPathDrawFlags != FPathDrawNone );
+    DebugAssert( iPathDrawFlags != FPathDrawNone, return );
 
     WaypointNode& w = m_cGraph[id];
 

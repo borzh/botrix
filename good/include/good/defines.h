@@ -3,31 +3,36 @@
 // Copyright (c) 2011 Borzh.
 //----------------------------------------------------------------------------------------------------------------
 
+// Force documenting defines.
+/** @file */
+
 #ifndef __GOOD_DEFINES_H__
 #define __GOOD_DEFINES_H__
 
 
 #ifndef abstract
-#    define abstract
+    /// Empty define for abstract class.
+    #define abstract
 #endif
 
 
 #ifndef NULL
-#    define NULL                         0
+    // NULL should already be defined.
+    #define NULL                         0
 #endif
 
 
-// Library definitions.
 #ifdef _WIN32
-#   define GOOD_DLL_PUBLIC               __declspec(dllexport)
-#   define GOOD_DLL_LOCAL                __declspec(dllimport)
+    // NULL should already be defined.
+    #define GOOD_DLL_PUBLIC               __declspec(dllexport)
+    #define GOOD_DLL_LOCAL                __declspec(dllimport)
 #else
-#   define GOOD_DLL_PUBLIC               __attribute__ ((visibility("default")))
-#   define GOOD_DLL_LOCAL                __attribute__ ((visibility("hidden")))
+    #define GOOD_DLL_PUBLIC               __attribute__ ((visibility("default")))
+    #define GOOD_DLL_LOCAL                __attribute__ ((visibility("hidden")))
 #endif
 
 
-// Char type.
+/// Char type.
 #ifdef _WIN32
     typedef Char TChar;
 #else
@@ -36,49 +41,50 @@
 
 
 #ifndef TIME_INFINITE
-#    define TIME_INFINITE                0xFFFFFFFF
+    /// Infinite time.
+    #define TIME_INFINITE                0xFFFFFFFF
 #endif
 
 
 #ifndef MAX_UINT32
-/// Max of unsigned 32bit int.
-#    define MAX_UINT32                   0xFFFFFFFF
+    /// Max of unsigned 32bit int.
+    #define MAX_UINT32                   0xFFFFFFFF
 #endif
 
 
 #ifndef MAX_INT32
-/// Max of signed 32bit int.
-#    define MAX_INT32                    0x7FFFFFFF
+    /// Max of signed 32bit int.
+    #define MAX_INT32                    0x7FFFFFFF
 #endif
 
 
 #ifndef MAX_UINT16
-/// Max of unsigned 16bit short.
-#    define MAX_UINT16                   0xFFFF
+    /// Max of unsigned 16bit short.
+    #define MAX_UINT16                   0xFFFF
 #endif
 
 
 #ifndef MAX_INT16
-/// Max of signed 16bit short.
-#    define MAX_INT16                    0x7FFF
+    /// Max of signed 16bit short.
+    #define MAX_INT16                    0x7FFF
 #endif
 
 
 #ifndef MAX2
-/// Max of two numbers.
-#    define MAX2(a, b)                   ((a)>=(b)?(a):(b))
+    /// Max of two numbers.
+    #define MAX2(a, b)                   ((a)>=(b)?(a):(b))
 #endif
 
 
 #ifndef MIN2
-/// Min of two numbers.
-#    define MIN2(a, b)                   ((a)<=(b)?(a):(b))
+    /// Min of two numbers.
+    #define MIN2(a, b)                   ((a)<=(b)?(a):(b))
 #endif
 
 
 #ifndef SQR
-/// Square of a number.
-#    define SQR(x)                       ((x)*(x))
+    /// Square of a number.
+    #define SQR(x)                       ((x)*(x))
 #endif
 
 
@@ -174,60 +180,90 @@
 
 /// Debug break, stopping execution.
 #ifndef BreakDebugger
-#   ifdef _WIN32
-#       define AsmBreak()          __asm { int 3 }
-#   else
-#       define AsmBreak()          __asm __volatile( "pause" );
-#   endif
+    #if defined(DEBUG) || defined(_DEBUG)
+        #ifdef _WIN32
+            /// Break in debugger.
+            #define BreakDebugger()          __asm { int 3 }
+        #else
+            #include <signal.h>
+            /// Break in debugger.
+            #define BreakDebugger()          raise(SIGTRAP)
+        #endif
+    #else
+        #define BreakDebugger(...)
+    #endif
 #endif
 
 
-/// Debug asserts. Will produce debug break, allowing debugging if exp is false.
+/// Debug break, stopping execution.
+#ifndef BreakDebuggerIf
+    #if defined(DEBUG) || defined(_DEBUG)
+        #ifdef _WIN32
+            /// Break in debugger if condition.
+            #define BreakDebuggerIf(cond)    do { if ( !(cond) ) __asm { int 3 }; } while (false)
+        #else
+            #include <signal.h>
+            /// Break in debugger.
+            #define BreakDebuggerIf(cond)    do { if ( !(cond) ) raise(SIGTRAP); } while (false)
+        #endif
+    #else
+        #define BreakDebuggerIf(cond)
+    #endif
+#endif
+
+#ifndef ReleasePrint
+    #include <stdio.h>
+
+    /// Release print, will print always.
+    #define ReleasePrint(...) do { printf(__VA_ARGS__); fflush(stdout); } while (false)
+#endif
+
+
 #if defined(DEBUG) || defined(_DEBUG)
 
-#   ifndef DebugPrint
-#       include <stdio.h>
-#       define DebugPrint(...) do { printf(__VA_ARGS__); fflush(stdout); } while (false)
-#   endif
+    #ifndef DebugPrint
+        /// Debug print. Will print in debug build only.
+        #define DebugPrint(...) ReleasePrint(__VA_ARGS__)
+    #endif
 
-#   ifndef DebugAssert
-#       ifdef _WIN32
-#           define DebugAssert(exp)\
+    #ifndef DebugAssert
+        /// Debug assert. If @p exp is false, will produce debug break, and instructions after @p exp are executed in order.
+        #define DebugAssert(exp, ...)\
+            do {\
+                if ( !(exp) )\
+                {\
+                    DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
+                    BreakDebugger();\
+                    __VA_ARGS__;\
+                }\
+            } while (false)
+    #endif
+
+#else // if defined(DEBUG) || defined(_DEBUG)
+
+    #ifndef DebugPrint
+        /// Debug print will do nothing.
+        #define DebugPrint(...)
+    #endif
+
+    #ifndef DebugAssert
+        #ifdef BETA_VERSION
+            /// Beta version debug assert. If @p exp is false, will print error, and instructions after @p exp are executed in order.
+            #define DebugAssert(exp, ...)\
                 do {\
                     if ( !(exp) )\
                     {\
                         DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
-                        AsmBreak();\
+                        __VA_ARGS__;\
                     }\
-                while (false)
-#       else
-#           include <assert.h>
-#           define DebugAssert assert
-#       endif
-#   endif
+                } while (false)
+        #else
+            /// Debug asserts. Will produce debug break, allowing debugging if @p exp is false.
+            #define DebugAssert(exp, ...) do { if ( !(exp) ) { __VA_ARGS__; } } while (false)
+        #endif
+    #endif // ifndef DebugAssert
 
-#else // if defined(DEBUG) || defined(_DEBUG)
-
-#   ifndef DebugPrint
-#       define DebugPrint(...)
-#   endif
-
-#   ifndef DebugAssert
-#       ifdef BETA_VERSION
-#           define DebugAssert(exp)\
-                do {\
-                   if (!(exp))\
-                   {\
-                       DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
-                       exit(1);\
-                   }\
-                while (false)
-#       else
-#           define DebugAssert(...)
-#       endif
-#   endif
-
-#endif
+#endif // if defined(DEBUG) || defined(_DEBUG)
 
 
 #endif // __GOOD_DEFINES_H__

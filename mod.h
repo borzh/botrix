@@ -115,7 +115,8 @@ public: // Methods.
     /// Get random bot name from [General] section, key bot_names.
     static const good::string* GetRandomModel( int iTeam )
     {
-        DebugAssert( iTeam != iSpectatorTeam );
+        // TODO: check if works with CSS.
+        DebugAssert( iTeam != iSpectatorTeam, return NULL );
         if ( (iTeam == iUnassignedTeam) && (m_aModels[iTeam].size() == 0) )
         {
             do {

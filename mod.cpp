@@ -36,14 +36,6 @@ void CMod::Load( TModId iModId )
 
     switch ( iModId )
     {
-    case EModId_Borzh:
-#ifdef BOTRIX_MOD_BORZH
-        pCurrentMod = new CModBorzh();
-#else
-        DebugAssert(false);
-#endif
-        break;
-
     case EModId_HL2DM:
         // TODO: move to hl2dm mod.
         AddEvent(new CPlayerActivateEvent());
@@ -55,6 +47,12 @@ void CMod::Load( TModId iModId )
 
         AddEvent(new CPlayerChatEvent());
         break;
+
+#ifdef BOTRIX_MOD_BORZH
+    case EModId_Borzh:
+        pCurrentMod = new CModBorzh();
+        break;
+#endif
 
 #ifdef BOTRIX_MOD_CSS
     case EModId_CSS:
@@ -69,7 +67,7 @@ void CMod::Load( TModId iModId )
 
     default:
         CUtil::Message(NULL, "Error: unknown mod.");
-        DebugAssert(false);
+        BreakDebugger();
     }
 }
 
@@ -86,6 +84,9 @@ void CMod::AddEvent( CEvent* pEvent )
 //----------------------------------------------------------------------------------------------------------------
 void CMod::MapLoaded()
 {
+    if ( !pCurrentMod )
+        return;
+
     // TODO: move this to items.
     for ( TEntityType iType=0; iType < EEntityTypeTotal-1; ++iType )
     {
@@ -107,9 +108,7 @@ void CMod::MapLoaded()
         }
     }
 
-    //DebugAssert(pCurrentMod);
-    if ( pCurrentMod )
-        pCurrentMod->MapLoaded();
+    pCurrentMod->MapLoaded();
 }
 
 //----------------------------------------------------------------------------------------------------------------

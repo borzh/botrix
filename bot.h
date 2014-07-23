@@ -209,7 +209,7 @@ protected: // Methods.
     void ToggleZoom()
     {
         CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
-        DebugAssert( cWeapon.IsSniper() && cWeapon.CanUse() );
+        DebugAssert( cWeapon.IsSniper() && cWeapon.CanUse(), return );
         if ( cWeapon.IsUsingZoom() )
             cWeapon.ZoomOut();
         else

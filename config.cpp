@@ -328,7 +328,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
                 {
                     StringVector aCurrent;
                     good::split(*paramsIt, aCurrent);
-                    DebugAssert( aCurrent.size() > 0 );
+                    DebugAssert( aCurrent.size() > 0, exit(1) );
 
                     // Get weapon from name.
                     TWeaponId iWeaponId = CWeapons::GetIdFromWeaponName( aCurrent[0] );
@@ -397,8 +397,8 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
                     int iValue = -1;
 
                     StringVector aCurrent;
-                    split(*paramsIt, aCurrent);
-                    DebugAssert( aCurrent.size() > 0 );
+                    good::split(*paramsIt, aCurrent);
+                    DebugAssert( aCurrent.size() > 0, exit(1) );
 
                     if ( aCurrent.size() == 1 )
                     {

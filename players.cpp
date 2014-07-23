@@ -36,9 +36,10 @@ static bool bAddingBot = false;
 void CPlayer::Activated()
 {
     m_pPlayerInfo = CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo( m_pEdict );
+    DebugAssert( m_pPlayerInfo, CPlayers::PlayerDisconnected(m_pEdict) );
+
     m_sName.assign(GetName(), good::string::npos, true);
     good::lower_case(m_sName);
-    DebugAssert( m_pPlayerInfo );
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -185,7 +186,7 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
         return NULL;
 
     TPlayerIndex iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
-    DebugAssert(iIdx >= 0);
+    DebugAssert(iIdx >= 0, return NULL);
 
     CPlayer* pPlayer = NULL;
     switch ( iModId )
@@ -193,15 +194,13 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
         case EModId_HL2DM:
             pPlayer = new CBot_HL2DM(pEdict, iIdx, iIntelligence);
             break;
-        case EModId_Borzh:
 #ifdef BOTRIX_MOD_BORZH
+        case EModId_Borzh:
             pPlayer = new CBotBorzh(pEdict, iIdx, iIntelligence);
-#else
-            DebugAssert(false);
-#endif
             break;
+#endif
         default:
-            DebugAssert(false);
+            BreakDebugger();
             return NULL;
     }
 
@@ -289,11 +288,11 @@ bool CPlayers::KickRandomBotOnTeam( int /*iTeam*/ )
 void CPlayers::PlayerConnected( edict_t* pEdict )
 {
     TPlayerIndex iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
-    DebugAssert( iIdx >= 0 );
+    DebugAssert( iIdx >= 0, return ); // Valve should not allow this assert.
 
     if ( !bAddingBot )
     {
-        DebugAssert( m_aPlayers[iIdx].get() == NULL );
+        DebugAssert( m_aPlayers[iIdx].get() == NULL, return ); // Should be fatal assert.
 
         CPlayer* pPlayer = new CClient(pEdict, iIdx);
         pPlayer->Activated();
@@ -324,13 +323,13 @@ void CPlayers::PlayerConnected( edict_t* pEdict )
 void CPlayers::PlayerDisconnected( edict_t* pEdict )
 {
     int iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
-    DebugAssert(iIdx >= 0);
+    DebugAssert(iIdx >= 0, return); // Valve should not allow this assert.
 
     if ( m_aPlayers[iIdx].get() == NULL )
-        return; // Happens when starting new map and pressing cancel button.
+        return; // Happens when starting new map and pressing cancel button. Valve issue.
 
     CPlayer* pPlayer = m_aPlayers[iIdx].get();
-    DebugAssert( pPlayer );
+    DebugAssert( pPlayer, return );
 
 #ifdef BOTRIX_CHAT
     if ( CChat::iPlayerVar != EChatVariableInvalid )
@@ -412,7 +411,7 @@ void CPlayers::DeliverChat( edict_t* pFrom, bool bTeamOnly, const char* szText )
     int iTeam = 0;
 
     int iIdx = CPlayers::Get(pFrom);
-    DebugAssert( iIdx >= 0 );
+    DebugAssert( iIdx >= 0, return );
     CPlayer* pSpeaker = CPlayers::Get(iIdx);
 
     if ( bTeamOnly )
@@ -438,7 +437,7 @@ void CPlayers::DeliverChat( edict_t* pFrom, bool bTeamOnly, const char* szText )
         int iFrom = 0, iTo = CPlayers::Size();
         if ( bIsRequest && (cChat.iDirectedTo != -1) )
         {
-            DebugAssert( cChat.iDirectedTo != iIdx );
+            DebugAssert( cChat.iDirectedTo != iIdx ); // TODO:???
             iFrom = cChat.iDirectedTo;
             iTo = iFrom + 1;
         }

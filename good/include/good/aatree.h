@@ -7,7 +7,10 @@
 #define __GOOD_AATREE_H__
 
 
-#define DEBUG_TREE_ITERATOR // Define it to show paths when incrementing iterator.
+#include "good/defines.h"
+
+
+//#define DEBUG_TREE_ITERATOR // Define it to show paths when incrementing iterator.
 
 #ifdef DEBUG_TREE_ITERATOR
 #   define AATreeDebugPrint        DebugPrint
@@ -15,6 +18,10 @@
 #   define AATreeDebugPrint(...)
 #endif
 
+#ifndef _WIN32
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 
 namespace good
 {
@@ -657,5 +664,9 @@ namespace good
 
 } // namespace good
 
+
+#ifndef _WIN32
+    #pragma GCC diagnostic pop
+#endif
 
 #endif // __GOOD_AATREE_H__

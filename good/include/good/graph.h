@@ -80,7 +80,9 @@ namespace good
             typename arcs_t::iterator add_arc_to( node_id target, Edge const& e )
             {
                 // Make sure that target belongs to graph.
+#if defined(DEBUG) || defined(_DEBUG)
                 DebugAssert( g->is_valid(target) );
+#endif
                 return neighbours.insert( neighbours.end(), arc_t(e, target) );
             }
 

@@ -82,7 +82,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get file directory (characters before last path separator).
         //--------------------------------------------------------------------------------------------------------
-        template <typename String = good::string>
+        template <typename String>
         static String dir( const String& sPath )
         {
             typename String::size_type pos = sPath.rfind(PATH_SEPARATOR);
@@ -95,7 +95,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get file name (characters after last path separator).
         //--------------------------------------------------------------------------------------------------------
-        template <typename String = good::string>
+        template <typename String>
         static String fname( const String& sPath )
         {
             typename String::size_type pos = sPath.rfind(PATH_SEPARATOR);
@@ -108,7 +108,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get file extension (characters after last '.').
         //--------------------------------------------------------------------------------------------------------
-        template <typename String = good::string>
+        template <typename String>
         static String ext( const String& sPath )
         {
             typename String::size_type posExt = sPath.rfind('.');

@@ -27,7 +27,7 @@ namespace good
     //--------------------------------------------------------------------------------------------------------
     /// Return true if string @p sStr starts with char @p c.
     //--------------------------------------------------------------------------------------------------------
-    template <typename String = good::string>
+    template <typename String>
     bool starts_with( const String& sStr, typename String::value_type c )
     {
         return ( sStr.size() > 0 ) ? (sStr[0] == c) : false;
@@ -36,7 +36,7 @@ namespace good
     //--------------------------------------------------------------------------------------------------------
     /// Return true if string sStr starts with sStart.
     //--------------------------------------------------------------------------------------------------------
-    template <typename String = good::string>
+    template <typename String>
     bool starts_with( const String& sStr, const String& sStart )
     {
         if ( sStart.size() > sStr.size() )
@@ -47,7 +47,7 @@ namespace good
     //--------------------------------------------------------------------------------------------------------
     /// Return true if string sStr ends with sEnd.
     //--------------------------------------------------------------------------------------------------------
-    template <typename String = good::string>
+    template <typename String>
     bool starts_with( const String& sStr, const typename String::value_type* szStart )
     {
         String sStart(szStart);
@@ -59,7 +59,7 @@ namespace good
     //--------------------------------------------------------------------------------------------------------
     /// Return true if string @p sStr ends with char @p c.
     //--------------------------------------------------------------------------------------------------------
-    template <typename String = good::string>
+    template <typename String>
     bool ends_with( const String& sStr, typename String::value_type c )
     {
         return ( sStr.size() > 0 ) ? (sStr[sStr.size()-1] == c) : false;
@@ -68,7 +68,7 @@ namespace good
     //--------------------------------------------------------------------------------------------------------
     /// Return true if string sStr ends with sEnd.
     //--------------------------------------------------------------------------------------------------------
-    template <typename String = good::string>
+    template <typename String>
     bool ends_with( const String& sStr, const String& sEnd )
     {
         if ( sEnd.size() > sStr.size() )
@@ -79,7 +79,7 @@ namespace good
     //--------------------------------------------------------------------------------------------------------
     /// Return true if string sStr ends with sEnd.
     //--------------------------------------------------------------------------------------------------------
-    template <typename String = good::string>
+    template <typename String>
     bool ends_with( const String& sStr, const typename String::value_type* szEnd )
     {
         String sEnd(szEnd);
@@ -91,7 +91,7 @@ namespace good
     //--------------------------------------------------------------------------------------------------------
     /// Return lowercase string.
     //--------------------------------------------------------------------------------------------------------
-    template <typename Char = char>
+    template <typename Char>
     Char* lower_case( Char* szStr )
     {
         for ( int i = 0; szStr[i]; ++i )
@@ -103,7 +103,7 @@ namespace good
     //--------------------------------------------------------------------------------------------------------
     /// Return lowercase string.
     //--------------------------------------------------------------------------------------------------------
-    template <typename String = good::string>
+    template <typename String>
     String& lower_case( String& sStr )
     {
         for ( typename String::size_type i = 0; i < sStr.size(); ++i )
@@ -115,7 +115,7 @@ namespace good
     //--------------------------------------------------------------------------------------------------------
     /// Remove leading and trailing whitespaces(space, tab, line feed - LF, carriage return - CR).
     //--------------------------------------------------------------------------------------------------------
-    template <typename String = good::string>
+    template <typename String>
     String& trim( String& sStr )
     {
         if (sStr.size() == 0)
@@ -151,7 +151,7 @@ namespace good
     //--------------------------------------------------------------------------------------------------------
     /// Process escape characters: \n, \r, \t, \0, else \ and next char are transformed to that char.
     //--------------------------------------------------------------------------------------------------------
-    template <typename String = good::string>
+    template <typename String>
     String& escape( String& sStr )
     {
         // Skip start sequence.
@@ -184,8 +184,7 @@ namespace good
     //--------------------------------------------------------------------------------------------------------
     /// Split string into several strings by separator, optionally trimming resulting strings. Put result in given array.
     //--------------------------------------------------------------------------------------------------------
-    template <template <typename, typename> class Container,
-              typename String = good::string, template <typename> class Alloc = allocator>
+    template <template <typename, typename> class Container, typename String, template <typename> class Alloc>
     void split( const String& sStr, Container< String, Alloc<String> >& aContainer, char separator = ' ', bool bTrim = false )
     {
         typename String::size_type start = 0;

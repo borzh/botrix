@@ -367,9 +367,11 @@ void CItems::CheckNewEntity( edict_t* pEdict )
         DebugAssert(iIndex >= 0, return);
         CEntity& cItem = m_aItems[iEntityType][iIndex];
 
-        const char* szWaypointFlags = CWaypoints::IsValid(cItem.iWaypoint) ? CTypeToString::WaypointFlagsToString( CWaypoints::Get(cItem.iWaypoint).iFlags ).c_str() : "";
         ItemMessage("New item: %s %d (%s), waypoint %d (%s).", CTypeToString::EntityTypeToString(iEntityType).c_str(), iIndex,
-                    pEdict->GetClassName(), cItem.iWaypoint, szWaypointFlags);
+                    pEdict->GetClassName(), cItem.iWaypoint,
+                    CWaypoints::IsValid(cItem.iWaypoint)
+                        ? CTypeToString::WaypointFlagsToString( CWaypoints::Get(cItem.iWaypoint).iFlags ).c_str()
+                        : "");
 
         if (  !m_bMapLoaded && FLAG_CLEARED(FTaken, cItem.iFlags) ) // Item should have waypoint near.
         {

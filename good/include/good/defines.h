@@ -219,49 +219,46 @@
 #endif
 
 
-#if defined(DEBUG) || defined(_DEBUG)
-
-    #ifndef DebugPrint
+#ifndef DebugPrint
+    #if defined(DEBUG) || defined(_DEBUG)
+        /// Debug print will do nothing.
+        #define DebugPrint(...)
+    #else
         /// Debug print. Will print in debug build only.
         #define DebugPrint(...) ReleasePrint(__VA_ARGS__)
     #endif
+#endif
 
-    #ifndef DebugAssert
-        /// Debug assert. If @p exp is false, will produce debug break, and instructions after @p exp are executed in order.
+
+#if defined(DEBUG) || defined(_DEBUG)
+
+    /// Debug assert. If @p exp is false, will produce debug break, and instructions after @p exp are executed in order.
+    #define DebugAssert(exp, ...)\
+        do {\
+            if ( !(exp) )\
+            {\
+                DebugPrint("Assert failed: (%s); in %s(), file %s, line %d\n", #exp, __FUNCTION__, __FILE__, __LINE__);\
+                BreakDebugger();\
+                __VA_ARGS__;\
+            }\
+        } while (false)
+
+#else // if defined(DEBUG) || defined(_DEBUG)
+
+    #ifdef BETA_VERSION
+        /// Beta version debug assert. If @p exp is false, will print error, and instructions after @p exp are executed in order.
         #define DebugAssert(exp, ...)\
             do {\
                 if ( !(exp) )\
                 {\
-                    DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
-                    BreakDebugger();\
+                    ReleasePrint("Assert failed: (%s); in %s(), file %s, line %d\n", #exp, __FUNCTION__, __FILE__, __LINE__);\
                     __VA_ARGS__;\
                 }\
             } while (false)
+    #else
+        /// Release version assert. Just will generate instructions after @p exp.
+        #define DebugAssert(exp, ...) do { if ( !(exp) ) { __VA_ARGS__; } } while (false)
     #endif
-
-#else // if defined(DEBUG) || defined(_DEBUG)
-
-    #ifndef DebugPrint
-        /// Debug print will do nothing.
-        #define DebugPrint(...)
-    #endif
-
-    #ifndef DebugAssert
-        #ifdef BETA_VERSION
-            /// Beta version debug assert. If @p exp is false, will print error, and instructions after @p exp are executed in order.
-            #define DebugAssert(exp, ...)\
-                do {\
-                    if ( !(exp) )\
-                    {\
-                        DebugPrint("Assert failed: (" #exp ") at %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
-                        __VA_ARGS__;\
-                    }\
-                } while (false)
-        #else
-            /// Debug asserts. Will produce debug break, allowing debugging if @p exp is false.
-            #define DebugAssert(exp, ...) do { if ( !(exp) ) { __VA_ARGS__; } } while (false)
-        #endif
-    #endif // ifndef DebugAssert
 
 #endif // if defined(DEBUG) || defined(_DEBUG)
 

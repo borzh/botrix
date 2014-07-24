@@ -193,8 +193,7 @@ public: // Methods.
     /// Clear waypoints.
     static void Clear()
     {
-        if (m_cGraph.size() > 0)
-            ClearLocations();
+        ClearLocations();
         m_cGraph.clear();
         m_cAreas.clear();
     }
@@ -311,10 +310,13 @@ protected:
     // Clear all locations.
     static void ClearLocations()
     {
-        for (int x=0; x<BUCKETS_SIZE_X; ++x)
-            for (int y=0; y<BUCKETS_SIZE_Y; ++y)
-                for (int z=0; z<BUCKETS_SIZE_Z; ++z)
-                    m_cBuckets[x][y][z].clear();
+        if ( m_cGraph.size() > 0 )
+        {
+            for (int x=0; x<BUCKETS_SIZE_X; ++x)
+                for (int y=0; y<BUCKETS_SIZE_Y; ++y)
+                    for (int z=0; z<BUCKETS_SIZE_Z; ++z)
+                        m_cBuckets[x][y][z].clear();
+        }
     }
 
     typedef good::vector<TWaypointId> Bucket;

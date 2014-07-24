@@ -32,9 +32,9 @@
 class MyClass
 {
 public:
-    MyClass(int argg): arg(argg) { DebugPrint("(MyClass constructor %d)\n", arg); }
-    MyClass(const MyClass& other) { arg = other.arg; DebugPrint("(MyClass copy constructor %d)\n", arg); }
-    ~MyClass() { DebugPrint("(MyClass destructor %d)\n", arg); }
+    MyClass(int argg): arg(argg) { ReleasePrint("(MyClass constructor %d)\n", arg); }
+    MyClass(const MyClass& other) { arg = other.arg; ReleasePrint("(MyClass copy constructor %d)\n", arg); }
+    ~MyClass() { ReleasePrint("(MyClass destructor %d)\n", arg); }
 
     int GetArg() const { return arg; }
     void SetArg(int argg) { arg = argg; }
@@ -60,7 +60,7 @@ void process_write_proc(void* param)
 
         if ( !cProcess->write_stdin(ss, ssSize) )
         {
-            DebugPrint(cProcess->get_last_error());
+            ReleasePrint(cProcess->get_last_error());
             break;
         }
 
@@ -76,7 +76,7 @@ void process_write_proc(void* param)
 
 void test_process()
 {
-    DebugPrint("%s()\n\n", __FUNCTION__);
+    ReleasePrint("%s()\n\n", __FUNCTION__);
 
 #ifdef _WIN32
     bool bRedirect = true;
@@ -91,7 +91,7 @@ void test_process()
     {
         if ( !cProcess.launch(times%2 == 0) )
         {
-            DebugPrint(cProcess.get_last_error());
+            ReleasePrint(cProcess.get_last_error());
             return;
         }
 
@@ -110,22 +110,22 @@ void test_process()
                 {
                     if ( !cProcess.read_stdout(szBuff, 512, iRead) )
                     {
-                        DebugPrint(cProcess.get_last_error());
+                        ReleasePrint(cProcess.get_last_error());
                         break;
                     }
                     szBuff[iRead] = 0;
-                    DebugPrint(szBuff);
+                    ReleasePrint(szBuff);
                 }
 
                 if ( cProcess.has_data_stderr() )
                 {
                     if ( !cProcess.read_stderr(szBuff, 512, iRead) )
                     {
-                        DebugPrint(cProcess.get_last_error());
+                        ReleasePrint(cProcess.get_last_error());
                         break;
                     }
                     szBuff[iRead] = 0;
-                    fDebugPrint(stderr, "StdErr: '%s'\n",szBuff);
+                    fReleasePrint(stderr, "StdErr: '%s'\n",szBuff);
                 }
                 Sleep(200);
                 ++i;
@@ -134,13 +134,13 @@ void test_process()
         bExit = (times%2 == 0);
 
         Sleep(5000);
-        DebugPrint("Before terminate\n");
+        ReleasePrint("Before terminate\n");
         if ( bMakeInput )
             cThread.terminate();
         if ( cProcess.is_finished() )
-            DebugPrint("  Already finished\n");
+            ReleasePrint("  Already finished\n");
         cProcess.terminate();
-        DebugPrint("After terminate\n");
+        ReleasePrint("After terminate\n");
         Sleep(500);
 
         cThread.dispose();
@@ -154,15 +154,15 @@ void thread_proc(void* param)
 {
     for (int i=0; i<50; ++i)
     {
-        DebugPrint("Thread %p: %d\n", param, i);
+        ReleasePrint("Thread %p: %d\n", param, i);
         Sleep(100);
     }
-    DebugPrint("Thread %p exited\n", param);
+    ReleasePrint("Thread %p exited\n", param);
 }
 
 void test_threads()
 {
-    DebugPrint("%s()\n\n", __FUNCTION__);
+    ReleasePrint("%s()\n\n", __FUNCTION__);
 
 #ifdef _WIN32
     const int threads_count = 10;
@@ -177,18 +177,18 @@ void test_threads()
     for (int i=0; i<threads_count-1; ++i)
     {
         pThreads[i].terminate();
-        DebugPrint("Thread %d terminated\n", i);
+        ReleasePrint("Thread %d terminated\n", i);
     }
-    DebugPrint("Before join\n");
+    ReleasePrint("Before join\n");
     pThreads[threads_count-1].join(10000);
-    DebugPrint("After join\n");
+    ReleasePrint("After join\n");
 #endif // _WIN32
 }
 
 //--------------------------------------------------------------------------------------
 void test_bitset()
 {
-    DebugPrint("%s()\n\n", __FUNCTION__);
+    ReleasePrint("%s()\n\n", __FUNCTION__);
     good::bitset b;
     b.resize(100);
     b.reset();
@@ -199,15 +199,15 @@ void test_bitset()
     for ( int i=0; i<100; ++i )
     {
         DebugAssert( b.test(i) == (i % 3 == 0) );
-        DebugPrint("%d", b.test(i));
+        ReleasePrint("%d", b.test(i));
     }
-    DebugPrint("\n");
+    ReleasePrint("\n");
 }
 
 //--------------------------------------------------------------------------------------
 void test_list()
 {
-    DebugPrint("%s()\n\n", __FUNCTION__);
+    ReleasePrint("%s()\n\n", __FUNCTION__);
 
     typedef good::list<MyClass> list_t;
     //typedef good::list<MyClass> list_t;
@@ -267,7 +267,7 @@ void test_list()
 //--------------------------------------------------------------------------------------
 void test_shared_ptr()
 {
-    DebugPrint("%s()\n\n", __FUNCTION__);
+    ReleasePrint("%s()\n\n", __FUNCTION__);
 
     const char* szStr = "hi there";
     good::shared_ptr<good::string> a(new good::string(szStr));
@@ -286,7 +286,7 @@ void test_shared_ptr()
 //--------------------------------------------------------------------------------------
 void test_file()
 {
-    DebugPrint("%s()\n\n", __FUNCTION__);
+    ReleasePrint("%s()\n\n", __FUNCTION__);
 
 #ifdef _WIN32
     const char* szFile = "file.h";
@@ -299,7 +299,7 @@ void test_file()
     DebugAssert(size == read);
     buf[size] = 0;
 
-    DebugPrint( "--------------------------------------------\n%s\n\n", buf );
+    ReleasePrint( "--------------------------------------------\n%s\n\n", buf );
     free(buf);
 
     good::string path("c:");
@@ -319,7 +319,7 @@ void test_file()
 //--------------------------------------------------------------------------------------
 void test_ini_file()
 {
-    DebugPrint("%s()\n\n", __FUNCTION__);
+    ReleasePrint("%s()\n\n", __FUNCTION__);
 
     for (int i=1; i<10; ++i)
     {
@@ -343,10 +343,10 @@ void test_ini_file()
 
         //for (good::ini_file::iterator it = ini.begin(); it != ini.end(); ++it)
         //{
-        //	DebugPrint("Section %s\n", it->name);
+        //	ReleasePrint("Section %s\n", it->name);
         //	for (good::ini_section::iterator confIt = it->begin(); confIt != it->end(); ++confIt)
         //	{
-        //		DebugPrint("\tKey '%s', value '%s', junk '%s'\n", confIt->key.c_str(), confIt->value.c_str(), confIt->junk.c_str());
+        //		ReleasePrint("\tKey '%s', value '%s', junk '%s'\n", confIt->key.c_str(), confIt->value.c_str(), confIt->junk.c_str());
         //	}
         //}
 
@@ -367,14 +367,14 @@ void test_ini_file()
             DebugAssert(sFile1 == sFile2);
         }
 #endif
-        DebugPrint("\n");
+        ReleasePrint("\n");
     }
 }
 
 //--------------------------------------------------------------------------------------
 void test_string()
 {
-    DebugPrint("%s()\n\n", __FUNCTION__);
+    ReleasePrint("%s()\n\n", __FUNCTION__);
 
     good::string s1("hello"); // hello, static
     DebugAssert(s1 == "hello" && s1 != "HELLO" );
@@ -416,7 +416,7 @@ void test_string()
 //--------------------------------------------------------------------------------------
 void test_string_buffer()
 {
-    DebugPrint("%s()\n\n", __FUNCTION__);
+    ReleasePrint("%s()\n\n", __FUNCTION__);
 
     good::string_buffer s1("hello"); // hello
     DebugAssert(s1 == "hello");
@@ -463,7 +463,7 @@ void test_string_buffer()
 //--------------------------------------------------------------------------------------
 void test_vector()
 {
-    DebugPrint("%s()\n\n", __FUNCTION__);
+    ReleasePrint("%s()\n\n", __FUNCTION__);
 
     good::vector<MyClass> v;
     {
@@ -478,7 +478,7 @@ void test_vector()
         v.push_front(c);
     }
 
-    DebugPrint("--------------------------------------------\n");
+    ReleasePrint("--------------------------------------------\n");
     int idx=32;
     for ( good::vector<MyClass>::const_iterator it = v.rbegin(); it != v.rend(); it-=1,--idx )
         DebugAssert( it->GetArg() == idx );
@@ -502,7 +502,7 @@ void test_vector()
 //--------------------------------------------------------------------------------------
 void test_map()
 {
-    DebugPrint("%s()\n\n", __FUNCTION__);
+    ReleasePrint("%s()\n\n", __FUNCTION__);
 
     typedef good::map<int, good::string> map_t;
     //typedef good::map<int, good::string> std_map_t;
@@ -542,11 +542,11 @@ void test_map()
     map_t::iterator it = map.find(0);
     while ( it != map.end() )
     {
-        DebugPrint("Erasing %d\n", it->first);
+        ReleasePrint("Erasing %d\n", it->first);
         it = map.erase(it);
         for (map_t::const_iterator iter = map.begin(); iter != map.end(); ++iter)
-            DebugPrint(" <%d> ", iter->first);
-        DebugPrint("--------------------------------------------\nSize: %d\n\n", map.size());
+            ReleasePrint(" <%d> ", iter->first);
+        ReleasePrint("--------------------------------------------\nSize: %d\n\n", map.size());
     }
 
     DebugAssert(map.size()==1);
@@ -562,7 +562,7 @@ void test_map()
 //--------------------------------------------------------------------------------------
 void test_set()
 {
-    DebugPrint("%s()\n\n", __FUNCTION__);
+    ReleasePrint("%s()\n\n", __FUNCTION__);
     typedef good::set<int> set_t;
     set_t set;
 
@@ -611,7 +611,7 @@ void test_set()
 //--------------------------------------------------------------------------------------
 void test_heap()
 {
-    DebugPrint("%s()\n\n", __FUNCTION__);
+    ReleasePrint("%s()\n\n", __FUNCTION__);
 
     //        1             1             1*            6             6
     //      (   )          (  )          (  )          (  )          (  )
@@ -622,8 +622,8 @@ void test_heap()
     good::string a[7] = {"1", "2", "3", "4", "5", "6",   "-1"};
     good::heap_make(a, size);
     for (int i=0; i<size; ++i)
-        DebugPrint("%s ", a[i].c_str());
-    DebugPrint("\n");
+        ReleasePrint("%s ", a[i].c_str());
+    ReleasePrint("\n");
 
     //        6             6             7
     //      (   )          (  )          (  )
@@ -632,13 +632,13 @@ void test_heap()
     //   4  2  1   7*   4  2 1   3    4  2 1   3
     good::heap_push(a, good::string("7"), size++);
     for (int i=0; i<size; ++i)
-        DebugPrint("%s ", a[i].c_str());
-    DebugPrint("\n");
+        ReleasePrint("%s ", a[i].c_str());
+    ReleasePrint("\n");
 
     good::heap_sort(a, size);
     for (int i=0; i<size; ++i)
-        DebugPrint("%s ", a[i].c_str());
-    DebugPrint("\n");
+        ReleasePrint("%s ", a[i].c_str());
+    ReleasePrint("\n");
 
     good::priority_queue<good::string> queue;
     queue.push("0");
@@ -648,17 +648,17 @@ void test_heap()
     queue.push("4");
     while (!queue.empty())
     {
-        DebugPrint("%s ", queue.top().c_str());
+        ReleasePrint("%s ", queue.top().c_str());
         queue.pop();
     }
-    DebugPrint("\n");
+    ReleasePrint("\n");
 }
 
 
 //--------------------------------------------------------------------------------------
 void test_graph()
 {
-    DebugPrint("%s()\n\n", __FUNCTION__);
+    ReleasePrint("%s()\n\n", __FUNCTION__);
 
     #define sqr(x) ((x)*(x))
     typedef good::pair<float, float> vertex_t;
@@ -670,7 +670,7 @@ void test_graph()
         float operator()(vertex_t const& left, vertex_t const& right)
         {
             float res = sqrt( sqr(right.first - left.first) + sqr(right.second - left.second) );
-            DebugPrint("%f %f ----%f----> %f %f\n", left.first, left.second, res, right.first, right.second);
+            ReleasePrint("%f %f ----%f----> %f %f\n", left.first, left.second, res, right.first, right.second);
             return res;
         }
     };
@@ -716,24 +716,24 @@ void test_graph()
 
     for ( graph_t::const_node_it nodeIt = g.begin(); nodeIt != g.end(); ++nodeIt )
     {
-        DebugPrint("Node: %f %f\n", nodeIt->vertex.first, nodeIt->vertex.second);
+        ReleasePrint("Node: %f %f\n", nodeIt->vertex.first, nodeIt->vertex.second);
         for ( graph_t::const_reverse_arc_it arcIt = nodeIt->neighbours.rbegin(); arcIt != nodeIt->neighbours.rend(); arcIt++ )
         {
-            DebugPrint("  %d ---%f---> %d\n", nodeIt - g.begin(), arcIt->edge, arcIt->target);
+            ReleasePrint("  %d ---%f---> %d\n", nodeIt - g.begin(), arcIt->edge, arcIt->target);
         }
     }
 
     a.setup_search(0, 3, can_use());
     bool b = a.step();
-    DebugPrint("\nFinished: %d, found path A->D: %d\n", b, a.has_path());
+    ReleasePrint("\nFinished: %d, found path A->D: %d\n", b, a.has_path());
     for (astar_t::path_t::const_iterator it = a.path().begin(); it != a.path().end(); ++it )
-        DebugPrint("%d -> ", *it);
-    DebugPrint("(must be 0 -> 2 -> 3)\n");
+        ReleasePrint("%d -> ", *it);
+    ReleasePrint("(must be 0 -> 2 -> 3)\n");
     DebugAssert( b && a.has_path() );
 
     a.setup_search(3, 0, can_use());
     b = a.step();
-    DebugPrint("Finished: %d, found path D->A: %d\n", b, a.has_path());
+    ReleasePrint("Finished: %d, found path D->A: %d\n", b, a.has_path());
     DebugAssert( b && !a.has_path() );
 }
 

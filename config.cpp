@@ -355,7 +355,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
                     int iExtra[2] = { -1, -1 };
                     if ( (pWeapon->iClipSize[0] > 0) && (aCurrent.size() >= 2 )) // Weapon name, primary extra ammo.
                     {
-                        sscanf( aCurrent[1].c_str(), "%u", &iExtra[0]);
+                        sscanf( aCurrent[1].c_str(), "%d", &iExtra[0]);
                         if ( iExtra[0] < 0 )
                             ConfigError("File \"%s\", section [%s], 'default' weapons, weapon '%s': invalid parameter %s.",
                                            m_iniFile.name.c_str(), it->name.c_str(), aCurrent[0].c_str(), aCurrent[1].c_str());
@@ -364,7 +364,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
                     // Get secondary extra ammo.
                     if ( pWeapon->bHasSecondary && !pWeapon->bSecondaryUseSameBullets && (aCurrent.size() >= 3) )
                     {
-                        sscanf( aCurrent[2].c_str(), "%u", &iExtra[1]);
+                        sscanf( aCurrent[2].c_str(), "%d", &iExtra[1]);
                         if ( iExtra[1] < 0 )
                             ConfigError("File \"%s\", section [%s], 'default' weapons, weapon '%s': invalid parameter %s.",
                                            m_iniFile.name.c_str(), it->name.c_str(), aCurrent[0].c_str(), aCurrent[3].c_str());
@@ -479,7 +479,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
                         }
                         else
                         {
-                            sscanf(aCurrent[1].c_str(), "%u", &iValue);
+                            sscanf(aCurrent[1].c_str(), "%d", &iValue);
                             if ( iValue < 0 )
                             {
                                 ConfigError("File \"%s\", section [%s], weapon %s, invalid number: %s for parameter %s.",
@@ -547,7 +547,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
                         for ( size_t i=1; i < aCurrent.size(); i+=2 )
                         {
                             int iValue = -1;
-                            sscanf(aCurrent[i+1].c_str(), "%u", &iValue);
+                            sscanf(aCurrent[i+1].c_str(), "%d", &iValue);
                             if ( iValue <= 0 ) // Ammo count can't be 0.
                             {
                                 ConfigError("File \"%s\", section [%s], weapon %s, invalid parameter for '%s' ammo's count: %s.",

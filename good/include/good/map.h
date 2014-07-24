@@ -52,7 +52,10 @@ namespace good
     public:
         typedef good::pair<Key, Value> key_value_t;
         typedef aatree< good::pair<Key, Value>, pair_first_op<good::pair<Key, Value>, Less>, Alloc> base_class;
+
         typedef typename base_class::node_t node_t;
+        typedef typename base_class::const_iterator const_iterator;
+        typedef typename base_class::iterator iterator;
 
         //--------------------------------------------------------------------------------------------------------
         /// Operator =. Note that this operator moves content, not copies it.
@@ -66,7 +69,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get constant iterator to a key.
         //--------------------------------------------------------------------------------------------------------
-        typename base_class::const_iterator find( const Key& key ) const
+        const_iterator find( const Key& key ) const
         {
             return this->find( key_value_t(key, Value()) );
         }
@@ -74,7 +77,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get iterator to a key.
         //--------------------------------------------------------------------------------------------------------
-        typename base_class::iterator find( const Key& key )
+        iterator find( const Key& key )
         {
             return base_class::find( key_value_t(key, Value()) );
         }
@@ -82,7 +85,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Remove element at map iterator. Return next element.
         //--------------------------------------------------------------------------------------------------------
-        typename base_class::iterator erase( typename base_class::iterator it )
+        iterator erase( iterator it )
         {
             return base_class::erase(it);
         }
@@ -90,17 +93,17 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Remove key->value association.
         //--------------------------------------------------------------------------------------------------------
-        typename base_class::iterator erase( const Key& key )
+        iterator erase( const Key& key )
         {
-            node_t* succ;
+            node_t* succ = NULL; // Void assign to remove warning.
             int succDir;
             node_t* cand = this->_search( this->m_pHead->parent, key_value_t(key, Value()), succ, succDir );
 
             if ( this->_is_nil(cand) )
-                return typename base_class::iterator(this->nil);
+                return iterator(this->nil);
 
             // Found key->value.
-            return typename base_class::iterator( this->_erase( cand, cand->parent->child[1] == cand, succ, succDir ) );
+            return iterator( this->_erase( cand, cand->parent->child[1] == cand, succ, succDir ) );
         }
 
         //--------------------------------------------------------------------------------------------------------
@@ -113,7 +116,7 @@ namespace good
         Value& operator[]( const Key& key )
         {
             key_value_t tmp( key, Value() );
-            typename base_class::iterator it = this->insert(tmp, false); // Insert if not exists but don't replace.
+            iterator it = this->insert(tmp, false); // Insert if not exists but don't replace.
             return it->second;
         }
 
@@ -131,6 +134,7 @@ namespace good
     };
 
 
-};
+} // namespace good
+
 
 #endif // __GOOD_MAP_H__

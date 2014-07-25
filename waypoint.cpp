@@ -220,7 +220,7 @@ bool CWaypoints::Load()
     }
 
     struct waypoint_header header;
-    int iRead = fread(&header, sizeof(struct waypoint_header), 1, f);
+    int iRead = fread(&header, 1, sizeof(struct waypoint_header), f);
     DebugAssert(iRead == sizeof(struct waypoint_header), Clear();fclose(f);return false);
 
     if (*((int*)&WAYPOINT_FILE_HEADER_ID[0]) != header.szFileType)
@@ -251,18 +251,18 @@ bool CWaypoints::Load()
     // Read waypoints information.
     for ( TWaypointId i = 0; i < header.iNumWaypoints; ++i )
     {
-        iRead = fread(&vOrigin, sizeof(Vector), 1, f);
+        iRead = fread(&vOrigin, 1, sizeof(Vector), f);
         DebugAssert(iRead == sizeof(Vector), Clear();fclose(f);return false);
 
-        iRead = fread(&iFlags, sizeof(TWaypointFlags), 1, f);
+        iRead = fread(&iFlags, 1, sizeof(TWaypointFlags), f);
         DebugAssert(iRead == sizeof(TWaypointFlags), Clear();fclose(f);return false);
 
-        iRead = fread(&iAreaId, sizeof(TAreaId), 1, f);
+        iRead = fread(&iAreaId, 1, sizeof(TAreaId), f);
         DebugAssert(iRead == sizeof(TAreaId), Clear();fclose(f);return false);
         if ( FLAG_CLEARED(WAYPOINT_FILE_FLAG_AREAS, header.iFlags) )
             iAreaId = 0;
 
-        iRead = fread(&iArgument, sizeof(int), 1, f);
+        iRead = fread(&iArgument, 1, sizeof(int), f);
         DebugAssert(iRead == sizeof(int), Clear();fclose(f);return false);
 
         Add(vOrigin, iFlags, iArgument, iAreaId);
@@ -277,20 +277,20 @@ bool CWaypoints::Load()
     {
         WaypointGraph::node_it from = m_cGraph.begin() + i;
 
-        iRead = fread(&iNumPaths, sizeof(int), 1, f);
+        iRead = fread(&iNumPaths, 1, sizeof(int), f);
         DebugAssert( (iRead == sizeof(int)) && (0 <= iNumPaths) && (iNumPaths < header.iNumWaypoints), Clear();fclose(f);return false );
 
         m_cGraph[i].neighbours.reserve(iNumPaths);
 
         for ( int n = 0; n < iNumPaths; n ++ )
         {
-            iRead = fread(&iPathTo, sizeof(int), 1, f);
+            iRead = fread(&iPathTo, 1, sizeof(int), f);
             DebugAssert( (iRead == sizeof(int)) && (0 <= iPathTo) && (iPathTo < header.iNumWaypoints), Clear();fclose(f);return false );
 
-            iRead = fread(&iPathFlags, sizeof(TPathFlags), 1, f);
+            iRead = fread(&iPathFlags, 1, sizeof(TPathFlags), f);
             DebugAssert( iRead == sizeof(TPathFlags), Clear();fclose(f);return false );
 
-            iRead = fread(&iPathArgument, sizeof(unsigned short), 1, f);
+            iRead = fread(&iPathArgument, 1, sizeof(unsigned short), f);
             DebugAssert( iRead == sizeof(unsigned short), Clear();fclose(f);return false );
 
             WaypointGraph::node_it to = m_cGraph.begin() + iPathTo;
@@ -302,7 +302,7 @@ bool CWaypoints::Load()
     if ( FLAG_SOME_SET(WAYPOINT_FILE_FLAG_AREAS, header.iFlags) )
     {
         // Read area names.
-        iRead = fread(&iAreaNamesSize, sizeof(int), 1, f);
+        iRead = fread(&iAreaNamesSize, 1, sizeof(int), f);
         DebugAssert( iRead == sizeof(unsigned short), Clear();fclose(f);return false);
         BreakDebuggerIf( (iAreaNamesSize < 0) || (iAreaNamesSize > header.iNumWaypoints) );
 
@@ -312,13 +312,13 @@ bool CWaypoints::Load()
         for ( int i=0; i < iAreaNamesSize; i++ )
         {
             int iStrSize;
-            iRead = fread(&iStrSize, sizeof(int), 1, f);
+            iRead = fread(&iStrSize, 1, sizeof(int), f);
             DebugAssert(iRead == sizeof(int), Clear();fclose(f);return false);
 
             DebugAssert(0 < iStrSize && iStrSize < iMainBufferSize, Clear(); return false);
             if (iStrSize > 0)
             {
-                iRead = fread(szMainBuffer, iStrSize+1, 1, f); // Read also trailing 0.
+                iRead = fread(szMainBuffer, 1, iStrSize+1, f); // Read also trailing 0.
                 DebugAssert(iRead == iStrSize+1, Clear();fclose(f);return false);
 
                 good::string sArea(szMainBuffer, true, true, iStrSize);
@@ -328,6 +328,8 @@ bool CWaypoints::Load()
     }
     else
         m_cAreas.push_back("default"); // New waypoints without area id will be put under this empty area id.
+
+    iAreaNamesSize = m_cAreas.size();
 
     // Check for areas names.
     for ( TWaypointId i = 0; i < header.iNumWaypoints; ++i )

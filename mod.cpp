@@ -84,9 +84,6 @@ void CMod::AddEvent( CEvent* pEvent )
 //----------------------------------------------------------------------------------------------------------------
 void CMod::MapLoaded()
 {
-    if ( !pCurrentMod )
-        return;
-
     // TODO: move this to items.
     for ( TEntityType iType=0; iType < EEntityTypeTotal-1; ++iType )
     {
@@ -108,7 +105,8 @@ void CMod::MapLoaded()
         }
     }
 
-    pCurrentMod->MapLoaded();
+    if ( pCurrentMod )
+        pCurrentMod->MapLoaded();
 }
 
 //----------------------------------------------------------------------------------------------------------------

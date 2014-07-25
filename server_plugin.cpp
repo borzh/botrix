@@ -234,7 +234,6 @@ const char* CBotrixPlugin::GetPluginDescription( void )
 void CBotrixPlugin::LevelInit( const char* pMapName )
 {
     sMapName = pMapName;
-    bMapRunning = true;
 
 #ifndef DONT_USE_VALVE_FUNCTIONS
     ConVar *pTeamplay = pCvar->FindVar("mp_teamplay");
@@ -254,6 +253,8 @@ void CBotrixPlugin::LevelInit( const char* pMapName )
 //----------------------------------------------------------------------------------------------------------------
 void CBotrixPlugin::ServerActivate( edict_t* /*pEdictList*/, int /*edictCount*/, int clientMax )
 {
+    bMapRunning = true;
+
     CPlayers::Init(clientMax);
     CItems::MapLoaded();
     CMod::MapLoaded();
@@ -306,11 +307,11 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
         CItems::Update();
         CPlayers::PreThink();
 
-#define BOTRIX_SHOW_PERFORMANCE
+//#define BOTRIX_SHOW_PERFORMANCE
 #ifdef BOTRIX_SHOW_PERFORMANCE
         static const float fInterval = 10.0f; // Print & reset every 10 seconds.
         static float fStart = 0.0f, fSum = 0.0f;
-        int iCount = 0;
+        static int iCount = 0;
 
         if ( fStart == 0.0f )
             fStart = fEngineTime;
@@ -318,10 +319,10 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
         fSum += pEngineServer->Time() - fEngineTime;
         iCount++;
 
-        if ( (fStart + fInterval) >= pEngineServer->Time() )
+        if ( (fStart + fInterval) <= pEngineServer->Time() )
         {
             CUtil::Message(NULL, "Botrix think time in %d frames (%.0f seconds): %.5f msecs",
-                           iCount, fInterval, fSum / (float)iCount / 1000.0f);
+                           iCount, fInterval, fSum / (float)iCount * 1000.0f);
             fStart = fSum = 0.0f;
             iCount = 0;
         }

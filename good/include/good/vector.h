@@ -166,7 +166,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Constructor with capacity parameter.
         //--------------------------------------------------------------------------------------------------------
-        vector( int iCapacity ): m_iCapacity(iCapacity), m_iSize(0)
+        vector( size_type iCapacity ): m_iCapacity(iCapacity), m_iSize(0)
         {
 #ifdef DEBUG_VECTOR_PRINT
             DebugPrint( "vector constructor(): capacity %d\n", iCapacity );

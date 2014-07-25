@@ -104,19 +104,22 @@ include_directories(
 )
 
 set( VALVE_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/src/lib/public/linux32" )
+link_directories( ${VALVE_LIB_DIR} )
 
-find_library( VALVE_MATHLIB NAMES mathlib.a     PATHS ${VALVE_LIB_DIR} )
-find_library( VALVE_VSTDLIB NAMES libvstdlib.so PATHS ${VALVE_LIB_DIR} )
-find_library( VALVE_TIER0   NAMES libtier0.so   PATHS ${VALVE_LIB_DIR} )
-find_library( VALVE_TIER1   NAMES tier1.a       PATHS ${VALVE_LIB_DIR} )
+#find_library( VALVE_MATHLIB NAMES mathlib.a     PATHS ${VALVE_LIB_DIR} )
+#find_library( VALVE_VSTDLIB NAMES libvstdlib.so PATHS ${VALVE_LIB_DIR} )
+#find_library( VALVE_TIER0   NAMES libtier0.so   PATHS ${VALVE_LIB_DIR} )
+#find_library( VALVE_TIER1   NAMES tier1.a       PATHS ${VALVE_LIB_DIR} )
 #find_library( VALVE_TIER2   NAMES tier2.a       PATHS ${VALVE_LIB_DIR} )
 
 set( PROJECT_LINK_LIBS
-    ${VALVE_MATHLIB}
-    ${VALVE_TIER0}
-    ${VALVE_TIER1}
-    ${VALVE_TIER2}
-    ${VALVE_VSTDLIB}
+    ${VALVE_LIB_DIR}/mathlib.a ${VALVE_LIB_DIR}/tier1.a
+    libtier0.so libvstdlib.so
+#    ${VALVE_MATHLIB}
+#    ${VALVE_TIER0}
+#    ${VALVE_TIER1}
+#    ${VALVE_TIER2}
+#    ${VALVE_VSTDLIB}
     dl                   # tier1.a needs that
     pthread
     good

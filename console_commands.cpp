@@ -2021,6 +2021,6 @@ CMainCommand::CMainCommand()
 CMainCommand::~CMainCommand()
 {
 #ifndef SOURCE_ENGINE_2006
-    //CBotrixPlugin::pCvar->UnregisterConCommand( &botrix );
+    CBotrixPlugin::pCvar->UnregisterConCommand( &botrix );
 #endif
 }

@@ -29,10 +29,10 @@ set( SHARED_FLAGS "${SHARED_COMPILE_FLAGS} ${SHARED_LINKER_FLAGS}")
 
 set( CMAKE_CXX_FLAGS                "${SHARED_FLAGS} ${CMAKE_CXX_FLAGS}" )
 set( CMAKE_CXX_FLAGS_DEBUG          "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -O0 -g -rdynamic" )
-#TODO: set( CMAKE_CXX_FLAGS_GCOV           "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -O0 -g -rdynamic --coverage -fprofile-arcs -ftest-coverage -lgcov" )
-set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -Og -rdynamic" )
+set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -g -O2 -rdynamic" )
 set( CMAKE_CXX_FLAGS_RELEASE        "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -O3" )
 #-O2 -falign-functions=16 -falign-loops=16" )
+#TODO: set( CMAKE_CXX_FLAGS_GCOV           "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -O0 -g -rdynamic --coverage -fprofile-arcs -ftest-coverage -lgcov" )
 
 message( "Build type: ${CMAKE_BUILD_TYPE}" )
 
@@ -85,60 +85,57 @@ file( GLOB PROJECT_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/borzh/*.cpp"
 )
 
+set( SOURCE_SDK_2013_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013" )
+
 # SYSTEM is used to not show warnings/errors for included files.
 include_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}"
     "${CMAKE_CURRENT_SOURCE_DIR}/good/include"
-    SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/src/public"
-    SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/src/public/engine"
-    SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/src/public/tier0"
-    SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/src/public/tier1"
-    SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/src/public/game/server"
-    SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/src/public/mathlib"
-    SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/src/public/vstdlib"
-    SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/src/game/server"
-    SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/src/game/server/hl2"
-    SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/src/game/server/hl2mp"
-    SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/src/game/shared"
-    SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/src/"
+    SYSTEM "${SOURCE_SDK_2013_PATH}/mp/src/public"
+    SYSTEM "${SOURCE_SDK_2013_PATH}/mp/src/public/engine"
+    SYSTEM "${SOURCE_SDK_2013_PATH}/mp/src/public/tier0"
+    SYSTEM "${SOURCE_SDK_2013_PATH}/mp/src/public/tier1"
+    SYSTEM "${SOURCE_SDK_2013_PATH}/mp/src/public/game/server"
+    SYSTEM "${SOURCE_SDK_2013_PATH}/mp/src/public/mathlib"
+    SYSTEM "${SOURCE_SDK_2013_PATH}/mp/src/public/vstdlib"
+    SYSTEM "${SOURCE_SDK_2013_PATH}/mp/src/game/server"
+    SYSTEM "${SOURCE_SDK_2013_PATH}/mp/src/game/server/hl2"
+    SYSTEM "${SOURCE_SDK_2013_PATH}/mp/src/game/server/hl2mp"
+    SYSTEM "${SOURCE_SDK_2013_PATH}/mp/src/game/shared"
+    SYSTEM "${SOURCE_SDK_2013_PATH}/mp/src/"
 )
 
-set( VALVE_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/src/lib/public/linux32" )
-link_directories( ${VALVE_LIB_DIR} )
 
-#find_library( VALVE_MATHLIB NAMES mathlib.a     PATHS ${VALVE_LIB_DIR} )
-#find_library( VALVE_VSTDLIB NAMES libvstdlib.so PATHS ${VALVE_LIB_DIR} )
-#find_library( VALVE_TIER0   NAMES libtier0.so   PATHS ${VALVE_LIB_DIR} )
-#find_library( VALVE_TIER1   NAMES tier1.a       PATHS ${VALVE_LIB_DIR} )
-#find_library( VALVE_TIER2   NAMES tier2.a       PATHS ${VALVE_LIB_DIR} )
+# Don't use full path dependencies in generated library.
+set( CMAKE_SKIP_BUILD_RPATH true )
+
+# Link libraries.
+set( SOURCE_SDK_2013_LINK_PATH "${SOURCE_SDK_2013_PATH}/mp/src/lib/public/linux32" )
+link_directories( ${SOURCE_SDK_2013_LINK_PATH} )
 
 set( PROJECT_LINK_LIBS
-    ${VALVE_LIB_DIR}/mathlib.a ${VALVE_LIB_DIR}/tier1.a
-    libtier0.so libvstdlib.so
-#    ${VALVE_MATHLIB}
-#    ${VALVE_TIER0}
-#    ${VALVE_TIER1}
-#    ${VALVE_TIER2}
-#    ${VALVE_VSTDLIB}
+    ${SOURCE_SDK_2013_LINK_PATH}/mathlib.a
+    ${SOURCE_SDK_2013_LINK_PATH}/tier1.a
+    libtier0.so
+    libvstdlib.so
     dl                   # tier1.a needs that
-    pthread
     good
 )
 
-set( LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/game/mod_hl2mp/addons" )
 
+# Link Botrix Plugin library.
 add_library( ${PROJECT_NAME} SHARED ${PROJECT_SOURCES} )
 target_link_libraries( ${PROJECT_NAME} ${PROJECT_LINK_LIBS} )
-#set_target_properties(
-#    ${PROJECT_NAME} PROPERTIES
-#    COMPILE_FLAGS "${COMPILE_FLAGS} -m32 -march=pentium4 "
-#    LINK_FLAGS "${LINK_FLAGS} -m32 -march=pentium4 -rdynamic -fvisibility=hidden"
-#)
 
-#add_library ( gcov_botrix SHARED ${PROJECT_SOURCES} )
-#target_link_libraries( gcov_botrix gcov ${PROJECT_LINK_LIBS} )
-#set_target_properties (
-#    gcov_botrix PROPERTIES
-#    COMPILE_FLAGS "-m32 -g --coverage -fprofile-arcs -ftest-coverage -march=pentium4"
-#    LINK_FLAGS "-m32 -march=pentium4" )
-#)
+
+# Post-build: copy botrix plugin to source-sdk-2013.
+get_target_property( BOTRIX_LIB_PATH ${PROJECT_NAME} LOCATION )
+set( SDK_2013_MOD_PATH "${SOURCE_SDK_2013_PATH}/mp/game/mod_hl2mp" )
+set( RUNTIME_PATH "${CMAKE_CURRENT_SOURCE_DIR}/runtime/linux" )
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND cp -r "${RUNTIME_PATH}/*" "${SDK_2013_MOD_PATH}/"
+    COMMAND cp "${BOTRIX_LIB_PATH}" "${SDK_2013_MOD_PATH}/addons/"
+    COMMAND echo -e "'\\e[0;32m'Copying Botrix runtime files'\\e[0m'"
+)

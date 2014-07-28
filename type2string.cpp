@@ -94,14 +94,14 @@ good::string aBools[2*iYesNoSynonims] =
     "off",
     "false",
     "no",
-    "on"
+    "on",
     "true",
     "yes"
 };
 
 int CTypeToString::BoolFromString( const good::string& sBool )
 {
-    int iResult = EnumFromString( sBool, 2, aBools );
+    int iResult = EnumFromString( sBool, 2*iYesNoSynonims, aBools );
     return (iResult == -1) ? -1 : (iResult/iYesNoSynonims);
 }
 

@@ -37,15 +37,17 @@
 #include "tier0/memdbgon.h"
 
 
-int iMainBufferSize = 2048;
-char szMainBufferArray[2048]; // Static buffer for different string purposes.
+#define BUFFER_LOG_SIZE 2048
 
+char szMainBufferArray[BUFFER_LOG_SIZE];
+char szLogBufferArray[BUFFER_LOG_SIZE];  // Static buffers for different string purposes.
+
+int iMainBufferSize = BUFFER_LOG_SIZE;
 char* szMainBuffer = szMainBufferArray;
 
 // For logging purpuses.
-int iLogBufferSize = 2048;
-char szLogBufferArray[2048]; // Static buffer for different string purposes.
-char* szLogBuffer = szMainBufferArray;
+int iLogBufferSize = BUFFER_LOG_SIZE;
+char* szLogBuffer = szLogBufferArray;
 
 //----------------------------------------------------------------------------------------------------------------
 // The plugin is a static singleton that is exported as an interface.
@@ -92,18 +94,18 @@ IVDebugOverlay* pVDebugOverlay = NULL;
 //----------------------------------------------------------------------------------------------------------------
 #define LOAD_INTERFACE(var,type,version) \
     if ((var =(type*)pInterfaceFactory(version, NULL)) == NULL ) {\
-        Warning("[Botrix] Cannot open interface " version " " #type " " #var "\n");\
+        BLOG_W("[Botrix] Cannot open interface " version " " #type " " #var "\n");\
         return false;\
     }
 
 #define LOAD_INTERFACE_IGNORE_ERROR(var,type,version) \
     if ((var =(type*)pInterfaceFactory(version, NULL)) == NULL ) {\
-        Warning("[Botrix] Cannot open interface " version " " #type " " #var "\n");\
+        BLOG_W("[Botrix] Cannot open interface " version " " #type " " #var "\n");\
     }
 
 #define LOAD_GAME_SERVER_INTERFACE(var, type, version) \
     if ((var =(type*)pGameServerFactory(version, NULL)) == NULL ) {\
-        Warning("[Botrix] Cannot open game server interface " version " " #type " " #var "\n");\
+        BLOG_W("[Botrix] Cannot open game server interface " version " " #type " " #var "\n");\
         return false;\
     }
 
@@ -118,6 +120,11 @@ CBotrixPlugin::~CBotrixPlugin() {}
 //----------------------------------------------------------------------------------------------------------------
 bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn pGameServerFactory )
 {
+    good::log::bLogToStdOut = false; // Disable log to stdout, Msg()/Wanring() will print there.
+    good::log::iStdErrLevel = good::ELogLevelWarning; // Log warnings and errors to stderr.
+    good::log::iLogLevel = good::ELogLevelWarning;
+    good::log::set_prefix("[Botrix] ");
+
 #ifndef DONT_USE_VALVE_FUNCTIONS
     LOAD_GAME_SERVER_INTERFACE(pPlayerInfoManager,IPlayerInfoManager,INTERFACEVERSION_PLAYERINFOMANAGER);
 
@@ -151,7 +158,9 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 
     // Get game/mod directories.
 #ifdef DONT_USE_VALVE_FUNCTIONS
-    strcpy(szMainBuffer, "/home/pccorar09/svn/source-sdk-2013/mp/game/mod_hl2mp");
+    #define xstr(a) str(a)
+    #define str(a) #a
+    strcpy(szMainBuffer, xstr(DONT_USE_VALVE_FUNCTIONS)); // Mod directory.
 #else
     pEngineServer->GetGameDir(szMainBuffer, iMainBufferSize);
 #endif
@@ -195,7 +204,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     if ( CMod::sModName.size() == 0 )
         sMod = "unknown";
 
-    BLOG_I("Botrix loaded. Current mod: %s.\n", sMod);
+    BLOG_I("Botrix loaded. Current mod: %s.", sMod);
 
     return true;
 }
@@ -213,6 +222,7 @@ void CBotrixPlugin::Unload( void )
     if ( pGameEventManager )
         pGameEventManager->RemoveListener(this);
 
+    good::log::stop_log_to_file();
     bIsLoaded = false;
 }
 

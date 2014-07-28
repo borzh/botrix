@@ -420,7 +420,8 @@ namespace good
         void copy_contents(const Char* szFrom)
         {
             m_pBuffer = m_cAlloc.allocate(m_iSize+1);
-            strncpy( m_pBuffer, szFrom, (m_iSize+1) * sizeof(Char) );
+            strncpy( m_pBuffer, szFrom, m_iSize * sizeof(Char) );
+            m_pBuffer[m_iSize] = 0;
         }
 
         //--------------------------------------------------------------------------------------------------------

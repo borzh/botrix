@@ -2,10 +2,6 @@
 #define __BOTRIX_WAYPOINT_NAVIGATOR_H__
 
 
-// Ugly fix for Source Engine.
-#undef MINMAX_H
-#undef min
-#undef max
 #include <good/astar.h>
 
 #include "defines.h"

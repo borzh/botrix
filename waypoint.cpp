@@ -215,7 +215,7 @@ bool CWaypoints::Load()
     FILE *f = CUtil::OpenFile(sFileName, "rb");
     if ( f == NULL )
     {
-        BLOG_W("No waypoints for map %s", CBotrixPlugin::instance->sMapName.c_str());
+        BLOG_W("No waypoints for map %s.", CBotrixPlugin::instance->sMapName.c_str());
         return false;
     }
 

@@ -12,26 +12,29 @@
     do {\
         extern int iLogBufferSize;\
         extern char* szLogBuffer;\
-        good::log::format(level, szLogBuffer, iLogBufferSize, __VA_ARGS__);\
-        good::log::print(level, szLogBuffer);\
-        CUtil::Message(user, szLogBuffer);\
+        int iMin = MIN2(good::log::iFileLogLevel, CUtil::iLogLevel);\
+        if ( level >= iMin ) {\
+            good::log::format(szLogBuffer, iLogBufferSize, __VA_ARGS__);\
+            good::log::print(level, szLogBuffer);\
+            CUtil::Message(level, user, szLogBuffer);\
+        }\
     } while (false)
 
 // Botrix log with level. Log to stdout/stderr and server.
-#define BLOG_T(...)        BLOG(NULL, good::ELogLevelTrace, __VA_ARGS__)
-#define BLOG_D(...)        BLOG(NULL, good::ELogLevelDebug, __VA_ARGS__)
-#define BLOG_I(...)        BLOG(NULL, good::ELogLevelInfo, __VA_ARGS__)
+#define BLOG_T(...)        BLOG(NULL, good::ELogLevelTrace,   __VA_ARGS__)
+#define BLOG_D(...)        BLOG(NULL, good::ELogLevelDebug,   __VA_ARGS__)
+#define BLOG_I(...)        BLOG(NULL, good::ELogLevelInfo,    __VA_ARGS__)
 #define BLOG_W(...)        BLOG(NULL, good::ELogLevelWarning, __VA_ARGS__)
-#define BLOG_E(...)        BLOG(NULL, good::ELogLevelError, __VA_ARGS__)
+#define BLOG_E(...)        BLOG(NULL, good::ELogLevelError,   __VA_ARGS__)
 
 // Log to stdout and user.
-#define BULOG_T(user, ...) BLOG(user, good::ELogLevelTrace, __VA_ARGS__)
-#define BULOG_D(user, ...) BLOG(user, good::ELogLevelDebug, __VA_ARGS__)
-#define BULOG_I(user, ...) BLOG(user, good::ELogLevelInfo, __VA_ARGS__)
+#define BULOG_T(user, ...) BLOG(user, good::ELogLevelTrace,   __VA_ARGS__)
+#define BULOG_D(user, ...) BLOG(user, good::ELogLevelDebug,   __VA_ARGS__)
+#define BULOG_I(user, ...) BLOG(user, good::ELogLevelInfo,    __VA_ARGS__)
 #define BULOG_W(user, ...) BLOG(user, good::ELogLevelWarning, __VA_ARGS__)
-#define BULOG_E(user, ...) BLOG(user, good::ELogLevelError, __VA_ARGS__)
+#define BULOG_E(user, ...) BLOG(user, good::ELogLevelError,   __VA_ARGS__)
 
-// Assertion.
+// Non fatal assert.
 #define BASSERT(exp, ...)\
     do {\
         if ( !(exp) )\

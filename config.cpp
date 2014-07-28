@@ -38,7 +38,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
     m_iniFile.name = sFileName;
     if ( m_iniFile.load() >= good::IniFileNotFound )
     {
-        BLOG_E("Error reading configuration file %s", m_iniFile.name.c_str());
+        BLOG_E("Error reading configuration file %s.", m_iniFile.name.c_str());
         return EModId_Invalid;
     }
 
@@ -48,8 +48,23 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
     good::ini_file::iterator it = m_iniFile.find("General");
     if ( it != m_iniFile.end() )
     {
+        // Check log file level.
+        good::ini_section::iterator kv = it->find("console_log_level");
+        if ( kv != it->end() )
+        {
+            int iLevel = CTypeToString::LogLevelFromString(kv->value);
+            if ( iLevel == -1 )
+                BLOG_E( "File \"%s\", section [%s]: invalid log level %s.", m_iniFile.name.c_str(),
+                        it->name.c_str(), kv->value.c_str() );
+            else
+            {
+                CUtil::iLogLevel = iLevel;
+                BLOG_I("Console log level: %s.", kv->value.c_str());
+            }
+        }
+
         // Check if need to log to a file.
-        good::ini_section::iterator kv = it->find("file_log");
+        kv = it->find("file_log");
         if ( kv != it->end() )
         {
             if ( good::log::start_log_to_file( kv->value.c_str(), false ) )
@@ -71,21 +86,6 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
             {
                 good::log::iFileLogLevel = iLevel;
                 BLOG_I("File log level: %s.", kv->value.c_str());
-            }
-        }
-
-        // Check log file level.
-        kv = it->find("console_log_level");
-        if ( kv != it->end() )
-        {
-            int iLevel = CTypeToString::LogLevelFromString(kv->value);
-            if ( iLevel == -1 )
-                BLOG_E( "File \"%s\", section [%s]: invalid log level %s.", m_iniFile.name.c_str(),
-                        it->name.c_str(), kv->value.c_str() );
-            else
-            {
-                good::log::iLogLevel = iLevel;
-                BLOG_I("Console log level: %s.", kv->value.c_str());
             }
         }
 

@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "good/defines.h"
 #include "good/log.h"
 
 
@@ -16,7 +15,7 @@ TLogLevel log::iFileLogLevel = ELogLevelWarning;
 TLogLevel log::iStdErrLevel = ELogLevelError;
 FILE* log::m_fLog = NULL;
 
-bool log::m_aLogFields[ELogFormatTotal] = { false };
+good::vector<good::log::log_field_t> log::m_aLogFields(8);
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -25,16 +24,93 @@ int iStartSize = 0;
 
 
 //----------------------------------------------------------------------------------------------------------------
+const good::string aLogLevelsUppercase[ELogLevelTotal] =
+{
+    "       ",
+    "TRACE  ",
+    "DEBUG  ",
+    "INFO   ",
+    "WARNING",
+    "ERROR  ",
+};
+const good::string aLogLevelsLowercase[ELogLevelTotal] =
+{
+    "       ",
+    "trace  ",
+    "debug  ",
+    "info   ",
+    "warning",
+    "error  ",
+};
+const good::string aLogLevelsLetterUppercase[ELogLevelTotal] =
+{
+    " ",
+    "T",
+    "D",
+    "I",
+    "W",
+    "E",
+};
+const good::string aLogLevelsLetterLowercase[ELogLevelTotal] =
+{
+    " ",
+    "t",
+    "d",
+    "i",
+    "w",
+    "e",
+};
+
+//----------------------------------------------------------------------------------------------------------------
 bool log::set_prefix( const char* szPrefix )
 {
+    /*m_aLogFields.clear();
+    iStartSize = 0;
+    int iStart = 0, iEnd = 0;
+
+    while ( szPrefix[iEnd] && (iEnd < GOOD_LOG_MAX_MSG_SIZE-1) )
+    {
+        if ( szPrefix[iEnd] == '%' )
+        {
+            ++iEnd;
+            switch ( szPrefix[iEnd] )
+            {
+            case 'N':
+            case 'F':
+            case 'f':
+            case 'L':
+            case 'l':
+            case 'D':
+            case 'T':
+            case 'p':
+
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    if ( iEnd-iStart > 0)
+    {
+        good::string sStr( &szPrefix[iStart], true, true, iEnd-iStart );
+        m_aLogFields.push_back( log_field_t(sStr, iStartSize) );
+        iStartSize += sStr.size();
+    }
+
     int iSize = strnlen(szPrefix, GOOD_LOG_MAX_MSG_SIZE-1);
     if ( iSize == GOOD_LOG_MAX_MSG_SIZE-1 )
         return false;
 
+    szLogMessage
+    snprintf()*/
+
 #ifdef GOOD_MULTI_THREAD
     good::lock cLock(m_cMutex);
 #endif
+    int iSize = strnlen(szPrefix, GOOD_LOG_MAX_MSG_SIZE-1);
     strncpy(szLogMessage, szPrefix, iSize);
+    szLogMessage[iSize] = 0;
     iStartSize = iSize;
     return true;
 }
@@ -64,11 +140,8 @@ void log::stop_log_to_file()
 
 
 //----------------------------------------------------------------------------------------------------------------
-int log::format( TLogLevel iLevel, char* szOutput, int iOutputSize, const char* szFmt, ... )
+int log::format( char* szOutput, int iOutputSize, const char* szFmt, ... )
 {
-    if ( iLevel < iLogLevel )
-        return 0;
-
     va_list argptr;
     va_start(argptr, szFmt);
     int iResult = format_va_list(szOutput, iOutputSize, szFmt, argptr);
@@ -81,7 +154,10 @@ int log::format( TLogLevel iLevel, char* szOutput, int iOutputSize, const char* 
 //----------------------------------------------------------------------------------------------------------------
 int log::printf( TLogLevel iLevel, const char* szFmt, ... )
 {
-    if ( iLevel < iLogLevel )
+    bool bLog = (iLevel >= iLogLevel);
+    bool bFile = m_fLog && (iFileLogLevel >= iStdErrLevel);
+
+    if ( !bLog || !bFile )
         return 0;
 
     va_list argptr;
@@ -92,12 +168,25 @@ int log::printf( TLogLevel iLevel, const char* szFmt, ... )
     if ( iResult )
     {
         // Log to stdout or stderr. TODO: FILE* array[iLevel] for setLogToStdOut() & setLogToStdErr().
-        FILE* fOut = ( bLogToStdErr && (iLevel >= iStdErrLevel) ) ? stderr : (bLogToStdOut ? stdout : NULL );
+        bool bStderr = bLog && bLogToStdErr;
+        bool bStdout = !bStderr && bLog && bLogToStdOut;
+        FILE* fOut = bStderr ? stderr : (bStdout ? stdout : NULL );
         if ( fOut )
+        {
             fputs(szLogMessage, fOut);
+    #ifdef GOOD_LOG_FLUSH
+            fflush(fOut);
+    #endif
+        }
+
         // Log to file.
-        if ( m_fLog )
+        if ( bFile )
+        {
             fputs(szLogMessage, m_fLog);
+    #ifdef GOOD_LOG_FLUSH
+            fflush(m_fLog);
+    #endif
+        }
     }
     return iResult;
 }
@@ -106,11 +195,13 @@ int log::printf( TLogLevel iLevel, const char* szFmt, ... )
 //----------------------------------------------------------------------------------------------------------------
 void log::print( TLogLevel iLevel, const char* szFinal )
 {
-    if ( iLevel < iLogLevel )
-        return;
+    bool bLog = (iLevel >= iLogLevel);
+    bool bFile = m_fLog && (iLevel >= iFileLogLevel);
 
     // Log to stdout or stderr. TODO: FILE* array[iLevel] for setLogToStdOut() & setLogToStdErr().
-    FILE* fOut = ( bLogToStdErr && (iLevel >= iStdErrLevel) ) ? stderr : (bLogToStdOut ? stdout : NULL );
+    bool bStderr = bLog && bLogToStdErr;
+    bool bStdout = !bStderr && bLog && bLogToStdOut;
+    FILE* fOut = bStderr ? stderr : (bStdout ? stdout : NULL );
     if ( fOut )
     {
         fputs(szFinal, fOut);
@@ -120,7 +211,7 @@ void log::print( TLogLevel iLevel, const char* szFinal )
     }
 
     // Log to file.
-    if ( m_fLog )
+    if ( bFile )
     {
         fputs(szFinal, m_fLog);
 #ifdef GOOD_LOG_FLUSH

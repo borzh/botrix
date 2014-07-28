@@ -2,9 +2,10 @@
 #define __BOTRIX_UTIL_H__
 
 
-#include "types.h"
+#include <good/log.h>
 
 #include "server_plugin.h"
+#include "types.h"
 
 #include "public/edict.h"
 #include "public/eiface.h"
@@ -45,6 +46,9 @@ class CUtil
 {
 
 public:
+
+    static good::TLogLevel iLogLevel; /// Console log level. Info by default.
+
     /// First make folders in file path, then open that file.
     static FILE* OpenFile( const good::string& szFile, const char *szMode );
 
@@ -52,7 +56,7 @@ public:
     static const good::string& BuildFileName( const good::string& sFolder, const good::string& sFile, const good::string& sExtension );
 
     /// Print a message to given client (must be called from game thread). If message tag is used then message will start with "[Botrix] ".
-    static void Message( edict_t* pEntity, const char* szMsg );
+    static void Message( good::TLogLevel iLevel, edict_t* pEntity, const char* szMsg );
 
     /// Put message in message queue. It must be done when called from thread != game thread, to avoid incorrect behaviour.
     static void PutMessageInQueue( const char* fmt, ... );

@@ -11,8 +11,12 @@
 /** @file */
 
 
-#include <stdarg.h>     /* va_list, va_start, va_arg, va_end */
+#include <stdio.h>      // FILE
+#include <stdarg.h>     // va_list, va_start, va_arg, va_end
 
+
+#include "good/string.h"
+#include "good/vector.h"
 #ifdef GOOD_MULTI_THREAD
     #include "good/mutex.h"
 #endif
@@ -69,7 +73,7 @@ namespace good
         static bool bLogToStdOut;       ///< Log all but error messages to stdout (true by default).
         static bool bLogToStdErr;       ///< Log error messages to stderr (true by default).
 
-        static TLogLevel iLogLevel;     ///< Log level.
+        static TLogLevel iLogLevel;     ///< Stdout log level.
         static TLogLevel iFileLogLevel; ///< File log level.
         static TLogLevel iStdErrLevel;  ///< Minimum level to log to stderr (ELogLevelError by default).
 
@@ -91,8 +95,11 @@ namespace good
          * If log prefix is set, then each log message will first print that prefix.
          *
          * You can use next predefined strings in there:
-         * @li %L log level.
-         * @li %l log level letter.
+         * @li %N log level lowercase with first letter in uppercase.
+         * @li %F log level uppercase.
+         * @li %f log level lowercase.
+         * @li %L log level uppercase letter.
+         * @li %l log level lowercase letter.
          * @li %D date.
          * @li %T time.
          * @li %t thread id.
@@ -127,8 +134,8 @@ namespace good
          * @param szFmt format string.
          * @return size of characters written.
          */
-        static int format( TLogLevel iLevel, char* szOutput, int iOutputSize, const char* szFmt, ... )
-            FORMAT_FUNCTION(4, 5);
+        static int format( char* szOutput, int iOutputSize, const char* szFmt, ... )
+            FORMAT_FUNCTION(3, 4);
 
         /**
          * @brief Log with given level.
@@ -148,8 +155,25 @@ namespace good
         static void print( TLogLevel iLevel, const char* szFinal );
 
 
-    protected:
+        /**
+         * @brief Format with va_list.
+         * @param szOutput buffer where to save output. Can be NULL.
+         * @param iOutputSize size of output buffer.
+         * @param szFmt format string.
+         * @param argptr va_list pointer.
+         * @return size of characters written.
+         */
         static int format_va_list( char* szOutput, int iOutputSize, const char* szFmt, va_list argptr );
+
+        /**
+         * @brief Format prefix string in @p szOutput.
+         * @param szOutput where to format prefix string.
+         * @param iOutputSize size of output string.
+         * @return  size of characters written.
+         */
+        static int format_prefix( char* szOutput, int iOutputSize );
+
+    protected:
 
         static TLogLevel m_iLogLevel; ///< Log level.
         static FILE* m_fLog; ///< Opened file descriptor where to do the logging.
@@ -160,7 +184,16 @@ namespace good
             ELogFormatTotal
         };
 
-        static bool m_aLogFields[ELogFormatTotal]; ///< Log fields.
+
+        /*struct log_field_s
+        {
+            char c;
+            int n;
+            good::string s;
+        };*/
+
+        typedef good::pair<good::string, int> log_field_t;
+        static good::vector<log_field_t> m_aLogFields; ///< Log fields for prefix.
 
 #ifdef GOOD_MULTI_THREAD
         static mutex m_cMutex; ///< Mutex to synchronize access.

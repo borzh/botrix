@@ -24,7 +24,7 @@ extern char* szMainBuffer;
 extern int iMainBufferSize;
 
 const int iTextTime = 10; // Time in seconds to show text in CUtil::GetReachableInfoFromTo().
-FILE* fLog = NULL;        // Log file.
+
 
 //----------------------------------------------------------------------------------------------------------------
 // If slope is less that 45 degrees (for HL2) then player can move forward (returns EReachReachable).
@@ -94,7 +94,7 @@ bool CanPassOrJump( Vector& vStart, Vector& vGround, Vector& vHit, Vector& vDire
 
 
 //****************************************************************************************************************
-bool CUtil::bLogMessageToFile = false;
+good::TLogLevel CUtil::iLogLevel = good::ELogLevelInfo;
 int CUtil::iPlayerHeight = 72;
 int CUtil::iPlayerHeightCrouched = 36;
 int CUtil::iPlayerWidth = 36;
@@ -472,14 +472,30 @@ bool CUtil::IsLineTouch3d(Vector const& amins, Vector const& amaxs, Vector const
 }
 
 //================================================================================================================
-void CUtil::Message( edict_t* pEntity, const char* szMsg )
+void CUtil::Message( good::TLogLevel iLevel, edict_t* pEntity, const char* szMsg )
 {
     if ( pEntity )
-    {
         CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, szMsg);
+
+    if ( iLevel >= iLogLevel )
+    {
+        switch ( iLevel )
+        {
+        case good::ELogLevelTrace:
+        case good::ELogLevelDebug:
+        case good::ELogLevelInfo:
+            Msg(szMsg);
+            break;
+        case good::ELogLevelWarning:
+        case good::ELogLevelError:
+            Warning(szMsg);
+            break;
+        }
+#ifdef GOOD_LOG_FLUSH
+        fflush(stdout);
+        fflush(stderr);
+#endif
     }
-    else
-        Msg(szMsg);
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -508,7 +524,7 @@ void CUtil::PrintMessagesInQueue()
 {
     if ( (iQueueMessageStringSize > 0) && cMessagesMutex.try_lock() )
     {
-        Message(NULL, szQueueMessageString);
+        Message(good::ELogLevelInfo, NULL, szQueueMessageString);
         iQueueMessageStringSize = 0;
         cMessagesMutex.unlock();
     }

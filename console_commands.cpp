@@ -2105,7 +2105,7 @@ CMainCommand::CMainCommand()
 
 CMainCommand::~CMainCommand()
 {
-#ifndef SOURCE_ENGINE_2006
+#if !defined(SOURCE_ENGINE_2006) && !defined(DONT_USE_VALVE_FUNCTIONS)
     CBotrixPlugin::pCvar->UnregisterConCommand( &botrix );
 #endif
 }

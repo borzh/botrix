@@ -2,7 +2,7 @@
 #include <string.h>
 
 #ifdef _WIN32
-#	include <direct.h> // For mkdir() function.
+    #include <direct.h> // For mkdir() function.
 #else
 #include <sys/stat.h>
 #endif

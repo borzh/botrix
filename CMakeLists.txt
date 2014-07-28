@@ -21,7 +21,7 @@ cmake_minimum_required( VERSION 2.6 )
 # -rdynamic: instructs the linker to add all symbols, not only used ones, to the dynamic symbol table. Needed to debug.
 # -fvisibility=hidden: Default symbols visibility is hidden.
 
-set( SHARED_COMPILE_FLAGS "-std=c++11 -Wall -Wextra -m32 -march=pentium4 -Wno-free-nonheap-object" )
+set( SHARED_COMPILE_FLAGS "-std=c++11 -Wall -Wextra -m32 -march=pentium4 -Wno-format-security -Wno-free-nonheap-object" )
 set( SHARED_LINKER_FLAGS  "-Wl,--no-undefined -fvisibility=hidden" )
 
 set( SHARED_FLAGS "${SHARED_COMPILE_FLAGS} ${SHARED_LINKER_FLAGS}")
@@ -35,7 +35,6 @@ set( CMAKE_CXX_FLAGS_RELEASE        "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -O3" )
 #TODO: set( CMAKE_CXX_FLAGS_GCOV           "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -O0 -g -rdynamic --coverage -fprofile-arcs -ftest-coverage -lgcov" )
 
 message( "Build type: ${CMAKE_BUILD_TYPE}" )
-
 if( CMAKE_BUILD_TYPE MATCHES "None" )
     message( "Flags: ${CMAKE_CXX_FLAGS}" )
 elseif( CMAKE_BUILD_TYPE MATCHES "Debug" )
@@ -50,20 +49,21 @@ endif()
 # Source code.
 add_subdirectory ( good )
 
+# Defines. Don't put comments between them :).
+# Not used: -DDONT_USE_VALVE_FUNCTIONS -DBOTRIX_SHOW_PERFORMANCE
 add_definitions(
-    # Botrix defines.
+    -DGOOD_LOG_FLUSH
     -DBOTRIX_SOURCE_2013
     -DBOTRIX_HL2DM_MOD
     -DBETA_VERSION
-    -DINI_FILE_USE_ONLY_ONE_KEY_VALUE_SEPARATOR
-#    -DDONT_USE_VALVE_FUNCTIONS
-    # System defines.
+    -DGOOD_LOG_USE_ENDL
+    -DINI_FILE_ONE_KV_SEPARATOR
+    -DINI_FILE_ONE_COMMENT_CHAR
     -DLINUX=1
     -D_LINUX=1
     -DPOSIX=1
     -DGNUC=1
     -DCOMPILER_GCC
-    # Valve defines.
     -DVECTOR
     -DGAME_DLL
     -DHL2_DLL
@@ -123,6 +123,9 @@ set( PROJECT_LINK_LIBS
 )
 
 
+# Set to copy plugin there.
+set( SRCDS_HL2DM_PATH "$ENV{HOME}/steamcmd/hl2dm/hl2mp" )
+
 # Link Botrix Plugin library.
 add_library( ${PROJECT_NAME} SHARED ${PROJECT_SOURCES} )
 target_link_libraries( ${PROJECT_NAME} ${PROJECT_LINK_LIBS} )
@@ -137,5 +140,12 @@ add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND cp -r "${RUNTIME_PATH}/*" "${SDK_2013_MOD_PATH}/"
     COMMAND cp "${BOTRIX_LIB_PATH}" "${SDK_2013_MOD_PATH}/addons/"
-    COMMAND echo -e "'\\e[0;32m'Copying Botrix runtime files'\\e[0m'"
+    COMMAND echo -e "'\\e[0;32m'Copying Botrix runtime files to HL2DM'\\e[0m'"
+)
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND cp -r "${RUNTIME_PATH}/*" "${SRCDS_HL2DM_PATH}/"
+    COMMAND cp "${BOTRIX_LIB_PATH}" "${SRCDS_HL2DM_PATH}/addons/"
+    COMMAND echo -e "'\\e[0;32m'Copying Botrix runtime files SRCDS'\\e[0m'"
 )

@@ -81,10 +81,10 @@ public: // Methods.
     static TModId GetModId() { return m_iModId; }
 
     /// Load all needed staff for mod.
-    static void Load( TModId iModId );
+    static bool Load( TModId iModId );
 
     // Add event and start listening to it.
-    static void AddEvent( CEvent* pEvent );
+    static bool AddEvent( CEvent* pEvent );
 
     /// Unload mod.
     static void UnLoad()
@@ -116,7 +116,7 @@ public: // Methods.
     static const good::string* GetRandomModel( int iTeam )
     {
         // TODO: check if works with CSS.
-        DebugAssert( iTeam != iSpectatorTeam, return NULL );
+        BASSERT( iTeam != iSpectatorTeam, return NULL );
         if ( (iTeam == iUnassignedTeam) && (m_aModels[iTeam].size() == 0) )
         {
             do {

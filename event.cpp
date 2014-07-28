@@ -106,7 +106,7 @@ void CPlayerActivateEvent::Execute( IEventInterface* pEvent )
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
 
     int iIdx = CPlayers::Get(pActivator);
-    DebugAssert( iIdx >= 0, return );
+    BASSERT( iIdx >= 0, return );
 
     CPlayer* pPlayer = CPlayers::Get(iIdx);
     if (pPlayer)
@@ -120,7 +120,7 @@ void CPlayerTeamEvent::Execute( IEventInterface* pEvent )
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
 
     int iIdx = CPlayers::Get(pActivator);
-    DebugAssert( iIdx >= 0, return );
+    BASSERT( iIdx >= 0, return );
 
     CPlayer* pPlayer = CPlayers::Get(iIdx);
     if (pPlayer)
@@ -134,7 +134,7 @@ void CPlayerSpawnEvent::Execute( IEventInterface* pEvent )
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
 
     int iIdx = CPlayers::Get(pActivator);
-    DebugAssert( iIdx >= 0, return );
+    BASSERT( iIdx >= 0, return );
 
     CPlayer* pPlayer = CPlayers::Get(iIdx);
     if (pPlayer)
@@ -158,11 +158,10 @@ void CPlayerHurtEvent::Execute( IEventInterface* pEvent )
 {
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
     int iActivator = CPlayers::Get(pActivator);
-    DebugAssert( iActivator >= 0, return );
+    BASSERT( iActivator >= 0, return );
 
     edict_t* pAttacker = CUtil::GetEntityByUserId( pEvent->GetInt("attacker") );
-    DebugAssert( pAttacker, return );
-    int iAttacker = CPlayers::Get(pAttacker);
+    int iAttacker = pAttacker ? CPlayers::Get(pAttacker) : iActivator; // May hurt himself.
 
     CPlayer *pPlayer = CPlayers::Get(iActivator);
     CPlayer *pPlayerAttacker = iAttacker >= 0 ? CPlayers::Get(iAttacker) : NULL;
@@ -178,7 +177,7 @@ void CPlayerDeathEvent::Execute( IEventInterface* pEvent )
     edict_t* pAttacker = CUtil::GetEntityByUserId( pEvent->GetInt("attacker") );
 
     int iActivator = CPlayers::Get(pActivator);
-    DebugAssert( iActivator >= 0, return );
+    BASSERT( iActivator >= 0, return );
 
     CPlayer* pPlayerActivator = CPlayers::Get(iActivator);
     if ( pPlayerActivator )
@@ -187,7 +186,7 @@ void CPlayerDeathEvent::Execute( IEventInterface* pEvent )
     if ( pAttacker )
     {
         int iAttacker = CPlayers::Get(pAttacker);
-        DebugAssert( iAttacker >= 0, return );
+        BASSERT( iAttacker >= 0, return );
 
         CPlayer* pPlayerAttacker = CPlayers::Get(iAttacker);
         if ( pPlayerAttacker && pPlayerAttacker->IsBot() )

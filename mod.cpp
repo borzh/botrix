@@ -29,23 +29,24 @@ bool CMod::bIntelligenceInBotName = true;
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CMod::Load( TModId iModId )
+bool CMod::Load( TModId iModId )
 {
     m_iModId = iModId;
     m_aEvents.clear();
 
+    bool bResult = true;
     switch ( iModId )
     {
     case EModId_HL2DM:
         // TODO: move to hl2dm mod.
-        AddEvent(new CPlayerActivateEvent());
-        AddEvent(new CPlayerTeamEvent());
-        AddEvent(new CPlayerSpawnEvent());
+        bResult &= AddEvent(new CPlayerActivateEvent());
+        bResult &= AddEvent(new CPlayerTeamEvent());
+        bResult &= AddEvent(new CPlayerSpawnEvent());
 
-        AddEvent(new CPlayerHurtEvent());
-        AddEvent(new CPlayerDeathEvent());
+        bResult &= AddEvent(new CPlayerHurtEvent());
+        bResult &= AddEvent(new CPlayerDeathEvent());
 
-        AddEvent(new CPlayerChatEvent());
+        bResult &= AddEvent(new CPlayerChatEvent());
         break;
 
 #ifdef BOTRIX_MOD_BORZH
@@ -56,29 +57,30 @@ void CMod::Load( TModId iModId )
 
 #ifdef BOTRIX_MOD_CSS
     case EModId_CSS:
-        AddEvent(new CRoundStartEvent());
-        AddEvent(new CWeaponFireEvent());
-        AddEvent(new CBulletImpactEvent());
-        AddEvent(new CPlayerFootstepEvent());
-        AddEvent(new CBombDroppedEvent());
-        AddEvent(new CBombPickupEvent());
+        bResult &= AddEvent(new CRoundStartEvent());
+        bResult &= AddEvent(new CWeaponFireEvent());
+        bResult &= AddEvent(new CBulletImpactEvent());
+        bResult &= AddEvent(new CPlayerFootstepEvent());
+        bResult &= AddEvent(new CBombDroppedEvent());
+        bResult &= AddEvent(new CBombPickupEvent());
         break;
 #endif
 
     default:
-        CUtil::Message(NULL, "Error: unknown mod.");
+        BLOG_E("Error: unknown mod.");
         BreakDebugger();
     }
+    return bResult;
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CMod::AddEvent( CEvent* pEvent )
+bool CMod::AddEvent( CEvent* pEvent )
 {
-    if (CBotrixPlugin::pGameEventManager)
-        CBotrixPlugin::pGameEventManager->AddListener( CBotrixPlugin::instance, pEvent->GetName().c_str(), true );
-    if (CBotrixPlugin::pGameEventManager2)
-        CBotrixPlugin::pGameEventManager2->AddListener( CBotrixPlugin::instance, pEvent->GetName().c_str(), true );
+    if ( CBotrixPlugin::pGameEventManager )
+        if ( !CBotrixPlugin::pGameEventManager->AddListener( CBotrixPlugin::instance, pEvent->GetName().c_str(), true ) )
+            return false;
     m_aEvents.push_back( CEventPtr(pEvent) );
+    return true;
 }
 
 //----------------------------------------------------------------------------------------------------------------

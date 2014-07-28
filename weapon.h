@@ -189,7 +189,7 @@ public:
     /// Return true if need to use zoom.
     bool ShouldZoom( float fDistanceToEnemySqr ) const
     {
-        DebugAssert( IsSniper(), return false );
+        BASSERT( IsSniper(), return false );
         return fDistanceToEnemySqr >= m_pWeapon->fMinDistanceSqr[1];
     }
 
@@ -211,7 +211,7 @@ public:
     /// Start to reload weapon.
     void Reload( bool bSecondary )
     {
-        DebugAssert( NeedReload(bSecondary) && CanUse(), return );
+        BASSERT( NeedReload(bSecondary) && CanUse(), return );
         m_bReloading = true;
         m_bSecondary = bSecondary;
         m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadTime[bSecondary];
@@ -256,7 +256,7 @@ public:
     /// Zoom in.
     void ZoomIn()
     {
-        DebugAssert( IsSniper() && !m_bUsingZoom, return );
+        BASSERT( IsSniper() && !m_bUsingZoom, return );
         m_bChangingZoom = true;
         m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fShotTime[1];
         m_bUsingZoom = true;
@@ -265,7 +265,7 @@ public:
     /// Zoom out.
     void ZoomOut()
     {
-        DebugAssert( IsSniper() && m_bUsingZoom, return );
+        BASSERT( IsSniper() && m_bUsingZoom, return );
         m_bChangingZoom = true;
         m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fShotTime[1];
         m_bUsingZoom = false;
@@ -312,7 +312,7 @@ public:
     /// Add default weapon.
     static void SetDefault( TWeaponId iWeaponId, int iExtraAmmo0, int iExtraAmmo1 )
     {
-        DebugAssert( iWeaponId < (int)m_aWeapons.size() );
+        BASSERT( iWeaponId < (int)m_aWeapons.size() );
         m_aWeapons[iWeaponId].AddWeapon(iExtraAmmo0, iExtraAmmo1);
     }
 
@@ -361,7 +361,7 @@ public:
                         return i;
                     }
         }
-        DebugAssert(false);
+        BASSERT(false);
         return -1;
     }
 

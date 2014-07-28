@@ -8,6 +8,7 @@
 #undef max
 #include <good/astar.h>
 
+#include "defines.h"
 #include "waypoint.h"
 
 

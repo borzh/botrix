@@ -5,5 +5,10 @@ Home page: http://www.famaf.unc.edu.ar/~godin/
 Windows build (at least):
     Microsoft Visual Studio 2010 with Service Pack 1
 
-For linux build you need to install:
+For Linux you need to do:
     sudo apt-get install gcc-multilib ia32-libs cmake
+    mkdir build
+    cd build
+    cmake ..
+    make
+

@@ -105,7 +105,7 @@ protected: // Methods.
             return false;
         TWaypointId iWaypoint1 = cDoor.iWaypoint;
         TWaypointId iWaypoint2 = (TWaypointId)cDoor.pArguments;
-        DebugAssert( iWaypoint1 != EWaypointIdInvalid && iWaypoint2 != EWaypointIdInvalid );
+        BASSERT( iWaypoint1 != EWaypointIdInvalid && iWaypoint2 != EWaypointIdInvalid );
         TAreaId iArea1 = CWaypoints::Get(iWaypoint1).iAreaId;
         TAreaId iArea2 = CWaypoints::Get(iWaypoint2).iAreaId;
         return (iArea == iArea1) || (iArea == iArea2);
@@ -217,7 +217,7 @@ protected: // Methods.
     // Get new task from stack.
     void TaskPop()
     {
-        DebugAssert( m_cCurrentTask.iTask == EBorzhTaskInvalid );
+        BASSERT( m_cCurrentTask.iTask == EBorzhTaskInvalid );
 
         if ( m_cTaskStack.size() > 0 )
         {

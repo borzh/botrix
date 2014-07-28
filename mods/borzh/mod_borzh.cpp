@@ -29,7 +29,7 @@ public:
 
         if ( argc > 0 )
         {
-            CUtil::Message(pClient->GetEdict(), "Error, invalid parameters.");
+            BULOG_E(pClient->GetEdict(), "Error, invalid parameters.");
             return ECommandError;
         }
 

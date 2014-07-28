@@ -2,9 +2,7 @@
 #define __BOTRIX_SERVER_PLUGIN_H__
 
 
-#include <good/defines.h>
-
-#include "item.h"
+#include <good/string.h>
 
 #include "public/engine/iserverplugin.h"
 #include "public/igameevents.h"
@@ -29,15 +27,22 @@ class ICvar;
 //****************************************************************************************************************
 /// Plugin class.
 //****************************************************************************************************************
-class CBotrixPlugin : public IServerPluginCallbacks, public IGameEventListener, public IGameEventListener2
+#ifdef USE_OLD_GAME_EVENT_MANAGER
+class CBotrixPlugin : public IServerPluginCallbacks, public IGameEventListener
+#else
+class CBotrixPlugin : public IServerPluginCallbacks, public IGameEventListener2
+#endif
 {
 
 public: // Static members.
     static CBotrixPlugin* instance;                    ///< Plugin singleton.
 
     static IVEngineServer* pEngineServer;              ///< Interface to util engine functions.
+#ifdef USE_OLD_GAME_EVENT_MANAGER
     static IGameEventManager* pGameEventManager;       ///< Game events interface.
-    static IGameEventManager2* pGameEventManager2;
+#else
+    static IGameEventManager2* pGameEventManager;      ///< Game events interface.
+#endif
     static IPlayerInfoManager* pPlayerInfoManager;     ///< Interface to interact with players.
     static IServerPluginHelpers* pServerPluginHelpers; ///< To create menues on client side.
     static IServerGameClients* pServerGameClients;
@@ -121,24 +126,25 @@ public: // Methods.
     virtual void OnQueryCvarValueFinished( QueryCvarCookie_t, edict_t*, EQueryCvarValueStatus, const char*, const char* ) {}
 
     /// added with version 3 of the interface.
-    virtual void OnEdictAllocated( edict_t *edict ) { if ( bMapRunning ) CItems::Allocated(edict); }
-    virtual void OnEdictFreed( const edict_t *edict  ) { if ( bMapRunning ) CItems::Freed(edict); }
+    virtual void OnEdictAllocated( edict_t *edict );
+    virtual void OnEdictFreed( const edict_t *edict  );
 #endif
 
+#ifdef USE_OLD_GAME_EVENT_MANAGER
     //------------------------------------------------------------------------------------------------------------
     // IGameEventListener implementation.
     //------------------------------------------------------------------------------------------------------------
     // FireEvent is called by EventManager if event just occured
     // KeyValue memory will be freed by manager if not needed anymore
     virtual void FireGameEvent( KeyValues * event);
-
+#else
     //------------------------------------------------------------------------------------------------------------
     // IGameEventListener2 implementation.
     //------------------------------------------------------------------------------------------------------------
     // FireEvent is called by EventManager if event just occured
     // IGameEvent memory will be freed by manager if not needed anymore
     virtual void FireGameEvent( IGameEvent *event );
-
+#endif
 
     // Generate say event.
     void GenerateSayEvent( edict_t* pEntity, const char* szText, bool bTeamOnly );

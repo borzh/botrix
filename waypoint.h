@@ -2,6 +2,7 @@
 #define __BOTRIX_WAYPOINT_H__
 
 
+#include <good/bitset.h>
 #include <good/graph.h>
 
 #include "source_engine.h"
@@ -42,7 +43,7 @@ public: // Methods.
     /// Get first angle from waypoint argument.
     static void SetFirstAngle( int iPitch, int iYaw, int& iArgument )
     {
-        //DebugAssert( -64 <= iPitch && iPitch <= 63 && -128 <= iYaw && iYaw <= 128 );
+        //BASSERT( -64 <= iPitch && iPitch <= 63 && -128 <= iYaw && iYaw <= 128 );
         SET_1ST_WORD( ((iPitch & 0x7F) << 9) | (iYaw &0x1FF), iArgument );
     }
 
@@ -57,7 +58,7 @@ public: // Methods.
     /// Get second angle from waypoint argument.
     static void SetSecondAngle( int iPitch, int iYaw, int& iArgument )
     {
-        //DebugAssert( -64 <= iPitch && iPitch <= 63 && -128 <= iYaw && iYaw <= 128 );
+        //BASSERT( -64 <= iPitch && iPitch <= 63 && -128 <= iYaw && iYaw <= 128 );
         SET_2ND_WORD( ((iPitch & 0x7F) << 9) | (iYaw &0x1FF), iArgument );
     }
 

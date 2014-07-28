@@ -15,8 +15,8 @@
 
 #ifdef _WIN32
 // Disable obsolete warnings.
-#pragma warning(push)
-#pragma warning(disable: 4996)
+    #pragma warning(push)
+    #pragma warning(disable: 4996)
 #endif
 
 
@@ -205,8 +205,7 @@ namespace good
 
 
 #ifdef _WIN32
-#pragma warning(pop) // Restore warnings.
+    #pragma warning(pop) // Restore warnings.
 #endif
-
 
 #endif // __GOOD_STRING_UTILS_H__

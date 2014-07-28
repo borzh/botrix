@@ -21,7 +21,7 @@
 #include "game/shared/in_buttons.h"
 
 
-#define BotMessage(...)             { if ( m_bDebugging ) CUtil::Message(NULL, __VA_ARGS__); }
+#define BotMessage(...)             { if ( m_bDebugging ) BLOG_D(__VA_ARGS__); }
 
 
 class CBotChat; // Forward declaration.
@@ -209,7 +209,7 @@ protected: // Methods.
     void ToggleZoom()
     {
         CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
-        DebugAssert( cWeapon.IsSniper() && cWeapon.CanUse(), return );
+        BASSERT( cWeapon.IsSniper() && cWeapon.CanUse(), return );
         if ( cWeapon.IsUsingZoom() )
             cWeapon.ZoomOut();
         else

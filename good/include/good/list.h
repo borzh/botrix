@@ -324,6 +324,9 @@ namespace good
         node_t* m_pTail;           // Last node is this one, and next node is start node (because it is circular list).
         int m_iSize;               // Count of elements in the list.
     };
-}
+
+
+} // namespace good
+
 
 #endif // __GOOD_LIST_H__

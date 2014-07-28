@@ -35,7 +35,7 @@
 // Define this to have maximum files size. Don't undef it, because 1Mb of memory for ini file is too much,
 // don't you think?
 #ifndef MAX_INI_FILE_SIZE
-#	define MAX_INI_FILE_SIZE 1*1024*1024 // 1Mb.
+    #define MAX_INI_FILE_SIZE 1*1024*1024 // 1Mb.
 #endif
 
 
@@ -44,28 +44,30 @@
 
 
 // Define this if you want to change key-value separator. By default it is '='.
-#ifndef INI_FILE_KEY_VALUE_SEPARATOR_1
-#	define INI_FILE_KEY_VALUE_SEPARATOR_1 '='
+#ifndef INI_FILE_KV_SEPARATOR_1
+    #define INI_FILE_KV_SEPARATOR_1 '='
 #endif
 
-// If you want to have only one key-value separator, define INI_FILE_USE_ONLY_ONE_KEY_VALUE_SEPARATOR.
+// If you want to have only one key-value separator, define INI_FILE_ONE_KV_SEPARATOR.
 // If not, both key-value separators will be used (by default '=' and ':').
-// Define INI_FILE_KEY_VALUE_SEPARATOR_2 if you want to change ':' key-value separator for something else.
-#if !defined(INI_FILE_USE_ONLY_ONE_KEY_VALUE_SEPARATOR) && !defined(INI_FILE_KEY_VALUE_SEPARATOR_2)
-#	define INI_FILE_KEY_VALUE_SEPARATOR_2 ':'
+// Define INI_FILE_KV_SEPARATOR_2 if you want to change ':' key-value separator for something else.
+#ifndef INI_FILE_ONE_KV_SEPARATOR
+    #ifndef INI_FILE_KV_SEPARATOR_2
+        #define INI_FILE_KV_SEPARATOR_2 ':'
+    #endif
 #endif
 
 
 // Redefine this if you want to change comment character.
-#ifndef INI_FILE_COMMENT_CHARACTER_1
-#	define INI_FILE_COMMENT_CHARACTER_1 ';'
+#ifndef INI_FILE_COMMENT_CHAR_1
+    #define INI_FILE_COMMENT_CHAR_1 ';'
 #endif
 
-// If you want to have only one comment character, define INI_FILE_USE_ONLY_ONE_COMMENT_CHARACTER.
+// If you want to have only one comment character, define INI_FILE_ONE_COMMENT_CHAR.
 // If not, both comment characters will be used (by default ';' and '#').
-// Define INI_FILE_COMMENT_CHARACTER_2 if you want to change '#' comment character for something else.
-#if !defined(INI_FILE_USE_ONLY_ONE_COMMENT_CHARACTER) && !defined(INI_FILE_COMMENT_CHARACTER_2)
-#	define INI_FILE_COMMENT_CHARACTER_2 '#'
+// Define INI_FILE_COMMENT_CHAR_2 if you want to change '#' comment character for something else.
+#if !defined(INI_FILE_ONE_COMMENT_CHAR) && !defined(INI_FILE_COMMENT_CHAR_2)
+    #define INI_FILE_COMMENT_CHAR_2 '#'
 #endif
 
 
@@ -73,7 +75,7 @@
 // But note that implementation with ini_string doesn't copies strings from file buffer
 // so it's actually saves memory and is fast (because it just saves pointers to strings).
 #ifndef INI_FILE_STRING_DEFINED
-#	include <good/string.h>
+    #include <good/string.h>
     typedef good::string ini_string;
 #endif
 

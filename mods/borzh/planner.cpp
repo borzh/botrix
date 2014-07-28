@@ -52,7 +52,7 @@ bool CPlanner::IsRunning()
 //----------------------------------------------------------------------------------------------------------------
 void CPlanner::Start( const CBotBorzh* pBot )
 {
-    DebugAssert( !bIsPlannerRunning && m_bLocked && (pBot == m_pBot) );
+    BASSERT( !bIsPlannerRunning && m_bLocked && (pBot == m_pBot) );
 
     bIsPlannerRunning = true;
     g_pBot = pBot;
@@ -273,7 +273,7 @@ void GeneratePddl( bool bFromBotBelief )
             }
             else
             {
-                DebugAssert(false);
+                BASSERT(false);
                 PRINT_MESSAGE("Error, door%d doesn't have 2 waypoints close.", iDoor+1);
             }
         }
@@ -288,7 +288,7 @@ void GeneratePddl( bool bFromBotBelief )
         {
             for ( int iWall=0; iWall < aWalls.size(); ++iWall )
             {
-                DebugAssert( iArea == CWaypoints::Get(aWalls[iWall].iLowerWaypoint).iAreaId );
+                BASSERT( iArea == CWaypoints::Get(aWalls[iWall].iLowerWaypoint).iAreaId );
                 fprintf( f, "		(wall %s %s)\n", aAreas[iArea].c_str(), aAreas[ CWaypoints::Get(aWalls[iWall].iHigherWaypoint).iAreaId ].c_str() );
             }
         }
@@ -308,7 +308,7 @@ void GeneratePddl( bool bFromBotBelief )
                     if ( cButtonTogglesDoor.test(iDoor) )
                         iDoors[iDoorsCount++] = iDoor;
 
-                DebugAssert( iDoorsCount <= 2 );
+                BASSERT( iDoorsCount <= 2 );
                 if ( iDoors[1] == -1 )
                     iDoors[1] = iDoors[0];
                 fprintf(f, "		(toggle button%d door%d door%d)\n", iButton, iDoors[0], iDoors[1]);
@@ -345,7 +345,7 @@ void GeneratePddl( bool bFromBotBelief )
     }
     else
     {
-        DebugAssert( g_pBot->m_cCurrentBigTask.iTask == EBorzhTaskButtonTryDoor );
+        BASSERT( g_pBot->m_cCurrentBigTask.iTask == EBorzhTaskButtonTryDoor );
 
         TEntityIndex iButton = GET_2ND_BYTE(g_pBot->m_cCurrentBigTask.iArgument);
         TEntityIndex iDoor = GET_3RD_BYTE(g_pBot->m_cCurrentBigTask.iArgument);
@@ -356,7 +356,7 @@ void GeneratePddl( bool bFromBotBelief )
         bool bShoot = (iButtonWaypoint == EWaypointIdInvalid);
         if ( bShoot )
             iButtonWaypoint = CModBorzh::GetWaypointToShootButton(iButton);
-        DebugAssert( iButtonWaypoint != EWaypointIdInvalid );
+        BASSERT( iButtonWaypoint != EWaypointIdInvalid );
 
         fprintf(f, "		(and\n");
         if ( bShoot )
@@ -369,7 +369,7 @@ void GeneratePddl( bool bFromBotBelief )
             const CEntity& cDoor = CItems::GetItems(EEntityTypeDoor)[iDoor];
             TWaypointId iDoorWaypoint1 = cDoor.iWaypoint;
             TWaypointId iDoorWaypoint2 = (TWaypointId)cDoor.pArguments;
-            DebugAssert( (iDoorWaypoint1 != EWaypointIdInvalid) && (iDoorWaypoint2 != EWaypointIdInvalid) );
+            BASSERT( (iDoorWaypoint1 != EWaypointIdInvalid) && (iDoorWaypoint2 != EWaypointIdInvalid) );
 
             TAreaId iDoorArea1 = CWaypoints::Get(iDoorWaypoint1).iAreaId;
             TAreaId iDoorArea2 = CWaypoints::Get(iDoorWaypoint2).iAreaId;
@@ -405,7 +405,7 @@ const good::string GetNextWord( good::string& sStr, int& iFrom )
     while ( (c != ' ') && (c != '\n') && (c != '\r') && (iTo < sStr.size()) )
         c = sStr[++iTo];
 
-    DebugAssert( iTo-iFrom > 0 );
+    BASSERT( iTo-iFrom > 0 );
     good::string result = sStr.substr(iFrom, iTo-iFrom, false);
     iFrom = iTo;
     return result;
@@ -437,9 +437,9 @@ bool TransformPlannerOutput()
     // Skip end of line twice.
     iPos += sPlanStart.size();
     iPos = sbBuffer.find('\n', iPos+1);
-    DebugAssert( iPos != good::string::npos );
+    BASSERT( iPos != good::string::npos );
     iPos = sbBuffer.find('\n', iPos+1);
-    DebugAssert( iPos != good::string::npos );
+    BASSERT( iPos != good::string::npos );
     iPos++;
 
     const StringVector& aAreas = CWaypoints::GetAreas();
@@ -462,32 +462,32 @@ bool TransformPlannerOutput()
         // Normally action requieres 2 arguments: bot that performs that action and argument.
         // Get action.
         good::string sAction = GetNextWord(sbBuffer, ++iPos);
-        DebugAssert( iPos < iEnd );
+        BASSERT( iPos < iEnd );
         if ( sAction == "REACH-GOAL" ) // FF interrnal action :S
             break;
 
         TBotAction iAction = CTypeToString::BotActionFromString(sAction);
-        DebugAssert( iAction != EBotActionInvalid );
+        BASSERT( iAction != EBotActionInvalid );
 
         // Get bot.
         static good::string sBot("BOT");
         good::string sPerformer = GetNextWord(sbBuffer, ++iPos);
-        DebugAssert( iPos < iEnd );
-        DebugAssert( sPerformer.size() > sBot.size() && sPerformer.starts_with(sBot) );
+        BASSERT( iPos < iEnd );
+        BASSERT( sPerformer.size() > sBot.size() && sPerformer.starts_with(sBot) );
         const char* szBotNumber = sPerformer.c_str() + sBot.size();
         int iBot = atoi(szBotNumber);
-        DebugAssert( 0 <= iBot && iBot <= CPlayers::Size() );
+        BASSERT( 0 <= iBot && iBot <= CPlayers::Size() );
 
         // Get argument.
         good::string sArgument = GetNextWord(sbBuffer, ++iPos);
         sArgument.lower_case();
-        DebugAssert( iPos < iEnd );
+        BASSERT( iPos < iEnd );
 
         int iArgument;
         if ( sArgument.starts_with("area") )
         {
             StringVector::const_iterator it = good::find(aAreas, sArgument);
-            DebugAssert( it != aAreas.end() );
+            BASSERT( it != aAreas.end() );
             iArgument = it - aAreas.begin();
         }
         else
@@ -533,7 +533,7 @@ void PlannerThreadFunc( void* pParameter )
             if ( g_cPlannerProcess.read_stdout(&g_szPlannerBuffer[iTotalRead], g_iPlannerBufferSize - iTotalRead, iRead) )
             {
                 iTotalRead += iRead;
-                DebugAssert( iTotalRead <= g_iPlannerBufferSize );
+                BASSERT( iTotalRead <= g_iPlannerBufferSize );
                 if ( iTotalRead == g_iPlannerBufferSize ) // Not enough memory, force failure.
                     break;
             }
@@ -546,7 +546,7 @@ void PlannerThreadFunc( void* pParameter )
         }
         good::thread::sleep(iThreadSleepTime);
     }
-    DebugAssert( !g_cPlannerProcess.has_data_stdout() );
+    BASSERT( !g_cPlannerProcess.has_data_stdout() );
 
     if ( g_cPlannerProcess.is_finished() && (iTotalRead < g_iPlannerBufferSize) )
     {

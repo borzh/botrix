@@ -4,6 +4,7 @@
 
 #include <good/bitset.h>
 
+#include "defines.h"
 #include "types.h"
 
 #include "public/edict.h"
@@ -108,7 +109,7 @@ public:
     /// Get random item clas for given entity type.
     static const CEntityClass* GetRandomItemClass( TEntityType iEntityType )
     {
-        DebugAssert( !m_aItemClasses[iEntityType].empty(), return NULL );
+        BASSERT( !m_aItemClasses[iEntityType].empty(), return NULL );
         return &m_aItemClasses[iEntityType][ rand() % m_aItemClasses[iEntityType].size() ];
     }
 

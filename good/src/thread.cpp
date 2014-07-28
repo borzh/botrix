@@ -169,4 +169,52 @@ namespace good
 
 } // namespace good
 
-#endif // WIN32
+
+
+#else // _WIN32
+
+
+
+///** @brief Clase que representa un hilo de ejecucion. */
+//class CThread
+//{
+//public:
+//    /// Destructor virtual.
+//    virtual ~CThread() {}
+
+//    /// Funcion abstracta que se ejecuta en un hilo nuevo.
+//    virtual void run() = 0;
+
+//    /**
+//     * @brief Ejecuta el metodo CThread::run() en un hilo nuevo.
+//     * @return resultado de ejecucion.
+//     */
+//    int start()
+//    {
+//        return pthread_create(&thread, NULL, CThread::thread_func, (void*)this);
+//    }
+
+//    /**
+//     * @brief Trata de esperar al hilo que se esta ejecutando.
+//     * @return false, en el caso que la espera falle.
+//     */
+//    bool join()
+//    {
+//        return pthread_join(thread, NULL) == 0;
+//    }
+
+//protected:
+//    pthread_t thread; ///< Hilo pthread.
+
+//    //CThread( const CThread& copy ); // Denegar constructor por copia.
+
+//    /// Funcion del hilo para creacion usando libreria pthread.
+//    static void *thread_func( void *d )
+//    {
+//        static_cast<CThread*>(d)->run();
+//        return NULL;
+//    }
+
+//};
+
+#endif // _WIN32

@@ -8,6 +8,7 @@
 
 
 #include <new> // Placement new
+
 #ifndef _WIN32
     #include <stdlib.h> // TODO: why?
 #endif
@@ -17,8 +18,8 @@
 
 #ifdef _WIN32
 // Disable unreferenced formal parameter warnings (at destroy() if T no need for destructor).
-#   pragma warning(push)
-#   pragma warning(disable: 4100)
+    #pragma warning(push)
+    #pragma warning(disable: 4100)
 #endif
 
 
@@ -166,8 +167,7 @@ namespace good
 
 
 #ifdef _WIN32
-#   pragma warning(pop)
+    #pragma warning(pop)
 #endif
-
 
 #endif // __GOOD_UTILITY_H__

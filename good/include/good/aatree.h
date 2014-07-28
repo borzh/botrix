@@ -18,7 +18,7 @@
 #   define AATreeDebugPrint(...)
 #endif
 
-#ifndef _WIN32
+#ifdef __GNUC__
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
@@ -665,7 +665,7 @@ namespace good
 } // namespace good
 
 
-#ifndef _WIN32
+#ifdef __GNUC__
     #pragma GCC diagnostic pop
 #endif
 

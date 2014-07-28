@@ -10,16 +10,6 @@
 #include "type2string.h"
 
 
-#define ChatError(...) CUtil::Message(NULL, __VA_ARGS__)
-
-#if defined(DEBUG) || defined(_DEBUG)
-#	define ChatMessage(...) CUtil::Message(NULL, __VA_ARGS__)
-#else
-#	define ChatMessage(...)
-#endif
-
-
-
 //----------------------------------------------------------------------------------------------------------------
 extern char* szMainBuffer;
 extern int iMainBufferSize;
@@ -117,7 +107,7 @@ void CChat::AddSynonims( const good::string& sKey, const good::string& sValue )
     sOthers.lower_case();
     sOthers.split<good::vector>(aSynonims, '.', true);
 
-    ChatMessage( "  %s", CTypeToString::StringVectorToString(aSynonims).c_str() );
+    BLOG_D( "  %s", CTypeToString::StringVectorToString(aSynonims).c_str() );
 
     m_aSynonims.push_back(aSynonims);
 }
@@ -134,7 +124,7 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
     int iCommand = CTypeToString::BotCommandFromString(sCommandName);
     if ( iCommand == -1 )
     {
-        ChatError("Error, unknown bot chat: %s.", sKey.c_str());
+        BLOG_E("Error, unknown bot chat: %s.", sKey.c_str());
         return false;
     }
 
@@ -188,12 +178,12 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
             bWord = bEnd = true;
             if ( !bCanBreak )
             {
-                ChatError("Error for '%s' command: sentence can't end inside <>", sKey.c_str());
+                BLOG_E("Error for '%s' command: sentence can't end inside <>", sKey.c_str());
                 return false;
             }
             if ( bParallel && (iWordsAfterParallel == 0) && (iPos-iBegin <= 0) )
             {
-                ChatError("Error for '%s' command: sentence can't end at '/'", sKey.c_str());
+                BLOG_E("Error for '%s' command: sentence can't end at '/'", sKey.c_str());
                 return false;
             }
             bExclamation = (sbCommands[iPos] == '!');
@@ -203,7 +193,7 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
         case '(':
             if ( bCanBreak && bParallel && (iWordsAfterParallel == 0) )
             {
-                ChatError("Error for '%s' command: word can't be optional after separator.", sKey.c_str());
+                BLOG_E("Error for '%s' command: word can't be optional after separator.", sKey.c_str());
                 return false;
             }
             bWord = true;
@@ -216,7 +206,7 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
         case '<':
             if ( !bCanBreak )
             {
-                ChatError("Error for '%s' command: invalid <> secuence.", sKey.c_str());
+                BLOG_E("Error for '%s' command: invalid <> secuence.", sKey.c_str());
                 return false;
             }
             bWord = true;
@@ -225,7 +215,7 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
         case '>':
             if ( bCanBreak )
             {
-                ChatError("Error for '%s' command: invalid <> secuence.", sKey.c_str());
+                BLOG_E("Error for '%s' command: invalid <> secuence.", sKey.c_str());
                 return false;
             }
             bWord = true;
@@ -234,7 +224,7 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
         case '/':
             if ( !bCanBreak )
             {
-                ChatError("Error for '%s' command: '/' can't occur inside <> secuence.", sKey.c_str());
+                BLOG_E("Error for '%s' command: '/' can't occur inside <> secuence.", sKey.c_str());
                 return false;
             }
             bWord = true;
@@ -393,7 +383,7 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
         {
             if ( bParallel && (iWordsAfterParallel == 0) )
             {
-                ChatError("Error for '%s' command: sentence can't end in separator.", sKey.c_str());
+                BLOG_E("Error for '%s' command: sentence can't end in separator.", sKey.c_str());
                 return false;
             }
             for ( int iPhrase = iFirstPhrase; iPhrase < aPhrases.size(); ++iPhrase )
@@ -415,12 +405,12 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
 
 #if defined(DEBUG) || defined(_DEBUG)
     // Show command name.
-    ChatMessage( "  %s:", sCommandName.c_str() );
+    BLOG_D( "  %s:", sCommandName.c_str() );
 
     for ( int iPhrase = 0; iPhrase < aPhrases.size(); ++iPhrase )
     {
-        ChatMessage("    To generate: %s", PhraseToString(aPhrases[iPhrase]).c_str() );
-        //ChatMessage("    To match:    %s", PhraseToString(aMatchPhrases[iPhrase]).c_str() );
+        BLOG_D("    To generate: %s", PhraseToString(aPhrases[iPhrase]).c_str() );
+        //BLOG_D("    To match:    %s", PhraseToString(aMatchPhrases[iPhrase]).c_str() );
     }
 #endif
 
@@ -535,7 +525,7 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
                     good::pair<TChatVariable, int> pair = GetVariableAndIndex( cPhraseWord.sWord );
                     iVar = pair.first;
                     iVarNumber = pair.second;
-                    DebugAssert( iVar != EChatVariableInvalid );
+                    BASSERT( iVar != EChatVariableInvalid );
                 }
 
                 // Check if word in match phrase occurres in spoken sentence.
@@ -620,8 +610,8 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
     if ( fBestImportance > 0.0f )
     {
         //const CPhrase& cPhrase = m_aMatchPhrases[cCommand.iBotChat][iBestPhrase];
-        //ChatMessage( "Chat match: %s", PhraseToString(cPhrase).c_str() );
-        //ChatMessage( "Matching (from 0 to 10): %f.", fBestImportance );
+        //BLOG_D( "Chat match: %s", PhraseToString(cPhrase).c_str() );
+        //BLOG_D( "Matching (from 0 to 10): %f.", fBestImportance );
 
         // Get $player/$player1 from chat variables, this is where chat is directed to.
         for ( int i=0; i < cCommand.cMap.size(); ++i )
@@ -634,7 +624,7 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
     }
     else
     {
-        ChatMessage( "No match found." );
+        BLOG_D( "No match found." );
     }
     return fBestImportance;
 }
@@ -648,11 +638,11 @@ const good::string& CChat::ChatToText( const CBotChat& cCommand )
 
     sbBuffer.erase();
 
-    DebugAssert( (EBotChatUnknown < cCommand.iBotChat) && (cCommand.iBotChat < EBotChatTotal), return sbBuffer );
+    BASSERT( (EBotChatUnknown < cCommand.iBotChat) && (cCommand.iBotChat < EBotChatTotal), return sbBuffer );
 
     if ( m_aPhrases[cCommand.iBotChat].size() == 0 )
     {
-        ChatError( "No phrases provided to generate chat message for '%s'.", CTypeToString::BotCommandToString(cCommand.iBotChat).c_str() );
+        BLOG_E( "No phrases provided to generate chat message for '%s'.", CTypeToString::BotCommandToString(cCommand.iBotChat).c_str() );
         return sbBuffer; // Empty string.
     }
 
@@ -660,7 +650,7 @@ const good::string& CChat::ChatToText( const CBotChat& cCommand )
     int iRand = rand() % m_aPhrases[cCommand.iBotChat].size();
     const CPhrase& cPhrase = m_aPhrases[cCommand.iBotChat][iRand];
 
-    DebugAssert( cPhrase.aWords.size(), return sbBuffer );
+    BASSERT( cPhrase.aWords.size(), return sbBuffer );
 
     // Get phrase into buffer replacing variables by their values.
     bool bNextOptional = false, bUseOptional = false;
@@ -694,7 +684,7 @@ const good::string& CChat::ChatToText( const CBotChat& cCommand )
             if ( cWord.sWord.starts_with('$') )
             {
                 good::pair<TChatVariable, int> iVarIndex = GetVariableAndIndex( cWord.sWord );
-                DebugAssert( iVarIndex.first != EChatVariableInvalid );
+                BASSERT( iVarIndex.first != EChatVariableInvalid );
 
                 bool bFound = false;
                 for ( int i=0; i < cCommand.cMap.size(); ++i )
@@ -703,7 +693,7 @@ const good::string& CChat::ChatToText( const CBotChat& cCommand )
                         bFound = true;
                         sbBuffer << GetVariableValue(iVarIndex.first, cCommand.cMap[i].iValue) );
                     }
-                DebugAssert(bFound); // You need to add pair <var, value> to the map.
+                BASSERT(bFound); // You need to add pair <var, value> to the map.
             }
             else
                 sbBuffer << cWord.sWord);
@@ -777,7 +767,7 @@ const good::vector<TBotChat>& CChat::PossibleAnswers( TBotChat iTalk )
 {
     // TODO: finish
     static CAnswers cAnswers;
-    DebugAssert( (0 <= iTalk) && (iTalk < EBotChatTotal) );
+    BASSERT( (0 <= iTalk) && (iTalk < EBotChatTotal) );
     return cAnswers.aTalkAnswers[iTalk];
 }
 

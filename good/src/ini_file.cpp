@@ -89,10 +89,10 @@ namespace good
         TIniFileError result = IniFileNoError;
 
         char* buf = (char*)malloc(fsize+1);
-        DebugAssert(buf, return IniFileTooBig;);
+        DebugAssert(buf, return IniFileTooBig);
 
         size_t read = good::file::file_to_memory(name.c_str(), buf, fsize);
-        DebugAssert(fsize == read, return IniFileTooBig;);
+        DebugAssert(fsize == read, return IniFileTooBig);
         buf[fsize] = 0;
 
         char *section = NULL, *key = NULL, *value = NULL, *junk = NULL;
@@ -107,7 +107,7 @@ namespace good
 
         iterator currentSection = m_lSections.end();
 
-        for (size_t pos = 0; pos < fsize; ++pos)
+        for ( size_t pos = 0; pos < fsize; ++pos )
         {
             //----------------------------------------------------------------------------
             // Fast skip comments.
@@ -117,11 +117,12 @@ namespace good
 
             char c = buf[pos];
 
+            switch ( c )
+            {
             //----------------------------------------------------------------------------
             // End of line.
             //----------------------------------------------------------------------------
-            if (c == '\n')
-            {
+            case '\n':
                 lineNumber++;
                 comment = false; // End of line is end of comment.
                 section_end = 0;
@@ -138,30 +139,27 @@ namespace good
                     if (line > buf)
                         *(line-1) = 0; // Make sure value stops at this line.
                 }
-            }
+                break;
 
             //----------------------------------------------------------------------------
             // Escape character. Don't do nothing, process them later.
             //----------------------------------------------------------------------------
-            else if (c == '\\')
-            {
+            case '\\':
                 /*if (buf[pos+1] == 'x') // Unicode character (example \x002B). Still not supported.
-                    pos +=5;*/
+                    pos +=5; else*/
                 if (buf[pos+1] == '\r') // "\\r\n"
                     pos +=2;
                 else // One of the following: \a \b \0 \t \r \n \\ \; \# \= \:
                     ++pos;
-            }
+                break;
 
             //----------------------------------------------------------------------------
             // Start of comment.
             //----------------------------------------------------------------------------
-            else if ( (c == INI_FILE_COMMENT_CHARACTER_1)
-#ifdef INI_FILE_COMMENT_CHARACTER_2
-                || (c == INI_FILE_COMMENT_CHARACTER_2)
+            case INI_FILE_COMMENT_CHAR_1:
+#ifdef INI_FILE_COMMENT_CHAR_2
+            case INI_FILE_COMMENT_CHAR_2:
 #endif
-                )
-            {
                 if (section)
                 {
                     section = NULL;
@@ -169,7 +167,7 @@ namespace good
                     DebugPrint("no ']', end of section character.\n");
                     result = IniFileBadSyntax;
 #ifdef INI_FILE_STOP_ON_ERROR
-                    break;
+                    goto ini_file_end_loop;
 #endif
                 }
                 else if ( key && (junk == NULL) )
@@ -179,13 +177,13 @@ namespace good
                     junkIsComment = true;
                 }
                 comment = true;
-            }
+                break;
 
             //----------------------------------------------------------------------------
             // Start of a new section.
             //----------------------------------------------------------------------------
-            else if (c == '[')
-            {
+            case '[':
+
                 if ( (section == NULL) && (key != line) ) // Section is not started yet and there is no key-value separator before.
                 {
                     section_end++;
@@ -200,16 +198,15 @@ namespace good
                     DebugPrint("'[' character in section name or value.\n");
                     result = IniFileBadSyntax;
 #ifdef INI_FILE_STOP_ON_ERROR
-                    break;
+                    goto ini_file_end_loop;
 #endif
                 }
-            }
+                break;
 
             //----------------------------------------------------------------------------
             // End of section.
             //----------------------------------------------------------------------------
-            else if (c == ']')
-            {
+            case ']':
                 if (section)
                 {
                     if (--section_end > 0)
@@ -268,33 +265,32 @@ namespace good
                     DebugPrint("'[' character in section name or value.\n");
                     result = IniFileBadSyntax;
 #ifdef INI_FILE_STOP_ON_ERROR
-                    break;
+                    goto ini_file_end_loop;
 #endif
                 }
-            }
+                break;
 
             //----------------------------------------------------------------------------
             // Separator of key-value.
             //----------------------------------------------------------------------------
-            else if ( (c == INI_FILE_KEY_VALUE_SEPARATOR_1)
-#ifdef INI_FILE_KEY_VALUE_SEPARATOR_2
-                || (c == INI_FILE_KEY_VALUE_SEPARATOR_2)
+            case INI_FILE_KV_SEPARATOR_1:
+#ifdef INI_FILE_KV_SEPARATOR_2
+            //case INI_FILE_KV_SEPARATOR_2:
+    //#error  WTF? INI_FILE_KV_SEPARATOR_2 is not defined...
 #endif
-                )
-            {
                 if (section == NULL)
                 {
                     if (key == NULL)
                     {
+                        if (line > buf)
+                            *(line-1) = 0; // Make sure last junk stops at this line.
+
                         if (junk_after_section_name)
                         {
                             currentSection->junkAfterName = junk_after_section_name;
                             currentSection->eolAfterJunk = true;
                             junk_after_section_name = NULL;
                         }
-
-                        if (line > buf)
-                            *(line-1) = 0; // Make sure last junk stops at this line.
 
                         buf[pos] = 0;
                         key = line;
@@ -340,9 +336,9 @@ namespace good
                             DebugPrint("Invalid ini file %s at line %d, column %d: ", name.c_str(), lineNumber, &buf[pos] - line + 1);
                             DebugPrint("key-value separator in value.\n");
                             result = IniFileBadSyntax;
-    #ifdef INI_FILE_STOP_ON_ERROR
-                            break;
-    #endif
+#ifdef INI_FILE_STOP_ON_ERROR
+                            goto ini_file_end_loop;
+#endif
                         }
                     }
                 }
@@ -352,13 +348,16 @@ namespace good
                     DebugPrint("key-value separator at section name.\n");
                     result = IniFileBadSyntax;
 #ifdef INI_FILE_STOP_ON_ERROR
-                    break;
+                    goto ini_file_end_loop;
 #endif
                 }
             }
         }
 
 
+#ifdef INI_FILE_STOP_ON_ERROR
+ini_file_end_loop:
+#endif
         // Save last junk after section name.
         if (junk_after_section_name)
         {

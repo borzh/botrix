@@ -130,8 +130,6 @@ int CUtil::iPointTouchLadderSquaredZ = SQR(2);
 const Vector CUtil::vZero(0, 0, 0);
 const QAngle CUtil::angZero(0, 0, 0);
 
-
-bool CUtil::m_bMessageUseTag = true;
 trace_t CUtil::m_TraceResult;
 
 
@@ -353,7 +351,7 @@ TReach CUtil::GetReachableInfoFromTo( Vector const& vSrc, Vector const& vDest, f
         break;
 
     default:
-        DebugAssert(false);
+        BASSERT(false);
     }
 
     return iResult;
@@ -407,7 +405,7 @@ bool CUtil::IsNetworkable( edict_t* pEntity )
 void CUtil::EntityCenter( edict_t* pEntity, Vector& v )
 {
     static float* fOrigin;
-    DebugAssert( IsNetworkable(pEntity), return );
+    BASSERT( IsNetworkable(pEntity), return );
     fOrigin = pEntity->GetIServerEntity()->GetNetworkable()->GetPVSInfo()->m_vCenter;
 
     v.x = fOrigin[0]; v.y = fOrigin[1]; v.z = fOrigin[2];
@@ -474,95 +472,14 @@ bool CUtil::IsLineTouch3d(Vector const& amins, Vector const& amaxs, Vector const
 }
 
 //================================================================================================================
-char szMessageString[16*1024];
-const int iSplitSize = 4*1024;
-void CUtil::Message( edict_t* pEntity, const char* fmt, ... )
+void CUtil::Message( edict_t* pEntity, const char* szMsg )
 {
-    int iStart = 0;
-    if ( m_bMessageUseTag )
-    {
-        strcpy(szMessageString, "[Botrix] ");
-        iStart = 9; // 9 is length of "[Botrix ]".
-    }
-
-    va_list argptr;
-
-    va_start(argptr, fmt);
-    int iTotal = vsprintf(&szMessageString[iStart], fmt, argptr);
-    va_end(argptr);
-
-    // Log to file.
-    if ( bLogMessageToFile )
-    {
-        if ( fLog == NULL )
-        {
-            fLog = fopen("botrix.log", "a");
-            if ( fLog )
-                fprintf(fLog, "\n--------------------------------------------------------------------------------------------\n");
-        }
-        if ( fLog )
-        {
-            fprintf(fLog, "%s\n", szMessageString);
-        }
-    }
-
-#if (defined(DEBUG) || defined(_DEBUG)) && defined(BOTRIX_MESSAGE_USE_TIME)
-    static char sTime[24];
-#endif
-
     if ( pEntity )
     {
-        if ( m_bMessageUseTag )
-        {
-#if (defined(DEBUG) || defined(_DEBUG)) && defined(BOTRIX_MESSAGE_USE_TIME)
-            sprintf(sTime, "%.5f: ", CBotrixPlugin::fTime);
-            CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, sTime);
-#endif
-        }
-        int i = 0;
-        while ( i < iTotal )
-        {
-            int iEnd = i + iSplitSize;
-            if ( iEnd < iTotal-1 )
-            {
-                char c = szMessageString[iEnd];
-                szMessageString[iEnd] = 0;
-                CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, &szMessageString[i]);
-                szMessageString[iEnd] = c;
-            }
-            else
-                CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, &szMessageString[i]);
-            i = iEnd;
-        }
-
-        CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, "\n");
+        CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, szMsg);
     }
     else
-    {
-        if ( m_bMessageUseTag )
-        {
-#if (defined(DEBUG) || defined(_DEBUG)) && defined(BOTRIX_MESSAGE_USE_TIME)
-            sprintf(sTime, "%.5f: ", CBotrixPlugin::fTime);
-            Msg(sTime);
-#endif
-        }
-        int i = 0;
-        while ( i < iTotal )
-        {
-            int iEnd = i + iSplitSize;
-            if ( iEnd < iTotal-1 )
-            {
-                char c = szMessageString[iEnd];
-                szMessageString[iEnd] = 0;
-                Msg("%s", &szMessageString[i]);
-                szMessageString[iEnd] = c;
-            }
-            else
-                Msg("%s", &szMessageString[i]);
-            i = iEnd;
-        }
-        Msg("\n");
-    }
+        Msg(szMsg);
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -578,7 +495,7 @@ void CUtil::PutMessageInQueue( const char* fmt, ... )
     cMessagesMutex.lock();
 
     int iSize = vsprintf( &szQueueMessageString[iQueueMessageStringSize], fmt, argptr );
-    DebugAssert( iSize >= 0, szQueueMessageString[iQueueMessageStringSize] = 0; return );
+    BASSERT( iSize >= 0, szQueueMessageString[iQueueMessageStringSize] = 0; return );
     iQueueMessageStringSize += iSize;
 
     cMessagesMutex.unlock();
@@ -643,17 +560,20 @@ void CUtil::DrawBeam( const Vector& v1, const Vector& v2, unsigned char iWidth, 
 //----------------------------------------------------------------------------------------------------------------
 void CUtil::DrawLine( const Vector& v1, const Vector& v2, float fDrawTime, unsigned char r, unsigned char g, unsigned char b )
 {
-    pVDebugOverlay->AddLineOverlay(v1, v2, r, g, b, false, fDrawTime);
+    if (pVDebugOverlay)
+        pVDebugOverlay->AddLineOverlay(v1, v2, r, g, b, false, fDrawTime);
 }
 
 //----------------------------------------------------------------------------------------------------------------
 void CUtil::DrawBox( const Vector& vOrigin, const Vector& vMins, const Vector& vMaxs, float fDrawTime, unsigned char r, unsigned char g, unsigned char b, const QAngle& ang )
 {
-    pVDebugOverlay->AddBoxOverlay(vOrigin, vMins, vMaxs, ang, r, g, b, 0, fDrawTime);
+    if (pVDebugOverlay)
+        pVDebugOverlay->AddBoxOverlay(vOrigin, vMins, vMaxs, ang, r, g, b, 0, fDrawTime);
 }
 
 //----------------------------------------------------------------------------------------------------------------
 void CUtil::DrawText( const Vector& vOrigin, int iLine, float fDrawTime, unsigned char, unsigned char, unsigned char, const char* szText )
 {
-    pVDebugOverlay->AddTextOverlay(vOrigin, iLine, fDrawTime, szText );
+    if (pVDebugOverlay)
+        pVDebugOverlay->AddTextOverlay(vOrigin, iLine, fDrawTime, szText );
 }

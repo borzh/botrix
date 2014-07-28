@@ -1,7 +1,7 @@
 #ifndef __GOOD_MUTEX_H__
 #define __GOOD_MUTEX_H__
 
-#ifndef _WIN32
+#ifdef __linux__
     #include <pthread.h>
 #endif
 

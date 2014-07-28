@@ -2,11 +2,13 @@
 #include "type2string.h"
 #include "mods/borzh/types_borzh.h"
 
+#include <good/log.h>
 #include <good/string_buffer.h>
 #include <good/string_utils.h>
 
-good::string sUnknown("unknown");
-good::string sEmpty("");
+const good::string sUnknown("unknown");
+const good::string sEmpty("");
+const good::string sNone("none");
 
 extern char* szMainBuffer;
 extern int iMainBufferSize;
@@ -31,7 +33,7 @@ int EnumFromString( const good::string& s, int iEnumCount, const good::string aS
 const good::string& FlagsToString( int iFlags, int iFlagsCount, const good::string aStrings[] )
 {
     if ( iFlags == 0 )
-        return sEmpty;
+        return sNone;
 
     static good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
     sbBuffer.erase();
@@ -86,15 +88,21 @@ const good::string& CTypeToString::StringVectorToString( const StringVector& aSt
 
 
 //----------------------------------------------------------------------------------------------------------------
-good::string aBools[2] =
+const int iYesNoSynonims = 3;
+good::string aBools[2*iYesNoSynonims] =
 {
     "off",
+    "false",
+    "no",
     "on"
+    "true",
+    "yes"
 };
 
 int CTypeToString::BoolFromString( const good::string& sBool )
 {
-    return EnumFromString( sBool, 2, aBools );
+    int iResult = EnumFromString( sBool, 2, aBools );
+    return (iResult == -1) ? -1 : (iResult/iYesNoSynonims);
 }
 
 const good::string& CTypeToString::BoolToString( bool b )
@@ -283,7 +291,6 @@ good::string aEntityClassFlags[FEntityTotal] =
     "heavy",
     "box",
 };
-const good::string sNone("none");
 
 int CTypeToString::EntityClassFlagsFromString( const good::string& sFlags )
 {
@@ -509,6 +516,23 @@ int CTypeToString::BotCommandFromString( const good::string& sCommand )
 const good::string& CTypeToString::BotCommandToString( TBotChat iCommand )
 {
     return EnumToString( iCommand, EBotChatTotal, aBotCommands, sUnknown );
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+good::string aLogLevels[good::ELogLevelTotal] =
+{
+    "none",
+    "trace",
+    "debug",
+    "info",
+    "warning",
+    "error",
+};
+
+int CTypeToString::LogLevelFromString( const good::string& sLevel )
+{
+    return EnumFromString( sLevel, good::ELogLevelTotal, aLogLevels );
 }
 
 #ifdef BOTRIX_MOD_BORZH

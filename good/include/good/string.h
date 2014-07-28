@@ -19,13 +19,14 @@
 
 // Define this so strings are moved around instead of copy. But don't define it if -std=c++11.
 #ifndef __GXX_EXPERIMENTAL_CXX0X__
-#   define STRING_MOVE
+    // TODO:
+    #define STRING_MOVE
 #endif
 
 // Disable obsolete warnings.
 #ifdef _WIN32
-#   pragma warning(push)
-#   pragma warning(disable: 4996)
+    #pragma warning(push)
+    #pragma warning(disable: 4996)
 #endif
 
 
@@ -451,7 +452,7 @@ namespace good
 
 
 #ifdef _WIN32
-#   pragma warning(pop) // Restore warnings.
+    #pragma warning(pop) // Restore warnings.
 #endif
 
 

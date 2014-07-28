@@ -16,14 +16,14 @@
 
 #ifdef _WIN32
 // Disable obsolete warnings.
-#   pragma warning(push)
-#   pragma warning(disable: 4996)
+    #pragma warning(push)
+    #pragma warning(disable: 4996)
 
-#	define PATH_SEPARATOR '\\'
-#	define PATH_SEPARATOR_STRING "\\"
+    #define PATH_SEPARATOR '\\'
+    #define PATH_SEPARATOR_STRING "\\"
 #else
-#	define PATH_SEPARATOR '/'
-#	define PATH_SEPARATOR_STRING "/"
+    #define PATH_SEPARATOR '/'
+    #define PATH_SEPARATOR_STRING "/"
 #endif
 
 

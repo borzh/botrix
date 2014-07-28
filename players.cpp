@@ -36,7 +36,7 @@ static bool bAddingBot = false;
 void CPlayer::Activated()
 {
     m_pPlayerInfo = CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo( m_pEdict );
-    DebugAssert( m_pPlayerInfo, CPlayers::PlayerDisconnected(m_pEdict) );
+    BASSERT( m_pPlayerInfo, CPlayers::PlayerDisconnected(m_pEdict) );
 
     m_sName.assign(GetName(), good::string::npos, true);
     good::lower_case(m_sName);
@@ -158,7 +158,7 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
     TModId iModId = CMod::GetModId();
     if ( iModId == EModId_Invalid )
     {
-        CUtil::Message(NULL, "Error, can't create bot: unknown mod.");
+        BLOG_E("Error, can't create bot: unknown mod.");
         return NULL;
     }
 
@@ -186,7 +186,7 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
         return NULL;
 
     TPlayerIndex iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
-    DebugAssert(iIdx >= 0, return NULL);
+    BASSERT(iIdx >= 0, return NULL);
 
     CPlayer* pPlayer = NULL;
     switch ( iModId )
@@ -224,7 +224,7 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
 //----------------------------------------------------------------------------------------------------------------
 void CPlayers::KickBot( CPlayer* pPlayer )
 {
-    DebugAssert( pPlayer && pPlayer->IsBot() );
+    BASSERT( pPlayer && pPlayer->IsBot() );
     char szCommand[16];
     sprintf( szCommand,"kickid %d\n", pPlayer->GetPlayerInfo()->GetUserID() ); // \n ???
     CBotrixPlugin::pEngineServer->ServerCommand(szCommand);
@@ -233,11 +233,14 @@ void CPlayers::KickBot( CPlayer* pPlayer )
 //----------------------------------------------------------------------------------------------------------------
 bool CPlayers::KickRandomBot()
 {
+    return KickRandomBotOnTeam(-1);
+}
+
+//----------------------------------------------------------------------------------------------------------------
+bool CPlayers::KickRandomBotOnTeam( int iTeam )
+{
     if ( m_iBotsCount == 0 )
-    {
-        CUtil::Message(NULL,"No bots to kick");
         return false;
-    }
 
     int index = rand() % m_aPlayers.size();
 
@@ -248,7 +251,8 @@ bool CPlayers::KickRandomBot()
     for (i = index; i >= 0; --i)
     {
         CPlayer* pPlayer = m_aPlayers[i].get();
-        if ( pPlayer && pPlayer->IsBot() )
+        if ( pPlayer && pPlayer->IsBot() &&
+             ( (iTeam == -1) || (pPlayer->GetTeam() == iTeam) ) )
         {
             toKick = (CBot*)pPlayer;
             break;
@@ -260,39 +264,29 @@ bool CPlayers::KickRandomBot()
         for (i = index+1; i < (int)m_aPlayers.size(); ++i)
         {
             CPlayer* pPlayer = m_aPlayers[i].get();
-            if ( pPlayer && pPlayer->IsBot() )
+            if ( pPlayer && pPlayer->IsBot() &&
+                 ( (iTeam == -1) || (pPlayer->GetTeam() == iTeam) ) )
             {
                 toKick = (CBot*)pPlayer;
                 break;
             }
         }
 
-    KickBot(toKick);
-    return true;
-}
+    if ( toKick )
+        KickBot(toKick);
 
-//----------------------------------------------------------------------------------------------------------------
-bool CPlayers::KickRandomBotOnTeam( int /*iTeam*/ )
-{
-    // TODO:
-    if ( m_iBotsCount == 0 )
-    {
-        CUtil::Message(NULL,"No bots to kick");
-        return false;
-    }
-
-    return true;
+    return ( toKick );
 }
 
 //----------------------------------------------------------------------------------------------------------------
 void CPlayers::PlayerConnected( edict_t* pEdict )
 {
     TPlayerIndex iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
-    DebugAssert( iIdx >= 0, return ); // Valve should not allow this assert.
+    BASSERT( iIdx >= 0, return ); // Valve should not allow this assert.
 
     if ( !bAddingBot )
     {
-        DebugAssert( m_aPlayers[iIdx].get() == NULL, return ); // Should be fatal assert.
+        BASSERT( m_aPlayers[iIdx].get() == NULL, return ); // Should be fatal assert.
 
         CPlayer* pPlayer = new CClient(pEdict, iIdx);
         pPlayer->Activated();
@@ -323,13 +317,13 @@ void CPlayers::PlayerConnected( edict_t* pEdict )
 void CPlayers::PlayerDisconnected( edict_t* pEdict )
 {
     int iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
-    DebugAssert(iIdx >= 0, return); // Valve should not allow this assert.
+    BASSERT(iIdx >= 0, return); // Valve should not allow this assert.
 
     if ( m_aPlayers[iIdx].get() == NULL )
         return; // Happens when starting new map and pressing cancel button. Valve issue.
 
     CPlayer* pPlayer = m_aPlayers[iIdx].get();
-    DebugAssert( pPlayer, return );
+    BASSERT( pPlayer, return );
 
 #ifdef BOTRIX_CHAT
     if ( CChat::iPlayerVar != EChatVariableInvalid )
@@ -358,7 +352,7 @@ void CPlayers::PlayerDisconnected( edict_t* pEdict )
         CheckForDebugging();
     }
 
-    DebugAssert( (m_iBotsCount >= 0) && (m_iClientsCount >= 0) );
+    BASSERT( (m_iBotsCount >= 0) && (m_iClientsCount >= 0) );
 }
 
 
@@ -384,7 +378,7 @@ void CPlayers::DebugEvent( const char *szFormat, ... )
     {
         const CPlayer* pPlayer = it->get();
         if ( pPlayer  &&  !pPlayer->IsBot()  &&  ((CClient*)pPlayer)->bDebuggingEvents )
-            CUtil::Message(pPlayer->GetEdict(), buffer);
+            BULOG_I(pPlayer->GetEdict(), buffer);
     }
 }
 
@@ -411,7 +405,7 @@ void CPlayers::DeliverChat( edict_t* pFrom, bool bTeamOnly, const char* szText )
     int iTeam = 0;
 
     int iIdx = CPlayers::Get(pFrom);
-    DebugAssert( iIdx >= 0, return );
+    BASSERT( iIdx >= 0, return );
     CPlayer* pSpeaker = CPlayers::Get(iIdx);
 
     if ( bTeamOnly )
@@ -437,12 +431,12 @@ void CPlayers::DeliverChat( edict_t* pFrom, bool bTeamOnly, const char* szText )
         int iFrom = 0, iTo = CPlayers::Size();
         if ( bIsRequest && (cChat.iDirectedTo != -1) )
         {
-            DebugAssert( cChat.iDirectedTo != iIdx ); // TODO:???
+            BASSERT( cChat.iDirectedTo != iIdx ); // TODO:???
             iFrom = cChat.iDirectedTo;
             iTo = iFrom + 1;
         }
         //else
-        //	DebugMessage("Can't detect player, chat is directed to.");
+        //	BLOG_E("Can't detect player, chat is directed to.");
 
 
         // Deliver chat for all bots.

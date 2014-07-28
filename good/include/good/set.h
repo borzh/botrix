@@ -32,6 +32,7 @@ namespace good
     };
 
 
-};
+} // namespace good
+
 
 #endif // __GOOD_SET_H__

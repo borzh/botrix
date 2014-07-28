@@ -3,15 +3,7 @@
 
 
 #include <good/string.h>
-#include "good/vector.h"
-
-
-#if defined(DEBUG) || defined(_DEBUG)
-#	define DebugMessage(...) CUtil::Message(NULL, __VA_ARGS__)
-//#	define DebugPrint(...) CUtil::Message(NULL, __VA_ARGS__)
-#else
-#	define DebugMessage(...)
-#endif
+#include <good/vector.h>
 
 
 enum TPlayerIndexInvalid

@@ -141,7 +141,7 @@ restart_find_task: // TODO: remove gotos.
     if ( retries == 5 )
     {
         m_bNeedTaskCheck = true;
-        DebugAssert(m_iCurrentTask == EBotTaskInvalid, m_iCurrentTask = EBotTaskInvalid);
+        BASSERT(m_iCurrentTask == EBotTaskInvalid, m_iCurrentTask = EBotTaskInvalid);
         BotMessage("%s -> No task, will continue to look for task on new frame.", GetName());
         return;
     }
@@ -256,7 +256,7 @@ restart_find_task: // TODO: remove gotos.
         break;
     }
 
-    DebugAssert( iNewTask != EBotTaskInvalid, return );
+    BASSERT( iNewTask != EBotTaskInvalid, return );
 
     // Check if need task switch.
     if ( bForce || (m_iCurrentTask != iNewTask) )

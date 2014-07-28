@@ -28,6 +28,8 @@
 #include <good/memory.h>
 #include "good/list.h"
 #include "good/vector.h"
+#include "good/log.h"
+
 
 class MyClass
 {
@@ -737,6 +739,21 @@ void test_graph()
     DebugAssert( b && !a.has_path() );
 }
 
+
+//--------------------------------------------------------------------------------------
+void test_log()
+{
+    ReleasePrint("%s()\n\n", __FUNCTION__);
+
+    good::log::start_log_to_file("log.txt");
+    good::log::set_prefix("[Botrix] ");
+    good::log::printf(good::ELogLevelWarning, "warning %s %d\n", "boris", 23);
+    GLOG_E("Error here");
+    GLOG_D("Debug");
+    GLOG_E("Error again");
+}
+
+
 //--------------------------------------------------------------------------------------
 void stop()
 {
@@ -751,10 +768,11 @@ void stop()
 #endif
 }
 
+
 //--------------------------------------------------------------------------------------
 int main(int, char**)
 {
-    test_process();
+    /*test_process();
     stop();
 
     test_threads();
@@ -794,6 +812,9 @@ int main(int, char**)
     stop();
 
     test_graph();
+    stop();*/
+
+    test_log();
     stop();
 
     return 0;

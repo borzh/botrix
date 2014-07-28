@@ -13,31 +13,10 @@
 #include "type2string.h"
 #include "waypoint.h"
 
-//#if !defined(DEBUG) && !defined(_DEBUG)
-//#include "public/isaverestore.h"
-//#include "game/shared/ehandle.h"
-//#include "game/shared/groundlink.h"
-//#include "game/shared/touchlink.h"
-//#include "game/shared/takedamageinfo.h"
-//#include "game/shared/predictableid.h"
-//#include "game/shared/predictable_entity.h"
-//#include "public/vmatrix.h"
-//#include "game/shared/shareddefs.h"
-//#include "game/server/util.h"
-//#include "game/server/variant_t.h"
-//#include "game/shared/baseentity_shared.h"
-//#include "public/networkvar.h"
-//#include "game/server/BaseEntity.h"
-//#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#if defined(DEBUG) || defined (_DEBUG)
-#	define ItemMessage(...) CUtil::Message(NULL, __VA_ARGS__)
-#else
-#	define ItemMessage(...)
-#endif
 
 extern IVDebugOverlay* pVDebugOverlay;
 
@@ -193,7 +172,7 @@ void CItems::Freed( const edict_t* pEdict )
             m_iFreeIndex[EEntityTypeWeapon] = i;
             return;
         }
-    DebugAssert(false); // Only weapons are allocated/deallocated while map is running.
+    BASSERT(false); // Only weapons are allocated/deallocated while map is running.
 }
 #endif // SOURCE_ENGINE_2006
 
@@ -364,10 +343,10 @@ void CItems::CheckNewEntity( edict_t* pEdict )
     else
     {
         TEntityIndex iIndex = AddItem( iEntityType, pEdict, pItemClass, pServerEntity );
-        DebugAssert(iIndex >= 0, return);
+        BASSERT(iIndex >= 0, return);
         CEntity& cItem = m_aItems[iEntityType][iIndex];
 
-        ItemMessage("New item: %s %d (%s), waypoint %d (%s).", CTypeToString::EntityTypeToString(iEntityType).c_str(), iIndex,
+        BLOG_D("New item: %s %d (%s), waypoint %d (%s).", CTypeToString::EntityTypeToString(iEntityType).c_str(), iIndex,
                     pEdict->GetClassName(), cItem.iWaypoint,
                     CWaypoints::IsValid(cItem.iWaypoint)
                         ? CTypeToString::WaypointFlagsToString( CWaypoints::Get(cItem.iWaypoint).iFlags ).c_str()
@@ -377,13 +356,13 @@ void CItems::CheckNewEntity( edict_t* pEdict )
         {
             if ( !CWaypoint::IsValid(cItem.iWaypoint) )
             {
-                CUtil::Message(NULL, "Warning: entity %s %d doesn't have waypoint close.", pEdict->GetClassName(), iIndex+1);
+                BLOG_W("Warning: entity %s %d doesn't have waypoint close.", pEdict->GetClassName(), iIndex+1);
                 TWaypointId iWaypoint = CWaypoints::GetNearestWaypoint( cItem.vOrigin );
                 if ( CWaypoint::IsValid(iWaypoint) )
-                    CUtil::Message(NULL, "\tNearest waypoint %d.", iWaypoint);
+                    BLOG_W("\tNearest waypoint %d.", iWaypoint);
             }
             else if ( iEntityType == EEntityTypeDoor && !CWaypoint::IsValid((TWaypointId)cItem.pArguments) )
-                CUtil::Message(NULL, "Door %d doesn't have 2 waypoints near.", iIndex);
+                BLOG_W("Door %d doesn't have 2 waypoints near.", iIndex);
         }
 
 #ifdef SOURCE_ENGINE_2006
@@ -473,7 +452,7 @@ void CItems::AutoWaypointPathFlagsForEntity( TEntityType iEntityType, TEntityInd
 TEntityIndex CItems::AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityClass* pItemClass, IServerEntity* pServerEntity )
 {
     ICollideable* pCollidable = pServerEntity->GetCollideable();
-    DebugAssert( pCollidable, return -1 );
+    BASSERT( pCollidable, return -1 );
 
     const Vector& vItemOrigin = pCollidable->GetCollisionOrigin();
 
@@ -561,7 +540,7 @@ bool CItems::IsDoorOpened( TEntityIndex iDoor )
     const CEntity& cDoor = m_aItems[EEntityTypeDoor][iDoor];
     TWaypointId w1 = cDoor.iWaypoint, w2 = (TWaypointId)cDoor.pArguments;
 
-    DebugAssert( CWaypoints::IsValid(w1) && CWaypoints::IsValid(w2), return false); // Door should have two waypoints from each side.
+    BASSERT( CWaypoints::IsValid(w1) && CWaypoints::IsValid(w2), return false); // Door should have two waypoints from each side.
 
     const Vector& v1 = CWaypoints::Get(w1).vOrigin;
     const Vector& v2 = CWaypoints::Get(w2).vOrigin;
@@ -596,7 +575,7 @@ void CItems::Draw( CClient* pClient )
                 continue;
 
             IServerEntity* pServerEntity = pEdict->GetIServerEntity();
-            DebugAssert( pServerEntity, continue );
+            BASSERT( pServerEntity, continue );
 
             if ( IsEntityTaken(pServerEntity) )
                 continue;

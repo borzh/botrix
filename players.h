@@ -12,7 +12,7 @@
 
 
 #if defined(DEBUG) || defined(_DEBUG)
-#	define DRAW_PLAYER_HULL 0
+    #define DRAW_PLAYER_HULL 0
 #endif
 
 

@@ -42,6 +42,11 @@ char szMainBufferArray[2048]; // Static buffer for different string purposes.
 
 char* szMainBuffer = szMainBufferArray;
 
+// For logging purpuses.
+int iLogBufferSize = 2048;
+char szLogBufferArray[2048]; // Static buffer for different string purposes.
+char* szLogBuffer = szMainBufferArray;
+
 //----------------------------------------------------------------------------------------------------------------
 // The plugin is a static singleton that is exported as an interface.
 //----------------------------------------------------------------------------------------------------------------
@@ -64,8 +69,12 @@ int CBotrixPlugin::m_iFramesCount = 60;
 //----------------------------------------------------------------------------------------------------------------
 IVEngineServer* CBotrixPlugin::pEngineServer = NULL;
 IFileSystem* pFileSystem = NULL;
-IGameEventManager2* CBotrixPlugin::pGameEventManager2 = NULL;
+
+#ifdef USE_OLD_GAME_EVENT_MANAGER
 IGameEventManager* CBotrixPlugin::pGameEventManager = NULL;
+#else
+IGameEventManager2* CBotrixPlugin::pGameEventManager = NULL;
+#endif
 IPlayerInfoManager* CBotrixPlugin::pPlayerInfoManager = NULL;
 IServerPluginHelpers* CBotrixPlugin::pServerPluginHelpers = NULL;
 IServerGameClients* CBotrixPlugin::pServerGameClients = NULL;
@@ -120,9 +129,12 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     LOAD_GAME_SERVER_INTERFACE(pEffects, IEffects, IEFFECTS_INTERFACE_VERSION);
     LOAD_GAME_SERVER_INTERFACE(pBotManager, IBotManager, INTERFACEVERSION_PLAYERBOTMANAGER);
 
-    LOAD_INTERFACE(pVDebugOverlay, IVDebugOverlay, VDEBUG_OVERLAY_INTERFACE_VERSION);
-    LOAD_INTERFACE(pGameEventManager, IGameEventManager, INTERFACEVERSION_GAMEEVENTSMANAGER)
-    LOAD_INTERFACE(pGameEventManager2, IGameEventManager2, INTERFACEVERSION_GAMEEVENTSMANAGER2)
+    LOAD_INTERFACE_IGNORE_ERROR(pVDebugOverlay, IVDebugOverlay, VDEBUG_OVERLAY_INTERFACE_VERSION);
+#ifdef USE_OLD_GAME_EVENT_MANAGER
+    LOAD_INTERFACE(pGameEventManager, IGameEventManager,  INTERFACEVERSION_GAMEEVENTSMANAGER);
+#else
+    LOAD_INTERFACE(pGameEventManager, IGameEventManager2, INTERFACEVERSION_GAMEEVENTSMANAGER2);
+#endif
 
     LOAD_GAME_SERVER_INTERFACE(pServerGameClients, IServerGameClients, INTERFACEVERSION_SERVERGAMECLIENTS);
     LOAD_INTERFACE_IGNORE_ERROR(pFileSystem, IFileSystem, FILESYSTEM_INTERFACE_VERSION);
@@ -183,7 +195,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     if ( CMod::sModName.size() == 0 )
         sMod = "unknown";
 
-    CUtil::Message(NULL, "Botrix loaded. Current mod: %s.\n", sMod);
+    BLOG_I("Botrix loaded. Current mod: %s.\n", sMod);
 
     return true;
 }
@@ -199,9 +211,7 @@ void CBotrixPlugin::Unload( void )
     CMainCommand::instance.reset();
 
     if ( pGameEventManager )
-        pGameEventManager->RemoveListener( this ); // make sure we are unloaded from the event system
-    if ( pGameEventManager2 )
-        pGameEventManager2->RemoveListener( this );
+        pGameEventManager->RemoveListener(this);
 
     bIsLoaded = false;
 }
@@ -239,7 +249,9 @@ void CBotrixPlugin::LevelInit( const char* pMapName )
     ConVar *pTeamplay = pCvar->FindVar("mp_teamplay");
     bTeamPlay = pTeamplay ? pTeamplay->GetBool() : false;
 
+#ifdef USE_OLD_GAME_EVENT_MANAGER
     pGameEventManager->AddListener( this, true );
+#endif
 
     CWaypoint::iWaypointTexture = CBotrixPlugin::pEngineServer->PrecacheModel( "sprites/lgtning.vmt" );
 #endif
@@ -259,8 +271,7 @@ void CBotrixPlugin::ServerActivate( edict_t* /*pEdictList*/, int /*edictCount*/,
     CItems::MapLoaded();
     CMod::MapLoaded();
 
-    CUtil::Message(NULL, "Level \"%s\" has been loaded.", sMapName.c_str());
-    CUtil::Message(NULL, "Max clients: %d.\n", clientMax);
+    BLOG_I("Level \"%s\" has been loaded.", sMapName.c_str());
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -279,14 +290,14 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
     else
         fTime += fDiff;
 
-    // FPS counting. Used in draw waypoints.
+    // FPS counting. Used in draw waypoints. TODO: define.
     /*m_iFramesCount++;
     if (fEngineTime >= m_fFpsEnd)
     {
         iFPS = m_iFramesCount;
         m_iFramesCount = 0;
         m_fFpsEnd = fEngineTime + 1.0f;
-        //CUtil::Message(NULL, "FPS: %d", iFPS);
+        //BULOG_T(NULL, "FPS: %d", iFPS);
     }*/
 
     if ( bMapRunning )
@@ -301,7 +312,7 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
         //	iFPS = m_iFramesCount;
         //	m_iFramesCount = 0;
         //	m_fFpsEnd = fTime + 1.0f;
-        //	CUtil::Message(NULL, "FPS: %d", iFPS);
+        //	BULOG_T(NULL, "FPS: %d", iFPS);
         //}
 
         CItems::Update();
@@ -321,8 +332,8 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
 
         if ( (fStart + fInterval) <= pEngineServer->Time() )
         {
-            CUtil::Message(NULL, "Botrix think time in %d frames (%.0f seconds): %.5f msecs",
-                           iCount, fInterval, fSum / (float)iCount * 1000.0f);
+            BLOG_T("Botrix think time in %d frames (%.0f seconds): %.5f msecs",
+                   iCount, fInterval, fSum / (float)iCount * 1000.0f);
             fStart = fSum = 0.0f;
             iCount = 0;
         }
@@ -341,9 +352,9 @@ void CBotrixPlugin::LevelShutdown( void ) // !!!!this can get called multiple ti
     CWaypoints::Clear();
     CItems::MapUnloaded();
 
-    pGameEventManager->RemoveListener( this );
-    if ( pGameEventManager2 )
-        pGameEventManager2->RemoveListener( this );
+#ifdef USE_OLD_GAME_EVENT_MANAGER
+    pGameEventManager->RemoveListener(this);
+#endif
 
     CConfiguration::Save();
 }
@@ -405,7 +416,7 @@ PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity )
 PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &args )
 #endif
 {
-    DebugAssert( pEntity && !pEntity->IsFree(), return PLUGIN_CONTINUE ); // Valve check.
+    BASSERT( pEntity && !pEntity->IsFree(), return PLUGIN_CONTINUE ); // Valve check.
 
 #ifdef SOURCE_ENGINE_2006
     int argc = MIN2(CBotrixPlugin::pEngineServer->Cmd_Argc(), 16);
@@ -425,10 +436,10 @@ PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &ar
 #endif
 
     int iIdx = CPlayers::Get(pEntity);
-    DebugAssert(iIdx >= 0, return PLUGIN_CONTINUE);
+    BASSERT(iIdx >= 0, return PLUGIN_CONTINUE);
 
     CPlayer* pPlayer = CPlayers::Get(iIdx);
-    DebugAssert(pPlayer && !pPlayer->IsBot(), return PLUGIN_CONTINUE); // Valve check.
+    BASSERT(pPlayer && !pPlayer->IsBot(), return PLUGIN_CONTINUE); // Valve check.
 
     CClient* pClient = (CClient*)pPlayer;
 
@@ -437,34 +448,65 @@ PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &ar
     if (iResult != ECommandPerformed)
     {
         if (iResult == ECommandRequireAccess)
-            CUtil::Message(pClient ? pClient->GetEdict() : NULL, "Sorry, you don't have access to this command.");
+            BULOG_E(pClient ? pClient->GetEdict() : NULL, "Sorry, you don't have access to this command.");
         else if (iResult == ECommandNotFound)
-            CUtil::Message(pClient ? pClient->GetEdict() : NULL, "Bot's command not found.");
+            BULOG_E(pClient ? pClient->GetEdict() : NULL, "Command not found.");
         else if (iResult == ECommandError)
-            CUtil::Message(pClient ? pClient->GetEdict() : NULL, "Command error.");
+            BULOG_E(pClient ? pClient->GetEdict() : NULL, "Command error.");
     }
     return PLUGIN_STOP; // We handled this command.
 }
 
 //----------------------------------------------------------------------------------------------------------------
+void CBotrixPlugin::OnEdictAllocated( edict_t *edict )
+{
+    CItems::Allocated(edict);
+}
+
+//----------------------------------------------------------------------------------------------------------------
+void CBotrixPlugin::OnEdictFreed( const edict_t *edict  )
+{
+    CItems::Freed(edict);
+}
+
+//----------------------------------------------------------------------------------------------------------------
 // Called when a client is authenticated
 //----------------------------------------------------------------------------------------------------------------
-PLUGIN_RESULT CBotrixPlugin::NetworkIDValidated( const char */*pszUserName*/, const char */*pszNetworkID*/ )
+PLUGIN_RESULT CBotrixPlugin::NetworkIDValidated( const char *pszUserName, const char *pszNetworkID )
 {
-    //TODO: use it.
+    TCommandAccessFlags iAccess = CConfiguration::ClientAccessLevel(pszNetworkID);
+    if ( iAccess ) // Founded.
+    {
+        for ( int i = 0; i < CPlayers::GetPlayersCount(); ++i )
+        {
+            CPlayer* pPlayer = CPlayers::Get(i);
+            if ( pPlayer && !pPlayer->IsBot() )
+            {
+                CClient* pClient = (CClient*)pPlayer;
+                if ( good::string(pszNetworkID) == pClient->GetSteamID() )
+                {
+                    pClient->iCommandAccessFlags = iAccess;
+                    break;
+                }
+            }
+        }
+    }
+
+    BLOG_I( "User id validated %s (steam id %s), access: %s.", pszUserName, pszNetworkID,
+            CTypeToString::AccessFlagsToString(iAccess).c_str() );
+
     return PLUGIN_CONTINUE;
 }
 
 //----------------------------------------------------------------------------------------------------------------
 // Called when an event is fired
 //----------------------------------------------------------------------------------------------------------------
+#ifdef USE_OLD_GAME_EVENT_MANAGER
 void CBotrixPlugin::FireGameEvent( KeyValues* event )
 {
     good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
 
     const char* type = event->GetName();
-
-    CMod::ExecuteEvent( (void*)event, EEventTypeKeyValues );
 
     if ( CPlayers::IsDebuggingEvents() )
     {
@@ -482,43 +524,56 @@ void CBotrixPlugin::FireGameEvent( KeyValues* event )
 
         copy->deleteThis();
     }
-}
 
-void CBotrixPlugin::FireGameEvent( IGameEvent * event )
-{
     CMod::ExecuteEvent( (void*)event, EEventTypeKeyValues );
 }
 
 void CBotrixPlugin::GenerateSayEvent( edict_t* pEntity, const char* szText, bool bTeamOnly )
 {
     int iUserId = pEngineServer->GetPlayerUserId(pEntity);
-    DebugAssert(iUserId != -1, return);
+    BASSERT(iUserId != -1, return);
 
-#define USE_GAME_EVENT_MANAGER2
-#ifdef USE_GAME_EVENT_MANAGER2
-    IGameEvent* pEvent = pGameEventManager2->CreateEvent("player_say");
-    if (pEvent)
-    {
-        pEvent->SetInt("userid", iUserId);
-        pEvent->SetString("text", szText);
-        pEvent->SetBool("teamonly", bTeamOnly);
-        //pEvent->SetInt("priority", 1 );	// HLTV event priority, not transmitted
-        pGameEventManager2->FireEvent(pEvent);
-        //pGameEventManager2->FreeEvent(pEvent);
-    }
-#else
     KeyValues* pEvent = pGameEventManager->GetEvent("player_say", true);
     if (pEvent)
     {
-        DebugAssert( strcmp(pEvent->GetName(), "player_say") ); // Valve check.
+        BASSERT( strcmp(pEvent->GetName(), "player_say") ); // Valve check.
         pEvent->SetInt("userid", iUserId);
         pEvent->SetString("text", szText);
         pEvent->SetBool("teamonly", bTeamOnly);
         pGameEventManager->FireEvent(pEvent);
         //pEvent->deleteThis(); // TODO: need to delete?
     }
-#endif
 }
+
+#else // USE_OLD_GAME_EVENT_MANAGER
+
+void CBotrixPlugin::FireGameEvent( IGameEvent * event )
+{
+    if ( CPlayers::IsDebuggingEvents() )
+        CPlayers::DebugEvent( "Event: %s", event->GetName() );
+
+    CMod::ExecuteEvent( (void*)event, EEventTypeIGameEvent );
+}
+
+void CBotrixPlugin::GenerateSayEvent( edict_t* pEntity, const char* szText, bool bTeamOnly )
+{
+    int iUserId = pEngineServer->GetPlayerUserId(pEntity);
+    BASSERT(iUserId != -1, return);
+
+    IGameEvent* pEvent = pGameEventManager->CreateEvent("player_say");
+    if (pEvent)
+    {
+        pEvent->SetInt("userid", iUserId);
+        pEvent->SetString("text", szText);
+        pEvent->SetBool("teamonly", bTeamOnly);
+        //pEvent->SetInt("priority", 1 );	// HLTV event priority, not transmitted
+        pGameEventManager->FireEvent(pEvent);
+        //pGameEventManager2->FreeEvent(pEvent); // Don't free it !!!
+    }
+}
+
+#endif
+
 
 void CBotrixPlugin::HudTextMessage( edict_t* pEntity, char */*szTitle*/, char *szMessage, Color colour, int level, int time )
 {

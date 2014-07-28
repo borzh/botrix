@@ -220,7 +220,7 @@ void CBotBorzh::Activated()
     m_cReachableAreas.resize( aAreas.size() );
 
     m_iCrossbow = CWeapons::GetIdFromWeaponName("weapon_crossbow");
-    DebugAssert( m_iCrossbow != EWeaponIdInvalid );
+    BASSERT( m_iCrossbow != EWeaponIdInvalid );
 
     m_bSaidHello = false;
 }
@@ -418,7 +418,7 @@ void CBotBorzh::ReceiveChatRequest( const CBotChat& cRequest )
         case EBorzhChatWeaponFound:
         {
             bool bIsCrossbow = (WEAPON == CModBorzh::iVarValueWeaponCrossbow);
-            DebugAssert( bIsCrossbow || (WEAPON == CModBorzh::iVarValueWeaponPhyscannon) );
+            BASSERT( bIsCrossbow || (WEAPON == CModBorzh::iVarValueWeaponPhyscannon) );
             if ( bIsCrossbow )
                 m_cPlayersWithCrossbow.set(cRequest.iSpeaker);
             else
@@ -471,7 +471,7 @@ void CBotBorzh::ReceiveChatRequest( const CBotChat& cRequest )
             {
                 const good::vector<CBoxInfo>& aBoxes = CModBorzh::GetBoxes();
                 good::vector<CBoxInfo>::const_iterator it = good::find(aBoxes, BOX);
-                DebugAssert( (it != aBoxes.end()) && (m_aPlayersAreas[cRequest.iSpeaker] == it->iArea) );
+                BASSERT( (it != aBoxes.end()) && (m_aPlayersAreas[cRequest.iSpeaker] == it->iArea) );
                 m_aBoxes.push_back(*it);
             }
             break;
@@ -485,7 +485,7 @@ void CBotBorzh::ReceiveChatRequest( const CBotChat& cRequest )
                 good::vector<CBoxInfo>::iterator it = good::find(m_aBoxes, BOX);
                 if ( it != m_aBoxes.end() )
                 {
-                    DebugAssert( it->iArea == m_aPlayersAreas[cRequest.iSpeaker] );
+                    BASSERT( it->iArea == m_aPlayersAreas[cRequest.iSpeaker] );
                     m_aBoxes.erase(it);
                 }
             }
@@ -671,7 +671,7 @@ void CBotBorzh::ReceiveChatRequest( const CBotChat& cRequest )
             break;
 
         case EBorzhChatDoorGo:
-            DebugAssert(false);
+            BASSERT(false);
             if ( DOOR == 0xFF || DOOR == -1  )
                 SwitchToSpeakTask(EBotChatError);
             else if ( cRequest.iDirectedTo == m_iIndex )
@@ -699,7 +699,7 @@ void CBotBorzh::ReceiveChatRequest( const CBotChat& cRequest )
             break;
 
         case EBorzhChatButtonGo:
-            DebugAssert(false);
+            BASSERT(false);
             break;
 
         case EBorzhChatAreaCantGo:
@@ -743,7 +743,7 @@ void CBotBorzh::Think()
 
     if ( !m_bNewTask && (m_cCurrentTask.iTask == EBorzhTaskInvalid) )
     {
-        DebugAssert( m_cTaskStack.size() == 0 );
+        BASSERT( m_cTaskStack.size() == 0 );
         if ( !CheckBigTask() )
         {
             CheckForNewTasks();
@@ -755,7 +755,7 @@ void CBotBorzh::Think()
     if ( m_bNewTask || m_bMoveFailure ) // Try again to go to waypoint in case of move failure.
         InitNewTask();
 
-    DebugAssert( !m_bNewTask );
+    BASSERT( !m_bNewTask );
 
     // Update current task.
     switch (m_cCurrentTask.iTask)
@@ -785,7 +785,7 @@ void CBotBorzh::Think()
             break;
 
         case EBorzhTaskWaitButton:
-            DebugAssert( m_cCurrentBigTask.iTask == EBorzhTaskButtonTryDoor );
+            BASSERT( m_cCurrentBigTask.iTask == EBorzhTaskButtonTryDoor );
             if ( IS_PUSHED() ) // We already pushed button.
             {
                 m_cCurrentTask.iTask = EBorzhTaskInvalid;
@@ -794,7 +794,7 @@ void CBotBorzh::Think()
             break;
 
         case EBorzhTaskWaitDoor:
-            DebugAssert( m_cCurrentBigTask.iTask == EBorzhTaskButtonTryDoor );
+            BASSERT( m_cCurrentBigTask.iTask == EBorzhTaskButtonTryDoor );
             if ( IS_ENDED() ) // Door/button configuration is tested.
                 m_cCurrentTask.iTask = EBorzhTaskInvalid;
             break;
@@ -826,7 +826,7 @@ void CBotBorzh::Think()
                         m_bUsedPlannerForButton = true;
                         break;
                     default:
-                        DebugAssert(false);
+                        BASSERT(false);
                     }*/
                     BigTaskFinish();
                     m_bNothingToDo = true;
@@ -965,7 +965,7 @@ void CBotBorzh::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntity
         }
         else
         {
-            //DebugAssert(false);
+            //BASSERT(false);
             return;
         }
         SwitchToSpeakTask(EBorzhChatWeaponFound, MAKE_WEAPON(iIdx));
@@ -1008,7 +1008,7 @@ void CBotBorzh::SetReachableAreas( const good::bitset& cOpenedDoors )
                         cToVisit.push_back(iNewArea);
                 }
                 else
-                    DebugAssert(false);
+                    BASSERT(false);
             }
         }
 
@@ -1054,7 +1054,7 @@ TWaypointId CBotBorzh::GetButtonWaypoint( TEntityIndex iButton, const good::bits
         else
             return EWaypointIdInvalid;
     }
-    DebugAssert( CWaypoints::IsValid(iWaypoint) );
+    BASSERT( CWaypoints::IsValid(iWaypoint) );
 
     TAreaId iArea = CWaypoints::Get(iWaypoint).iAreaId;
 
@@ -1077,16 +1077,16 @@ TWaypointId CBotBorzh::GetDoorWaypoint( TEntityIndex iDoor, const good::bitset& 
         return cReachableAreas.test(iArea1) ? iWaypoint1 : (cReachableAreas.test(iArea2) ? iWaypoint2 : EWaypointIdInvalid);
     }
     else
-        DebugAssert(false);
+        BASSERT(false);
     return false;
 }
 
 //----------------------------------------------------------------------------------------------------------------
 TPlayerIndex CBotBorzh::GetPlanStepPerformer()
 {
-    DebugAssert( IsUsingPlanner() );
+    BASSERT( IsUsingPlanner() );
     const CPlanner::CPlan* pPlan = CPlanner::GetPlan();
-    DebugAssert( pPlan );
+    BASSERT( pPlan );
 
     int iLastStep = m_iPlanStep - 1;
 
@@ -1172,7 +1172,7 @@ void CBotBorzh::DoorStatusCheck( TEntityIndex iDoor, bool bOpened, bool bNeedToP
 
     if ( !m_cSeenDoors.test(iDoor) ) // Bot sees door for the first time.
     {
-        DebugAssert( bSpoken || (m_cCurrentBigTask.iTask == EBorzhTaskExplore) ); // Should occur only when exploring new area.
+        BASSERT( bSpoken || (m_cCurrentBigTask.iTask == EBorzhTaskExplore) ); // Should occur only when exploring new area.
         m_cSeenDoors.set(iDoor);
         m_cOpenedDoors.set(iDoor, bOpened);
 
@@ -1236,7 +1236,7 @@ void CBotBorzh::DoorStatusDifferent( TEntityIndex iDoor, bool bOpened, bool bChe
     m_cOpenedDoors.set(iDoor, bOpened);
     if ( bCheckingDoors )
     {
-        DebugAssert( !m_cCheckedDoors.test(iDoor) ); // Door should not be checked already.
+        BASSERT( !m_cCheckedDoors.test(iDoor) ); // Door should not be checked already.
         m_cCheckedDoors.set(iDoor);
 
         // Button that we are checking opens iDoor.
@@ -1266,8 +1266,8 @@ void CBotBorzh::DoorStatusDifferent( TEntityIndex iDoor, bool bOpened, bool bChe
 //----------------------------------------------------------------------------------------------------------------
 void CBotBorzh::DoorClosedOnTheWay( TEntityIndex iDoor, bool bCheckingDoors, bool bSpoken )
 {
-    DebugAssert( !bSpoken );
-    DebugAssert( m_cOpenedDoors.test(iDoor) ); // Bot should think that this door was opened.
+    BASSERT( !bSpoken );
+    BASSERT( m_cOpenedDoors.test(iDoor) ); // Bot should think that this door was opened.
     m_cOpenedDoors.reset(iDoor); // Close the door.
 
     CancelTasksInStack();
@@ -1323,7 +1323,7 @@ void CBotBorzh::Start()
 bool CBotBorzh::CheckBigTask()
 {
     bool bHasTask = false;
-    DebugAssert( (m_cCurrentTask.iTask == EBorzhTaskInvalid) && (m_cTaskStack.size() == 0) );
+    BASSERT( (m_cCurrentTask.iTask == EBorzhTaskInvalid) && (m_cTaskStack.size() == 0) );
     switch ( m_cCurrentBigTask.iTask )
     {
         case EBorzhTaskExplore:
@@ -1331,7 +1331,7 @@ bool CBotBorzh::CheckBigTask()
             TAreaId iDestinationArea = m_cCurrentBigTask.iArgument;
 
             const good::vector<TWaypointId>& cWaypoints = CModBorzh::GetWaypointsForArea(iDestinationArea);
-            DebugAssert( cWaypoints.size() > 0 );
+            BASSERT( cWaypoints.size() > 0 );
 
             TWaypointId iWaypoint = EWaypointIdInvalid;
             int iIndex = rand() % cWaypoints.size();
@@ -1359,7 +1359,7 @@ bool CBotBorzh::CheckBigTask()
                 }
             }
 
-            DebugAssert( iWaypoint != iCurrentWaypoint );
+            BASSERT( iWaypoint != iCurrentWaypoint );
             if ( iWaypoint == EWaypointIdInvalid )
             {
                 m_cVisitedAreas.set(iDestinationArea);
@@ -1485,7 +1485,7 @@ bool CBotBorzh::CheckBigTask()
 //----------------------------------------------------------------------------------------------------------------
 bool CBotBorzh::CheckForNewTasks( TBorzhTask iProposedTask )
 {
-    DebugAssert( (iProposedTask == EBorzhTaskInvalid) || (m_cCurrentBigTask.iTask == EBorzhTaskInvalid) );
+    BASSERT( (iProposedTask == EBorzhTaskInvalid) || (m_cCurrentBigTask.iTask == EBorzhTaskInvalid) );
 
     // Check if all bots can pass to goal area. Bot should have been at least in goal area.
     if ( iProposedTask >= EBorzhTaskGoToGoal )
@@ -1704,7 +1704,7 @@ void CBotBorzh::InitNewTask()
             break;
 
         case EBorzhTaskWeaponSet:
-            DebugAssert ( m_aWeapons[m_cCurrentTask.iArgument].IsPresent() );
+            BASSERT ( m_aWeapons[m_cCurrentTask.iArgument].IsPresent() );
             if ( m_iWeapon != m_cCurrentTask.iArgument )
             {
                 BotMessage( "%s -> Will holster %s", GetName(), m_aWeapons[m_cCurrentTask.iArgument].GetName().c_str() );
@@ -1718,7 +1718,7 @@ void CBotBorzh::InitNewTask()
         case EBorzhTaskWeaponZoom:
         case EBorzhTaskWeaponRemoveZoom:
             BotMessage("%s -> Will toggle zoom, zooming: %s", GetName(), m_aWeapons[m_iCrossbow].IsUsingZoom() ? "yes" : "no");
-            DebugAssert( m_aWeapons[m_iCrossbow].IsUsingZoom() == (m_cCurrentTask.iTask == EBorzhTaskWeaponRemoveZoom) );
+            BASSERT( m_aWeapons[m_iCrossbow].IsUsingZoom() == (m_cCurrentTask.iTask == EBorzhTaskWeaponRemoveZoom) );
             ToggleZoom();
             Wait( m_aWeapons[m_iCrossbow].GetBaseWeapon()->fShotTime[1]*1000 + 500 ); // Wait for zoom.
             break;
@@ -1741,7 +1741,7 @@ void CBotBorzh::InitNewTask()
                 if ( itBox != m_aBoxes.end() ) // No box in current area.
                     m_aBoxes.erase(itBox);
                 else
-                    DebugAssert(false);
+                    BASSERT(false);
             }
             m_fEndWaitTime = CBotrixPlugin::fTime + 1.0f;
             break;
@@ -1817,7 +1817,7 @@ void CBotBorzh::CheckCarryingBox()
 
             // Add box info, so bot will not speak about this box.
             CBoxInfo cBoxInfo(m_iBox, iBoxWaypoint, iBoxArea);
-            DebugAssert( good::find(m_aBoxes, cBoxInfo) == m_aBoxes.end() );
+            BASSERT( good::find(m_aBoxes, cBoxInfo) == m_aBoxes.end() );
             m_aBoxes.push_back( cBoxInfo );
         }
         else
@@ -1828,7 +1828,7 @@ void CBotBorzh::CheckCarryingBox()
 //----------------------------------------------------------------------------------------------------------------
 bool CBotBorzh::CheckBoxForAreas()
 {
-    DebugAssert( m_cCurrentBigTask.iTask == EBorzhTaskBringBox );
+    BASSERT( m_cCurrentBigTask.iTask == EBorzhTaskBringBox );
 
     // TODO: increment after doing all this.
     TAreaId iArea = GET_AREA(m_cCurrentBigTask.iArgument)+1;
@@ -1840,7 +1840,7 @@ bool CBotBorzh::CheckBoxForAreas()
         {
             const CWall& cWall = aWalls[iWall];
             TAreaId iLowerArea = CWaypoints::Get(cWall.iLowerWaypoint).iAreaId;
-            DebugAssert( iArea == iLowerArea );
+            BASSERT( iArea == iLowerArea );
             TAreaId iHigherArea = CWaypoints::Get(cWall.iHigherWaypoint).iAreaId;
             if ( m_cVisitedAreas.test(iLowerArea) && !m_cVisitedAreas.test(iHigherArea) &&
                  (GetBoxInArea(iArea) == m_aBoxes.end()) ) // No box in this area.
@@ -1866,7 +1866,7 @@ bool CBotBorzh::CheckBoxForAreas()
 //----------------------------------------------------------------------------------------------------------------
 bool CBotBorzh::CheckButtonDoorConfigurations()
 {
-    DebugAssert( m_cCurrentTask.iTask == EBorzhTaskInvalid );
+    BASSERT( m_cCurrentTask.iTask == EBorzhTaskInvalid );
 
     TEntityIndex iButton = GET_BUTTON(m_cCurrentBigTask.iArgument);
     TEntityIndex iDoor = GET_DOOR(m_cCurrentBigTask.iArgument);
@@ -1997,7 +1997,7 @@ void CBotBorzh::PushPressButtonTask( TEntityIndex iButton )
     bool bShoot = (iWaypoint == EWaypointIdInvalid);
 
     // If it is shoot button, check that bot has crossbow.
-    DebugAssert( !bShoot || m_cPlayersWithCrossbow.test(m_iIndex) );
+    BASSERT( !bShoot || m_cPlayersWithCrossbow.test(m_iIndex) );
 
     // Push/shoot button.
     if ( bShoot )
@@ -2039,7 +2039,7 @@ void CBotBorzh::PushPressButtonTask( TEntityIndex iButton )
     // Go to button waypoint.
     if ( bShoot )
         iWaypoint = CModBorzh::GetWaypointToShootButton(iButton);
-    DebugAssert( iWaypoint != EWaypointIdInvalid );
+    BASSERT( iWaypoint != EWaypointIdInvalid );
 
     m_cTaskStack.push_back( CBorzhTask(EBorzhTaskMove, iWaypoint) );
     m_cCurrentTask.iTask = EBorzhTaskInvalid;
@@ -2057,7 +2057,7 @@ void CBotBorzh::PushCheckButtonTask( TEntityIndex iButton, TEntityIndex iDoor )
     SET_DOOR(iDoor, m_cCurrentBigTask.iArgument);
     SET_PLAYER(m_iIndex, m_cCurrentBigTask.iArgument);
 
-    //DebugAssert( m_cCurrentProposedTask.iTask == EBorzhTaskInvalid );
+    //BASSERT( m_cCurrentProposedTask.iTask == EBorzhTaskInvalid );
     m_cCurrentProposedTask = m_cCurrentBigTask;
 
     PushPressButtonTask(iButton);
@@ -2070,7 +2070,7 @@ void CBotBorzh::PerformActionCarryBox( TEntityIndex iBox )
     TAreaId iCurrentArea = m_aPlayersAreas[m_iIndex];
     const good::vector<CBoxInfo>& aBoxes = CModBorzh::GetBoxes();
     good::vector<CBoxInfo>::const_iterator it = good::find(aBoxes, iBox);
-    DebugAssert( it != aBoxes.end() );
+    BASSERT( it != aBoxes.end() );
 
     if ( good::find(m_aBoxes, *it) == m_aBoxes.end() )
         m_aBoxes.push_back(*it);
@@ -2084,7 +2084,7 @@ void CBotBorzh::PerformActionCarryBox( TEntityIndex iBox )
             if ( it->iArea == CWaypoints::Get(itFall->iLowerWaypoint).iAreaId )
                 break;
 
-        DebugAssert( itFall != cFalls.end() );
+        BASSERT( itFall != cFalls.end() );
         iWaypoint = itFall->iHigherWaypoint;
     }
     PushGrabBoxTask(iBox, iWaypoint);
@@ -2093,7 +2093,7 @@ void CBotBorzh::PerformActionCarryBox( TEntityIndex iBox )
 //----------------------------------------------------------------------------------------------------------------
 void CBotBorzh::PerformActionDropBox( TEntityIndex iBox )
 {
-    DebugAssert( m_bCarryingBox );
+    BASSERT( m_bCarryingBox );
     const good::vector<CWall>& cWalls = CModBorzh::GetWallsForArea(m_aPlayersAreas[m_iIndex]);
     TWaypointId iWaypoint = ( cWalls.size() > 0 ) ? cWalls[0].iLowerWaypoint : CModBorzh::GetRandomAreaWaypoint(m_aPlayersAreas[m_iIndex]);
 
@@ -2103,8 +2103,8 @@ void CBotBorzh::PerformActionDropBox( TEntityIndex iBox )
 //----------------------------------------------------------------------------------------------------------------
 void CBotBorzh::PushGrabBoxTask( TEntityIndex iBox, TWaypointId iBoxWaypoint, bool bSpeak )
 {
-    DebugAssert( m_aWeapons[m_iPhyscannon].IsPresent() && iBox != EEntityIndexInvalid );
-    DebugAssert( m_cCurrentTask.iTask == EBorzhTaskInvalid );
+    BASSERT( m_aWeapons[m_iPhyscannon].IsPresent() && iBox != EEntityIndexInvalid );
+    BASSERT( m_cCurrentTask.iTask == EBorzhTaskInvalid );
     BotMessage("%s -> PushGrabBoxTask(): box %d, to %d", GetName(), iBox, iBoxWaypoint);
 
     m_cTaskStack.push_back( CBorzhTask(EBorzhTaskCarryBox, iBox) );
@@ -2123,8 +2123,8 @@ void CBotBorzh::PushGrabBoxTask( TEntityIndex iBox, TWaypointId iBoxWaypoint, bo
 //----------------------------------------------------------------------------------------------------------------
 void CBotBorzh::PushDropBoxTask( TEntityIndex iBox, TWaypointId iWhere )
 {
-    DebugAssert( iBox != EEntityIndexInvalid && iWhere != EWaypointIdInvalid );
-    DebugAssert( m_cCurrentTask.iTask == EBorzhTaskInvalid );
+    BASSERT( iBox != EEntityIndexInvalid && iWhere != EWaypointIdInvalid );
+    BASSERT( m_cCurrentTask.iTask == EBorzhTaskInvalid );
     BotMessage("%s -> PushDropBoxTask(): box %d, to %d", GetName(), iBox, iWhere);
 
     m_cTaskStack.push_back( CBorzhTask(EBorzhTaskDropBox, iBox) );
@@ -2148,11 +2148,11 @@ void CBotBorzh::PushDropBoxTask( TEntityIndex iBox, TWaypointId iWhere )
 //----------------------------------------------------------------------------------------------------------------
 void CBotBorzh::DropBox()
 {
-    DebugAssert( m_bCarryingBox && (m_iWeapon == m_iPhyscannon) );
+    BASSERT( m_bCarryingBox && (m_iWeapon == m_iPhyscannon) );
     BotMessage("%s -> Will drop box %d", GetName(), m_cCurrentTask.iArgument);
     Shoot(true);
     //TWaypointId iBoxWaypoint = CWaypoints::GetNearestWaypoint( CItems::GetItems(EEntityTypeObject)[m_iBox].CurrentPosition() );
-    //DebugAssert( iBoxWaypoint != EWaypointIdInvalid );
+    //BASSERT( iBoxWaypoint != EWaypointIdInvalid );
     //m_aBoxes.push_back( CBoxInfo(m_iBox, iBoxWaypoint, CWaypoints::Get(iBoxWaypoint).iAreaId) );
     m_aBoxes.push_back( CBoxInfo(m_iBox, iCurrentWaypoint, CWaypoints::Get(iCurrentWaypoint).iAreaId) );
 
@@ -2163,7 +2163,7 @@ void CBotBorzh::DropBox()
 //----------------------------------------------------------------------------------------------------------------
 void CBotBorzh::CheckAcceptedPlayersForCollaborativeTask()
 {
-    DebugAssert( IsCollaborativeTask() );
+    BASSERT( IsCollaborativeTask() );
     if ( m_cAcceptedPlayers.count() == m_cCollaborativePlayers.count() )
     {
         SET_ACCEPTED(); // Start executing plan or press button.
@@ -2174,7 +2174,7 @@ void CBotBorzh::CheckAcceptedPlayersForCollaborativeTask()
 //----------------------------------------------------------------------------------------------------------------
 void CBotBorzh::OfferCollaborativeTask( int iArgument ) // TODO: OfferCollaborativeTask()
 {
-    DebugAssert( IsCollaborativeTask() );
+    BASSERT( IsCollaborativeTask() );
 
     m_cAcceptedPlayers.reset();
     m_cAcceptedPlayers.set(m_iIndex);
@@ -2208,14 +2208,14 @@ void CBotBorzh::OfferCollaborativeTask( int iArgument ) // TODO: OfferCollaborat
             break;
 
         default:
-            DebugAssert(false);
+            BASSERT(false);
     }
 }
 
 //----------------------------------------------------------------------------------------------------------------
 void CBotBorzh::ReceiveTaskOffer( TBorzhTask iProposedTask, int iButtonOrArea, int iDoor, TPlayerIndex iSpeaker )
 {
-    DebugAssert( iProposedTask == EBorzhTaskBringBox || iProposedTask == EBorzhTaskButtonTryDoor || iProposedTask == EBorzhTaskGoToGoal );
+    BASSERT( iProposedTask == EBorzhTaskBringBox || iProposedTask == EBorzhTaskButtonTryDoor || iProposedTask == EBorzhTaskGoToGoal );
 
     if ( (iProposedTask == EBorzhTaskButtonTryDoor) && (iDoor != EEntityIndexInvalid) && (iDoor != 0xFF) )
     {
@@ -2309,7 +2309,7 @@ void CBotBorzh::ReceiveTaskOffer( TBorzhTask iProposedTask, int iButtonOrArea, i
                 break;
 
             default:
-                DebugAssert(false);
+                BASSERT(false);
         }
 
         // Say ok.
@@ -2338,7 +2338,7 @@ void CBotBorzh::ButtonPushed( TEntityIndex iButton )
 
     if ( (m_cCurrentBigTask.iTask == EBorzhTaskButtonTryDoor) && (GET_BUTTON(m_cCurrentBigTask.iArgument) == iButton) )
     {
-        DebugAssert( !IS_PUSHED() );
+        BASSERT( !IS_PUSHED() );
         SET_PUSHED(); // Save that button was pushed.
     }
 
@@ -2361,7 +2361,7 @@ void CBotBorzh::ButtonPushed( TEntityIndex iButton )
 //----------------------------------------------------------------------------------------------------------------
 bool CBotBorzh::IsPlanPerformed()
 {
-    DebugAssert( IsCollaborativeTask() );
+    BASSERT( IsCollaborativeTask() );
     switch ( m_cCurrentBigTask.iTask )
     {
         case EBorzhTaskButtonTryDoor:
@@ -2372,7 +2372,7 @@ bool CBotBorzh::IsPlanPerformed()
             TWaypointId iButtonWaypoint = CItems::GetItems(EEntityTypeButton)[iButton].iWaypoint;
             if ( iButtonWaypoint == EWaypointIdInvalid ) // Button is for shoot.
                 iButtonWaypoint = CModBorzh::GetWaypointToShootButton(iButton);
-            DebugAssert( CWaypoints::IsValid(iButtonWaypoint) );
+            BASSERT( CWaypoints::IsValid(iButtonWaypoint) );
 
             TAreaId iButtonArea = CWaypoints::Get(iButtonWaypoint).iAreaId;
             TAreaId iDoorArea1 = EAreaIdInvalid;
@@ -2409,7 +2409,7 @@ bool CBotBorzh::IsPlanPerformed()
             return false;
 
         default:
-            DebugAssert(false);
+            BASSERT(false);
     }
     return true;
 }
@@ -2417,10 +2417,10 @@ bool CBotBorzh::IsPlanPerformed()
 //----------------------------------------------------------------------------------------------------------------
 bool CBotBorzh::PlanStepNext()
 {
-    DebugAssert( !CPlanner::IsRunning() );
+    BASSERT( !CPlanner::IsRunning() );
     int iStep = m_iPlanStep++;
     const CPlanner::CPlan* pPlan = CPlanner::GetPlan();
-    DebugAssert( pPlan && iStep <= pPlan->size() );
+    BASSERT( pPlan && iStep <= pPlan->size() );
     if ( iStep == pPlan->size() )
     {
         // All plan steps performed, end big task.
@@ -2464,7 +2464,7 @@ void CBotBorzh::PlanStepExecute( const CAction& cAction )
         case EBotActionShootButton:
         {
             bool bShoot = (CItems::GetItems(EEntityTypeButton)[cAction.iArgument].iWaypoint == EWaypointIdInvalid);
-            DebugAssert( bShoot || (cAction.iAction == EBotActionPushButton) );
+            BASSERT( bShoot || (cAction.iAction == EBotActionPushButton) );
             if ( cAction.iExecutioner == m_iIndex )
             {
                 PushPressButtonTask(cAction.iArgument);
@@ -2505,7 +2505,7 @@ void CBotBorzh::PlanStepExecute( const CAction& cAction )
         case EBotActionClimbBox:
         {
             const good::vector<CWall>& cWalls = CModBorzh::GetWallsForArea(m_aPlayersAreas[m_iIndex]);
-            DebugAssert( cWalls.size() > 0 );
+            BASSERT( cWalls.size() > 0 );
             if ( cAction.iExecutioner == m_iIndex )
                 m_cTaskStack.push_back( CBorzhTask(EBorzhTaskMove, cWalls[0].iHigherWaypoint) );
             else
@@ -2518,7 +2518,7 @@ void CBotBorzh::PlanStepExecute( const CAction& cAction )
         }
 
         default:
-            DebugAssert(false);
+            BASSERT(false);
     }
 }
 
@@ -2536,13 +2536,13 @@ void CBotBorzh::PlanStepLast()
         const CEntity& cButton = CItems::GetItems(EEntityTypeButton)[iButton];
         bool bShoot = !CWaypoints::IsValid(cButton.iWaypoint);
         TWaypointId iWaypointButton = bShoot ? CModBorzh::GetWaypointToShootButton(iButton) : cButton.iWaypoint;
-        DebugAssert( CWaypoints::IsValid(iWaypointButton) );
+        BASSERT( CWaypoints::IsValid(iWaypointButton) );
         TAreaId iAreaButton = CWaypoints::Get(iWaypointButton).iAreaId;
 
         const CEntity& cDoor = CItems::GetItems(EEntityTypeDoor)[iDoor];
         TWaypointId iWaypointDoor1 = cDoor.iWaypoint;
         TWaypointId iWaypointDoor2 = (TWaypointId)cDoor.pArguments;
-        DebugAssert( CWaypoints::IsValid(iWaypointDoor1) && CWaypoints::IsValid(iWaypointDoor2) );
+        BASSERT( CWaypoints::IsValid(iWaypointDoor1) && CWaypoints::IsValid(iWaypointDoor2) );
         TAreaId iAreaDoor1 = CWaypoints::Get(iWaypointDoor1).iAreaId;
         TAreaId iAreaDoor2 = CWaypoints::Get(iWaypointDoor2).iAreaId;
 
@@ -2561,7 +2561,7 @@ void CBotBorzh::PlanStepLast()
             }
         }
 
-        DebugAssert( (iButtonPlayer != EPlayerIndexInvalid) && (iDoorPlayer != EPlayerIndexInvalid) );
+        BASSERT( (iButtonPlayer != EPlayerIndexInvalid) && (iDoorPlayer != EPlayerIndexInvalid) );
 
         // Press button or say to another player to do it. After this or another player goes to the door.
         if ( iButtonPlayer == m_iIndex )
@@ -2593,16 +2593,16 @@ void CBotBorzh::PlanStepLast()
     }
     else
     {
-        DebugAssert(EBorzhTaskGoToGoal);
+        BASSERT(EBorzhTaskGoToGoal);
         // GOAL IS REACHED!!!
-        DebugAssert(false);
+        BASSERT(false);
     }
 }
 
 //----------------------------------------------------------------------------------------------------------------
 void CBotBorzh::UnexpectedChatForCollaborativeTask( TPlayerIndex iSpeaker, bool bWaitForThisPlayer )
 {
-    DebugAssert( IsCollaborativeTask() && m_cCollaborativePlayers.test(iSpeaker) );
+    BASSERT( IsCollaborativeTask() && m_cCollaborativePlayers.test(iSpeaker) );
     if ( IS_ASKED_FOR_HELP() )
     {
         if ( !IS_ACCEPTED() || !IS_USING_PLANNER() || (GetPlanStepPerformer() == iSpeaker) )
@@ -2615,7 +2615,7 @@ void CBotBorzh::UnexpectedChatForCollaborativeTask( TPlayerIndex iSpeaker, bool 
 //----------------------------------------------------------------------------------------------------------------
 void CBotBorzh::CancelCollaborativeTask( TPlayerIndex iWaitForPlayer )
 {
-    DebugAssert( IsCollaborativeTask() );
+    BASSERT( IsCollaborativeTask() );
 
     // It is collaborative task, cancel it and wait until player is free.
     CancelTasksInStack();
@@ -2673,7 +2673,7 @@ void CBotBorzh::CheckGoalReached( TPlayerIndex iSpeaker )
                 break;
 
             default:
-                DebugAssert(false);
+                BASSERT(false);
         }
     }
 }
@@ -2730,7 +2730,7 @@ void CBotBorzh::CheckIfSeeBox()
         else if ( (itRealBox == aBoxes.end()) && (itBeliefBox != m_aBoxes.end()) ) // Box changed it's position.
         {
             good::vector<CBoxInfo>::const_iterator it = good::find(aBoxes, *itBeliefBox);
-            DebugAssert( it != aBoxes.end() );
+            BASSERT( it != aBoxes.end() );
             if ( it->iArea != itBeliefBox->iArea )
             {
                 // Remove box.
@@ -2742,7 +2742,7 @@ void CBotBorzh::CheckIfSeeBox()
         }
         else
         {
-            DebugAssert( itBeliefBox->iBox == itRealBox->iBox );
+            BASSERT( itBeliefBox->iBox == itRealBox->iBox );
         }
     }
 }

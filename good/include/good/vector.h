@@ -480,6 +480,8 @@ namespace good
         size_type m_iSize;        // Used size.
     };
 
+
 } // namespace good
+
 
 #endif // __GOOD_VECTOR_H__

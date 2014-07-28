@@ -188,7 +188,7 @@ bool CWaypoints::Save()
     }
 
     int iAreaNamesSize = m_cAreas.size() - 1;
-    DebugAssert( iAreaNamesSize >= 0, iAreaNamesSize=0 );
+    BASSERT( iAreaNamesSize >= 0, iAreaNamesSize=0 );
 
     fwrite(&iAreaNamesSize, sizeof(int), 1, f); // Save area names size.
 
@@ -215,29 +215,29 @@ bool CWaypoints::Load()
     FILE *f = CUtil::OpenFile(sFileName, "rb");
     if ( f == NULL )
     {
-        CUtil::Message(NULL, "No waypoints for map %s", CBotrixPlugin::instance->sMapName.c_str());
+        BLOG_W("No waypoints for map %s", CBotrixPlugin::instance->sMapName.c_str());
         return false;
     }
 
     struct waypoint_header header;
     int iRead = fread(&header, 1, sizeof(struct waypoint_header), f);
-    DebugAssert(iRead == sizeof(struct waypoint_header), Clear();fclose(f);return false);
+    BASSERT(iRead == sizeof(struct waypoint_header), Clear();fclose(f);return false);
 
     if (*((int*)&WAYPOINT_FILE_HEADER_ID[0]) != header.szFileType)
     {
-        CUtil::Message(NULL, "Error loading waypoints: invalid file.");
+        BLOG_E("Error loading waypoints: invalid file.");
         fclose(f);
         return false;
     }
     if ( (header.iVersion <= 0) || (header.iVersion > WAYPOINT_VERSION) )
     {
-        CUtil::Message(NULL, "Error loading waypoints: version mismatch.");
+        BLOG_E("Error loading waypoints: version mismatch.");
         fclose(f);
         return false;
     }
     if (CBotrixPlugin::instance->sMapName != header.szMapName)
     {
-        CUtil::Message(NULL, "Error loading waypoints: map name mismatch.s");
+        BLOG_E("Error loading waypoints: map name mismatch.s");
         fclose(f);
         return false;
     }
@@ -252,18 +252,18 @@ bool CWaypoints::Load()
     for ( TWaypointId i = 0; i < header.iNumWaypoints; ++i )
     {
         iRead = fread(&vOrigin, 1, sizeof(Vector), f);
-        DebugAssert(iRead == sizeof(Vector), Clear();fclose(f);return false);
+        BASSERT(iRead == sizeof(Vector), Clear();fclose(f);return false);
 
         iRead = fread(&iFlags, 1, sizeof(TWaypointFlags), f);
-        DebugAssert(iRead == sizeof(TWaypointFlags), Clear();fclose(f);return false);
+        BASSERT(iRead == sizeof(TWaypointFlags), Clear();fclose(f);return false);
 
         iRead = fread(&iAreaId, 1, sizeof(TAreaId), f);
-        DebugAssert(iRead == sizeof(TAreaId), Clear();fclose(f);return false);
+        BASSERT(iRead == sizeof(TAreaId), Clear();fclose(f);return false);
         if ( FLAG_CLEARED(WAYPOINT_FILE_FLAG_AREAS, header.iFlags) )
             iAreaId = 0;
 
         iRead = fread(&iArgument, 1, sizeof(int), f);
-        DebugAssert(iRead == sizeof(int), Clear();fclose(f);return false);
+        BASSERT(iRead == sizeof(int), Clear();fclose(f);return false);
 
         Add(vOrigin, iFlags, iArgument, iAreaId);
     }
@@ -278,20 +278,20 @@ bool CWaypoints::Load()
         WaypointGraph::node_it from = m_cGraph.begin() + i;
 
         iRead = fread(&iNumPaths, 1, sizeof(int), f);
-        DebugAssert( (iRead == sizeof(int)) && (0 <= iNumPaths) && (iNumPaths < header.iNumWaypoints), Clear();fclose(f);return false );
+        BASSERT( (iRead == sizeof(int)) && (0 <= iNumPaths) && (iNumPaths < header.iNumWaypoints), Clear();fclose(f);return false );
 
         m_cGraph[i].neighbours.reserve(iNumPaths);
 
         for ( int n = 0; n < iNumPaths; n ++ )
         {
             iRead = fread(&iPathTo, 1, sizeof(int), f);
-            DebugAssert( (iRead == sizeof(int)) && (0 <= iPathTo) && (iPathTo < header.iNumWaypoints), Clear();fclose(f);return false );
+            BASSERT( (iRead == sizeof(int)) && (0 <= iPathTo) && (iPathTo < header.iNumWaypoints), Clear();fclose(f);return false );
 
             iRead = fread(&iPathFlags, 1, sizeof(TPathFlags), f);
-            DebugAssert( iRead == sizeof(TPathFlags), Clear();fclose(f);return false );
+            BASSERT( iRead == sizeof(TPathFlags), Clear();fclose(f);return false );
 
             iRead = fread(&iPathArgument, 1, sizeof(unsigned short), f);
-            DebugAssert( iRead == sizeof(unsigned short), Clear();fclose(f);return false );
+            BASSERT( iRead == sizeof(unsigned short), Clear();fclose(f);return false );
 
             WaypointGraph::node_it to = m_cGraph.begin() + iPathTo;
             m_cGraph.add_arc( from, to, CWaypointPath(from->vertex.vOrigin.DistTo(to->vertex.vOrigin), iPathFlags, iPathArgument) );
@@ -303,7 +303,7 @@ bool CWaypoints::Load()
     {
         // Read area names.
         iRead = fread(&iAreaNamesSize, 1, sizeof(int), f);
-        DebugAssert( iRead == sizeof(unsigned short), Clear();fclose(f);return false);
+        BASSERT( iRead == sizeof(unsigned short), Clear();fclose(f);return false);
         BreakDebuggerIf( (iAreaNamesSize < 0) || (iAreaNamesSize > header.iNumWaypoints) );
 
         m_cAreas.reserve(iAreaNamesSize + 1);
@@ -313,13 +313,13 @@ bool CWaypoints::Load()
         {
             int iStrSize;
             iRead = fread(&iStrSize, 1, sizeof(int), f);
-            DebugAssert(iRead == sizeof(int), Clear();fclose(f);return false);
+            BASSERT(iRead == sizeof(int), Clear();fclose(f);return false);
 
-            DebugAssert(0 < iStrSize && iStrSize < iMainBufferSize, Clear(); return false);
+            BASSERT(0 < iStrSize && iStrSize < iMainBufferSize, Clear(); return false);
             if (iStrSize > 0)
             {
                 iRead = fread(szMainBuffer, 1, iStrSize+1, f); // Read also trailing 0.
-                DebugAssert(iRead == iStrSize+1, Clear();fclose(f);return false);
+                BASSERT(iRead == iStrSize+1, Clear();fclose(f);return false);
 
                 good::string sArea(szMainBuffer, true, true, iStrSize);
                 m_cAreas.push_back(sArea);
@@ -347,7 +347,7 @@ bool CWaypoints::Load()
         bHasVisibility = m_pVisibilityTable->ReadFromFile();
     }
     else
-        CUtil::Message("No waypoint visibility in file");
+        BULOG_I("No waypoint visibility in file");
 */
     fclose(f);
 
@@ -423,7 +423,7 @@ bool CWaypoints::RemovePath( TWaypointId iFrom, TWaypointId iTo )
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoints::CreatePathsWithAutoFlags( TWaypointId iWaypoint1, TWaypointId iWaypoint2, bool bIsCrouched )
 {
-    DebugAssert( CWaypoints::IsValid(iWaypoint1) && CWaypoints::IsValid(iWaypoint2), return );
+    BASSERT( CWaypoints::IsValid(iWaypoint1) && CWaypoints::IsValid(iWaypoint2), return );
 
     WaypointNode& w1 = m_cGraph[iWaypoint1];
     WaypointNode& w2 = m_cGraph[iWaypoint2];
@@ -488,7 +488,7 @@ void CWaypoints::CreateAutoPaths( TWaypointId id, bool bIsCrouched )
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoints::RemoveLocation( TWaypointId id )
 {
-    DebugAssert( CWaypoint::IsValid(id), return );
+    BASSERT( CWaypoint::IsValid(id), return );
 
     // Shift waypoints indexes, all waypoints with index > id.
     for (int x=0; x<BUCKETS_SIZE_X; ++x)
@@ -693,7 +693,7 @@ void CWaypoints::GetPathColor( TPathFlags iFlags, unsigned char& r, unsigned cha
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoints::DrawWaypointPaths( TWaypointId id, TPathDrawFlags iPathDrawFlags )
 {
-    DebugAssert( iPathDrawFlags != FPathDrawNone, return );
+    BASSERT( iPathDrawFlags != FPathDrawNone, return );
 
     WaypointNode& w = m_cGraph[id];
 

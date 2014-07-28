@@ -15,8 +15,8 @@
 
 // Disable obsolete warnings.
 #ifdef _WIN32
-#   pragma warning(push)
-#   pragma warning(disable: 4996)
+    #pragma warning(push)
+    #pragma warning(disable: 4996)
 #endif
 
 
@@ -341,12 +341,12 @@ namespace good
 
     typedef good::base_string_buffer<char> string_buffer;
 
+
 } // namespace good
 
 
 #ifdef _WIN32
-#   pragma warning(pop) // Restore warnings.
+    #pragma warning(pop) // Restore warnings.
 #endif
-
 
 #endif // __GOOD_STRING_BUFFER_H__

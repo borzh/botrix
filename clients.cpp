@@ -1,6 +1,7 @@
 #include "clients.h"
 #include "config.h"
 #include "item.h"
+#include "type2string.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -11,18 +12,20 @@ void CClient::Activated()
 {
     CPlayer::Activated();
 
-    DebugAssert(m_pPlayerInfo, CPlayers::KickBot(this));
+    BASSERT(m_pPlayerInfo, exit(1));
     m_sSteamId = m_pPlayerInfo->GetNetworkIDString();
 
     if ( m_sSteamId.size() )
     {
-        // TODO: check if works on dedicated server.
         TCommandAccessFlags iAccess = CConfiguration::ClientAccessLevel(m_sSteamId);
-        if (iAccess) // Founded.
+        if ( iAccess ) // Founded.
             iCommandAccessFlags = iAccess;
     }
     else
         iCommandAccessFlags = 0;
+
+    BLOG_I( "User connected %s (steam id %s), access: %s.", GetName(), m_sSteamId.c_str(),
+            CTypeToString::AccessFlagsToString(iCommandAccessFlags).c_str() );
 
     iWaypointDrawFlags = FWaypointDrawNone;
     iPathDrawFlags = FPathDrawNone;

@@ -40,10 +40,10 @@ public:
     static bool IsLocked() { return m_bLocked; }
 
     /// Lock the planner. Lock it while you are using planner and GetPlan() result.
-    static void Lock( const CBotBorzh* pBot ) { DebugAssert( !m_bLocked ); m_bLocked = true; m_pBot = pBot; }
+    static void Lock( const CBotBorzh* pBot ) { BASSERT( !m_bLocked ); m_bLocked = true; m_pBot = pBot; }
 
     /// Unlock the planner.
-    static void Unlock( const CBotBorzh* m_pBot ) { DebugAssert( m_bLocked && (m_pBot == m_pBot) ); m_bLocked = false; }
+    static void Unlock( const CBotBorzh* m_pBot ) { BASSERT( m_bLocked && (m_pBot == m_pBot) ); m_bLocked = false; }
 
     /// Return true if planner is currently running.
     static bool IsRunning();

@@ -113,6 +113,8 @@ namespace good
         Less m_cLess;             // Comparator functor.
     };
 
+
 } // namespace good
+
 
 #endif // __GOOD_PRIORITY_QUEUE_H__

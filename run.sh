@@ -29,6 +29,7 @@ fi
 
 # Steam is i386 (32bit).
 STEAM_RUNTIME="$STEAM_DIR/ubuntu12_32/steam-runtime"
+
 export LD_LIBRARY_PATH="$GAME_DIR/bin:$MOD_DIR/bin:$STEAM_RUNTIME/i386/lib/i386-linux-gnu:$STEAM_RUNTIME/i386/lib:$STEAM_RUNTIME/i386/usr/lib/i386-linux-gnu:$STEAM_RUNTIME/i386/usr/lib:$STEAM_RUNTIME/amd64/lib/x86_64-linux-gnu:$STEAM_RUNTIME/amd64/lib:$STEAM_RUNTIME/amd64/usr/lib/x86_64-linux-gnu:$STEAM_RUNTIME/amd64/usr/lib:$LD_LIBRARY_PATH"
 
 # Prepare for launch: copy addons, libbotrix.so and botrix.cfg.

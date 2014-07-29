@@ -45,9 +45,9 @@ namespace good
     {
     public:
 
-        typedef Char value_type;      ///< Typedef for char type.
-        typedef int size_type;        ///< Typedef for string size.
-        static const int npos = -1;   ///< Invalid position in string.
+        typedef Char value_type;              ///< Typedef for char type.
+        typedef int size_type;                ///< Typedef for string size.
+        static const int npos = MAX_INT32>>1; ///< Invalid position in string.
 
         //--------------------------------------------------------------------------------------------------------
         /// Default constructor.
@@ -123,12 +123,12 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get length of this string.
         //--------------------------------------------------------------------------------------------------------
-        int length() const { return m_iSize; }
+        size_type length() const { return m_iSize; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Get length of this string.
         //--------------------------------------------------------------------------------------------------------
-        int size() const { return m_iSize; }
+        size_type size() const { return m_iSize; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Get 0-terminating string.
@@ -359,7 +359,7 @@ namespace good
         base_string substr( int iFrom, int iSize = npos, bool bAlloc = true ) const
         {
             int maxSize = m_iSize - iFrom;
-            if ( iSize < 0 )
+            if ( iSize + iFrom > length() )
                 iSize = maxSize;
 
             DebugAssert( iFrom + iSize <= m_iSize );

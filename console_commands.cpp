@@ -215,8 +215,6 @@ void CConsoleCommandContainer::PrintCommand( edict_t* pPrintTo, int indent )
 
     for ( size_t i = 0; i < m_commands.size(); i ++ )
         m_commands[i]->PrintCommand( pPrintTo, indent+1 );
-
-    BULOG_I( pPrintTo, "\n" );
 }
 
 

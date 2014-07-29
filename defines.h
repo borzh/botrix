@@ -1,7 +1,6 @@
 #ifndef __BOTRIX_DEFINES_H__
 #define __BOTRIX_DEFINES_H__
 
-
 #include <good/log.h>
 
 #include "source_engine.h"

@@ -52,14 +52,13 @@ add_subdirectory ( good )
 # Defines. Don't put comments between them :).
 # Not used: -DDONT_USE_VALVE_FUNCTIONS -DBOTRIX_SHOW_PERFORMANCE
 add_definitions(
+    -DGOOD_INI_ONE_KV_SEPARATOR
+    -DGOOD_INI_ONE_COMMENT_CHAR
     -DGOOD_LOG_FLUSH
     -DGOOD_LOG_USE_ENDL
     -DBOTRIX_SOURCE_2013
     -DBOTRIX_HL2DM_MOD
     -DBETA_VERSION
-    -DGOOD_LOG_USE_ENDL
-    -DINI_FILE_ONE_KV_SEPARATOR
-    -DINI_FILE_ONE_COMMENT_CHAR
     -DLINUX=1
     -D_LINUX=1
     -DPOSIX=1
@@ -140,7 +139,7 @@ add_custom_command(
     COMMAND cp -r "${RUNTIME_PATH}/*" "${SDK_2013_MOD_PATH}/"
     COMMAND cp -r "${BOTRIX_CONFIG_PATH}" "${SDK_2013_MOD_PATH}/../../"
     COMMAND cp "${BOTRIX_LIB_PATH}" "${SDK_2013_MOD_PATH}/addons/"
-    COMMAND echo -e "'\\e[0;32m'Copying Botrix runtime files to Source SDK 2013'\\e[0m'"
+    COMMAND echo -e "'\\e[0;32m'Copying Botrix runtime files to Source SDK 2013: ${SDK_2013_MOD_PATH}'\\e[0m'"
 )
 
 # Post-build: copy runtime files and botrix plugin to Source Dedicated Server.
@@ -151,6 +150,6 @@ if( EXISTS "${SRCDS_HL2DM_MOD_PATH}/" )
         COMMAND cp -r "${RUNTIME_PATH}/*" "${SRCDS_HL2DM_MOD_PATH}/"
         COMMAND cp -r "${BOTRIX_CONFIG_PATH}" "${SRCDS_HL2DM_MOD_PATH}/../../"
         COMMAND cp "${BOTRIX_LIB_PATH}" "${SRCDS_HL2DM_MOD_PATH}/addons/"
-        COMMAND echo -e "'\\e[0;32m'Copying Botrix runtime files to Source Dedicated Server'\\e[0m'"
+        COMMAND echo -e "'\\e[0;32m'Copying Botrix runtime files to SRCDS: ${SRCDS_HL2DM_MOD_PATH}'\\e[0m'"
     )
 endif()

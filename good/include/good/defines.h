@@ -254,7 +254,7 @@
 
 #else // if defined(DEBUG) || defined(_DEBUG)
 
-    #ifdef BETA_VERSION
+    #ifdef GOOD_BETA_VERSION
         /// Beta version debug assert. If @p exp is false, will print error, and instructions after @p exp are executed in order.
         #define DebugAssert(exp, ...)\
             do {\

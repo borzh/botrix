@@ -48,10 +48,10 @@
     #define INI_FILE_KV_SEPARATOR_1 '='
 #endif
 
-// If you want to have only one key-value separator, define INI_FILE_ONE_KV_SEPARATOR.
+// If you want to have only one key-value separator, define GOOD_INI_ONE_KV_SEPARATOR.
 // If not, both key-value separators will be used (by default '=' and ':').
 // Define INI_FILE_KV_SEPARATOR_2 if you want to change ':' key-value separator for something else.
-#ifndef INI_FILE_ONE_KV_SEPARATOR
+#ifndef GOOD_INI_ONE_KV_SEPARATOR
     #ifndef INI_FILE_KV_SEPARATOR_2
         #define INI_FILE_KV_SEPARATOR_2 ':'
     #endif
@@ -63,10 +63,10 @@
     #define INI_FILE_COMMENT_CHAR_1 ';'
 #endif
 
-// If you want to have only one comment character, define INI_FILE_ONE_COMMENT_CHAR.
+// If you want to have only one comment character, define GOOD_INI_ONE_COMMENT_CHAR.
 // If not, both comment characters will be used (by default ';' and '#').
 // Define INI_FILE_COMMENT_CHAR_2 if you want to change '#' comment character for something else.
-#if !defined(INI_FILE_ONE_COMMENT_CHAR) && !defined(INI_FILE_COMMENT_CHAR_2)
+#if !defined(GOOD_INI_ONE_COMMENT_CHAR) && !defined(INI_FILE_COMMENT_CHAR_2)
     #define INI_FILE_COMMENT_CHAR_2 '#'
 #endif
 

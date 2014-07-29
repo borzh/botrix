@@ -2,7 +2,12 @@ project( good )
 
 cmake_minimum_required( VERSION 2.6 )
 
-#add_definitions( -DINI_FILE_ONE_KV_SEPARATOR )
+add_definitions(
+    -DGOOD_INI_ONE_KV_SEPARATOR
+    -DGOOD_INI_ONE_COMMENT_CHAR
+    -DGOOD_LOG_FLUSH
+    -DGOOD_LOG_USE_ENDL
+)
 
 # Get files list.
 file( GLOB PROJECT_SOURCES

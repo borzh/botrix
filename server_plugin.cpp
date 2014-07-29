@@ -120,7 +120,8 @@ CBotrixPlugin::~CBotrixPlugin() {}
 //----------------------------------------------------------------------------------------------------------------
 bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn pGameServerFactory )
 {
-    good::log::bLogToStdOut = false; // Disable log to stdout, Msg()/Wanring() will print there.
+    good::log::bLogToStdOut = false; // Disable log to stdout, Msg() will print there.
+    good::log::bLogToStdErr = false; // Disable log to stderr, Warning() will print there.
     good::log::iStdErrLevel = good::ELogLevelWarning; // Log warnings and errors to stderr.
     good::log::iLogLevel = good::ELogLevelWarning;
     good::log::set_prefix("[Botrix] ");

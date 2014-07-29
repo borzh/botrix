@@ -685,8 +685,7 @@ TCommandAccessFlags CConfiguration::ClientAccessLevel( const good::string& sStea
 void CConfiguration::SetClientAccessLevel( const good::string& sSteamId, TCommandAccessFlags iAccess )
 {
     good::ini_section& sect = m_iniFile["User access"];
-    char buffer[10];
-    sprintf( buffer, "%d", iAccess );
-    sect[sSteamId] = good::string(buffer, true, true);
+    sect[sSteamId.duplicate()] = CTypeToString::AccessFlagsToString(iAccess).duplicate();
     m_bModified = true;
+    Save();
 }

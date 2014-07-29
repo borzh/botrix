@@ -3,6 +3,7 @@
 
 #include "bot.h"
 #include "clients.h"
+#include "config.h"
 #include "console_commands.h"
 #include "waypoint.h"
 
@@ -556,7 +557,7 @@ TCommandResult CWaypointRemoveTypeCommand::Execute( CClient* pClient, int argc, 
     {
         CWaypoint& w = CWaypoints::Get(id);
         w.iFlags = FWaypointNone;
-        BULOG_W(pClient->GetEdict(), "Waypoint %d has no type now.", id);
+        BULOG_I(pClient->GetEdict(), "Waypoint %d has no type now.", id);
         return ECommandPerformed;
     }
     else
@@ -596,39 +597,39 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
     if ( argc == 0 )
     {
         if ( bWeapon )
-            BULOG_W(pClient->GetEdict(), "Weapon index %d, subindex %d.", CWaypoint::GetWeaponIndex(w.iArgument), CWaypoint::GetWeaponSubIndex(w.iArgument));
+            BULOG_I(pClient->GetEdict(), "Weapon index %d, subindex %d.", CWaypoint::GetWeaponIndex(w.iArgument), CWaypoint::GetWeaponSubIndex(w.iArgument));
         if ( FLAG_ALL_SET(FWaypointAmmo, w.iFlags) )
         {
             bool bIsSecondary; int iAmmo = CWaypoint::GetAmmo(bIsSecondary, w.iArgument);
-            BULOG_W(pClient->GetEdict(), "Weapon ammo %d, secondary %s.", iAmmo, bIsSecondary ? "yes" : "no");
+            BULOG_I(pClient->GetEdict(), "Weapon ammo %d, secondary %s.", iAmmo, bIsSecondary ? "yes" : "no");
         }
         if ( bHealth )
-            BULOG_W(pClient->GetEdict(), "Health %d.", CWaypoint::GetHealth(w.iArgument));
+            BULOG_I(pClient->GetEdict(), "Health %d.", CWaypoint::GetHealth(w.iArgument));
         if ( bArmor )
-            BULOG_W(pClient->GetEdict(), "Armor %d.", CWaypoint::GetArmor(w.iArgument));
+            BULOG_I(pClient->GetEdict(), "Armor %d.", CWaypoint::GetArmor(w.iArgument));
         if ( bButton )
-            BULOG_W(pClient->GetEdict(), "Button %d.", CWaypoint::GetButton(w.iArgument));
+            BULOG_I(pClient->GetEdict(), "Button %d.", CWaypoint::GetButton(w.iArgument));
         if ( bAngle1 )
         {
             QAngle a1; CWaypoint::GetFirstAngle(a1, w.iArgument);
-            BULOG_W(pClient->GetEdict(), "Angle 1 (pitch, yaw): (%.0f, %.0f).", a1.x, a1.y);
+            BULOG_I(pClient->GetEdict(), "Angle 1 (pitch, yaw): (%.0f, %.0f).", a1.x, a1.y);
         }
         if ( bAngle2 )
         {
             QAngle a2; CWaypoint::GetSecondAngle(a2, w.iArgument);
-            BULOG_W(pClient->GetEdict(), "Angle 2 (pitch, yaw): (%.0f, %.0f).", a2.x, a2.y);
+            BULOG_I(pClient->GetEdict(), "Angle 2 (pitch, yaw): (%.0f, %.0f).", a2.x, a2.y);
         }
         return ECommandPerformed;
     }
 
     if ( sHelp == argv[0] )
     {
-        BULOG_W(pClient->GetEdict(), "You can mix next arguments:");
-        BULOG_W(pClient->GetEdict(), " - 'weapon' number1 number2: set weapon index/subindex (for ammo and/or weapon)");
-        BULOG_W(pClient->GetEdict(), " - 'health' number: set health amount (also for health machine, 30 by default)");
-        BULOG_W(pClient->GetEdict(), " - 'armor' number: set armor amount (also for armor machine, 30 by default)");
-        BULOG_W(pClient->GetEdict(), " - 'first_angle': set your current angles as waypoint first angles (camper, sniper, machines)");
-        BULOG_W(pClient->GetEdict(), " - 'second_angle': set your current angles as second angles (camper, sniper)");
+        BULOG_I(pClient->GetEdict(), "You can mix next arguments:");
+        BULOG_I(pClient->GetEdict(), " - 'weapon' number1 number2: set weapon index/subindex (for ammo and/or weapon)");
+        BULOG_I(pClient->GetEdict(), " - 'health' number: set health amount (also for health machine, 30 by default)");
+        BULOG_I(pClient->GetEdict(), " - 'armor' number: set armor amount (also for armor machine, 30 by default)");
+        BULOG_I(pClient->GetEdict(), " - 'first_angle': set your current angles as waypoint first angles (camper, sniper, machines)");
+        BULOG_I(pClient->GetEdict(), " - 'second_angle': set your current angles as second angles (camper, sniper)");
         return ECommandPerformed;
     }
 
@@ -868,8 +869,8 @@ TCommandResult CWaypointInfoCommand::Execute( CClient* pClient, int argc, const 
     {
         CWaypoint& w = CWaypoints::Get(id);
         const good::string& sFlags = CTypeToString::WaypointFlagsToString(w.iFlags);
-        BULOG_W(pClient->GetEdict(), "Waypoint id %d: flags %s", id, (sFlags.size() > 0) ? sFlags.c_str() : sNone.c_str());
-        BULOG_W(pClient->GetEdict(), "Origin: %.0f %.0f %.0f", w.vOrigin.x, w.vOrigin.y, w.vOrigin.z);
+        BULOG_I(pClient->GetEdict(), "Waypoint id %d: flags %s", id, (sFlags.size() > 0) ? sFlags.c_str() : sNone.c_str());
+        BULOG_I(pClient->GetEdict(), "Origin: %.0f %.0f %.0f", w.vOrigin.x, w.vOrigin.y, w.vOrigin.z);
         return ECommandPerformed;
     }
     else
@@ -896,7 +897,7 @@ TCommandResult CWaypointDestinationCommand::Execute( CClient* pClient, int argc,
     if ( CWaypoint::IsValid(id) )
     {
         pClient->iDestinationWaypoint = id;
-        BULOG_W(pClient->GetEdict(), "Path 'destination' is waypoint %d.", id );
+        BULOG_I(pClient->GetEdict(), "Path 'destination' is waypoint %d.", id );
         return ECommandPerformed;
     }
     else
@@ -916,7 +917,7 @@ TCommandResult CWaypointSaveCommand::Execute( CClient* pClient, int /*argc*/, co
 
     if ( CWaypoints::Save() )
     {
-        BULOG_W(pClient->GetEdict(), "%d waypoints saved.", CWaypoints::Size());
+        BULOG_I(pClient->GetEdict(), "%d waypoints saved.", CWaypoints::Size());
         return ECommandPerformed;
     }
     else
@@ -985,7 +986,7 @@ TCommandResult CWaypointAreaRemoveCommand::Execute( CClient* pClient, int argc, 
             }
 
             cAreas.erase(cAreas.begin() + iArea);
-            BULOG_W( pClient->GetEdict(), "Deleted area '%s'.", sbBuffer.c_str() );
+            BULOG_I( pClient->GetEdict(), "Deleted area '%s'.", sbBuffer.c_str() );
             return ECommandPerformed;
         }
     }
@@ -1024,7 +1025,7 @@ TCommandResult CWaypointAreaRenameCommand::Execute( CClient* pClient, int argc, 
             good::trim(sbBuffer);
             if ( sbBuffer.size() > 0 )
             {
-                BULOG_W( pClient->GetEdict(), "Renamed '%s' to '%s'.", sArea.c_str(), sbBuffer.c_str() );
+                BULOG_I( pClient->GetEdict(), "Renamed '%s' to '%s'.", sArea.c_str(), sbBuffer.c_str() );
                 sArea = sbBuffer.duplicate();
                 return ECommandPerformed;
             }
@@ -1063,7 +1064,7 @@ TCommandResult CWaypointAreaSetCommand::Execute( CClient* pClient, int argc, con
     if ( index == argc ) // Only waypoint given, show waypoint area.
     {
         const CWaypoint& w = CWaypoints::Get(iWaypoint);
-        BULOG_W(pClient->GetEdict(), "Waypoint %d is at area %s (%d).", iWaypoint, CWaypoints::GetAreas()[w.iAreaId].c_str(), w.iAreaId);
+        BULOG_I(pClient->GetEdict(), "Waypoint %d is at area %s (%d).", iWaypoint, CWaypoints::GetAreas()[w.iAreaId].c_str(), w.iAreaId);
         return ECommandPerformed;
     }
 
@@ -1099,7 +1100,7 @@ TCommandResult CWaypointAreaShowCommand::Execute( CClient* pClient, int /*argc*/
         sbBuffer << "   - " <<  CWaypoints::GetAreas()[i] << '\n';
     sbBuffer.erase( sbBuffer.size()-1, 1 ); // Erase last \n.
 
-    BULOG_W( pEdict, "Area names:\n%s", sbBuffer.c_str() );
+    BULOG_I( pEdict, "Area names:\n%s", sbBuffer.c_str() );
     return ECommandPerformed;
 }
 
@@ -1146,7 +1147,7 @@ TCommandResult CPathSwapCommand::Execute( CClient* pClient, int argc, const char
     CWaypoint& wTo = CWaypoints::Get(pClient->iCurrentWaypoint);
     pClient->GetPlayerInfo()->Set
 
-    BULOG_W(pClient->GetEdict(), "Teleported to %d. Path destination now is %d", pClient->iCurrentWaypoint, pClient->iDestinationWaypoint);
+    BULOG_I(pClient->GetEdict(), "Teleported to %d. Path destination now is %d", pClient->iCurrentWaypoint, pClient->iDestinationWaypoint);
 
     return ECommandPerformed;
 }
@@ -1162,7 +1163,7 @@ TCommandResult CPathDrawCommand::Execute( CClient* pClient, int argc, const char
     if ( argc == 0 )
     {
         const good::string& sType = CTypeToString::PathDrawFlagsToString(pClient->iPathDrawFlags);
-        BULOG_W( pClient->GetEdict(), "Path draw flags: %s.", (sType.size() > 0) ? sType.c_str() : sNone.c_str());
+        BULOG_I( pClient->GetEdict(), "Path draw flags: %s.", (sType.size() > 0) ? sType.c_str() : sNone.c_str());
         return ECommandPerformed;
     }
 
@@ -1207,7 +1208,7 @@ TCommandResult CPathDrawCommand::Execute( CClient* pClient, int argc, const char
     }
 
     pClient->iPathDrawFlags = iFlags;
-    BULOG_W(pClient->GetEdict(), "Path drawing is %s.", iFlags ? "on" : "off");
+    BULOG_I(pClient->GetEdict(), "Path drawing is %s.", iFlags ? "on" : "off");
     return ECommandPerformed;
 }
 
@@ -1252,7 +1253,7 @@ TCommandResult CPathCreateCommand::Execute( CClient* pClient, int argc, const ch
 
     if ( CWaypoints::AddPath(iPathFrom, iPathTo, 0, iFlags) )
     {
-        BULOG_W(pClient->GetEdict(), "Path created: from %d to %d.", iPathFrom, iPathTo);
+        BULOG_I(pClient->GetEdict(), "Path created: from %d to %d.", iPathFrom, iPathTo);
         return ECommandPerformed;
     }
     else
@@ -1295,7 +1296,7 @@ TCommandResult CPathRemoveCommand::Execute( CClient* pClient, int argc, const ch
 
     if ( CWaypoints::RemovePath(iPathFrom, iPathTo) )
     {
-        BULOG_W(pClient->GetEdict(), "Path removed: from %d to %d.", iPathFrom, iPathTo);
+        BULOG_I(pClient->GetEdict(), "Path removed: from %d to %d.", iPathFrom, iPathTo);
         return ECommandPerformed;
     }
     else
@@ -1315,7 +1316,7 @@ TCommandResult CPathAutoCreateCommand::Execute( CClient* pClient, int argc, cons
 
     if ( argc == 0 )
     {
-        BULOG_W(pClient->GetEdict(), "Waypoint's auto paths creation is: %s.", CTypeToString::BoolToString(pClient->bAutoCreatePaths).c_str());
+        BULOG_I(pClient->GetEdict(), "Waypoint's auto paths creation is: %s.", CTypeToString::BoolToString(pClient->bAutoCreatePaths).c_str());
         return ECommandPerformed;
     }
 
@@ -1330,7 +1331,7 @@ TCommandResult CPathAutoCreateCommand::Execute( CClient* pClient, int argc, cons
     }
 
     pClient->bAutoCreatePaths = iValue != 0;
-    BULOG_W(pClient->GetEdict(), "Waypoint's auto paths creation is: %s.", CTypeToString::BoolToString(pClient->bAutoCreatePaths).c_str());
+    BULOG_I(pClient->GetEdict(), "Waypoint's auto paths creation is: %s.", CTypeToString::BoolToString(pClient->bAutoCreatePaths).c_str());
     return ECommandPerformed;
 }
 
@@ -1380,7 +1381,7 @@ TCommandResult CPathAddTypeCommand::Execute( CClient* pClient, int argc, const c
     if ( pPath )
     {
         FLAG_SET(iFlags, pPath->iFlags);
-        BULOG_W(pClient->GetEdict(), "Added path types %s (path from %d to %d).", CTypeToString::PathFlagsToString(iFlags).c_str(), iPathFrom, iPathTo);
+        BULOG_I(pClient->GetEdict(), "Added path types %s (path from %d to %d).", CTypeToString::PathFlagsToString(iFlags).c_str(), iPathFrom, iPathTo);
         return ECommandPerformed;
     }
     else
@@ -1425,7 +1426,7 @@ TCommandResult CPathRemoveTypeCommand::Execute( CClient* pClient, int argc, cons
     if ( pPath )
     {
         pPath->iFlags = FPathNone;
-        BULOG_W(pClient->GetEdict(), "Removed all types for path from %d to %d.", iPathFrom, pClient->iDestinationWaypoint);
+        BULOG_I(pClient->GetEdict(), "Removed all types for path from %d to %d.", iPathFrom, pClient->iDestinationWaypoint);
         return ECommandPerformed;
     }
     else
@@ -1458,7 +1459,7 @@ TCommandResult CPathArgumentCommand::Execute( CClient* pClient, int argc, const 
 
     if (argc == 0)
     {
-        BULOG_W( pClient->GetEdict(), "Path (from %d to %d) action time %d, action duration %d. Time in deciseconds.",
+        BULOG_I( pClient->GetEdict(), "Path (from %d to %d) action time %d, action duration %d. Time in deciseconds.",
                         pClient->iCurrentWaypoint, pClient->iDestinationWaypoint, GET_1ST_BYTE(pPath->iArgument), GET_2ND_BYTE(pPath->iArgument) );
         return ECommandPerformed;
     }
@@ -1478,7 +1479,7 @@ TCommandResult CPathArgumentCommand::Execute( CClient* pClient, int argc, const 
         }
 
         pPath->iArgument = iFirst | (iSecond << 8);
-        BULOG_W( pClient->GetEdict(), "Set path (from %d to %d) action time %d, action duration %d. Time in deciseconds.",
+        BULOG_I( pClient->GetEdict(), "Set path (from %d to %d) action time %d, action duration %d. Time in deciseconds.",
                         pClient->iCurrentWaypoint, pClient->iDestinationWaypoint, GET_1ST_BYTE(pPath->iArgument), GET_2ND_BYTE(pPath->iArgument) );
         return ECommandPerformed;
     }
@@ -1519,21 +1520,21 @@ TCommandResult CPathInfoCommand::Execute( CClient* pClient, int argc, const char
     if ( pPath )
     {
         if ( pPath->HasDemo() )
-            BULOG_W(pClient->GetEdict(), "Path (from %d to %d) has demo: id %d.", iPathFrom, iPathTo, pPath->DemoNumber());
+            BULOG_I(pClient->GetEdict(), "Path (from %d to %d) has demo: id %d.", iPathFrom, iPathTo, pPath->DemoNumber());
         else
         {
             const good::string& sFlags = CTypeToString::PathFlagsToString(pPath->iFlags);
-            BULOG_W( pClient->GetEdict(), "Path (from %d to %d) has flags: %s.", iPathFrom, iPathTo,
+            BULOG_I( pClient->GetEdict(), "Path (from %d to %d) has flags: %s.", iPathFrom, iPathTo,
                             (sFlags.size() > 0) ? sFlags.c_str() : sNone.c_str() );
             if ( FLAG_SOME_SET(FPathDoor, pPath->iFlags) )
             {
                 if ( pPath->iArgument )
-                    BULOG_W( pClient->GetEdict(), "Door %d.", pPath->iArgument );
+                    BULOG_I( pClient->GetEdict(), "Door %d.", pPath->iArgument );
                 else
-                    BULOG_W( pClient->GetEdict(), "Door not set." );
+                    BULOG_I( pClient->GetEdict(), "Door not set." );
             }
             else if ( FLAG_SOME_SET(FPathJump | FPathCrouch | FPathBreak, pPath->iFlags) )
-                BULOG_W( pClient->GetEdict(), "Path action time %d, action duration %d. Time in deciseconds.", GET_1ST_BYTE(pPath->iArgument), GET_2ND_BYTE(pPath->iArgument) );
+                BULOG_I( pClient->GetEdict(), "Path action time %d, action duration %d. Time in deciseconds.", GET_1ST_BYTE(pPath->iArgument), GET_2ND_BYTE(pPath->iArgument) );
         }
         return ECommandPerformed;
     }
@@ -1558,7 +1559,7 @@ TCommandResult AllowOrForbid( bool bForbid, CClient* pClient, int argc, const ch
         for ( TWeaponId i=0; i < CWeapons::Size(); ++i )
         {
             const CWeapon* pWeapon = CWeapons::Get(i);
-            BULOG_W(pEdict, "%s is %s.", pWeapon->pWeaponClass->sClassName.c_str(), pWeapon->bForbidden ? "forbidden" : "allowed" );
+            BULOG_I(pEdict, "%s is %s.", pWeapon->pWeaponClass->sClassName.c_str(), pWeapon->bForbidden ? "forbidden" : "allowed" );
         }
     }
     else if ( (argc == 1) && (sAll == argv[0]) ) // Apply to all weapons.
@@ -1567,7 +1568,7 @@ TCommandResult AllowOrForbid( bool bForbid, CClient* pClient, int argc, const ch
         {
             const CWeapon* pWeapon = CWeapons::Get(i);
             ((CWeapon*)pWeapon)->bForbidden = bForbid;
-            BULOG_W(pEdict, "%s is %s.", pWeapon->pWeaponClass->sClassName.c_str(), pWeapon->bForbidden ? "forbidden" : "allowed" );
+            BULOG_I(pEdict, "%s is %s.", pWeapon->pWeaponClass->sClassName.c_str(), pWeapon->bForbidden ? "forbidden" : "allowed" );
         }
     }
     else
@@ -1579,7 +1580,7 @@ TCommandResult AllowOrForbid( bool bForbid, CClient* pClient, int argc, const ch
             {
                 const CWeapon* pWeapon = CWeapons::Get(iWeaponId);
                 ((CWeapon*)pWeapon)->bForbidden = bForbid;
-                BULOG_W(pEdict, "%s is %s.", argv[i], bForbid ? "forbidden" : "allowed" );
+                BULOG_I(pEdict, "%s is %s.", argv[i], bForbid ? "forbidden" : "allowed" );
             }
             else
                 BULOG_W(pEdict, "Warning, no such weapon: %s, skipping.", argv[i]);
@@ -1607,12 +1608,12 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int /*argc*/, const ch
     CPlayer* pPlayer = CPlayers::AddBot(iIntelligence);
     if ( pPlayer )
     {
-        BULOG_W(pEdict, "Bot added: %s (%d).", pPlayer->GetName(), iIntelligence);
+        BULOG_I(pEdict, "Bot added: %s (%d).", pPlayer->GetName(), iIntelligence);
         return ECommandPerformed;
     }
     else
     {
-        BULOG_W(pEdict, "Can't add bot (server full?)");
+        BULOG_W(pEdict, "Error, can't add bot (server full?)");
         return ECommandError;
     }
 }
@@ -1700,7 +1701,7 @@ TCommandResult CBotDrawPathCommand::Execute( CClient* pClient, int argc, const c
     if ( argc == 0 )
     {
         const good::string& sTypes = CTypeToString::PathDrawFlagsToString(CWaypointNavigator::iPathDrawFlags);
-        BULOG_W( pClient->GetEdict(), "Bot's path draw flags: %s.", (sTypes.size() > 0) ? sTypes.c_str() : sNone.c_str() );
+        BULOG_I( pClient->GetEdict(), "Bot's path draw flags: %s.", (sTypes.size() > 0) ? sTypes.c_str() : sNone.c_str() );
         return ECommandPerformed;
     }
 
@@ -1745,7 +1746,7 @@ TCommandResult CBotDrawPathCommand::Execute( CClient* pClient, int argc, const c
     }
 
     CWaypointNavigator::iPathDrawFlags = iFlags;
-    BULOG_W(pClient->GetEdict(), "Bot's path drawing is %s.", iFlags ? "on" : "off");
+    BULOG_I(pClient->GetEdict(), "Bot's path drawing is %s.", iFlags ? "on" : "off");
     return ECommandPerformed;
 }
 
@@ -1847,7 +1848,7 @@ TCommandResult CBotTestPathCommand::Execute( CClient* pClient, int argc, const c
     {
         BASSERT( pPlayer->IsBot(), return ECommandError );
         ((CBot*)pPlayer)->TestWaypoints(iPathFrom, iPathTo);
-        BULOG_W(pClient->GetEdict(), "Bot added: %s. Testing path from %d to %d.", pPlayer->GetName(), iPathFrom, iPathTo);
+        BULOG_I(pClient->GetEdict(), "Bot added: %s. Testing path from %d to %d.", pPlayer->GetName(), iPathFrom, iPathTo);
         return ECommandPerformed;
     }
     else
@@ -1871,7 +1872,7 @@ TCommandResult CItemDrawCommand::Execute( CClient* pClient, int argc, const char
     if ( argc == 0 )
     {
         const good::string& sFlags = CTypeToString::EntityTypeFlagsToString(pClient->iItemTypeFlags);
-        BULOG_W(pClient->GetEdict(), "Item types to draw: %s.", sFlags.size() ? sFlags.c_str(): "none");
+        BULOG_I(pClient->GetEdict(), "Item types to draw: %s.", sFlags.size() ? sFlags.c_str(): "none");
         return ECommandPerformed;
     }
 
@@ -1917,7 +1918,7 @@ TCommandResult CItemDrawCommand::Execute( CClient* pClient, int argc, const char
 
     pClient->iItemTypeFlags = iFlags;
     const good::string& sFlags = CTypeToString::EntityTypeFlagsToString(pClient->iItemTypeFlags);
-    BULOG_W(pClient->GetEdict(), "Item types to draw: %s.", sFlags.size() ? sFlags.c_str(): "none");
+    BULOG_I(pClient->GetEdict(), "Item types to draw: %s.", sFlags.size() ? sFlags.c_str(): "none");
     return ECommandPerformed;
 }
 
@@ -1932,7 +1933,7 @@ TCommandResult CItemDrawTypeCommand::Execute( CClient* pClient, int argc, const 
     if ( argc == 0 )
     {
         const good::string& sFlags = CTypeToString::ItemDrawFlagsToString(pClient->iItemDrawFlags);
-        BULOG_W(pClient->GetEdict(), "Draw item flags: %s.", sFlags.size() ? sFlags.c_str(): "none");
+        BULOG_I(pClient->GetEdict(), "Draw item flags: %s.", sFlags.size() ? sFlags.c_str(): "none");
         return ECommandPerformed;
     }
 
@@ -1977,7 +1978,7 @@ TCommandResult CItemDrawTypeCommand::Execute( CClient* pClient, int argc, const 
     }
 
     pClient->iItemDrawFlags = iFlags;
-    BULOG_W(pClient->GetEdict(), "Items drawing is %s.", iFlags ? "on" : "off");
+    BULOG_I(pClient->GetEdict(), "Items drawing is %s.", iFlags ? "on" : "off");
     return ECommandPerformed;
 }
 
@@ -1994,7 +1995,7 @@ TCommandResult CConfigEventsCommand::Execute( CClient* pClient, int argc, const 
 
     if ( argc == 0 )
     {
-        BULOG_W(pClient->GetEdict(), "Display game events: %s.", pClient->bDebuggingEvents ?  "on" : "off");
+        BULOG_I(pClient->GetEdict(), "Display game events: %s.", pClient->bDebuggingEvents ?  "on" : "off");
         return ECommandPerformed;
     }
 
@@ -2010,7 +2011,60 @@ TCommandResult CConfigEventsCommand::Execute( CClient* pClient, int argc, const 
 
     pClient->bDebuggingEvents = iValue != 0;
     CPlayers::CheckForDebugging();
-    BULOG_W(pClient->GetEdict(), "Display game events: %s.", pClient->bDebuggingEvents ?  "on" : "off");
+    BULOG_I(pClient->GetEdict(), "Display game events: %s.", pClient->bDebuggingEvents ?  "on" : "off");
+    return ECommandPerformed;
+}
+
+TCommandResult CConfigAdminsSetAccessCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( argc < 2 )
+    {
+        BULOG_W(pEdict, "Error, you show provide steam id and access level.");
+        return ECommandError;
+    }
+
+    good::string sSteamId = argv[0];
+    if ( !good::starts_with(sSteamId, "STEAM_") )
+    {
+        BULOG_W(pEdict, "Error, steam id should start with \"STEAM_\".");
+        return ECommandError;
+    }
+
+    good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false); // Don't deallocate after use.
+    for ( int i=1; i<argc; ++i )
+        sbBuffer << argv[i] << " ";
+    sbBuffer.erase( sbBuffer.size()-1 ); // Erase last space.
+
+    int iFlags = CTypeToString::AccessFlagsFromString( sbBuffer );
+    if ( iFlags == -1 )
+    {
+        BULOG_W( pEdict, "Error, invalid access flags: %s.", sbBuffer.c_str() );
+        return ECommandError;
+    }
+
+    CConfiguration::SetClientAccessLevel(sSteamId, iFlags);
+    bool bFound = false;
+    for (int i = 0; i < CPlayers::Size(); ++i)
+    {
+        CPlayer* pPlayer = CPlayers::Get(i);
+        if ( pPlayer && !pPlayer->IsBot() )
+        {
+            CClient* pClient = (CClient*)pPlayer;
+            if ( sSteamId == pClient->GetSteamID() )
+            {
+                pClient->iCommandAccessFlags = iFlags;
+                BULOG_I( pEdict, "Set access flags: '%s' for %s.", sbBuffer.c_str(), pClient->GetName() );
+                bFound = true;
+                break;
+            }
+        }
+    }
+
+    if ( !bFound )
+        BULOG_I( pEdict, "Set access flags: '%s' for %s.", sbBuffer.c_str(), sSteamId.c_str() );
+
     return ECommandPerformed;
 }
 
@@ -2025,7 +2079,7 @@ TCommandResult CConfigAdminsShowCommand::Execute( CClient* pClient, int /*argc*/
         {
             CClient* pClient = (CClient*)pPlayer;
             if ( pClient->iCommandAccessFlags )
-                BULOG_W( pEdict, "Name: %s, access: %s, steam ID: %s.", pClient->GetName(),
+                BULOG_I( pEdict, "Name: %s, access: %s, steam ID: %s.", pClient->GetName(),
                          CTypeToString::AccessFlagsToString(pClient->iCommandAccessFlags).c_str(), pClient->GetSteamID().c_str() );
         }
     }

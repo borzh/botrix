@@ -94,18 +94,18 @@ IVDebugOverlay* pVDebugOverlay = NULL;
 //----------------------------------------------------------------------------------------------------------------
 #define LOAD_INTERFACE(var,type,version) \
     if ((var =(type*)pInterfaceFactory(version, NULL)) == NULL ) {\
-        BLOG_W("[Botrix] Cannot open interface " version " " #type " " #var "\n");\
+        BLOG_W("[Botrix] Cannot open interface " version " " #type " " #var);\
         return false;\
     }
 
 #define LOAD_INTERFACE_IGNORE_ERROR(var,type,version) \
     if ((var =(type*)pInterfaceFactory(version, NULL)) == NULL ) {\
-        BLOG_W("[Botrix] Cannot open interface " version " " #type " " #var "\n");\
+        BLOG_W("[Botrix] Cannot open interface " version " " #type " " #var);\
     }
 
 #define LOAD_GAME_SERVER_INTERFACE(var, type, version) \
     if ((var =(type*)pGameServerFactory(version, NULL)) == NULL ) {\
-        BLOG_W("[Botrix] Cannot open game server interface " version " " #type " " #var "\n");\
+        BLOG_W("[Botrix] Cannot open game server interface " version " " #type " " #var);\
         return false;\
     }
 
@@ -159,9 +159,9 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 
     // Get game/mod directories.
 #ifdef DONT_USE_VALVE_FUNCTIONS
-    #define xstr(a) str(a)
-    #define str(a) #a
-    strcpy(szMainBuffer, xstr(DONT_USE_VALVE_FUNCTIONS)); // Mod directory.
+    #define BOTRIX_XSTRINGIFY(a) str(a)
+    #define BOTRIX_STRINGIFY(a) #a
+    strcpy(szMainBuffer, BOTRIX_XSTRINGIFY(DONT_USE_VALVE_FUNCTIONS)); // Mod directory.
 #else
     pEngineServer->GetGameDir(szMainBuffer, iMainBufferSize);
 #endif

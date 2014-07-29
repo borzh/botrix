@@ -625,8 +625,7 @@ public:
         m_iAccessLevel = FCommandAccessConfig;
     }
 
-    // TODO:
-    TCommandResult Execute( CClient* /*pClient*/, int /*argc*/, const char** /*argv*/ ) { return ECommandNotFound; }
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 
 };
 

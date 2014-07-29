@@ -22,7 +22,10 @@ public: // Methods.
     static void Save()
     {
         if ( m_bModified )
+        {
             m_iniFile.save();
+            m_bModified = false;
+        }
     }
 
     /// Unload configuration file, free all memory.

@@ -33,9 +33,7 @@
 
 
 /// Char type.
-#ifdef _WIN32
-    typedef Char TChar;
-#else
+#ifndef _WIN32
     typedef char TChar;
 #endif
 
@@ -186,6 +184,26 @@
 #endif
 
 
+/// Define for Windows pragma.
+#ifdef _WIN32
+    #define WIN_PRAGMA(...)                  __pragma(__VA_ARGS__)
+#else
+    #define WIN_PRAGMA(...)
+#endif
+
+
+/// Define to start a scope.
+#define GOOD_SCOPE_START \
+    do {
+
+/// Define to end a scope.
+#define GOOD_SCOPE_END \
+    WIN_PRAGMA( warning(push) )\
+    WIN_PRAGMA( warning(disable:4127) )\
+    } while(false)\
+    WIN_PRAGMA( warning(pop) )
+
+
 /// Debug break, stopping execution.
 #ifndef BreakDebugger
     #if defined(DEBUG) || defined(_DEBUG)
@@ -198,7 +216,7 @@
             #define BreakDebugger()          raise(SIGTRAP)
         #endif
     #else
-        #define BreakDebugger(...)
+        #define BreakDebugger(...)           void(0)
     #endif
 #endif
 
@@ -215,7 +233,7 @@
         #endif
     #else
         /// No debugger break.
-        #define BreakDebuggerIf(cond)
+        #define BreakDebuggerIf(cond)        void(0)
     #endif
 #endif
 
@@ -224,7 +242,7 @@
     #include <stdio.h>
 
     /// Release print, will print always.
-    #define ReleasePrint(...)                do { printf(__VA_ARGS__); fflush(stdout); } while (false)
+    #define ReleasePrint(...)                GOOD_SCOPE_START printf(__VA_ARGS__); fflush(stdout); GOOD_SCOPE_END
 #endif
 
 
@@ -234,42 +252,28 @@
         #define DebugPrint(...)              ReleasePrint(__VA_ARGS__)
     #else
         /// Debug print will do nothing.
-        #define DebugPrint(...)
+        #define DebugPrint(...)              void(0)
     #endif
 #endif
 
 
-#if defined(DEBUG) || defined(_DEBUG)
 
-    /// Debug assert. If @p exp is false, will produce debug break, and instructions after @p exp are executed in order.
-    #define DebugAssert(exp, ...)\
-        do {\
-            if ( !(exp) )\
-            {\
-                DebugPrint("Assert failed: (%s); in %s(), file %s, line %d\n", #exp, __FUNCTION__, __FILE__, __LINE__);\
-                BreakDebugger();\
-                __VA_ARGS__;\
-            }\
-        } while (false)
+// Check condition, executing instructions if condition fails.
+#define GoodCheck_(exp, start, ...) \
+    GOOD_SCOPE_START \
+        if ( !(exp) )\
+        {\
+            DebugPrint(start " failed: (%s); in %s(), file %s, line %d\n", #exp, __FUNCTION__, __FILE__, __LINE__);\
+            BreakDebugger();\
+            __VA_ARGS__;\
+        }\
+    GOOD_SCOPE_END
 
-#else // if defined(DEBUG) || defined(_DEBUG)
+/// Check condition, executing instructions if @p exp fails.
+#define GoodCheck(exp, ...)                  GoodCheck_(exp, "Check", __VA_ARGS__)
 
-    #ifdef GOOD_BETA_VERSION
-        /// Beta version debug assert. If @p exp is false, will print error, and instructions after @p exp are executed in order.
-        #define DebugAssert(exp, ...)\
-            do {\
-                if ( !(exp) )\
-                {\
-                    ReleasePrint("Assert failed: (%s); in %s(), file %s, line %d\n", #exp, __FUNCTION__, __FILE__, __LINE__);\
-                    __VA_ARGS__;\
-                }\
-            } while (false)
-    #else
-        /// Release version assert. Just will generate instructions after @p exp.
-        #define DebugAssert(exp, ...)        do { if ( !(exp) ) { __VA_ARGS__; } } while (false)
-    #endif
-
-#endif // if defined(DEBUG) || defined(_DEBUG)
+/// Debug assert. If @p exp is false, will produce debugger break.
+#define GoodAssert(exp)                      GoodCheck_(exp, "Assert", void(0))
 
 
 #endif // __GOOD_DEFINES_H__

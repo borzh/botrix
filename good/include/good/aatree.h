@@ -80,19 +80,19 @@ namespace good
             bool operator!= ( const const_iterator& itOther ) const { return m_pCurrent != itOther.m_pCurrent; }
 
             /// Pre-increment.
-            const_iterator& operator++() { DebugAssert(m_pCurrent); m_pCurrent = _get_next(m_pCurrent, 1); return *this; }
+            const_iterator& operator++() { GoodAssert(m_pCurrent); m_pCurrent = _get_next(m_pCurrent, 1); return *this; }
             /// Pre-decrement.
-            const_iterator& operator--() { DebugAssert(m_pCurrent); m_pCurrent = _get_next(m_pCurrent, 0); return *this; }
+            const_iterator& operator--() { GoodAssert(m_pCurrent); m_pCurrent = _get_next(m_pCurrent, 0); return *this; }
 
             /// Post-increment.
-            const_iterator operator++ (int) { DebugAssert(m_pCurrent); const_iterator tmp(*this); m_pCurrent = _get_next(m_pCurrent, 1); return tmp; }
+            const_iterator operator++ (int) { GoodAssert(m_pCurrent); const_iterator tmp(*this); m_pCurrent = _get_next(m_pCurrent, 1); return tmp; }
             /// Post-decrement.
-            const_iterator operator-- (int) { DebugAssert(m_pCurrent); const_iterator tmp(*this); m_pCurrent = _get_next(m_pCurrent, 0); return tmp; }
+            const_iterator operator-- (int) { GoodAssert(m_pCurrent); const_iterator tmp(*this); m_pCurrent = _get_next(m_pCurrent, 0); return tmp; }
 
             /// Dereference.
-            const T& operator*() const { DebugAssert(m_pCurrent); return m_pCurrent->elem; }
+            const T& operator*() const { GoodAssert(m_pCurrent); return m_pCurrent->elem; }
             /// Element selection through pointer.
-            const T* operator->() const { DebugAssert(m_pCurrent); return &m_pCurrent->elem; }
+            const T* operator->() const { GoodAssert(m_pCurrent); return &m_pCurrent->elem; }
 
         protected:
             node_t* m_pCurrent;
@@ -113,19 +113,19 @@ namespace good
             iterator ( iterator const& lOther ): base_class(lOther) {}
 
             /// Pre-increment.
-            iterator& operator++() { DebugAssert(this->m_pCurrent); this->m_pCurrent = _get_next(this->m_pCurrent, 1); return *this; }
+            iterator& operator++() { GoodAssert(this->m_pCurrent); this->m_pCurrent = _get_next(this->m_pCurrent, 1); return *this; }
             /// Pre-decrement.
-            iterator& operator--() { DebugAssert(this->m_pCurrent); this->m_pCurrent = _get_next(this->m_pCurrent, 0); return *this; }
+            iterator& operator--() { GoodAssert(this->m_pCurrent); this->m_pCurrent = _get_next(this->m_pCurrent, 0); return *this; }
 
             /// Post-increment.
-            iterator operator++(int) { DebugAssert(this->m_pCurrent); iterator tmp(*this); this->m_pCurrent = _get_next(this->m_pCurrent, 1); return tmp; }
+            iterator operator++(int) { GoodAssert(this->m_pCurrent); iterator tmp(*this); this->m_pCurrent = _get_next(this->m_pCurrent, 1); return tmp; }
             /// Post-decrement.
-            iterator operator--(int) { DebugAssert(this->m_pCurrent); iterator tmp(*this); this->m_pCurrent = _get_next(this->m_pCurrent, 0); return tmp; }
+            iterator operator--(int) { GoodAssert(this->m_pCurrent); iterator tmp(*this); this->m_pCurrent = _get_next(this->m_pCurrent, 0); return tmp; }
 
             /// Dereference.
-            T& operator*() const { DebugAssert(this->m_pCurrent); return this->m_pCurrent->elem; }
+            T& operator*() const { GoodAssert(this->m_pCurrent); return this->m_pCurrent->elem; }
             /// Element selection through pointer.
-            T* operator->() const { DebugAssert(this->m_pCurrent); return &this->m_pCurrent->elem; }
+            T* operator->() const { GoodAssert(this->m_pCurrent); return &this->m_pCurrent->elem; }
         };
 
 

@@ -32,14 +32,14 @@ namespace good
 		//------------------------------------------------------------------------------------------------------------
 		inline void set_params( const good::string& sExe, const good::string& sCmd, bool bRedirect, bool bChangeWorkingDir )
 		{
-			DebugAssert( sExe.size() > 0 || sCmd.size() > 0 );
+			GoodAssert( sExe.size() > 0 || sCmd.size() > 0 );
 			m_sExe.assign(sExe, true);
 			m_sCmd.assign(sCmd, true);
 
 			m_bChangeWorkingDir = bChangeWorkingDir;
 			m_bRedirect = bRedirect;
 			if ( bChangeWorkingDir )
-				m_sCurrentDir = file::file_dir(sExe);
+				m_sCurrentDir = file::dir(sExe);
 		}
 
 		//------------------------------------------------------------------------------------------------------------
@@ -49,7 +49,7 @@ namespace good
 		{
 			#define SET_LAUNCH_ERROR(error) { SetError(error, __LINE__-1); goto process_launch_error; }
 
-			DebugAssert( m_sExe.size() > 0 );
+			GoodAssert( m_sExe.size() > 0 );
 
 			m_szLastError[0] = 0; // No error.
 			m_bDaemon = bDaemon;
@@ -180,7 +180,7 @@ namespace good
 		//------------------------------------------------------------------------------------------------------------
 		inline bool join( int iMSecs = TIME_INFINITE )
 		{
-			DebugAssert( m_hProcess );
+			GoodAssert( m_hProcess );
 			return WaitForSingleObject(m_hProcess, iMSecs) == WAIT_OBJECT_0;
 		}
 
@@ -190,7 +190,7 @@ namespace good
 		//------------------------------------------------------------------------------------------------------------
 		inline void terminate()
 		{
-			DebugAssert( m_hProcess );
+			GoodAssert( m_hProcess );
 			TerminateProcess(m_hProcess, 1);
 		}
 
@@ -204,7 +204,7 @@ namespace good
 		//------------------------------------------------------------------------------------------------------------
 		inline bool is_finished()
 		{
-			DebugAssert( m_hProcess );
+			GoodAssert( m_hProcess );
 			DWORD iExitCode = 0;
 			GetExitCodeProcess(m_hProcess, &iExitCode); // TODO: Handle error.
 			return iExitCode != STILL_ACTIVE;
@@ -215,7 +215,7 @@ namespace good
 		//------------------------------------------------------------------------------------------------------------
 		void close_stdin()
 		{
-			DebugAssert( m_hWriteChildInput );
+			GoodAssert( m_hWriteChildInput );
 			CloseHandle( m_hWriteChildInput );
 			m_hWriteChildInput = NULL;
 		}
@@ -227,7 +227,7 @@ namespace good
 		{
 			m_szLastError[0] = 0; // No error.
 
-			DebugAssert(m_hWriteChildInput);
+			GoodAssert(m_hWriteChildInput);
 			DWORD iTotal = 0;
 			while ( iTotal < (DWORD)iSize )
 			{
@@ -248,7 +248,7 @@ namespace good
 		// Return true if child has data on stdout.
 		inline bool has_data_stdout()
 		{
-			DebugAssert(m_hReadChildOutput);
+			GoodAssert(m_hReadChildOutput);
 			DWORD iBytesAvailable;
 			if ( !PeekNamedPipe(m_hReadChildOutput, NULL, 0, NULL, &iBytesAvailable, NULL) )
 				return true; // Force to read and thus fail.
@@ -264,7 +264,7 @@ namespace good
 		// Return true if child has data on stderr.
 		inline bool has_data_stderr()
 		{
-			DebugAssert(m_hReadChildError);
+			GoodAssert(m_hReadChildError);
 			DWORD iBytesAvailable;
 			if ( !PeekNamedPipe(m_hReadChildError, NULL, 0, NULL, &iBytesAvailable, NULL) )
 				return true; // Force to read and thus fail.
@@ -287,7 +287,7 @@ namespace good
 		// Read handle.
 		bool read( HANDLE& hHandle, void* pBuffer, int iMaxSize, int& iReadSize )
 		{
-			DebugAssert(hHandle);
+			GoodAssert(hHandle);
 
 			m_szLastError[0] = 0; // No error.
 
@@ -313,7 +313,7 @@ namespace good
 		// Displays the error number and corresponding message.
 		void SetError( char* szFunction, int iLine )
 		{
-			DebugAssert( GetLastError() != 0 );
+			GoodAssert( GetLastError() != 0 );
 
 			LPVOID szError;
 			FormatMessageA(

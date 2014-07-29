@@ -189,7 +189,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         path_t& path()
         {
-            DebugAssert(m_bFound);
+            GoodAssert(m_bFound);
             return m_path;
         }
 
@@ -198,7 +198,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         const path_t& path() const
         {
-            DebugAssert(m_bFound);
+            GoodAssert(m_bFound);
             return m_path;
         }
 

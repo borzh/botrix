@@ -98,7 +98,7 @@ namespace good
         void modify( const T& elem )
         {
             typename container_t::iterator it = good::find(m_cContainer.begin(), m_cContainer.end(), elem);
-            DebugAssert(it != m_cContainer.end());
+            GoodAssert(it != m_cContainer.end());
 
             good::heap_modify(&*m_cContainer.begin(), &*it - &*m_cContainer.begin(), size(), m_cLess);
         }

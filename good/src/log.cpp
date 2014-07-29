@@ -4,6 +4,9 @@
 #include "good/log.h"
 
 
+WIN_PRAGMA(warning(disable:4996))
+
+
 namespace good
 {
 
@@ -120,7 +123,7 @@ bool log::set_prefix( const char* szPrefix )
 bool log::start_log_to_file( const char* szFile, bool bAppend /*= false*/ )
 {
     m_fLog = fopen(szFile, bAppend ? "w+" : "w");
-    return (m_fLog);
+    return (m_fLog != NULL);
 }
 
 

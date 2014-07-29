@@ -89,10 +89,11 @@ namespace good
         TIniFileError result = IniFileNoError;
 
         char* buf = (char*)malloc(fsize+1);
-        DebugAssert(buf, return IniFileTooBig);
+        if ( !buf )
+            return IniFileTooBig;
 
         size_t read = good::file::file_to_memory(name.c_str(), buf, fsize);
-        DebugAssert(fsize == read, return IniFileTooBig);
+        GoodCheck(fsize == read, return IniFileTooBig);
         buf[fsize] = 0;
 
         char *section = NULL, *key = NULL, *value = NULL, *junk = NULL;

@@ -27,11 +27,11 @@ namespace good
         // Execute thread.
         inline void launch( void* pThreadParameter, bool bDaemon = false )
         {
-            DebugAssert( m_hThread == NULL );
+            GoodAssert( m_hThread == NULL );
             m_bDaemon = bDaemon;
             m_pThreadParameter = pThreadParameter;
             m_hThread = CreateThread(NULL, 0, thread_impl_thread_proc, (LPVOID)this, 0, NULL);
-            DebugAssert(m_hThread);
+            GoodAssert(m_hThread);
         }
 
         /// Free all handles and memory. Terminate thread if not daemon.
@@ -48,14 +48,14 @@ namespace good
         // Wait for this thread.  Return true if thread is terminated.
         inline bool join( int iMSecs )
         {
-            DebugAssert( m_hThread );
+            GoodAssert( m_hThread );
             return WaitForSingleObject(m_hThread, iMSecs) == WAIT_OBJECT_0;
         }
 
         // Terminate thread.
         inline void terminate()
         {
-            DebugAssert( m_hThread );
+            GoodAssert( m_hThread );
             TerminateThread(m_hThread, 1);
         }
 
@@ -65,7 +65,7 @@ namespace good
         // Check if thread is finished.
         inline bool is_finished()
         {
-            DebugAssert( m_hThread );
+            GoodAssert( m_hThread );
             DWORD iExitCode = 0;
             GetExitCodeThread(m_hThread, &iExitCode); // TODO: Handle error.
             return iExitCode != STILL_ACTIVE;
@@ -161,7 +161,7 @@ namespace good
     DWORD WINAPI thread_impl_thread_proc(LPVOID lpThreadParameter)
     {
         good::thread_impl* pImpl = (good::thread_impl*)lpThreadParameter;
-        DebugAssert( pImpl->m_pThreadFunc );
+        GoodAssert( pImpl->m_pThreadFunc );
         pImpl->m_pThreadFunc(pImpl->m_pThreadParameter);
         ExitThread(0);
         //return 0;

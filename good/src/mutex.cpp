@@ -18,7 +18,7 @@ namespace good
     mutex::mutex()
     {
         m_hMutex = CreateMutex(NULL, FALSE, NULL); // Default security attibutes, initially not owned, mutex not named.
-        DebugAssert(m_hMutex);
+        GoodAssert(m_hMutex);
     }
 
     mutex::~mutex()

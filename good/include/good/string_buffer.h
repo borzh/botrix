@@ -45,7 +45,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         base_string_buffer( int iCapacity = DEFAULT_STRING_BUFFER_ALLOC )
         {
-            DebugAssert( iCapacity >= 0 );
+            GoodAssert( iCapacity >= 0 );
 #ifdef DEBUG_STRING_PRINT
             printf( "base_string_buffer constructor, reserve %d\n", iCapacity );
 #endif
@@ -75,7 +75,7 @@ namespace good
 #ifdef DEBUG_STRING_PRINT
             printf( "base_string_buffer constructor with buffer, reserved %d\n", iCapacity );
 #endif
-            DebugAssert(iCapacity > 0);
+            GoodAssert(iCapacity > 0);
 
             m_iCapacity = iCapacity;
             this->m_iStatic = !bDeallocate;
@@ -163,7 +163,7 @@ namespace good
 
             if ( this->m_iStatic )
             {
-                DebugAssert( m_iCapacity >= iOtherSize+1 );
+                GoodAssert( m_iCapacity >= iOtherSize+1 );
             }
             else
             {
@@ -220,8 +220,8 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         base_string_buffer& insert( const string& sOther, int iPos )
         {
-            DebugAssert( iPos <= this->length() );
-            DebugAssert( sOther.length() > 0 );
+            GoodAssert( iPos <= this->length() );
+            GoodAssert( sOther.length() > 0 );
             increment( sOther.length() );
             memmove( &this->m_pBuffer[iPos + sOther.length()], &this->m_pBuffer[iPos], (this->length() - iPos) * sizeof(Char) );
             copy_contents( sOther.c_str(), sOther.length(), iPos );
@@ -255,7 +255,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         void reserve( int iCapacity )
         {
-            DebugAssert( iCapacity > 0 );
+            GoodAssert( iCapacity > 0 );
             if ( this->m_pBuffer && (this->m_iCapacity >= iCapacity) )
                 return;
             if ( this->m_iStatic )
@@ -295,8 +295,8 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         void copy_contents( const Char* szOther, int iOtherLen, int pos = 0 )
         {
-            DebugAssert( iOtherLen >= 0 && pos >= 0 );
-            DebugAssert( m_iCapacity >= pos + iOtherLen + 1 );
+            GoodAssert( iOtherLen >= 0 && pos >= 0 );
+            GoodAssert( m_iCapacity >= pos + iOtherLen + 1 );
             strncpy( &this->m_pBuffer[pos], szOther, iOtherLen * sizeof(Char) );
             this->m_iSize += iOtherLen;
         }
@@ -309,7 +309,7 @@ namespace good
             int desired = this->m_iSize + iBySize + 1; // Trailing 0.
             if ( desired > m_iCapacity )
             {
-                DebugAssert( !this->m_iStatic );
+                GoodAssert( !this->m_iStatic );
                 iBySize = m_iCapacity;
                 if (iBySize == 0)
                     iBySize = DEFAULT_STRING_BUFFER_ALLOC;

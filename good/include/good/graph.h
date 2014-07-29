@@ -81,7 +81,7 @@ namespace good
             {
                 // Make sure that target belongs to graph.
 #if defined(DEBUG) || defined(_DEBUG)
-                DebugAssert( g->is_valid(target) );
+                GoodAssert( g->is_valid(target) );
 #endif
                 return neighbours.insert( neighbours.end(), arc_t(e, target) );
             }

@@ -275,7 +275,7 @@ bool CPlayers::KickRandomBotOnTeam( int iTeam )
     if ( toKick )
         KickBot(toKick);
 
-    return ( toKick );
+    return ( toKick != NULL );
 }
 
 //----------------------------------------------------------------------------------------------------------------

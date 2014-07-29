@@ -140,7 +140,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         const Char& operator[] ( int iIndex ) const
         {
-            DebugAssert( (0 <= iIndex) && (iIndex < m_iSize) );
+            GoodAssert( (0 <= iIndex) && (iIndex < m_iSize) );
             return m_pBuffer[iIndex];
         }
 
@@ -149,7 +149,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         Char& operator[] ( int iIndex )
         {
-            DebugAssert( (0 <= iIndex) && (iIndex < m_iSize) );
+            GoodAssert( (0 <= iIndex) && (iIndex < m_iSize) );
             return m_pBuffer[iIndex];
         }
 
@@ -215,7 +215,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         bool operator< ( const base_string& other ) const
         {
-            DebugAssert( (c_str() !=  NULL) && (other.c_str() !=  NULL) );
+            GoodAssert( (c_str() !=  NULL) && (other.c_str() !=  NULL) );
             return strcmp(c_str(), other.c_str()) < 0;
         }
 
@@ -232,7 +232,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         bool operator== ( const Char* other ) const
         {
-            DebugAssert(other != NULL);
+            GoodAssert(other != NULL);
             return ( c_str() == other )  ||  ( strcmp( c_str(), other ) == 0 );
         }
 
@@ -265,7 +265,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         base_string operator+ ( const Char* szRight ) const
         {
-            DebugAssert(szRight);
+            GoodAssert(szRight);
             return concat_with( szRight, strlen(szRight) );
         }
 
@@ -282,7 +282,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /*base_string operator+ ( const Char* szRight ) const
         {
-            DebugAssert(szRight);
+            GoodAssert(szRight);
             return concat_with( szRight, strlen(szRight) );
         }*/
 
@@ -295,7 +295,7 @@ namespace good
                 iCount = length() - iPos;
             if (iCount == 0)
                 return *this;
-            DebugAssert( (iCount > 0) && (iPos < this->length()) && (iPos+iCount <= length()) );
+            GoodAssert( (iCount > 0) && (iPos < this->length()) && (iPos+iCount <= length()) );
             memmove( &m_pBuffer[iPos], &m_pBuffer[iPos+iCount], (length() - iPos + 1) * sizeof(Char) );
             m_iSize -= iCount;
             return *this;
@@ -317,7 +317,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         int find( const base_string& str, int iFrom = 0 ) const
         {
-            DebugAssert( iFrom <= m_iSize );
+            GoodAssert( iFrom <= m_iSize );
             if ( m_iSize - iFrom < str.m_iSize )
                 return npos;
 
@@ -333,7 +333,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         int find( Char c, int iFrom = 0 ) const
         {
-            DebugAssert( iFrom <= m_iSize );
+            GoodAssert( iFrom <= m_iSize );
             Char* result = strchr( &m_pBuffer[iFrom], (int)c );
             if (result)
                 return (int)( result - m_pBuffer );
@@ -362,7 +362,7 @@ namespace good
             if ( iSize + iFrom > length() )
                 iSize = maxSize;
 
-            DebugAssert( iFrom + iSize <= m_iSize );
+            GoodAssert( iFrom + iSize <= m_iSize );
 
             if (bAlloc)
             {

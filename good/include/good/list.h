@@ -63,19 +63,19 @@ namespace good
             bool operator!= ( const_iterator const& itOther ) const { return m_pCurrent != itOther.m_pCurrent; }
 
             /// Pre-increment.
-            const_iterator& operator++() { DebugAssert(m_pCurrent); m_pCurrent = m_pCurrent->next; return *this; }
+            const_iterator& operator++() { GoodAssert(m_pCurrent); m_pCurrent = m_pCurrent->next; return *this; }
             /// Pre-decrement.
-            const_iterator& operator--() { DebugAssert(m_pCurrent); m_pCurrent = m_pCurrent->prev; return *this; }
+            const_iterator& operator--() { GoodAssert(m_pCurrent); m_pCurrent = m_pCurrent->prev; return *this; }
 
             /// Post-increment.
-            const_iterator operator++(int) { DebugAssert(m_pCurrent); const_iterator tmp(*this); m_pCurrent = m_pCurrent->next; return tmp; }
+            const_iterator operator++(int) { GoodAssert(m_pCurrent); const_iterator tmp(*this); m_pCurrent = m_pCurrent->next; return tmp; }
             /// Post-decrement.
-            const_iterator operator--(int) { DebugAssert(m_pCurrent); const_iterator tmp(*this); m_pCurrent = m_pCurrent->prev; return tmp; }
+            const_iterator operator--(int) { GoodAssert(m_pCurrent); const_iterator tmp(*this); m_pCurrent = m_pCurrent->prev; return tmp; }
 
             /// Dereference.
-            const T& operator*() const { DebugAssert(m_pCurrent); return m_pCurrent->elem; }
+            const T& operator*() const { GoodAssert(m_pCurrent); return m_pCurrent->elem; }
             /// Element selection through pointer.
-            const T* operator->() const { DebugAssert(m_pCurrent); return &m_pCurrent->elem; }
+            const T* operator->() const { GoodAssert(m_pCurrent); return &m_pCurrent->elem; }
 
         protected:
             node_t* m_pCurrent;
@@ -96,19 +96,19 @@ namespace good
             iterator ( iterator const& itOther ): base_class(itOther) {}
 
             /// Pre-increment.
-            iterator& operator++() { DebugAssert(this->m_pCurrent); this->m_pCurrent = this->m_pCurrent->next; return *this; }
+            iterator& operator++() { GoodAssert(this->m_pCurrent); this->m_pCurrent = this->m_pCurrent->next; return *this; }
             /// Pre-decrement.
-            iterator& operator--() { DebugAssert(this->m_pCurrent); this->m_pCurrent = this->m_pCurrent->prev; return *this; }
+            iterator& operator--() { GoodAssert(this->m_pCurrent); this->m_pCurrent = this->m_pCurrent->prev; return *this; }
 
             /// Post-increment.
-            iterator operator++(int) { DebugAssert(this->m_pCurrent); iterator tmp(*this); this->m_pCurrent = this->m_pCurrent->next; return tmp; }
+            iterator operator++(int) { GoodAssert(this->m_pCurrent); iterator tmp(*this); this->m_pCurrent = this->m_pCurrent->next; return tmp; }
             /// Post-decrement.
-            iterator operator--(int) { DebugAssert(this->m_pCurrent); iterator tmp(*this); this->m_pCurrent = this->m_pCurrent->prev; return tmp; }
+            iterator operator--(int) { GoodAssert(this->m_pCurrent); iterator tmp(*this); this->m_pCurrent = this->m_pCurrent->prev; return tmp; }
 
             /// Dereference.
-            T& operator*() const { DebugAssert(this->m_pCurrent); return this->m_pCurrent->elem; }
+            T& operator*() const { GoodAssert(this->m_pCurrent); return this->m_pCurrent->elem; }
             /// Element selection through pointer.
-            T* operator->() const { DebugAssert(this->m_pCurrent); return &this->m_pCurrent->elem; }
+            T* operator->() const { GoodAssert(this->m_pCurrent); return &this->m_pCurrent->elem; }
         };
 
         //--------------------------------------------------------------------------------------------------------
@@ -197,12 +197,12 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Returns first element of the list.
         //--------------------------------------------------------------------------------------------------------
-        T& front() { DebugAssert(m_iSize > 0); return m_pTail->next->elem; }
+        T& front() { GoodAssert(m_iSize > 0); return m_pTail->next->elem; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Returns last element of the list.
         //--------------------------------------------------------------------------------------------------------
-        T& back() { DebugAssert(m_iSize > 0); return m_pTail->prev->elem; }
+        T& back() { GoodAssert(m_iSize > 0); return m_pTail->prev->elem; }
 
 
         //--------------------------------------------------------------------------------------------------------
@@ -278,8 +278,8 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         iterator erase( iterator position )
         {
-            DebugAssert(m_iSize > 0);
-            DebugAssert(position.m_pCurrent != m_pTail);
+            GoodAssert(m_iSize > 0);
+            GoodAssert(position.m_pCurrent != m_pTail);
 
             node_t* prev = position.m_pCurrent->prev;
             node_t* next = position.m_pCurrent->next;

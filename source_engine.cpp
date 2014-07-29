@@ -164,7 +164,7 @@ public:
     }
 
     virtual TraceType_t	GetTraceType() const { return m_TraceType; }
-    virtual bool ShouldHitEntity( IHandleEntity */*pEntity*/, int /*contentsMask*/ ) { return m_bShouldHitEntity; }
+    virtual bool ShouldHitEntity( IHandleEntity* /*pEntity*/, int /*contentsMask*/ ) { return m_bShouldHitEntity; }
 
     int iTraceFlags;
 

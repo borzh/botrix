@@ -25,7 +25,7 @@ namespace good
     template < typename T, typename Less >
     void heap_adjust_down( T* aHeap, int iPos, int iSize, Less cLess = Less() )
     {
-        DebugAssert(iPos <= iSize);
+        GoodAssert(iPos <= iSize);
         int left = (iPos << 1) + 1, child;
         if (left >= iSize) return;
 
@@ -83,7 +83,7 @@ namespace good
     template < typename T, typename Less >
     void heap_pop( T* aHeap, int iSize, Less cLess = Less() )
     {
-        DebugAssert(iSize > 0);
+        GoodAssert(iSize > 0);
         aHeap[0] = aHeap[--iSize];
         heap_adjust_down(aHeap, 0, iSize, cLess);
     }
@@ -95,7 +95,7 @@ namespace good
     template < typename T, typename Less >
     void heap_modify( T* aHeap, int iPos, int iSize, Less cLess = Less() )
     {
-        DebugAssert(0 <= iPos && iPos < iSize);
+        GoodAssert(0 <= iPos && iPos < iSize);
         if ( (iPos > 0) && cLess(aHeap[(iPos-1) >> 1], aHeap[iPos]) )
             heap_adjust_up(aHeap, iPos, cLess);
         else

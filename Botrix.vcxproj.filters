@@ -18,67 +18,64 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="good\aatree.h">
+    <ClInclude Include="good\include\good\aatree.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\astar.h">
+    <ClInclude Include="good\include\good\astar.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\bitmatrix.h">
+    <ClInclude Include="good\include\good\bitmatrix.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\bitset.h">
+    <ClInclude Include="good\include\good\circular_buffer.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\circular_buffer.h">
+    <ClInclude Include="good\include\good\defines.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\defines.h">
+    <ClInclude Include="good\include\good\file.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\file.h">
+    <ClInclude Include="good\include\good\graph.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\graph.h">
+    <ClInclude Include="good\include\good\heap.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\heap.h">
+    <ClInclude Include="good\include\good\ini_file.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\ini_file.h">
+    <ClInclude Include="good\include\good\list.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\list.h">
+    <ClInclude Include="good\include\good\map.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\map.h">
+    <ClInclude Include="good\include\good\mutex.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\mutex.h">
+    <ClInclude Include="good\include\good\priority_queue.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\priority_queue.h">
+    <ClInclude Include="good\include\good\process.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\process.h">
+    <ClInclude Include="good\include\good\set.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\set.h">
+    <ClInclude Include="good\include\good\string.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\string.h">
+    <ClInclude Include="good\include\good\string_buffer.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\string_buffer.h">
+    <ClInclude Include="good\include\good\thread.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\thread.h">
+    <ClInclude Include="good\include\good\utility.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="good\utility.h">
-      <Filter>good</Filter>
-    </ClInclude>
-    <ClInclude Include="good\vector.h">
+    <ClInclude Include="good\include\good\vector.h">
       <Filter>good</Filter>
     </ClInclude>
     <ClInclude Include="mods\borzh\bot_borzh.h">
@@ -121,21 +118,34 @@
     <ClInclude Include="waypoint.h" />
     <ClInclude Include="waypoint_navigator.h" />
     <ClInclude Include="weapon.h" />
+    <ClInclude Include="good\include\good\include\good\bitset.h" />
+    <ClInclude Include="good\include\good\bitset.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\include\good\log.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\include\good\memory.h">
+      <Filter>good</Filter>
+    </ClInclude>
+    <ClInclude Include="good\include\good\string_utils.h">
+      <Filter>good</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="good\file.cpp">
+    <ClCompile Include="good\src\file.cpp">
       <Filter>good</Filter>
     </ClCompile>
-    <ClCompile Include="good\ini_file.cpp">
+    <ClCompile Include="good\src\ini_file.cpp">
       <Filter>good</Filter>
     </ClCompile>
-    <ClCompile Include="good\mutex.cpp">
+    <ClCompile Include="good\src\mutex.cpp">
       <Filter>good</Filter>
     </ClCompile>
-    <ClCompile Include="good\process.cpp">
+    <ClCompile Include="good\src\process.cpp">
       <Filter>good</Filter>
     </ClCompile>
-    <ClCompile Include="good\thread.cpp">
+    <ClCompile Include="good\src\thread.cpp">
       <Filter>good</Filter>
     </ClCompile>
     <ClCompile Include="mods\borzh\bot_borzh.cpp">
@@ -168,6 +178,9 @@
     <ClCompile Include="waypoint.cpp" />
     <ClCompile Include="waypoint_navigator.cpp" />
     <ClCompile Include="weapon.cpp" />
+    <ClCompile Include="good\src\log.cpp">
+      <Filter>good</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mods\borzh\readme.txt">

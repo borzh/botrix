@@ -412,8 +412,8 @@ void CBotrixPlugin::ClientSettingsChanged( edict_t* /*pEdict*/ )
 //----------------------------------------------------------------------------------------------------------------
 // Called when a client joins a server.
 //----------------------------------------------------------------------------------------------------------------
-PLUGIN_RESULT CBotrixPlugin::ClientConnect( bool */*bAllowConnect*/, edict_t* /*pEntity*/, const char */*pszName*/,
-                                            const char */*pszAddress*/, char */*reject*/, int /*maxrejectlen*/ )
+PLUGIN_RESULT CBotrixPlugin::ClientConnect( bool* /*bAllowConnect*/, edict_t* /*pEntity*/, const char* /*pszName*/,
+                                            const char* /*pszAddress*/, char* /*reject*/, int /*maxrejectlen*/ )
 {
     return PLUGIN_CONTINUE;
 }
@@ -586,7 +586,7 @@ void CBotrixPlugin::GenerateSayEvent( edict_t* pEntity, const char* szText, bool
 #endif
 
 
-void CBotrixPlugin::HudTextMessage( edict_t* pEntity, char */*szTitle*/, char *szMessage, Color colour, int level, int time )
+void CBotrixPlugin::HudTextMessage( edict_t* pEntity, char* /*szTitle*/, char* szMessage, Color colour, int level, int time )
 {
     KeyValues *kv = new KeyValues( "menu" );
     kv->SetString( "title", szMessage );

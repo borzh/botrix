@@ -42,7 +42,7 @@
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</IntDir>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
@@ -69,7 +69,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\Source2013\mp\src\public;..\Source2013\mp\src\public\engine;..\Source2013\mp\src\public\tier0;..\Source2013\mp\src\public\tier1;..\Source2013\mp\src\public\game\server;..\Source2013\mp\src\public\mathlib;..\Source2013\mp\src\public\vstdlib;..\Source2013\mp\src\game\server;..\Source2013\mp\src\game\server\hl2;..\Source2013\mp\src\game\server\hl2mp;..\Source2013\mp\src\game\shared;..\Source2013\mp\src\;.</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src\;$(ProjectDir)\;$(ProjectDir)\good\include\</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_HAS_ITERATOR_DEBUGGING=0;_DEBUG;_WINDOWS;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;BOTRIX_SOURCE_2013;BOTRIX_HL2DM_MOD;INI_FILE_USE_ONLY_ONE_KEY_VALUE_SEPARATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
@@ -95,7 +95,7 @@
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)botrix.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>..\Source2013\mp\src\lib\public;..\Source2013\mp\src\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\$(OutDir)botrix.pdb</ProgramDatabaseFile>
@@ -111,12 +111,18 @@
       <MapExports>true</MapExports>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(OutDir)botrix.dll" "..\Source2013\mp\game\mod_hl2mp\bin"
-copy /Y "$(OutDir)botrix.pdb" "..\Source2013\mp\game\mod_hl2mp\bin"
-copy /Y "$(OutDir)botrix.dll" "F:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\bin"
-copy /Y "$(OutDir)botrix.pdb" "F:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\bin"
-copy /Y "$(OutDir)botrix.dll" "F:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\bin"
-copy /Y "$(OutDir)botrix.pdb" "F:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\bin"
+      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp\addons" (
+    copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
+    copy /Y "$(OutDir)botrix.pdb" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
+)
+if exist "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons" (
+    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons"
+    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons"
+)
+if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons" (
+    copy /Y "$(OutDir)botrix.dll" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons"
+    copy /Y "$(OutDir)botrix.pdb" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons"
+)
 </Command>
     </PostBuildEvent>
     <PostBuildEvent>
@@ -144,7 +150,7 @@ copy /Y "$(OutDir)botrix.pdb" "F:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\b
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>..\Source2013\mp\src\public;..\Source2013\mp\src\public\engine;..\Source2013\mp\src\public\tier0;..\Source2013\mp\src\public\tier1;..\Source2013\mp\src\public\game\server;..\Source2013\mp\src\public\mathlib;..\Source2013\mp\src\public\vstdlib;..\Source2013\mp\src\game\server;..\Source2013\mp\src\game\server\hl2;..\Source2013\mp\src\game\server\hl2mp;..\Source2013\mp\src\game\shared;..\Source2013\mp\src\;.</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src\;$(ProjectDir)\;$(ProjectDir)\good\include\</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;VECTOR;GAME_DLL;HL2_DLL;HL2_EPISODIC;HL2_MP;MP_SDK;BOTRIX_SOURCE_2013;BOTRIX_HL2DM_MOD;INI_FILE_USE_ONLY_ONE_KEY_VALUE_SEPARATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -170,7 +176,7 @@ copy /Y "$(OutDir)botrix.pdb" "F:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\b
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)botrix.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>..\Source2013\mp\src\lib\public;..\Source2013\mp\src\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMTD;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(IntDir)/$(TargetName).pdb</ProgramDatabaseFile>
@@ -188,12 +194,18 @@ copy /Y "$(OutDir)botrix.pdb" "F:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\b
       <AdditionalOptions> /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(OutDir)botrix.dll" "..\Source2013\mp\game\mod_hl2mp\bin"
-copy /Y "$(OutDir)botrix.pdb" "..\Source2013\mp\game\mod_hl2mp\bin"
-copy /Y "$(OutDir)botrix.dll" "F:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\bin"
-copy /Y "$(OutDir)botrix.pdb" "F:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\bin"
-copy /Y "$(OutDir)botrix.dll" "F:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\bin"
-copy /Y "$(OutDir)botrix.pdb" "F:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\bin"
+      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp\addons" (
+    copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
+    copy /Y "$(OutDir)botrix.pdb" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
+)
+if exist "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons" (
+    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons"
+    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons"
+)
+if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons" (
+    copy /Y "$(OutDir)botrix.dll" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons"
+    copy /Y "$(OutDir)botrix.pdb" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons"
+)
 </Command>
     </PostBuildEvent>
     <PostBuildEvent>
@@ -201,27 +213,31 @@ copy /Y "$(OutDir)botrix.pdb" "F:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\b
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="good\aatree.h" />
-    <ClInclude Include="good\astar.h" />
-    <ClInclude Include="good\bitmatrix.h" />
-    <ClInclude Include="good\bitset.h" />
-    <ClInclude Include="good\circular_buffer.h" />
-    <ClInclude Include="good\defines.h" />
-    <ClInclude Include="good\file.h" />
-    <ClInclude Include="good\graph.h" />
-    <ClInclude Include="good\heap.h" />
-    <ClInclude Include="good\ini_file.h" />
-    <ClInclude Include="good\list.h" />
-    <ClInclude Include="good\map.h" />
-    <ClInclude Include="good\mutex.h" />
-    <ClInclude Include="good\priority_queue.h" />
-    <ClInclude Include="good\process.h" />
-    <ClInclude Include="good\set.h" />
-    <ClInclude Include="good\string.h" />
-    <ClInclude Include="good\string_buffer.h" />
-    <ClInclude Include="good\thread.h" />
-    <ClInclude Include="good\utility.h" />
-    <ClInclude Include="good\vector.h" />
+    <ClInclude Include="good\include\good\aatree.h" />
+    <ClInclude Include="good\include\good\astar.h" />
+    <ClInclude Include="good\include\good\bitmatrix.h" />
+    <ClInclude Include="good\include\good\bitset.h" />
+    <ClInclude Include="good\include\good\include\good\bitset.h" />
+    <ClInclude Include="good\include\good\circular_buffer.h" />
+    <ClInclude Include="good\include\good\defines.h" />
+    <ClInclude Include="good\include\good\file.h" />
+    <ClInclude Include="good\include\good\graph.h" />
+    <ClInclude Include="good\include\good\heap.h" />
+    <ClInclude Include="good\include\good\ini_file.h" />
+    <ClInclude Include="good\include\good\list.h" />
+    <ClInclude Include="good\include\good\log.h" />
+    <ClInclude Include="good\include\good\map.h" />
+    <ClInclude Include="good\include\good\memory.h" />
+    <ClInclude Include="good\include\good\mutex.h" />
+    <ClInclude Include="good\include\good\priority_queue.h" />
+    <ClInclude Include="good\include\good\process.h" />
+    <ClInclude Include="good\include\good\set.h" />
+    <ClInclude Include="good\include\good\string.h" />
+    <ClInclude Include="good\include\good\string_buffer.h" />
+    <ClInclude Include="good\include\good\string_utils.h" />
+    <ClInclude Include="good\include\good\thread.h" />
+    <ClInclude Include="good\include\good\utility.h" />
+    <ClInclude Include="good\include\good\vector.h" />
     <ClInclude Include="mods\borzh\bot_borzh.h" />
     <ClInclude Include="mods\borzh\mod_borzh.h" />
     <ClInclude Include="mods\borzh\planner.h" />
@@ -248,11 +264,12 @@ copy /Y "$(OutDir)botrix.pdb" "F:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\b
     <ClInclude Include="weapon.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="good\file.cpp" />
-    <ClCompile Include="good\ini_file.cpp" />
-    <ClCompile Include="good\mutex.cpp" />
-    <ClCompile Include="good\process.cpp" />
-    <ClCompile Include="good\thread.cpp" />
+    <ClCompile Include="good\src\file.cpp" />
+    <ClCompile Include="good\src\ini_file.cpp" />
+    <ClCompile Include="good\src\log.cpp" />
+    <ClCompile Include="good\src\mutex.cpp" />
+    <ClCompile Include="good\src\process.cpp" />
+    <ClCompile Include="good\src\thread.cpp" />
     <ClCompile Include="mods\borzh\bot_borzh.cpp" />
     <ClCompile Include="mods\borzh\mod_borzh.cpp" />
     <ClCompile Include="mods\borzh\planner.cpp" />

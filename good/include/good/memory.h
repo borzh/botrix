@@ -47,6 +47,7 @@ public:
     //--------------------------------------------------------------------------------------------------------
     void destroy(pointer_t pWhere) const
     {
+        (void)pWhere; // To remove ugly VS warning 4100.
         pWhere->~T();
     }
 
@@ -132,12 +133,12 @@ public:
     //--------------------------------------------------------------------------------------------------------
     /// Perform operation on pointer. Assertion is used to ensure that pointer is valid.
     //--------------------------------------------------------------------------------------------------------
-    T* operator->() { DebugAssert(ptr); return ptr; }
+    T* operator->() { GoodAssert(ptr); return ptr; }
 
     //--------------------------------------------------------------------------------------------------------
     /// Perform operation on pointer. Assertion is used to ensure that pointer is valid.
     //--------------------------------------------------------------------------------------------------------
-    const T* operator->() const { DebugAssert(ptr); return ptr; }
+    const T* operator->() const { GoodAssert(ptr); return ptr; }
 
     //--------------------------------------------------------------------------------------------------------
     /// Copy operator.
@@ -229,7 +230,7 @@ public:
     {
         if (m_iCounter)
         {
-            DebugAssert(m_pPtr);
+            GoodAssert(m_pPtr);
             if ( (--(*m_iCounter)) == 0 )
             {
                 m_cAlloc.deallocate(m_iCounter, 1);
@@ -243,12 +244,12 @@ public:
     //--------------------------------------------------------------------------------------------------------
     /// Perform operation on pointer. Assertion is used to ensure that pointer is valid.
     //--------------------------------------------------------------------------------------------------------
-    reference_t operator*() const { DebugAssert(m_pPtr); return *m_pPtr; }
+    reference_t operator*() const { GoodAssert(m_pPtr); return *m_pPtr; }
 
     //--------------------------------------------------------------------------------------------------------
     /// Perform operation on pointer. Assertion is used to ensure that pointer is valid.
     //--------------------------------------------------------------------------------------------------------
-    pointer_t operator->() const { DebugAssert(m_pPtr); return m_pPtr; }
+    pointer_t operator->() const { GoodAssert(m_pPtr); return m_pPtr; }
 
     //--------------------------------------------------------------------------------------------------------
     /// Copy operator.

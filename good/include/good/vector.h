@@ -69,34 +69,34 @@ namespace good
             bool operator!= ( const const_iterator& itOther ) const { return m_pCurrent != itOther.m_pCurrent; }
 
             /// Operator -.
-            int operator- ( const const_iterator& itOther ) const { DebugAssert(m_pCurrent); return m_pCurrent - itOther.m_pCurrent; }
+            int operator- ( const const_iterator& itOther ) const { GoodAssert(m_pCurrent); return m_pCurrent - itOther.m_pCurrent; }
 
             /// Operator +.
-            const_iterator operator+ ( size_type iOffset ) const { DebugAssert(m_pCurrent); return const_iterator(m_pCurrent + iOffset); }
+            const_iterator operator+ ( size_type iOffset ) const { GoodAssert(m_pCurrent); return const_iterator(m_pCurrent + iOffset); }
             /// Operator +=.
-            const_iterator& operator+= ( size_type iOffset ) { DebugAssert(m_pCurrent); m_pCurrent += iOffset; return *this; }
+            const_iterator& operator+= ( size_type iOffset ) { GoodAssert(m_pCurrent); m_pCurrent += iOffset; return *this; }
 
             /// Operator -.
-            const_iterator operator- ( size_type iOffset ) const { DebugAssert(m_pCurrent); return const_iterator(m_pCurrent - iOffset); }
+            const_iterator operator- ( size_type iOffset ) const { GoodAssert(m_pCurrent); return const_iterator(m_pCurrent - iOffset); }
             /// Operator -=.
-            const_iterator& operator-= ( size_type iOffset ) { DebugAssert(m_pCurrent); m_pCurrent -= iOffset; return *this; }
+            const_iterator& operator-= ( size_type iOffset ) { GoodAssert(m_pCurrent); m_pCurrent -= iOffset; return *this; }
 
             /// Pre-increment.
-            const_iterator& operator++() {DebugAssert(m_pCurrent);  m_pCurrent++; return *this; }
+            const_iterator& operator++() {GoodAssert(m_pCurrent);  m_pCurrent++; return *this; }
             /// Pre-decrement.
-            const_iterator& operator--() { DebugAssert(m_pCurrent); m_pCurrent--; return *this; }
+            const_iterator& operator--() { GoodAssert(m_pCurrent); m_pCurrent--; return *this; }
 
             /// Post-increment.
-            const_iterator operator++ (int) { DebugAssert(m_pCurrent); const_iterator tmp(*this); m_pCurrent++; return tmp; }
+            const_iterator operator++ (int) { GoodAssert(m_pCurrent); const_iterator tmp(*this); m_pCurrent++; return tmp; }
             /// Post-decrement.
-            const_iterator operator-- (int) { DebugAssert(m_pCurrent); const_iterator tmp(*this); m_pCurrent--; return tmp; }
+            const_iterator operator-- (int) { GoodAssert(m_pCurrent); const_iterator tmp(*this); m_pCurrent--; return tmp; }
 
             /// Dereference.
-            const T& operator*() const { DebugAssert(m_pCurrent); return *m_pCurrent; }
+            const T& operator*() const { GoodAssert(m_pCurrent); return *m_pCurrent; }
             /// Dereference.
-            const T& operator[] (int iOffset) const { DebugAssert(m_pCurrent); return m_pCurrent[iOffset]; }
+            const T& operator[] (int iOffset) const { GoodAssert(m_pCurrent); return m_pCurrent[iOffset]; }
             /// Element selection through pointer.
-            pointer operator->() const { DebugAssert(m_pCurrent); return m_pCurrent; }
+            pointer operator->() const { GoodAssert(m_pCurrent); return m_pCurrent; }
 
         protected:
             pointer m_pCurrent;
@@ -119,34 +119,34 @@ namespace good
             iterator( iterator const& itOther ): base_class(itOther) {}
 
             /// Operator +.
-            iterator operator+ ( size_type iOffset ) const { DebugAssert(this->m_pCurrent); return iterator(this->m_pCurrent + iOffset); }
+            iterator operator+ ( size_type iOffset ) const { GoodAssert(this->m_pCurrent); return iterator(this->m_pCurrent + iOffset); }
             /// Operator +=.
-            iterator& operator+= ( size_type iOffset ) { DebugAssert(this->m_pCurrent); this->m_pCurrent += iOffset; return *this; }
+            iterator& operator+= ( size_type iOffset ) { GoodAssert(this->m_pCurrent); this->m_pCurrent += iOffset; return *this; }
 
             /// Operator -.
-            int operator- ( const iterator& other ) const { DebugAssert(this->m_pCurrent); return (this->m_pCurrent - other.m_pCurrent); }
+            int operator- ( const iterator& other ) const { GoodAssert(this->m_pCurrent); return (this->m_pCurrent - other.m_pCurrent); }
 
             /// Operator -.
-            iterator operator- ( size_type iOffset ) const { DebugAssert(this->m_pCurrent); return iterator(this->m_pCurrent - iOffset); }
+            iterator operator- ( size_type iOffset ) const { GoodAssert(this->m_pCurrent); return iterator(this->m_pCurrent - iOffset); }
             /// Operator -=.
-            iterator& operator-= ( size_type iOffset ) { DebugAssert(this->m_pCurrent); this->m_pCurrent -= iOffset; return *this; }
+            iterator& operator-= ( size_type iOffset ) { GoodAssert(this->m_pCurrent); this->m_pCurrent -= iOffset; return *this; }
 
             /// Pre-increment.
-            iterator& operator++() { DebugAssert(this->m_pCurrent); this->m_pCurrent++; return *this; }
+            iterator& operator++() { GoodAssert(this->m_pCurrent); this->m_pCurrent++; return *this; }
             /// Pre-decrement.
-            iterator& operator--() { DebugAssert(this->m_pCurrent); this->m_pCurrent--; return *this; }
+            iterator& operator--() { GoodAssert(this->m_pCurrent); this->m_pCurrent--; return *this; }
 
             /// Post-increment.
-            iterator operator++ (int) { DebugAssert(this->m_pCurrent); iterator tmp(*this); this->m_pCurrent++; return tmp; }
+            iterator operator++ (int) { GoodAssert(this->m_pCurrent); iterator tmp(*this); this->m_pCurrent++; return tmp; }
             /// Post-decrement.
-            iterator operator-- (int) { DebugAssert(this->m_pCurrent); iterator tmp(*this); this->m_pCurrent--; return tmp; }
+            iterator operator-- (int) { GoodAssert(this->m_pCurrent); iterator tmp(*this); this->m_pCurrent--; return tmp; }
 
             /// Dereference.
-            reference operator*() const { DebugAssert(this->m_pCurrent); return *this->m_pCurrent; }
+            reference operator*() const { GoodAssert(this->m_pCurrent); return *this->m_pCurrent; }
             /// Dereference.
-            reference operator[] (int iOffset) const { DebugAssert(this->m_pCurrent); return this->m_pCurrent[iOffset]; }
+            reference operator[] (int iOffset) const { GoodAssert(this->m_pCurrent); return this->m_pCurrent[iOffset]; }
             /// Element selection through pointer.
-            pointer operator->() const { DebugAssert(this->m_pCurrent); return this->m_pCurrent; }
+            pointer operator->() const { GoodAssert(this->m_pCurrent); return this->m_pCurrent; }
         };
 
         typedef util_reverse_iterator<const_iterator> const_reverse_iterator; ///< Reverse const iterator of a vector.
@@ -316,32 +316,32 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Array subscript.
         //--------------------------------------------------------------------------------------------------------
-        T& operator[] ( size_type iIndex ) { DebugAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
+        T& operator[] ( size_type iIndex ) { GoodAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Array subscript const.
         //--------------------------------------------------------------------------------------------------------
-        T const& operator[] ( size_type iIndex ) const { DebugAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
+        T const& operator[] ( size_type iIndex ) const { GoodAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Element at index.
         //--------------------------------------------------------------------------------------------------------
-        T& at( size_type iIndex ) { DebugAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
+        T& at( size_type iIndex ) { GoodAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Element at index.
         //--------------------------------------------------------------------------------------------------------
-        T const& at( size_type iIndex ) const { DebugAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
+        T const& at( size_type iIndex ) const { GoodAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Get first array element.
         //--------------------------------------------------------------------------------------------------------
-        T& front() { DebugAssert(m_iSize > 0); return m_pBuffer[0]; }
+        T& front() { GoodAssert(m_iSize > 0); return m_pBuffer[0]; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Get last array element.
         //--------------------------------------------------------------------------------------------------------
-        T& back() { DebugAssert(m_iSize > 0); return m_pBuffer[m_iSize-1]; }
+        T& back() { GoodAssert(m_iSize > 0); return m_pBuffer[m_iSize-1]; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Add element to end of buffer.
@@ -368,7 +368,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         iterator insert( size_type iPos, const T& tElem )
         {
-            DebugAssert( iPos <= m_iSize );
+            GoodAssert( iPos <= m_iSize );
             increment(1);
             if ( iPos < m_iSize )
                 memmove( &m_pBuffer[iPos + 1], &m_pBuffer[iPos],(m_iSize - iPos) * sizeof(T) );
@@ -392,7 +392,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         iterator erase( size_type iPos )
         {
-            DebugAssert( iPos < m_iSize );
+            GoodAssert( iPos < m_iSize );
             m_cAlloc.destroy(&m_pBuffer[iPos]);
             m_iSize--;
             if ( iPos < m_iSize )

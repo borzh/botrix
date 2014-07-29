@@ -35,7 +35,7 @@ namespace good
         /// Or operator.
         base_bitset& operator|= (const base_bitset& other)
         {
-            DebugAssert( size() == other.size() );
+            GoodAssert( size() == other.size() );
             for ( int i=0; i < m_cContainer.size(); ++i )
                 m_cContainer[i] |= other.m_cContainer[i];
             return *this;
@@ -44,7 +44,7 @@ namespace good
         /// = operator.
         base_bitset& operator= (const base_bitset& other)
         {
-            DebugAssert( size() == other.size() );
+            GoodAssert( size() == other.size() );
             for ( int i=0; i < m_cContainer.size(); ++i )
                 m_cContainer[i] = other.m_cContainer[i];
             return *this;
@@ -79,19 +79,19 @@ namespace good
         bool operator[]( int iIndex ) const { return test(iIndex); }
 
         /// Returns true if bit n is set.
-        bool test( int iIndex ) const { DebugAssert( iIndex < m_iSize ); return BIT_ARRAY_IS_SET(iIndex, m_cContainer) != 0; }
+        bool test( int iIndex ) const { GoodAssert( iIndex < m_iSize ); return BIT_ARRAY_IS_SET(iIndex, m_cContainer) != 0; }
 
         /// Set bit at given position.
         void set( int iIndex )
         {
-            DebugAssert( iIndex < m_iSize );
+            GoodAssert( iIndex < m_iSize );
             BIT_ARRAY_SET(iIndex, m_cContainer);
         }
 
         /// Set bit at given position.
         void set( int iIndex, bool bValue )
         {
-            DebugAssert( iIndex < m_iSize );
+            GoodAssert( iIndex < m_iSize );
             if ( bValue )
                 BIT_ARRAY_SET(iIndex, m_cContainer);
             else

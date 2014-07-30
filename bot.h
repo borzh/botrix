@@ -21,7 +21,7 @@
 #include "game/shared/in_buttons.h"
 
 
-#define BotMessage(...)             { if ( m_bDebugging ) BLOG_D(__VA_ARGS__); }
+#define BotMessage(...)             { if ( m_bDebugging ) BLOG_I(__VA_ARGS__); }
 
 
 class CBotChat; // Forward declaration.

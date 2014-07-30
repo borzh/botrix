@@ -24,7 +24,7 @@ good::ini_file CConfiguration::m_iniFile; // Ini file.
 bool CConfiguration::m_bModified;         // True if something was modified (to save later).
 
 //------------------------------------------------------------------------------------------------------------
-TModId CConfiguration::Load( const good::string& sFileName, const good::string& sGameDir, const good::string& sModDir )
+TModId CConfiguration::Load( const good::string& sGameDir, const good::string& sModDir )
 {
     TModId iModId = EModId_Invalid;
 
@@ -35,7 +35,6 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 
     good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
 
-    m_iniFile.name = sFileName.duplicate();
     if ( m_iniFile.load() >= good::IniFileNotFound )
     {
         BLOG_E("Error reading configuration file %s.", m_iniFile.name.c_str());
@@ -122,7 +121,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 
     }
     else
-        BLOG_E("File %s, missing [%s] section.", m_iniFile.name.c_str(), it->name.c_str());
+        BLOG_E("File %s, missing [General] section.", m_iniFile.name.c_str());
 
     CMod::SetBotNames(aBotNames);
 
@@ -250,6 +249,8 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 
         CMod::aTeamsNames = aTeams;
     }
+    else
+        BLOG_W("  No teams & models information.");
 
     // Load health /armor / object entity classes.
     sbBuffer = CMod::sModName;
@@ -306,6 +307,8 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
                 CItems::AddItemClassFor( iType, cEntityClass );
             }
         }
+        else
+            BLOG_W("  No entities of type '%s' available.", CTypeToString::EntityTypeToString(iType).c_str());
     }
 
     // Load object models.
@@ -327,16 +330,19 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
             }
         }
     }
+    else
+        BLOG_W("  No models of type 'object' available.");
 
     // Load weapons.
     CWeapons::Clear();
 
-    BLOG_D("Weapons:");
     sbBuffer = CMod::sModName;
     sbBuffer << ".weapons";
     it = m_iniFile.find( sbBuffer );
     if ( it != m_iniFile.end() )
     {
+        BLOG_D("Weapons:");
+
         // Iterate throught key values.
         for ( good::ini_section::const_iterator itemIt = it->begin(); itemIt != it->end(); ++itemIt )
         {
@@ -627,6 +633,9 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
             }
         }
     }
+    else
+        BLOG_W("  No weapons available.");
+
 
 #ifdef BOTRIX_CHAT
     // Load chat: synonims.

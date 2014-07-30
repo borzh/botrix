@@ -276,17 +276,21 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     if ( sIniPath.size() == 0 )
     {
         if ( find_config_ini(sbBuffer) )
-        {
             sIniPath.assign(sbBuffer, true);
-            sBotrixPath.assign( sbBuffer.c_str(), sbBuffer.size() - sConfigIni.size() - 1, true);
-        }
+
+        // Set botrix path to game/../ directory.
+        sbBuffer.erase(sbBuffer.size() - sConfigIni.size() - 1, sConfigIni.size() + 1);
+        sBotrixPath.assign( sbBuffer.c_str(), sbBuffer.size(), true);
+        sbBuffer << PATH_SEPARATOR;
+        good::file::make_folders( sbBuffer.c_str() );
     }
 
     // Load configuration file.
     TModId iModId = EModId_Invalid;
     if ( sIniPath.size() > 0 )
     {
-        iModId = CConfiguration::Load(sIniPath, sGameFolder, sModFolder);
+        CConfiguration::SetFileName(sIniPath);
+        iModId = CConfiguration::Load(sGameFolder, sModFolder);
         GoodAssert(iModId != EModId_Invalid);
     }
 
@@ -299,14 +303,17 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
         CUtil::iLogLevel = good::ELogLevelInfo;
         good::log::iFileLogLevel = good::ELogLevelDebug;
 
-        sBotrixPath = ".";
-
         sbBuffer = sBotrixPath;
         sbBuffer << PATH_SEPARATOR << "botrix.log";
         if ( good::log::start_log_to_file( sbBuffer.c_str(), false ) )
             BLOG_I("Log to file: %s.", sbBuffer.c_str());
         else
             BLOG_E( "Can't open log file %s.", sbBuffer.c_str() );
+
+        sbBuffer = sBotrixPath;
+        sbBuffer << PATH_SEPARATOR << "config.ini";
+        CConfiguration::SetFileName(sbBuffer);
+        CConfiguration::SetClientAccessLevel("STEAM_ID_LAN", FCommandAccessAll);
     }
 
     // Create console command instance.

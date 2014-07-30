@@ -165,10 +165,11 @@ namespace good
                     m_pBuffer = m_cAlloc.allocate(iSize+1);
                 else if (m_iSize < iSize)
                     m_pBuffer = m_cAlloc.reallocate(m_pBuffer, (iSize+1)*sizeof(Char), (m_iSize+1)*sizeof(Char));
-                memcpy(m_pBuffer, s, (iSize + 1)*sizeof(Char) );
+                memcpy(m_pBuffer, s, iSize*sizeof(Char) );
             }
             else
                 m_pBuffer = (Char*)s;
+            m_pBuffer[iSize] = 0;
 
             m_iStatic = !bCopy;
             m_iSize = iSize;

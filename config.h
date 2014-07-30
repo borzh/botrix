@@ -15,8 +15,12 @@ class CConfiguration
 
 public: // Methods.
 
+
+    /// Set ini file name.
+    static void SetFileName( const good::string& sFileName ) { m_iniFile.name.assign(sFileName, true); }
+
     /// Load configuration file. You need also provide game and mod folders in order to detect mod to use.
-    static TModId Load( const good::string& sFileName, const good::string& sGameDir, const good::string& sModDir );
+    static TModId Load( const good::string& sGameDir, const good::string& sModDir );
 
     /// Save configuration file (must be loaded first).
     static void Save()

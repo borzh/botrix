@@ -7,6 +7,10 @@
 #define __GOOD_FILE_H__
 
 
+#ifndef _WIN32
+    #include <sys/stat.h>
+#endif
+
 #include "good/string_buffer.h"
 #include "good/string_utils.h"
 
@@ -14,11 +18,13 @@
 #define FILE_OPERATION_FAILED (size_t)(-1)
 
 
-#ifdef _WIN32
 // Disable obsolete warnings.
-    #pragma warning(push)
-    #pragma warning(disable: 4996)
+WIN_PRAGMA( warning(push) )
+WIN_PRAGMA( warning(disable: 4996) )
 
+
+
+#ifdef _WIN32
     #define PATH_SEPARATOR '\\'
     #define PATH_SEPARATOR_STRING "\\"
 #else
@@ -41,17 +47,17 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get file size. Returns FILE_OPERATION_FAILED if file doesn't exists.
         //--------------------------------------------------------------------------------------------------------
-        static size_t file_size( const char* szFileName );
+        static size_t file_size( const TChar* szFileName );
 
         //--------------------------------------------------------------------------------------------------------
         /// Read bytes from position iPos of the file in given buffer. Return false if file doesn't exists.
         //--------------------------------------------------------------------------------------------------------
-        static size_t file_to_memory( const char* szFileName, void* pBuffer, size_t iBufferSize, long iPos = 0 );
+        static size_t file_to_memory( const TChar* szFileName, void* pBuffer, size_t iBufferSize, long iPos = 0 );
 
         //--------------------------------------------------------------------------------------------------------
         /// Make folders for a file if they don't exist.
         //--------------------------------------------------------------------------------------------------------
-        static bool make_folders( const char *szFileName );
+        static bool make_folders( const TChar *szFileName );
 
         //-------------------------------------------------------------------------------------------------
         /// Append sPath1 to sPath2, using path separator if necessary.
@@ -93,6 +99,19 @@ namespace good
         }
 
         //--------------------------------------------------------------------------------------------------------
+        /// Get file directory (characters before last path separator).
+        //--------------------------------------------------------------------------------------------------------
+        template <typename StringBuffer>
+        inline static StringBuffer& dir( StringBuffer& sPath )
+        {
+            typename StringBuffer::size_type pos = sPath.rfind(PATH_SEPARATOR);
+            if ( pos == StringBuffer::npos )
+                pos = 0;
+            sPath.erase( pos, sPath.size()-pos );
+            return sPath;
+        }
+
+        //--------------------------------------------------------------------------------------------------------
         /// Get file name (characters after last path separator).
         //--------------------------------------------------------------------------------------------------------
         template <typename String>
@@ -124,8 +143,35 @@ namespace good
                 return "";
         }
 
+        //--------------------------------------------------------------------------------------------------------
+        /// Check if file @p szPath exists.
+        //--------------------------------------------------------------------------------------------------------
+        inline static bool exists( const TChar* szPath )
+        {
+            GoodAssert(szPath);
+            struct stat cStat;
+            return ( stat(szPath, &cStat) == 0 );
+        }
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Check if file path is absolute.
+        //--------------------------------------------------------------------------------------------------------
+        inline static bool absolute( const TChar* szPath )
+        {
+            GoodAssert(szPath);
+#ifdef _WIN32
+            return ( (szPath[0] != 0) && (szPath[1] == ':') ); // i.e. "c:"
+#else
+            return ( szPath[0] == '/' );
+#endif
+        }
+
     };
 
+
 } // namespace good
+
+
+WIN_PRAGMA( warning(pop) )
 
 #endif // __GOOD_FILE_H__

@@ -58,7 +58,6 @@ add_definitions(
     -DGOOD_LOG_USE_ENDL
     -DBOTRIX_SOURCE_2013
     -DBOTRIX_HL2DM_MOD
-    -DBETA_VERSION
     -DLINUX=1
     -D_LINUX=1
     -DPOSIX=1

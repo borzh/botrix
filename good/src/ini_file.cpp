@@ -5,9 +5,8 @@
 
 
 // Disable obsolete warnings.
-#ifdef _WIN32
-#pragma warning(disable: 4996)
-#endif
+WIN_PRAGMA( warning(push) )
+WIN_PRAGMA( warning(disable: 4996) )
 
 
 namespace good
@@ -399,3 +398,6 @@ ini_file_end_loop:
 
 
 } // namespace
+
+
+WIN_PRAGMA( warning(pop) ) // Restore warnings.

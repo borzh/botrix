@@ -16,13 +16,6 @@
 #include "good/defines.h"
 
 
-#ifdef _WIN32
-// Disable unreferenced formal parameter warnings (at destroy() if T no need for destructor).
-    #pragma warning(push)
-    #pragma warning(disable: 4100)
-#endif
-
-
 namespace good
 {
 
@@ -165,9 +158,5 @@ namespace good
     };
 } // namespace good
 
-
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif
 
 #endif // __GOOD_UTILITY_H__

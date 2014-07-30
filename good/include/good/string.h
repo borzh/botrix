@@ -24,10 +24,8 @@
 #endif
 
 // Disable obsolete warnings.
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable: 4996)
-#endif
+WIN_PRAGMA( warning(push) )
+WIN_PRAGMA( warning(disable: 4996) )
 
 
 namespace good
@@ -344,13 +342,17 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Find last occurrence of Char c in this string.
         //--------------------------------------------------------------------------------------------------------
-        int rfind( Char c ) const
+        int rfind( Char c, int iFrom = npos ) const
         {
-            for ( Char* pCurr = m_pBuffer + m_iSize - 1; pCurr >= m_pBuffer; --pCurr )
+            if ( iFrom >= m_iSize )
+                iFrom = m_iSize - 1;
+            for ( Char* pCurr = m_pBuffer + iFrom; pCurr >= m_pBuffer; --pCurr )
                 if ( *pCurr == c )
                     return pCurr - m_pBuffer;
             return npos;
         }
+
+        // TODO: rfind with string.
 
         //--------------------------------------------------------------------------------------------------------
         /// Get substring from position iFrom and size iSize.
@@ -452,9 +454,7 @@ namespace good
 } // namespace good
 
 
-#ifdef _WIN32
-    #pragma warning(pop) // Restore warnings.
-#endif
+WIN_PRAGMA( warning(pop) ) // Restore warnings.
 
 
 #endif // __GOOD_STRING_H__

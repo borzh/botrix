@@ -35,7 +35,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 
     good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
 
-    m_iniFile.name = sFileName;
+    m_iniFile.name = sFileName.duplicate();
     if ( m_iniFile.load() >= good::IniFileNotFound )
     {
         BLOG_E("Error reading configuration file %s.", m_iniFile.name.c_str());
@@ -169,51 +169,6 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
                                     iModId = EModId_HL2DM;
                                 }
 
-                                // Get player teams.
-                                good::ini_section::iterator teams = it->find("teams");
-                                if ( teams != it->end() )
-                                {
-                                    sbBuffer = teams->value;
-                                    good::escape(sbBuffer);
-                                    good::split( (good::string)sbBuffer, aTeams, ',', true );
-
-                                    BLOG_D("Team names:");
-                                    for ( size_t i = 0; i < aTeams.size(); ++i )
-                                    {
-                                        if ( aTeams[i] == "unassigned" )
-                                            CMod::iUnassignedTeam = i;
-                                        else if ( aTeams[i] == "spectators" )
-                                            CMod::iSpectatorTeam = i;
-                                        BLOG_D( "  %s", aTeams[i].c_str() );
-                                    }
-                                }
-
-                                // Get player models.
-                                for ( size_t i = 0; i < aTeams.size(); ++i )
-                                {
-                                    if ( aTeams[i] == "spectators" )
-                                        continue;
-
-                                    sbBuffer = "models ";
-                                    sbBuffer << aTeams[i];
-
-                                    good::ini_section::iterator models = it->find(sbBuffer);
-                                    if ( models != it->end() )
-                                    {
-                                        sbBuffer = models->value;
-                                        good::escape(sbBuffer);
-                                        good::split( (good::string)sbBuffer, aModels, ',', true );
-#if defined(DEBUG) || defined(_DEBUG)
-                                        BLOG_D("Model names for team %s:", aTeams[i].c_str());
-                                        for ( int j = 0; j < (int)aModels.size(); ++j )
-                                            BLOG_D( "  %s", aModels[j].c_str() );
-#endif
-                                        CMod::SetBotModels( aModels, i );
-                                    }
-                                }
-
-                                CMod::aTeamsNames = aTeams;
-
                                 // Get mod name in sbBuffer.
                                 sbBuffer = it->name;
                                 sbBuffer.erase( sbBuffer.length() - 4, 4 ); // Erase ".mod" from section name.
@@ -232,10 +187,11 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 
     if ( iModId == EModId_Invalid )
     {
-        BLOG_E("File %s: there is no mod available that matches current game & mod folders.", m_iniFile.name.c_str());
-        BLOG_E("Using default mod 'HalfLife2Deathmatch' with bot 'hl2dm', no items available.");
+        BLOG_E("File %s: there is no mod that matches current game & mod folders.", m_iniFile.name.c_str());
+        BLOG_E("Using default mod 'HalfLife2Deathmatch'.");
         CMod::sModName = "HalfLife2Deathmatch";
         sbBuffer = CMod::sModName;
+        iModId = EModId_HL2DM;
     }
     else
     {
@@ -243,7 +199,60 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
         CMod::sModName.assign(sbBuffer, true);
     }
 
+    // Find section "<mod name>.mod".
+    sbBuffer = CMod::sModName;
+    sbBuffer << ".mod";
+    it = m_iniFile.find( sbBuffer );
+    if ( it != m_iniFile.end() )
+    {
+        // Get player teams.
+        good::ini_section::iterator teams = it->find("teams");
+        if ( teams != it->end() )
+        {
+            sbBuffer = teams->value;
+            good::escape(sbBuffer);
+            good::split( (good::string)sbBuffer, aTeams, ',', true );
+
+            BLOG_D("Team names:");
+            for ( size_t i = 0; i < aTeams.size(); ++i )
+            {
+                if ( aTeams[i] == "unassigned" )
+                    CMod::iUnassignedTeam = i;
+                else if ( aTeams[i] == "spectators" )
+                    CMod::iSpectatorTeam = i;
+                BLOG_D( "  %s", aTeams[i].c_str() );
+            }
+        }
+
+        // Get player models.
+        for ( size_t i = 0; i < aTeams.size(); ++i )
+        {
+            if ( aTeams[i] == "spectators" )
+                continue;
+
+            sbBuffer = "models ";
+            sbBuffer << aTeams[i];
+
+            good::ini_section::iterator models = it->find(sbBuffer);
+            if ( models != it->end() )
+            {
+                sbBuffer = models->value;
+                good::escape(sbBuffer);
+                good::split( (good::string)sbBuffer, aModels, ',', true );
+
+                BLOG_D("Model names for team %s:", aTeams[i].c_str());
+                for ( int j = 0; j < (int)aModels.size(); ++j )
+                    BLOG_D( "  %s", aModels[j].c_str() );
+
+                CMod::SetBotModels( aModels, i );
+            }
+        }
+
+        CMod::aTeamsNames = aTeams;
+    }
+
     // Load health /armor / object entity classes.
+    sbBuffer = CMod::sModName;
     for ( TEntityType iType = 0; iType < EEntityTypeTotal; ++iType )
     {
         // Get mod item section, i.e. [HalfLife2Deathmatch.item.health].
@@ -251,7 +260,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
         sbBuffer << ".items.";
         sbBuffer <<  CTypeToString::EntityTypeToString(iType);
 
-        good::ini_file::iterator it = m_iniFile.find( sbBuffer );
+        it = m_iniFile.find( sbBuffer );
         if ( it != m_iniFile.end() )
         {
             CItems::SetEntityClassesSizeForType( iType, it->size() ); // Reserve needed space, as we will use pointers to that space.
@@ -301,7 +310,6 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
 
     // Load object models.
     sbBuffer = CMod::sModName;
-    sbBuffer.erase( CMod::sModName.size() );
     sbBuffer << ".items.object.models";
     it = m_iniFile.find( sbBuffer );
     if ( it != m_iniFile.end() )
@@ -324,7 +332,7 @@ TModId CConfiguration::Load( const good::string& sFileName, const good::string& 
     CWeapons::Clear();
 
     BLOG_D("Weapons:");
-    sbBuffer.erase( CMod::sModName.size() );
+    sbBuffer = CMod::sModName;
     sbBuffer << ".weapons";
     it = m_iniFile.find( sbBuffer );
     if ( it != m_iniFile.end() )

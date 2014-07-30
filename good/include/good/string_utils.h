@@ -13,11 +13,9 @@
 #include "good/string.h"
 
 
-#ifdef _WIN32
 // Disable obsolete warnings.
-    #pragma warning(push)
-    #pragma warning(disable: 4996)
-#endif
+WIN_PRAGMA( warning(push) )
+WIN_PRAGMA( warning(disable: 4996) )
 
 
 namespace good
@@ -204,8 +202,6 @@ namespace good
 } // namespace good
 
 
-#ifdef _WIN32
-    #pragma warning(pop) // Restore warnings.
-#endif
+WIN_PRAGMA( warning(pop) ) // Restore warnings.
 
 #endif // __GOOD_STRING_UTILS_H__

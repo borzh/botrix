@@ -2,10 +2,16 @@
 #include <stdlib.h> // rand().
 #include <time.h> // time()
 
-#include <good/string_buffer.h>
+#ifdef _WIN32
+    #include <direct.h>
+    #define getcwd _getcwd
+#else
+    #include <unistd.h>
+#endif
 
 // Good headers.
 #include <good/file.h>
+#include <good/string_buffer.h>
 
 // Plugin headers.
 #include "bot.h"
@@ -67,10 +73,46 @@ int CBotrixPlugin::m_iFramesCount = 60;
 
 
 //----------------------------------------------------------------------------------------------------------------
+good::string sBotrix("botrix");
+good::string sConfigIni("config.ini");
+
+//----------------------------------------------------------------------------------------------------------------
+bool find_config_ini( good::string_buffer& sbBuffer )
+{
+    bool bResult = false;
+
+    sbBuffer << PATH_SEPARATOR << sBotrix << PATH_SEPARATOR << sConfigIni;
+
+    BLOG_T( "Looking for configuration file %s", sbBuffer.c_str() );
+    if ( good::file::exists(sbBuffer.c_str()) )
+    {
+        BLOG_T( "  found.");
+        bResult = true;
+    }
+    else
+    {
+        // Go one level up.
+        int iPos = sbBuffer.rfind(PATH_SEPARATOR, sbBuffer.size() - sConfigIni.size() - sBotrix.size() - 3);
+        if ( iPos != good::string::npos )
+        {
+            sbBuffer.erase(iPos);
+            sbBuffer << PATH_SEPARATOR << sBotrix << PATH_SEPARATOR << sConfigIni;
+
+            BLOG_T( "Looking for configuration file %s", sbBuffer.c_str() );
+            if ( good::file::exists(sbBuffer.c_str()) )
+            {
+                BLOG_T( "  found.");
+                bResult = true;
+            }
+        }
+    }
+    return bResult;
+}
+
+//----------------------------------------------------------------------------------------------------------------
 // Interfaces from the CBotrixPlugin::pEngineServer.
 //----------------------------------------------------------------------------------------------------------------
 IVEngineServer* CBotrixPlugin::pEngineServer = NULL;
-IFileSystem* pFileSystem = NULL;
 
 #ifdef USE_OLD_GAME_EVENT_MANAGER
 IGameEventManager* CBotrixPlugin::pGameEventManager = NULL;
@@ -123,7 +165,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     good::log::bLogToStdOut = false; // Disable log to stdout, Msg() will print there.
     good::log::bLogToStdErr = false; // Disable log to stderr, Warning() will print there.
     good::log::iStdErrLevel = good::ELogLevelWarning; // Log warnings and errors to stderr.
-    good::log::iLogLevel = good::ELogLevelWarning;
+    CUtil::iLogLevel = good::log::iLogLevel = good::ELogLevelTrace; // Trace before loading config.ini
     good::log::set_prefix("[Botrix] ");
 
 #ifndef DONT_USE_VALVE_FUNCTIONS
@@ -145,7 +187,6 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 #endif
 
     LOAD_GAME_SERVER_INTERFACE(pServerGameClients, IServerGameClients, INTERFACEVERSION_SERVERGAMECLIENTS);
-    LOAD_INTERFACE_IGNORE_ERROR(pFileSystem, IFileSystem, FILESYSTEM_INTERFACE_VERSION);
     //LOAD_GAME_SERVER_INTERFACE(pServerGameEnts, IServerGameEnts, INTERFACEVERSION_SERVERGAMECLIENTS);
 
 #ifdef SOURCE_ENGINE_2006
@@ -157,35 +198,116 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 #endif // DONT_USE_VALVE_FUNCTIONS
 
 
-    // Get game/mod directories.
+    // Get game/mod and botrix base directories.
+    good::string sIniPath;
+
 #ifdef DONT_USE_VALVE_FUNCTIONS
-    #define BOTRIX_XSTRINGIFY(a) str(a)
+    #define BOTRIX_XSTRINGIFY(a) BOTRIX_STRINGIFY(a)
     #define BOTRIX_STRINGIFY(a) #a
     strcpy(szMainBuffer, BOTRIX_XSTRINGIFY(DONT_USE_VALVE_FUNCTIONS)); // Mod directory.
 #else
-    pEngineServer->GetGameDir(szMainBuffer, iMainBufferSize);
+    pEngineServer->GetGameDir(szMainBuffer, iMainBufferSize); // Mod directory.
 #endif
-    sModFolder = szMainBuffer;
-    int modPos = sModFolder.rfind(PATH_SEPARATOR);
-    sModFolder = good::string(&szMainBuffer[modPos+1], true, true);
 
-    if ( pFileSystem )
-        pFileSystem->GetCurrentDirectory(szMainBuffer, iMainBufferSize);
+    // Get full path of game directory in sbBuffer.
+    good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false, false); // Don't deallocate nor clear.
+    if ( good::ends_with(sbBuffer, PATH_SEPARATOR) )
+        sbBuffer.erase( sbBuffer.size()-1, 1 );
+
+    // Get mod folder (-game argument of hl2/srcds executable).
+    int iPos = sbBuffer.rfind(PATH_SEPARATOR);
+    if ( iPos == good::string::npos )
+        iPos = 0;
     else
-        szMainBuffer[modPos] = 0; // Remove trailing mod name (for example hl2dm).
+        iPos++;
+    sModFolder.assign(&szMainBuffer[iPos], sbBuffer.size()-iPos, true); // Allocate new string.
+    good::lower_case(sModFolder);
 
-    sGameFolder = szMainBuffer;
-    int gamePos = sGameFolder.rfind(PATH_SEPARATOR);
-    szMainBuffer[gamePos] = 0;
-    sGameFolder = good::string(&szMainBuffer[gamePos+1], true, true);
+    // Check if configuration file exists in mod directory/botrix and one directory up.
+    if ( find_config_ini(sbBuffer) )
+    {
+        sIniPath.assign(sbBuffer, true);
+        sBotrixPath.assign( sbBuffer.c_str(), sbBuffer.size() - sConfigIni.size() - 1, true);
+    }
+
+    // Find hl2/srcds executable directory (game directory).
+#ifdef _WIN32
+    iPos = GetModuleFileName(NULL, szLogBuffer, iLogBufferSize);
+#else
+    iPos = good::file::file_to_memory("/proc/self/cmdline", szLogBuffer, iLogBufferSize);
+    if ( iPos < 0 )
+        iPos = 0;
+    else
+        iPos = strnlen(szLogBuffer, iLogBufferSize);
+#endif
+
+    // Remove last '/' and add trailing 0.
+    if ( (iPos > 0) && (szLogBuffer[iPos-1] == PATH_SEPARATOR) )
+        --iPos;
+    szLogBuffer[iPos] = 0;
+
+    // Add current directory if path is not absolute.
+    if ( good::file::absolute(szLogBuffer) )
+    {
+        sbBuffer.assign(szLogBuffer, iPos);
+    }
+    else
+    {
+        good::string aux(szLogBuffer, iPos, true);
+        if ( getcwd(szLogBuffer, iLogBufferSize) == NULL )
+            szLogBuffer[0] = 0;
+        sbBuffer = szLogBuffer;
+        good::file::append_path(sbBuffer, aux);
+    }
+
+    // Remove exe name.
+    good::file::dir(sbBuffer);
+
+    // Get game folder (where hl2/srcds executable is located).
+    iPos = sbBuffer.rfind(PATH_SEPARATOR);
+    if ( iPos == good::string::npos )
+        iPos = 0;
+    else
+        iPos++;
+    sGameFolder.assign(&szMainBuffer[iPos], sbBuffer.size()-iPos, true); // Allocate new string.
     good::lower_case(sGameFolder);
 
-    sBotrixPath = szMainBuffer;
-    sBotrixPath = good::file::append_path( sBotrixPath, good::string("botrix") );
+    // Check if configuration file exists in mod directory/botrix and one directory up.
+    if ( sIniPath.size() == 0 )
+    {
+        if ( find_config_ini(sbBuffer) )
+        {
+            sIniPath.assign(sbBuffer, true);
+            sBotrixPath.assign( sbBuffer.c_str(), sbBuffer.size() - sConfigIni.size() - 1, true);
+        }
+    }
 
     // Load configuration file.
-    good::string iniName( good::file::append_path(sBotrixPath, good::string("config.ini") ) );
-    TModId iModId = CConfiguration::Load(iniName, sGameFolder, sModFolder);
+    TModId iModId = EModId_Invalid;
+    if ( sIniPath.size() > 0 )
+    {
+        iModId = CConfiguration::Load(sIniPath, sGameFolder, sModFolder);
+        GoodAssert(iModId != EModId_Invalid);
+    }
+
+    if ( iModId == EModId_Invalid )
+    {
+        BLOG_W("Configuration file not founded.");
+        BLOG_W("Using default mod HalfLife2Deathmatch without items/weapons.");
+        CMod::sModName = "HalfLife2Deathmatch";
+        iModId = EModId_HL2DM;
+        CUtil::iLogLevel = good::ELogLevelInfo;
+        good::log::iFileLogLevel = good::ELogLevelDebug;
+
+        sBotrixPath = ".";
+
+        sbBuffer = sBotrixPath;
+        sbBuffer << PATH_SEPARATOR << "botrix.log";
+        if ( good::log::start_log_to_file( sbBuffer.c_str(), false ) )
+            BLOG_I("Log to file: %s.", sbBuffer.c_str());
+        else
+            BLOG_E( "Can't open log file %s.", sbBuffer.c_str() );
+    }
 
     // Create console command instance.
     CMainCommand::instance = good::unique_ptr<CMainCommand>( new CMainCommand() );
@@ -201,11 +323,11 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     srand( time(NULL) );
 
     bIsLoaded = true;
-    const char* sMod = CMod::sModName.c_str();
+    const char* szMod = CMod::sModName.c_str();
     if ( CMod::sModName.size() == 0 )
-        sMod = "unknown";
+        szMod = "unknown";
 
-    BLOG_I("Botrix loaded. Current mod: %s.", sMod);
+    BLOG_I("Botrix loaded. Current mod: %s.", szMod);
 
     return true;
 }

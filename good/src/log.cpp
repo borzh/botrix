@@ -4,7 +4,8 @@
 #include "good/log.h"
 
 
-WIN_PRAGMA(warning(disable:4996))
+WIN_PRAGMA( warning(push) )
+WIN_PRAGMA( warning(disable: 4996) )
 
 
 namespace good
@@ -259,3 +260,6 @@ int log::format_va_list( char* szOutput, int iOutputSize, const char* szFmt, va_
 
 
 } // namespace good
+
+
+WIN_PRAGMA( warning(pop) ) // Restore warnings.

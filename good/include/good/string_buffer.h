@@ -14,10 +14,8 @@
 
 
 // Disable obsolete warnings.
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable: 4996)
-#endif
+WIN_PRAGMA( warning(push) )
+WIN_PRAGMA( warning(disable: 4996) )
 
 
 namespace good
@@ -37,6 +35,7 @@ namespace good
     public:
         typedef base_string<Char, Alloc> base_class;
         typedef typename base_class::value_type value_type;
+        typedef typename base_class::size_type size_type;
 
 
 
@@ -137,6 +136,18 @@ namespace good
         }
 
         //--------------------------------------------------------------------------------------------------------
+        /// Operator =. Copy other string contents into buffer.
+        //--------------------------------------------------------------------------------------------------------
+        base_string_buffer& operator=( const Char* szOther )
+        {
+#ifdef DEBUG_STRING_PRINT
+            printf( "base_string_buffer operator=, %s\n", szOther );
+#endif
+            assign(szOther);
+            return *this;
+        }
+
+        //--------------------------------------------------------------------------------------------------------
         /// Copy other string buffer contents into buffer.
         //--------------------------------------------------------------------------------------------------------
         void assign( const base_string_buffer& sbOther )
@@ -156,9 +167,9 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Copy other string contents into buffer.
         //--------------------------------------------------------------------------------------------------------
-        void assign( const Char* szOther, int iOtherSize )
+        void assign( const Char* szOther, int iOtherSize = base_class::npos )
         {
-            if ( iOtherSize < 0)
+            if ( iOtherSize == base_class::npos )
                 iOtherSize = strlen(szOther);
 
             if ( this->m_iStatic )
@@ -260,11 +271,11 @@ namespace good
                 return;
             if ( this->m_iStatic )
             {
-                this->m_pBuffer = (Char*) malloc( iCapacity * sizeof(Char) );
+                this->m_pBuffer = (Char*)malloc( iCapacity * sizeof(Char) );
                 this->m_iStatic = false;
             }
             else
-                this->m_pBuffer = (Char*) realloc( this->m_pBuffer, iCapacity * sizeof(Char) );
+                this->m_pBuffer = (Char*)realloc( this->m_pBuffer, iCapacity * sizeof(Char) );
             m_iCapacity = iCapacity;
 #ifdef DEBUG_STRING_PRINT
             printf( "base_string_buffer reserve(): %d\n", m_iCapacity );
@@ -345,8 +356,6 @@ namespace good
 } // namespace good
 
 
-#ifdef _WIN32
-    #pragma warning(pop) // Restore warnings.
-#endif
+WIN_PRAGMA( warning(pop) ) // Restore warnings.
 
 #endif // __GOOD_STRING_BUFFER_H__

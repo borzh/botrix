@@ -199,9 +199,10 @@
 /// Define to end a scope.
 #define GOOD_SCOPE_END \
     WIN_PRAGMA( warning(push) )\
-    WIN_PRAGMA( warning(disable:4127) )\
+    WIN_PRAGMA( warning(disable: 4127) )\
     } while(false)\
     WIN_PRAGMA( warning(pop) )
+// Warning C4127: conditional expression is constant.
 
 
 /// Debug break, stopping execution.

@@ -1,3 +1,20 @@
+/**
+* @mainpage Botrix plugin.
+* @author Botrix ( botrix.plugin\@gmail.com )
+*
+* @version 0.0.2
+*
+* <h2>Bots plugin for Valve Games made with Source SDK.</h2>
+*
+* @section Changelog
+*
+* 0.0.2
+* @li Default base folder location is <MOD DIRECTORY>/addons/botrix.
+* @li Searching for base folder in 4 different locations.
+* @li Log with levels (none, trace, debug, info, warning, error).
+* @li Fixed several crashes.
+*/
+
 #ifndef __BOTRIX_SERVER_PLUGIN_H__
 #define __BOTRIX_SERVER_PLUGIN_H__
 
@@ -8,7 +25,7 @@
 #include "public/igameevents.h"
 
 
-#define PLUGIN_VERSION "v0.0.1"
+#define PLUGIN_VERSION "v0.0.2"
 
 class IVEngineServer;
 class IFileSystem;

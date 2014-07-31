@@ -76,7 +76,7 @@ namespace good
     TIniFileError ini_file::load()
     {
         // Read entire file into memory.
-        size_t fsize = file::file_size(name.c_str());
+        long fsize = file::file_size(name.c_str());
 
         if (fsize == FILE_OPERATION_FAILED)
             return IniFileNotFound;
@@ -91,7 +91,7 @@ namespace good
         if ( !buf )
             return IniFileTooBig;
 
-        size_t read = good::file::file_to_memory(name.c_str(), buf, fsize);
+        long read = good::file::file_to_memory(name.c_str(), buf, fsize);
         GoodCheck(fsize == read, return IniFileTooBig);
         buf[fsize] = 0;
 
@@ -100,14 +100,13 @@ namespace good
 
         int lineNumber = 1, section_end = 0;
 
-        //bool escapeKey = false, escapeValue = false, escapeSection = false;
         bool comment = false, junkIsComment = false;
 
         ini_string Key, Value, Junk;
 
         iterator currentSection = m_lSections.end();
 
-        for ( size_t pos = 0; pos < fsize; ++pos )
+        for ( long pos = 0; pos < fsize; ++pos )
         {
             //----------------------------------------------------------------------------
             // Fast skip comments.

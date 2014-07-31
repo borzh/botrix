@@ -19,7 +19,7 @@ namespace good
 {
 
 //----------------------------------------------------------------------------------------------------------------
-int file::file_size(const char* szFileName)
+long file::file_size(const char* szFileName)
 {
     FILE* f = fopen(szFileName, "r");
 
@@ -36,14 +36,14 @@ int file::file_size(const char* szFileName)
 
 
 //----------------------------------------------------------------------------------------------------------------
-int file::file_to_memory(const char* szFileName, void* pBuffer, int iBufferSize, long iPos)
+long file::file_to_memory(const char* szFileName, void* pBuffer, long iBufferSize, long iPos)
 {
     FILE* f = fopen(szFileName, "rb");
 
     if (f)
     {
         fseek(f, iPos, SEEK_SET);
-        int readen = fread(pBuffer, 1, iBufferSize, f);
+        long readen = fread(pBuffer, 1, iBufferSize, f);
         fclose(f);
         return readen;
     }

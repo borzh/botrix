@@ -5,8 +5,8 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -m32" ) # -Wno
 set( CMAKE_BUILD_TYPE Debug )
 
 
-set ( BOTRIX_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../botrix" )
-set( SOURCE_SDK_2013_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013" )
+set ( BOTRIX_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.." )
+set( SOURCE_SDK_2013_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../source-sdk-2013" )
 
 
 # Not used: -DDONT_USE_VALVE_FUNCTIONS -DBOTRIX_SHOW_PERFORMANCE
@@ -34,8 +34,7 @@ add_definitions(
     -DVPC
 )
 
-add_subdirectory( ../botrix "${CMAKE_CURRENT_BINARY_DIR}/botrix")
-
+add_subdirectory( .. "${CMAKE_CURRENT_BINARY_DIR}/botrix")
 aux_source_directory( . SRC_LIST )
 
 include_directories(
@@ -56,20 +55,17 @@ include_directories(
     #"${PROJECT_BINARY_DIR}"
 )
 
-set( VALVE_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013/mp/src/lib/public/linux32" )
+# Link libraries.
+set( SOURCE_SDK_2013_LINK_PATH "${SOURCE_SDK_2013_PATH}/mp/src/lib/public/linux32" )
+link_directories( ${SOURCE_SDK_2013_LINK_PATH} )
 
-find_library( VALVE_MATHLIB NAMES mathlib.a     PATHS ${VALVE_LIB_DIR} )
-find_library( VALVE_VSTDLIB NAMES libvstdlib.so PATHS ${VALVE_LIB_DIR} )
-find_library( VALVE_TIER0   NAMES libtier0.so   PATHS ${VALVE_LIB_DIR} )
-find_library( VALVE_TIER1   NAMES tier1.a       PATHS ${VALVE_LIB_DIR} )
-#find_library( VALVE_TIER2   NAMES tier2.a       PATHS ${VALVE_LIB_DIR} )
-
-set( BOTRIX_LINK_LIBS
-    ${VALVE_MATHLIB}
-    ${VALVE_TIER0}
-    ${VALVE_TIER1}
-    ${VALVE_TIER2}
-    ${VALVE_VSTDLIB}
+set( PROJECT_LINK_LIBS
+    ${SOURCE_SDK_2013_LINK_PATH}/mathlib.a
+    ${SOURCE_SDK_2013_LINK_PATH}/tier1.a
+    libtier0.so
+    libvstdlib.so
+    dl                   # tier1.a needs that
+    good
 )
 
 

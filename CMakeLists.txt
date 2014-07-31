@@ -129,26 +129,26 @@ target_link_libraries( ${PROJECT_NAME} ${PROJECT_LINK_LIBS} )
 
 # Post-build: copy runtime files and botrix plugin to source-sdk-2013.
 get_target_property( BOTRIX_LIB_PATH ${PROJECT_NAME} LOCATION )
+set( RUNTIME_PATH "${CMAKE_CURRENT_SOURCE_DIR}/runtime" )
 set( SDK_2013_MOD_PATH "${SOURCE_SDK_2013_PATH}/mp/game/mod_hl2mp" )
-set( RUNTIME_PATH "${CMAKE_CURRENT_SOURCE_DIR}/runtime/linux" )
-set( BOTRIX_CONFIG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/runtime/botrix" )
+set( SRCDS_HL2DM_MOD_PATH "$ENV{HOME}/steamcmd/hl2dm/hl2mp" )
 
-add_custom_command(
-    TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND cp -r "${RUNTIME_PATH}/*" "${SDK_2013_MOD_PATH}/"
-    COMMAND cp -r "${BOTRIX_CONFIG_PATH}" "${SDK_2013_MOD_PATH}/../../"
-    COMMAND cp "${BOTRIX_LIB_PATH}" "${SDK_2013_MOD_PATH}/addons/"
-    COMMAND echo -e "'\\e[0;32m'Copying Botrix runtime files to Source SDK 2013: ${SDK_2013_MOD_PATH}'\\e[0m'"
-)
+# Post-build: copy runtime files and botrix plugin to Source SDK 2013 mp mod.
+if( EXISTS "${SRCDS_HL2DM_MOD_PATH}/" )
+    add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND cp -r "${RUNTIME_PATH}/*" "${SDK_2013_MOD_PATH}/"
+        COMMAND cp "${BOTRIX_LIB_PATH}" "${SDK_2013_MOD_PATH}/addons/botrix.so"
+        COMMAND /bin/echo -e "'\\e[0;32m'Copying Botrix runtime files to Source SDK 2013: ${SDK_2013_MOD_PATH}'\\e[0m'"
+    )
+endif()
 
 # Post-build: copy runtime files and botrix plugin to Source Dedicated Server.
-set( SRCDS_HL2DM_MOD_PATH "$ENV{HOME}/steamcmd/hl2dm/hl2mp" )
 if( EXISTS "${SRCDS_HL2DM_MOD_PATH}/" )
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND cp -r "${RUNTIME_PATH}/*" "${SRCDS_HL2DM_MOD_PATH}/"
-        COMMAND cp -r "${BOTRIX_CONFIG_PATH}" "${SRCDS_HL2DM_MOD_PATH}/../../"
-        COMMAND cp "${BOTRIX_LIB_PATH}" "${SRCDS_HL2DM_MOD_PATH}/addons/"
-        COMMAND echo -e "'\\e[0;32m'Copying Botrix runtime files to SRCDS: ${SRCDS_HL2DM_MOD_PATH}'\\e[0m'"
+        COMMAND cp "${BOTRIX_LIB_PATH}" "${SRCDS_HL2DM_MOD_PATH}/addons/botrix.so"
+        COMMAND /bin/echo -e "'\\e[0;32m'Copying Botrix runtime files to SRCDS: ${SRCDS_HL2DM_MOD_PATH}'\\e[0m'"
     )
 endif()

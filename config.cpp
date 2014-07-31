@@ -307,7 +307,7 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                 CItems::AddItemClassFor( iType, cEntityClass );
             }
         }
-        else
+        else if ( (iType != EEntityTypeAmmo) && (iType != EEntityTypeWeapon) ) // Will load ammo&weapons later.
             BLOG_W("  No entities of type '%s' available.", CTypeToString::EntityTypeToString(iType).c_str());
     }
 

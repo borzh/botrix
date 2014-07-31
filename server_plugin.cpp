@@ -137,18 +137,18 @@ IVDebugOverlay* pVDebugOverlay = NULL;
 //----------------------------------------------------------------------------------------------------------------
 #define LOAD_INTERFACE(var,type,version) \
     if ((var =(type*)pInterfaceFactory(version, NULL)) == NULL ) {\
-        BLOG_W("[Botrix] Cannot open interface " version " " #type " " #var);\
+        BLOG_W("Cannot open interface " version " " #type " " #var);\
         return false;\
     }
 
 #define LOAD_INTERFACE_IGNORE_ERROR(var,type,version) \
     if ((var =(type*)pInterfaceFactory(version, NULL)) == NULL ) {\
-        BLOG_W("[Botrix] Cannot open interface " version " " #type " " #var);\
+        BLOG_W("Cannot open interface " version " " #type " " #var);\
     }
 
 #define LOAD_GAME_SERVER_INTERFACE(var, type, version) \
     if ((var =(type*)pGameServerFactory(version, NULL)) == NULL ) {\
-        BLOG_W("[Botrix] Cannot open game server interface " version " " #type " " #var);\
+        BLOG_W("Cannot open game server interface " version " " #type " " #var);\
         return false;\
     }
 

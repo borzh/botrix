@@ -10,18 +10,23 @@
 #include "good/file.h"
 
 
+// Disable obsolete warnings.
+WIN_PRAGMA( warning(push) )
+WIN_PRAGMA( warning(disable: 4996) )
+
+
 namespace good
 {
 
 //----------------------------------------------------------------------------------------------------------------
-size_t file::file_size(const char* szFileName)
+int file::file_size(const char* szFileName)
 {
     FILE* f = fopen(szFileName, "r");
 
     if (f)
     {
         fseek(f, 0, SEEK_END);
-        long int result = ftell(f);
+        long result = ftell(f);
         fclose(f);
         return result;
     }
@@ -31,19 +36,19 @@ size_t file::file_size(const char* szFileName)
 
 
 //----------------------------------------------------------------------------------------------------------------
-size_t file::file_to_memory(const char* szFileName, void* pBuffer, size_t iBufferSize, long iPos)
+int file::file_to_memory(const char* szFileName, void* pBuffer, int iBufferSize, long iPos)
 {
     FILE* f = fopen(szFileName, "rb");
 
     if (f)
     {
         fseek(f, iPos, SEEK_SET);
-        size_t readen = fread(pBuffer, 1, iBufferSize, f);
+        int readen = fread(pBuffer, 1, iBufferSize, f);
         fclose(f);
         return readen;
     }
 
-    return (size_t)FILE_OPERATION_FAILED;
+    return FILE_OPERATION_FAILED;
 }
 
 
@@ -85,3 +90,5 @@ bool file::make_folders( const char *szFileName )
 
 
 } // namespace good
+
+WIN_PRAGMA( warning(pop) ) // Restore warnings.

@@ -3,6 +3,7 @@
 #include <time.h> // time()
 
 #ifdef _WIN32
+    #include <windows.h>
     #include <direct.h>
     #define getcwd _getcwd
 #else
@@ -223,7 +224,8 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     sModFolder.assign(&szMainBuffer[iPos], sbBuffer.size()-iPos, true); // Allocate new string.
     good::lower_case(sModFolder);
 
-    // Check if configuration file exists in mod directory/botrix and one directory up.
+    // Check if configuration file exists in "mod directory/botrix" and "mod directory/addons/botrix".
+    sbBuffer << PATH_SEPARATOR << "addons";
     if ( find_config_ini(sbBuffer) )
     {
         sIniPath.assign(sbBuffer, true);
@@ -253,7 +255,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     }
     else
     {
-        good::string aux(szLogBuffer, iPos, true);
+        good::string aux(szLogBuffer, true, true, iPos);
         if ( getcwd(szLogBuffer, iLogBufferSize) == NULL )
             szLogBuffer[0] = 0;
         sbBuffer = szLogBuffer;

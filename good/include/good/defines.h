@@ -33,9 +33,7 @@
 
 
 /// Char type.
-#ifndef _WIN32
-    typedef char TChar;
-#endif
+typedef char TChar;
 
 
 #ifndef TIME_INFINITE

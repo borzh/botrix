@@ -7,15 +7,13 @@
 #define __GOOD_FILE_H__
 
 
-#ifndef _WIN32
-    #include <sys/stat.h>
-#endif
+#include <sys/stat.h>
 
 #include "good/string_buffer.h"
 #include "good/string_utils.h"
 
 
-#define FILE_OPERATION_FAILED (size_t)(-1)
+#define FILE_OPERATION_FAILED       -1
 
 
 // Disable obsolete warnings.
@@ -25,11 +23,11 @@ WIN_PRAGMA( warning(disable: 4996) )
 
 
 #ifdef _WIN32
-    #define PATH_SEPARATOR '\\'
-    #define PATH_SEPARATOR_STRING "\\"
+    #define PATH_SEPARATOR          '\\'
+    #define PATH_SEPARATOR_STRING   "\\"
 #else
-    #define PATH_SEPARATOR '/'
-    #define PATH_SEPARATOR_STRING "/"
+    #define PATH_SEPARATOR          '/'
+    #define PATH_SEPARATOR_STRING   "/"
 #endif
 
 
@@ -47,12 +45,12 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get file size. Returns FILE_OPERATION_FAILED if file doesn't exists.
         //--------------------------------------------------------------------------------------------------------
-        static size_t file_size( const TChar* szFileName );
+        static int file_size( const TChar* szFileName );
 
         //--------------------------------------------------------------------------------------------------------
         /// Read bytes from position iPos of the file in given buffer. Return false if file doesn't exists.
         //--------------------------------------------------------------------------------------------------------
-        static size_t file_to_memory( const TChar* szFileName, void* pBuffer, size_t iBufferSize, long iPos = 0 );
+        static int file_to_memory( const TChar* szFileName, void* pBuffer, int iBufferSize, long iPos = 0 );
 
         //--------------------------------------------------------------------------------------------------------
         /// Make folders for a file if they don't exist.
@@ -172,6 +170,6 @@ namespace good
 } // namespace good
 
 
-WIN_PRAGMA( warning(pop) )
+WIN_PRAGMA( warning(pop) ) // Restore warnings.
 
 #endif // __GOOD_FILE_H__

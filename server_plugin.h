@@ -12,6 +12,7 @@
 * @li Default base folder location is <MOD DIRECTORY>/addons/botrix.
 * @li Searching for base folder in 4 different locations.
 * @li Log with levels (none, trace, debug, info, warning, error).
+* @li Added command "version".
 * @li Fixed several crashes.
 */
 

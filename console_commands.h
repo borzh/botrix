@@ -790,6 +790,28 @@ public:
 
 
 //****************************************************************************************************************
+// Commmand "version".
+//****************************************************************************************************************
+class CVersionCommand: public CConsoleCommand
+{
+public:
+    CVersionCommand()
+    {
+        m_sCommand = "version";
+        m_sHelp = "display events on console ('off' - disable, 'on' - enable)";
+        m_iAccessLevel = FCommandAccessConfig;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv )
+	{
+		edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
+		BULOG_I( pEdict, "Version " PLUGIN_VERSION );
+		return ECommandPerformed;
+	}
+};
+
+
+//****************************************************************************************************************
 // Container of all commands starting with "botrix".
 //****************************************************************************************************************
 class CMainCommand: public CConsoleCommandContainer

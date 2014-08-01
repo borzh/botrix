@@ -2145,13 +2145,14 @@ CMainCommand::CMainCommand()
     Add(new CItemCommand);
     Add(new CBotChatCommand);
     Add(new CConfigCommand);
+    Add(new CVersionCommand);
 
 #ifndef DONT_USE_VALVE_FUNCTIONS
-#ifdef SOURCE_ENGINE_2006
+  #ifdef SOURCE_ENGINE_2006
     CBotrixPlugin::pCvar->RegisterConCommandBase( &botrix );
-#else
+  #else
     CBotrixPlugin::pCvar->RegisterConCommand( &botrix );
-#endif
+  #endif
 #endif
 }
 

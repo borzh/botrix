@@ -5,6 +5,7 @@ Changelog
 =========
 
 v0.0.2
+* Works in Linux.
 * Default base folder location is <MOD DIRECTORY>/addons/botrix.
 * Searching for base folder in 4 different locations.
 * Log with levels (none, trace, debug, info, warning, error).

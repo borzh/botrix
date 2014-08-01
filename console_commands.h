@@ -798,16 +798,16 @@ public:
     CVersionCommand()
     {
         m_sCommand = "version";
-        m_sHelp = "display events on console ('off' - disable, 'on' - enable)";
+        m_sHelp = "display plugin version";
         m_iAccessLevel = FCommandAccessConfig;
     }
 
-    TCommandResult Execute( CClient* pClient, int argc, const char** argv )
-	{
-		edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
-		BULOG_I( pEdict, "Version " PLUGIN_VERSION );
-		return ECommandPerformed;
-	}
+    TCommandResult Execute( CClient* pClient, int /*argc*/, const char** /*argv*/ )
+    {
+        edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
+        BULOG_I( pEdict, "Version " PLUGIN_VERSION );
+        return ECommandPerformed;
+    }
 };
 
 

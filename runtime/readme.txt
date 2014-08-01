@@ -1,6 +1,18 @@
 Botrix is a plugin for Half-Life 2: Deathmatch that allows to play with bots.
 
 
+Changelog
+=========
+
+v0.0.2
+* Default base folder location is <MOD DIRECTORY>/addons/botrix.
+* Searching for base folder in 4 different locations.
+* Log with levels (none, trace, debug, info, warning, error).
+* Added command "version".
+* Don't repeat bot names.
+* Fixed several crashes.
+ 
+
 Fast installation for HL2DM
 ===========================
 Copy folders "addons" to your mod dir, i.e.

@@ -5,6 +5,7 @@ Debug2006
 Release2006
 *.suo
 *.ncb
+Botrix.vcxproj.user
 
 # linux files
 build

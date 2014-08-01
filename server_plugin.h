@@ -13,6 +13,7 @@
 * @li Searching for base folder in 4 different locations.
 * @li Log with levels (none, trace, debug, info, warning, error).
 * @li Added command "version".
+* @li Don't repeat bot names.
 * @li Fixed several crashes.
 */
 

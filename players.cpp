@@ -162,7 +162,7 @@ CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
         return NULL;
     }
 
-    const good::string& sName = CMod::GetRandomBotName();
+    const good::string& sName = CMod::GetRandomBotName(iIntelligence);
     const char* szName;
 
     if ( CMod::bIntelligenceInBotName )

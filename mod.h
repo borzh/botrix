@@ -127,7 +127,7 @@ public: // Methods.
     }
 
     /// Get random bot name from [General] section, key bot_names.
-    static const good::string& GetRandomBotName();
+	static const good::string& GetRandomBotName( TBotIntelligence iIntelligence );
 
     /// Execute event.
     static void ExecuteEvent( void* pEvent, TEventType iType );
@@ -145,7 +145,7 @@ protected: // Methods.
     friend class CConfiguration; // Give access to next protected methods.
 
     // Returns true there is a player/bot with name cName.
-    static bool IsNameTaken(const good::string& cName);
+    static bool IsNameTaken(const good::string& cName, TBotIntelligence iIntelligence);
 
     // Set bot names.
     static void SetBotNames( const StringVector& aBotNames ) { m_aBotNames = aBotNames; }

@@ -63,6 +63,9 @@ public: // Methods.
     /// Destructor.
     virtual ~CBot() {}
 
+    /// Get bot's intelligence.
+    TBotIntelligence GetIntelligence() { return m_iIntelligence; }
+
     /// Show or hide bot messages.
     void SetDebugging( bool bOn ) { m_bDebugging = bOn; }
 

@@ -1,9 +1,12 @@
+#include <good/string_utils.h>
+
 #ifdef BOTRIX_MOD_CSS
 #   include "mods/css/event_css.h"
 #elif BOTRIX_MOD_BORZH
 #   include "mods/borzh/mod_borzh.h"
 #endif
 
+#include "bot.h"
 #include "mod.h"
 #include "players.h"
 #include "server_plugin.h"
@@ -112,15 +115,17 @@ void CMod::MapLoaded()
 }
 
 //----------------------------------------------------------------------------------------------------------------
-const good::string& CMod::GetRandomBotName()
+const good::string& CMod::GetRandomBotName( TBotIntelligence iIntelligence )
 {
     int iIdx = rand() % m_aBotNames.size();
     for ( size_t i=iIdx; i<m_aBotNames.size(); ++i )
-        if ( !IsNameTaken(m_aBotNames[i]) )
+        if ( !IsNameTaken(m_aBotNames[i], iIntelligence) )
             return m_aBotNames[i];
     for ( int i=iIdx-1; i>=0; --i )
-        if ( !IsNameTaken(m_aBotNames[i]) )
+        if ( !IsNameTaken(m_aBotNames[i], iIntelligence) )
             return m_aBotNames[i];
+    if ( iIdx < 0 ) // All names taken.
+        iIdx = rand() % m_aBotNames.size();
     return m_aBotNames[iIdx];
 }
 //----------------------------------------------------------------------------------------------------------------
@@ -145,12 +150,13 @@ void CMod::ExecuteEvent( void* pEvent, TEventType iType )
 }
 
 //----------------------------------------------------------------------------------------------------------------
-bool CMod::IsNameTaken(const good::string& cName)
+bool CMod::IsNameTaken( const good::string& cName, TBotIntelligence iIntelligence )
 {
     for ( TPlayerIndex iPlayer=0; iPlayer<CPlayers::Size(); ++iPlayer )
     {
         const CPlayer* pPlayer = CPlayers::Get(iPlayer);
-        if ( pPlayer && (cName == pPlayer->GetName()) )
+        if ( pPlayer && good::starts_with( good::string(pPlayer->GetName()), cName ) &&
+             pPlayer->IsBot() && ( iIntelligence == ((CBot*)pPlayer)->GetIntelligence()) )
             return true;
     }
     return false;

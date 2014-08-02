@@ -1,6 +1,7 @@
 #include <stdlib.h> // atoi
-#include <good/string_buffer.h>
 
+#include <good/file.h>
+#include <good/string_buffer.h>
 #include <good/string_utils.h>
 
 #include "chat.h"
@@ -66,7 +67,14 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
         kv = it->find("file_log");
         if ( kv != it->end() )
         {
-            if ( good::log::start_log_to_file( kv->value.c_str(), false ) )
+            if ( good::file::absolute(kv->value.c_str()) )
+                sbBuffer = kv->value;
+            else
+            {
+                sbBuffer = CBotrixPlugin::instance->sBotrixPath;
+                sbBuffer << PATH_SEPARATOR << kv->value;
+            }
+            if ( good::log::start_log_to_file( sbBuffer.c_str(), false ) )
                 BLOG_I("Log to file: %s.", kv->value.c_str());
             else
                 BLOG_E( "File \"%s\", section [%s]: can't open log file %s.", m_iniFile.name.c_str(),

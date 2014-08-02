@@ -462,6 +462,12 @@ void CBot::PreThink()
     if ( m_bPaused )
         return;
 
+    if ( CWaypoints::Size() <= 3 )
+    {
+        BLOG_W( "Please create more waypoints, so I could move." );
+        m_bPaused = true;
+    }
+
     if ( m_bFirstRespawn )
     {
         Respawned(); // Force respawn, as first time bot appeares on map, Respawned() is not called.

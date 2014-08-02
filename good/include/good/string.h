@@ -72,8 +72,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Move constructor.
         //--------------------------------------------------------------------------------------------------------
-        base_string( base_string&& other ):
-            m_pBuffer(other.m_pBuffer), m_iSize(other.m_iSize), m_iStatic(other.m_iStatic)
+        base_string( base_string&& other ): m_pBuffer(other.m_pBuffer), m_iSize(other.m_iSize), m_iStatic(other.m_iStatic)
         {
 #ifdef DEBUG_STRING_PRINT
             DebugPrint( "base_string move constructor: %s.\n", other.c_str() );
@@ -85,8 +84,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Constructor by 0-terminating string. Make sure that iSize reflects string size properly or is npos.
         //--------------------------------------------------------------------------------------------------------
-        base_string( const Char* szStr, bool bCopy = false, bool bDealloc = false, int iSize = npos ):
-            m_iStatic(true)
+        base_string( const Char* szStr, bool bCopy = false, bool bDealloc = false, int iSize = npos ): m_iStatic(true)
         {
 #ifdef DEBUG_STRING_PRINT
             DebugPrint( "base_string constructor: %s, copy %d, dealloc %d\n", szStr, bCopy, bDealloc );

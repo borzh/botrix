@@ -58,7 +58,7 @@ class CBot: public CPlayer
 
 public: // Methods.
     /// Constructor.
-    CBot( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence iIntelligence );
+    CBot( edict_t* pEdict, TBotIntelligence iIntelligence, TClass iClass );
 
     /// Destructor.
     virtual ~CBot() {}
@@ -75,17 +75,17 @@ public: // Methods.
     /// Pause/resume bot.
     void SetPaused( bool bPause ) { m_bPaused = bPause; }
 
-    /// Bot is created for testing path between two waypoints. Will be kicked if fails, killed, or reaches destination.
-    void TestWaypoints( TWaypointId iFrom, TWaypointId iTo );
-
     /// Emulate console command for bot.
     void ConsoleCommand(const char* szFormat, ...);
 
     /// Use say command.
     void Say(bool bTeamOnly, const char* szFormat, ...);
 
+    /// Bot is created for testing path between two waypoints. Will be kicked if fails, killed, or reaches destination.
+    virtual void TestWaypoints( TWaypointId iFrom, TWaypointId iTo );
+
     //------------------------------------------------------------------------------------------------------------
-    // Next functions are mod dependent.
+    // Next functions are mod dependent. You need to implement those in order to make bot moving around.
     //------------------------------------------------------------------------------------------------------------
     /// Called when player becomes active, before first respawn. Sets players model and team.
     virtual void Activated();
@@ -154,7 +154,8 @@ protected: // Mod dependend protected functions.
     virtual bool IsEnemy( CPlayer* pPlayer ) const
     {
         int idx = m_pPlayerInfo->GetTeamIndex();
-        return (idx == CMod::iUnassignedTeam) || (idx != pPlayer->GetPlayerInfo()->GetTeamIndex());
+        return ( (idx != pPlayer->GetPlayerInfo()->GetTeamIndex()) && (idx != CMod::iSpectatorTeam) ) ||
+               ( idx == CMod::iUnassignedTeam ); // TODO: it is deathmatch team.
     }
 
     // Bot just picked up given item.
@@ -256,6 +257,7 @@ protected: // Members.
     CBotCmd m_cCmd;                                                // Bot's command (virtual keyboard, used to move bot around and fire weapons).
 
     TBotIntelligence m_iIntelligence;                              // Bot's intelligence.
+    TClass m_iClass;                                               // Bot's class.
 
     float m_fPrevThinkTime;                                        // Previous think time (used to get time difference between this and previous frame).
 

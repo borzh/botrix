@@ -19,7 +19,7 @@ int main(int, char **)
     }
     CreateInterfaceFn pFn = (CreateInterfaceFn)GetProcAddress( handle, "CreateInterface" );
 #else
-    void *handle = dlopen("/home/pccorar09/svn/source-sdk-2013/mp/game/mod_hl2mp/addons/botrix.so", RTLD_NOW);
+    void *handle = dlopen("/home/pccorar09/botrix/source-sdk-2013/mp/game/mod_hl2mp/addons/botrix.so", RTLD_NOW);
     if ( !handle )
     {
         fprintf( stderr, "%s.\n", dlerror() );

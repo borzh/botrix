@@ -1,4 +1,4 @@
-#ifdef BOTRIX_MOD_BORZH
+#ifdef BOTRIX_BORZH
 
 #include "chat.h"
 #include "clients.h"
@@ -2783,4 +2783,4 @@ void CBotBorzh::CheckToReturnBox()
     }
 }
 
-#endif // BOTRIX_MOD_BORZH
+#endif // BOTRIX_BORZH

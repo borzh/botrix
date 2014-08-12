@@ -1,4 +1,4 @@
-#ifdef BOTRIX_MOD_BORZH
+#ifdef BOTRIX_BORZH
 
 #include "chat.h"
 #include "console_commands.h"
@@ -292,9 +292,9 @@ const CWall* CModBorzh::GetWallBetweenAreas( TAreaId iLowerArea, TAreaId iHigher
 bool CModBorzh::IsWallClimbable( const CWall& cWall )
 {
     Vector w1 = CWaypoints::Get(cWall.iLowerWaypoint).vOrigin;
-    w1.z -= CUtil::iPlayerEyeLevel;
+    w1.z -= CMod::iPlayerEyeLevel;
     Vector w2 = CWaypoints::Get(cWall.iHigherWaypoint).vOrigin;
-    w2.z -= CUtil::iPlayerEyeLevel;
+    w2.z -= CMod::iPlayerEyeLevel;
 
     float sqrDist = (w1 - w2).Length2DSqr();
 
@@ -320,4 +320,4 @@ bool CModBorzh::IsWallClimbable( const CWall& cWall )
     return false;
 }
 
-#endif // BOTRIX_MOD_BORZH
+#endif // BOTRIX_BORZH

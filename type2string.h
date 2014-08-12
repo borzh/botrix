@@ -2,7 +2,7 @@
 #define __BOTRIX_TYPE_TO_STRING_H__
 
 
-#include "mods/hl2dm/types_hl2dm.h"
+#include "types.h"
 
 
 //****************************************************************************************************************
@@ -138,13 +138,37 @@ public:
     //------------------------------------------------------------------------------------------------------------
     /// Get string from bot intelligence.
     //------------------------------------------------------------------------------------------------------------
-    static const good::string& IntelligenceToString( TBotIntelligence iIntelligence );
+    static const good::string& IntelligenceToString( int iIntelligence );
+
+    /// Get bot intelligence from string.
+    static int IntelligenceFromString( const good::string& sIntelligence );
+
+
+    //------------------------------------------------------------------------------------------------------------
+    /// Get string from bot team.
+    //------------------------------------------------------------------------------------------------------------
+    static const good::string& TeamToString( int iTeam );
+
+    /// Get bot class from string.
+    static int TeamFromString( const good::string& sTeam );
+
+
+    //------------------------------------------------------------------------------------------------------------
+    /// Get string from bot class.
+    //------------------------------------------------------------------------------------------------------------
+    static const good::string& ClassToString( int iClass );
+
+    /// Get bot class from string.
+    static const good::string& ClassFlagsToString( int iClasses );
+
+    /// Get bot class from string.
+    static int ClassFromString( const good::string& sClass );
 
 
     //------------------------------------------------------------------------------------------------------------
     /// Get bot task name.
     //------------------------------------------------------------------------------------------------------------
-    static const good::string& BotTaskToString( TBotTaskHL2DM iBotTask );
+    static const good::string& BotTaskToString( int iBotTask );
 
     //------------------------------------------------------------------------------------------------------------
     /// Get bot command from string.
@@ -161,7 +185,7 @@ public:
     static int LogLevelFromString( const good::string& sAction );
 
 
-#ifdef BOTRIX_MOD_BORZH
+#ifdef BOTRIX_BORZH
     //------------------------------------------------------------------------------------------------------------
     /// Get bot action from string.
     //------------------------------------------------------------------------------------------------------------

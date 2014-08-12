@@ -29,11 +29,6 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
 {
     TModId iModId = EModId_Invalid;
 
-    StringVector aBotNames, aModels, aTeams;
-    aBotNames.reserve(32);
-    aModels.reserve(32);
-    aTeams.reserve(4);
-
     good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
 
     if ( m_iniFile.load() >= good::IniFileNotFound )
@@ -120,18 +115,15 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
         {
             sbBuffer = kv->value;
             good::escape(sbBuffer);
-            good::split((good::string)sbBuffer, aBotNames, ',', true);
+            good::split((good::string)sbBuffer, CMod::aBotNames, ',', true);
         }
 
         BLOG_D("Bot names:");
-        for ( size_t i = 0; i < aBotNames.size(); ++i )
-            BLOG_D( "  %s", aBotNames[i].c_str() );
-
+        for ( int i = 0; i < CMod::aBotNames.size(); ++i )
+            BLOG_D( "  %s", CMod::aBotNames[i].c_str() );
     }
     else
         BLOG_E("File %s, missing [General] section.", m_iniFile.name.c_str());
-
-    CMod::SetBotNames(aBotNames);
 
     // Set current mod from mods sections.
     for ( it = m_iniFile.begin(); it != m_iniFile.end(); ++it )
@@ -194,8 +186,9 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
 
     if ( iModId == EModId_Invalid )
     {
-        BLOG_E("File %s: there is no mod that matches current game & mod folders.", m_iniFile.name.c_str());
-        BLOG_E("Using default mod 'HalfLife2Deathmatch'.");
+        BLOG_E( "File %s:", m_iniFile.name.c_str() );
+        BLOG_E( "  There is no mod that matches current game (%s) & mod (%s) folders.", sGameDir.c_str(), sModDir.c_str() );
+        BLOG_E( "Using default mod 'HalfLife2Deathmatch'." );
         CMod::sModName = "HalfLife2Deathmatch";
         sbBuffer = CMod::sModName;
         iModId = EModId_HL2DM;
@@ -213,52 +206,43 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
     if ( it != m_iniFile.end() )
     {
         // Get player teams.
-        good::ini_section::iterator teams = it->find("teams");
-        if ( teams != it->end() )
+        good::ini_section::iterator itSect = it->find("teams");
+        if ( itSect != it->end() )
         {
-            sbBuffer = teams->value;
+            sbBuffer = itSect->value;
             good::escape(sbBuffer);
-            good::split( (good::string)sbBuffer, aTeams, ',', true );
+            good::split( (good::string)sbBuffer, CMod::aTeamsNames, ',', true );
 
-            BLOG_D("Team names:");
-            for ( size_t i = 0; i < aTeams.size(); ++i )
+            BLOG_D("Teams names:");
+            for ( int i = 0; i < CMod::aTeamsNames.size(); ++i )
             {
-                if ( aTeams[i] == "unassigned" )
+                if ( CMod::aTeamsNames[i] == "unassigned" )
                     CMod::iUnassignedTeam = i;
-                else if ( aTeams[i] == "spectators" )
+                else if ( CMod::aTeamsNames[i] == "spectators" )
                     CMod::iSpectatorTeam = i;
-                BLOG_D( "  %s", aTeams[i].c_str() );
+                BLOG_D( "  %s", CMod::aTeamsNames[i].c_str() );
             }
         }
 
-        // Get player models.
-        for ( size_t i = 0; i < aTeams.size(); ++i )
+        // Get player classes.
+        itSect = it->find("classes");
+        if ( itSect != it->end() )
         {
-            if ( aTeams[i] == "spectators" )
-                continue;
+            sbBuffer = itSect->value;
+            good::escape(sbBuffer);
+            good::split( (good::string)sbBuffer, CMod::aClassNames, ',', true );
 
-            sbBuffer = "models ";
-            sbBuffer << aTeams[i];
-
-            good::ini_section::iterator models = it->find(sbBuffer);
-            if ( models != it->end() )
+            BLOG_D("Classes names:");
+            for ( int i = 0; i < CMod::aTeamsNames.size(); ++i )
             {
-                sbBuffer = models->value;
-                good::escape(sbBuffer);
-                good::split( (good::string)sbBuffer, aModels, ',', true );
-
-                BLOG_D("Model names for team %s:", aTeams[i].c_str());
-                for ( int j = 0; j < (int)aModels.size(); ++j )
-                    BLOG_D( "  %s", aModels[j].c_str() );
-
-                CMod::SetBotModels( aModels, i );
+                if ( CMod::aTeamsNames[i] == "unassigned" )
+                    CMod::iUnassignedTeam = i;
+                else if ( CMod::aTeamsNames[i] == "spectators" )
+                    CMod::iSpectatorTeam = i;
+                BLOG_D( "  %s", CMod::aTeamsNames[i].c_str() );
             }
         }
-
-        CMod::aTeamsNames = aTeams;
     }
-    else
-        BLOG_W("  No teams & models information.");
 
     // Load health /armor / object entity classes.
     sbBuffer = CMod::sModName;
@@ -283,7 +267,7 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                 // Get item flags.
                 StringVector aArguments;
                 good::split(itemIt->value, aArguments, ',', true);
-                for ( size_t i=0; i < aArguments.size(); ++i )
+                for ( int i=0; i < aArguments.size(); ++i )
                 {
                     StringVector aCurrent;
                     good::split<good::vector>(aArguments[i], aCurrent);
@@ -315,8 +299,6 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                 CItems::AddItemClassFor( iType, cEntityClass );
             }
         }
-        else if ( (iType != EEntityTypeAmmo) && (iType != EEntityTypeWeapon) ) // Will load ammo&weapons later.
-            BLOG_W("  No entities of type '%s' available.", CTypeToString::EntityTypeToString(iType).c_str());
     }
 
     // Load object models.
@@ -338,8 +320,6 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
             }
         }
     }
-    else
-        BLOG_W("  No models of type 'object' available.");
 
     // Load weapons.
     CWeapons::Clear();
@@ -379,7 +359,7 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                     }
                     const CWeapon* pWeapon = CWeapons::Get(iWeaponId);
 
-                    size_t iNeedArgument = 1;
+                    int iNeedArgument = 1;
 
                     if ( pWeapon->iClipSize[0] > 0 )
                         iNeedArgument++;
@@ -429,17 +409,46 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
             else // Weapon definition.
             {
                 CWeapon* pWeapon = new CWeapon();
+                StringVector aCurrent;
+                aCurrent.reserve(4);
 
                 bool bSecondary = false, bError = false;
                 for ( StringVector::iterator paramsIt = aParams.begin(); paramsIt != aParams.end(); ++paramsIt )
                 {
                     int iValue = -1;
 
-                    StringVector aCurrent;
+                    aCurrent.clear();
                     good::split(*paramsIt, aCurrent);
                     BASSERT( aCurrent.size() > 0, exit(1) );
 
-                    if ( aCurrent.size() == 1 )
+                    if ( aCurrent[0] == "class" )
+                    {
+                        if ( aCurrent.size() > 1 )
+                        {
+                            for ( int i=1; i<aCurrent.size(); ++i )
+                            {
+                                TClass iClass = CTypeToString::ClassFromString(aCurrent[i]);
+                                if ( iClass == -1 )
+                                {
+                                    BLOG_E("File \"%s\", section [%s], weapon %s, invalid class: %s.",
+                                                   m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[1].c_str());
+                                    bError = true;
+                                    break;
+                                }
+                                FLAG_SET(1 << iClass, pWeapon->iClass);
+                            }
+                            if ( bError )
+                                break;
+                        }
+                        else
+                        {
+                            BLOG_E("File \"%s\", section [%s], weapon %s, class not specified.",
+                                           m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str());
+                            bError = true;
+                            break;
+                        }
+                    }
+                    else if ( aCurrent.size() == 1 )
                     {
                         if ( aCurrent[0] == "secondary" )
                             pWeapon->bHasSecondary = bSecondary = true;
@@ -509,7 +518,7 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                                 bError = true;
                                 break;
                             }
-                            pWeapon->iTeamOnly = iValue;
+                            pWeapon->iTeam = iValue;
                         }
                         else if ( aCurrent[0] == "range" )
                         {
@@ -583,7 +592,7 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                             break;
                         }
                         aAmmos[bSecondary].reserve( (aCurrent.size() - 1) >> 1 ); // Reserve some space for ammos.
-                        for ( size_t i=1; i < aCurrent.size(); i+=2 )
+                        for ( int i=1; i < aCurrent.size(); i+=2 )
                         {
                             int iValue = -1;
                             sscanf(aCurrent[i+1].c_str(), "%d", &iValue);
@@ -611,11 +620,20 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                     }
                 }
 
-                if ( !bError )
+                if ( bError )
+                    delete pWeapon;
+                else
                 {
                     BLOG_D( "  %s", itemIt->key.c_str() );
 
                     pWeapon->iId = CWeapons::Size();
+                    BLOG_D( "    id %d", pWeapon->iId );
+
+                    if ( pWeapon->iTeam )
+                        BLOG_D( "    team %s", CTypeToString::TeamToString(pWeapon->iTeam).c_str() );
+
+                    if ( CMod::aClassNames.size() )
+                        BLOG_D( "    class %s", CTypeToString::ClassFlagsToString(pWeapon->iClass).c_str() );
 
                     // Add weapon class.
                     CEntityClass cEntityClass;
@@ -626,7 +644,7 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                     pWeapon->aAmmos[0].reserve(aAmmos[0].size());
                     pWeapon->aAmmos[1].reserve(aAmmos[1].size());
                     for ( int bSec=0; bSec < 2; ++bSec )
-                        for ( size_t i=0; i < aAmmos[bSec].size(); ++i )
+                        for ( int i=0; i < aAmmos[bSec].size(); ++i )
                         {
                             const CEntityClass* pAmmoClass = CItems::AddItemClassFor( EEntityTypeAmmo, aAmmos[bSec][i] );
                             pWeapon->aAmmos[bSec].push_back( pAmmoClass );
@@ -636,14 +654,9 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                     CWeaponWithAmmo cWeapon(pWeapon);
                     CWeapons::Add(cWeapon);
                 }
-                else
-                    delete pWeapon;
             }
         }
     }
-    else
-        BLOG_W("  No weapons available.");
-
 
 #ifdef BOTRIX_CHAT
     // Load chat: synonims.

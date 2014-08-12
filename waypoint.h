@@ -5,6 +5,7 @@
 #include <good/bitset.h>
 #include <good/graph.h>
 
+#include "mod.h"
 #include "source_engine.h"
 #include "types.h"
 
@@ -107,9 +108,9 @@ public: // Methods.
 
 
     /// Return true if point v 'touches' this waypoint.
-    bool IsTouching( Vector const& v, bool bOnLadder ) const
+    inline bool IsTouching( Vector const& v, bool bOnLadder ) const
     {
-        return CUtil::IsPointTouch3d(vOrigin, v, bOnLadder ? CUtil::iPointTouchLadderSquaredZ : CUtil::iPointTouchSquaredZ);
+        return CUtil::IsPointTouch3d(vOrigin, v, bOnLadder ? CMod::iPointTouchLadderSquaredZ : CMod::iPointTouchSquaredZ, CMod::iPointTouchSquaredXY);
     }
 
     /// Get color of waypoint.

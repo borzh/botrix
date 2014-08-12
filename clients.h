@@ -15,7 +15,7 @@ class CClient: public CPlayer
 public: // Methods.
 
     /// Constructor.
-    CClient( edict_t* pPlayer, TPlayerIndex iIndex ): CPlayer(pPlayer, iIndex, false),
+    CClient( edict_t* pPlayer ): CPlayer(pPlayer, false),
         iCommandAccessFlags(0), iDestinationWaypoint(-1), iWaypointDrawFlags(0),
         iPathDrawFlags(0), iItemTypeFlags(0), iItemDrawFlags(0), bAutoCreateWaypoints(false),
         bAutoCreatePaths(true), bDebuggingEvents(false) { }

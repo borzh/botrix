@@ -20,15 +20,15 @@ class CClient; // Forward declaration.
 
 
 //****************************************************************************************************************
-/// Abstract class that defines a player.
+/// Class that defines a player (bot or client).
 //****************************************************************************************************************
 class CPlayer
 {
 public:
     /// Constructor.
-    CPlayer(edict_t* pEdict, TPlayerIndex iIndex, bool bIsBot):
+    CPlayer(edict_t* pEdict, bool bIsBot):
         iCurrentWaypoint(-1), iNextWaypoint(-1), iPrevWaypoint(-1), iChatMate(-1),
-        m_pEdict(pEdict), m_iIndex(iIndex), m_pPlayerInfo(NULL), m_bBot(bIsBot), m_bAlive(false) {}
+        m_pEdict(pEdict), m_iIndex(-1), m_pPlayerInfo(NULL), m_bBot(bIsBot), m_bAlive(false) {}
 
     /// Destructor.
     virtual ~CPlayer() {}
@@ -167,11 +167,13 @@ public:
     //------------------------------------------------------------------------------------------------------------
     // Bot handling.
     //------------------------------------------------------------------------------------------------------------
-    /// Add bot on random team.
-    static CPlayer* AddBot( TBotIntelligence iIntelligence = EBotPro );
-
-    /// Add bot on given team.
-    static CPlayer* AddBotOnTeam( int team, TBotIntelligence iIntelligence = EBotPro );
+    /// Add bot.
+    static void AddBot( CPlayer* pPlayer )
+    {
+        TPlayerIndex iIndex = CBotrixPlugin::pEngineServer->IndexOfEdict( pPlayer->GetEdict() ) - 1;
+        GoodAssert( iIndex >= 0 );
+        m_aPlayers[iIndex] = pPlayer;
+    }
 
     /// Kick given bot.
     static void KickBot( CPlayer* pPlayer );

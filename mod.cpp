@@ -1,11 +1,5 @@
 #include <good/string_utils.h>
 
-#ifdef BOTRIX_MOD_CSS
-#   include "mods/css/event_css.h"
-#elif BOTRIX_MOD_BORZH
-#   include "mods/borzh/mod_borzh.h"
-#endif
-
 #include "bot.h"
 #include "mod.h"
 #include "players.h"
@@ -13,14 +7,17 @@
 #include "type2string.h"
 #include "waypoint.h"
 
+#include "mods/css/event_css.h"
+#include "mods/borzh/mod_borzh.h"
+#include "mods/hl2dm/mod_hl2dm.h"
+#include "mods/tf2/mod_tf2.h"
 
 //----------------------------------------------------------------------------------------------------------------
 TModId CMod::m_iModId;
 good::string CMod::sModName;
 IMod* CMod::pCurrentMod = NULL;
 
-StringVector CMod::m_aBotNames;
-good::vector<StringVector> CMod::m_aModels;
+StringVector CMod::aBotNames;
 good::vector<CEventPtr> CMod::m_aEvents;
 
 bool CMod::m_bMapHas[EEntityTypeTotal-1]; // Health, armor, weapon, ammo.
@@ -28,7 +25,42 @@ bool CMod::m_bMapHas[EEntityTypeTotal-1]; // Health, armor, weapon, ammo.
 StringVector CMod::aTeamsNames;
 int CMod::iUnassignedTeam = 0;
 int CMod::iSpectatorTeam = 1;
+
+StringVector CMod::aClassNames;
+
 bool CMod::bIntelligenceInBotName = true;
+
+int CMod::iPlayerHeight = 72;
+int CMod::iPlayerHeightCrouched = 36;
+int CMod::iPlayerWidth = 36;
+Vector CMod::vPlayerCollisionHull(iPlayerWidth, iPlayerWidth, iPlayerHeight);
+
+int CMod::iPlayerEyeLevel = 64;
+int CMod::iPlayerEyeLevelCrouched = 28;
+
+int CMod::iPlayerMaxObstacleHeight = 18;
+int CMod::iPlayerNormalJumpHeight = 20;
+int CMod::iPlayerJumpCrouchHeight = 56;
+
+int CMod::iPlayerRadius = ceilf( powf(2 * SQR(iPlayerWidth/2), 0.5f) );
+int CMod::iNearItemMaxDistanceSqr = SQR(256);
+int CMod::iItemPickUpDistance = 40;
+
+int CMod::iPlayerMaxSlopeGradient = 45;
+int CMod::iPlayerMaxHeightNoFallDamage = 185;
+
+int CMod::iPlayerMaxArmor = 100;
+int CMod::iPlayerMaxHealth = 100;
+
+float CMod::fMaxCrouchVelocity = 63.33f;
+float CMod::fMaxWalkVelocity = 150.0f;
+float CMod::fMaxRunVelocity = 190.0f;
+float CMod::fMaxSprintVelocity = 327.5f;
+float CMod::fMinNonStuckSpeed = fMaxCrouchVelocity / 2.0f;
+
+int CMod::iPointTouchSquaredXY = SQR(iPlayerWidth/4);
+int CMod::iPointTouchSquaredZ = SQR(iPlayerJumpCrouchHeight);
+int CMod::iPointTouchLadderSquaredZ = SQR(2);
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -40,19 +72,74 @@ bool CMod::Load( TModId iModId )
     bool bResult = true;
     switch ( iModId )
     {
+#ifdef BOTRIX_TF2
+    case EModId_TF2:
+        bResult &= AddEvent(new CPlayerActivateEvent());
+        bResult &= AddEvent(new CPlayerTeamEvent());
+        bResult &= AddEvent(new CPlayerSpawnEvent());
+        bResult &= AddEvent(new CPlayerHurtEvent());
+        bResult &= AddEvent(new CPlayerDeathEvent());
+        // TODO: events https://wiki.alliedmods.net/Team_Fortress_2_Events
+        // player_changeclass ctf_flag_captured
+        // teamplay_point_startcapture achievement_earned
+        // player_calledformedic
+        // teamplay_round_active
+
+//        bResult &= AddEvent(new CPlayerChatEvent());
+
+        iPlayerHeight = 83;
+        iPlayerHeightCrouched = 56;
+        iPlayerWidth = 49;
+        vPlayerCollisionHull = Vector(iPlayerWidth, iPlayerWidth, iPlayerHeight);
+
+        // TODO: for class  https://developer.valvesoftware.com/wiki/TF2/Team_Fortress_2_Mapper%27s_Reference
+        iPlayerEyeLevel = 68;
+        iPlayerEyeLevelCrouched = 48;
+
+        iPlayerMaxObstacleHeight = 18;
+        iPlayerNormalJumpHeight = 43;
+        iPlayerJumpCrouchHeight = 70;
+
+        iPlayerRadius = ceilf( powf(2 * SQR(iPlayerWidth/2), 0.5f) );
+
+        iNearItemMaxDistanceSqr = SQR(256); // TODO: check
+        iItemPickUpDistance = 40;
+
+        iPlayerMaxSlopeGradient = 45;
+        iPlayerMaxHeightNoFallDamage = 269;
+
+        iPlayerMaxArmor = 0; // TODO:
+        iPlayerMaxHealth = 100;
+
+        fMaxCrouchVelocity = 63.33f;
+        fMaxWalkVelocity = 400.0f;
+        fMaxRunVelocity = 400.0f;
+        fMaxSprintVelocity = 327.5f;
+        fMinNonStuckSpeed = fMaxCrouchVelocity / 2.0f;
+
+        iPointTouchSquaredXY = SQR(iPlayerWidth/4);
+        iPointTouchSquaredZ = SQR(iPlayerJumpCrouchHeight);
+        iPointTouchLadderSquaredZ = SQR(2);
+
+        pCurrentMod = new CModTF2();
+        break;
+#endif
+
+#ifdef BOTRIX_HL2DM
     case EModId_HL2DM:
         // TODO: move to hl2dm mod.
         bResult &= AddEvent(new CPlayerActivateEvent());
         bResult &= AddEvent(new CPlayerTeamEvent());
         bResult &= AddEvent(new CPlayerSpawnEvent());
-
         bResult &= AddEvent(new CPlayerHurtEvent());
         bResult &= AddEvent(new CPlayerDeathEvent());
+//        bResult &= AddEvent(new CPlayerChatEvent());
 
-        bResult &= AddEvent(new CPlayerChatEvent());
+        pCurrentMod = new CModHL2DM();
         break;
+#endif
 
-#ifdef BOTRIX_MOD_BORZH
+#ifdef BOTRIX_BORZH
     case EModId_Borzh:
         pCurrentMod = new CModBorzh();
         break;
@@ -66,6 +153,7 @@ bool CMod::Load( TModId iModId )
         bResult &= AddEvent(new CPlayerFootstepEvent());
         bResult &= AddEvent(new CBombDroppedEvent());
         bResult &= AddEvent(new CBombPickupEvent());
+        pCurrentMod = new CModCss();
         break;
 #endif
 
@@ -79,11 +167,11 @@ bool CMod::Load( TModId iModId )
 //----------------------------------------------------------------------------------------------------------------
 bool CMod::AddEvent( CEvent* pEvent )
 {
-    if ( CBotrixPlugin::pGameEventManager )
-        if ( !CBotrixPlugin::pGameEventManager->AddListener( CBotrixPlugin::instance, pEvent->GetName().c_str(), true ) )
-            return false;
-    m_aEvents.push_back( CEventPtr(pEvent) );
-    return true;
+    bool bResult = CBotrixPlugin::pGameEventManager &&
+                   CBotrixPlugin::pGameEventManager->AddListener( CBotrixPlugin::instance, pEvent->GetName().c_str(), true );
+    if ( bResult )
+        m_aEvents.push_back( CEventPtr(pEvent) );
+    return bResult;
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -117,17 +205,18 @@ void CMod::MapLoaded()
 //----------------------------------------------------------------------------------------------------------------
 const good::string& CMod::GetRandomBotName( TBotIntelligence iIntelligence )
 {
-    int iIdx = rand() % m_aBotNames.size();
-    for ( size_t i=iIdx; i<m_aBotNames.size(); ++i )
-        if ( !IsNameTaken(m_aBotNames[i], iIntelligence) )
-            return m_aBotNames[i];
+    int iIdx = rand() % aBotNames.size();
+    for ( int i=iIdx; i<aBotNames.size(); ++i )
+        if ( !IsNameTaken(aBotNames[i], iIntelligence) )
+            return aBotNames[i];
     for ( int i=iIdx-1; i>=0; --i )
-        if ( !IsNameTaken(m_aBotNames[i], iIntelligence) )
-            return m_aBotNames[i];
+        if ( !IsNameTaken(aBotNames[i], iIntelligence) )
+            return aBotNames[i];
     if ( iIdx < 0 ) // All names taken.
-        iIdx = rand() % m_aBotNames.size();
-    return m_aBotNames[iIdx];
+        iIdx = rand() % aBotNames.size();
+    return aBotNames[iIdx];
 }
+
 //----------------------------------------------------------------------------------------------------------------
 void CMod::ExecuteEvent( void* pEvent, TEventType iType )
 {

@@ -2,9 +2,11 @@
 #include <good/string_buffer.h>
 #include <good/string_utils.h>
 
+#include "mod.h"
 #include "server_plugin.h"
 #include "type2string.h"
 #include "mods/borzh/types_borzh.h"
+#include "mods/hl2dm/types_hl2dm.h"
 
 
 const good::string sUnknown("unknown");
@@ -31,6 +33,21 @@ int EnumFromString( const good::string& s, int iEnumCount, const good::string aS
 
 
 //================================================================================================================
+const good::string& EnumToString( int iEnum, const StringVector& aStrings, const good::string& sDefault )
+{
+    return (0 <= iEnum && iEnum < aStrings.size()) ? aStrings[iEnum] : sDefault;
+}
+
+int EnumFromString( const good::string& s, const StringVector& aStrings )
+{
+    for ( int i=0; i < aStrings.size(); ++i )
+        if ( s == aStrings[i] )
+            return i;
+    return -1;
+}
+
+
+//================================================================================================================
 const good::string& FlagsToString( int iFlags, int iFlagsCount, const good::string aStrings[] )
 {
     if ( iFlags == 0 )
@@ -45,6 +62,11 @@ const good::string& FlagsToString( int iFlags, int iFlagsCount, const good::stri
 
     sbBuffer.erase(sbBuffer.length()-1, 1); // Erase last space.
     return sbBuffer;
+}
+
+const good::string& FlagsToString( int iFlags, const StringVector& aStrings )
+{
+    return FlagsToString(iFlags, aStrings.size(), aStrings.data());
 }
 
 int FlagsFromString( const good::string& s, int iFlagsCount, const good::string aStrings[] )
@@ -118,6 +140,7 @@ const good::string& CTypeToString::BoolToString( bool b )
 good::string aMods[EModId_Total] =
 {
     "hl2dm",
+    "tf2",
     "css",
     "borzh"
 };
@@ -366,7 +389,7 @@ const good::string& CTypeToString::WeaponTypeToString( TWeaponType iType )
 good::string aPreferences[EBotIntelligenceTotal] =
 {
     "lowest",
-    "lowest",
+    "low",
     "normal",
     "high",
     "highest",
@@ -399,6 +422,37 @@ const good::string& CTypeToString::IntelligenceToString( TBotIntelligence iIntel
     return EnumToString( iIntelligence, EBotIntelligenceTotal, aIntelligences, sUnknown );
 }
 
+int CTypeToString::IntelligenceFromString( const good::string& sIntelligence )
+{
+    return EnumFromString( sIntelligence, EBotIntelligenceTotal, aIntelligences );
+}
+
+//----------------------------------------------------------------------------------------------------------------
+const good::string& CTypeToString::TeamToString( int iTeam )
+{
+    return EnumToString( iTeam, CMod::aTeamsNames, sUnknown );
+}
+
+int CTypeToString::TeamFromString( const good::string& sTeam )
+{
+    return EnumFromString( sTeam, CMod::aTeamsNames );
+}
+
+//----------------------------------------------------------------------------------------------------------------
+const good::string& CTypeToString::ClassToString( int iClass )
+{
+    return EnumToString( iClass, CMod::aClassNames, sUnknown );
+}
+
+const good::string& CTypeToString::ClassFlagsToString( int iClasses )
+{
+    return FlagsToString( iClasses, CMod::aClassNames );
+}
+
+int CTypeToString::ClassFromString( const good::string& sClass )
+{
+    return EnumFromString( sClass, CMod::aClassNames );
+}
 
 //----------------------------------------------------------------------------------------------------------------
 // Ordered by TBotTasks.
@@ -523,12 +577,12 @@ const good::string& CTypeToString::BotCommandToString( TBotChat iCommand )
 //----------------------------------------------------------------------------------------------------------------
 good::string aLogLevels[good::ELogLevelTotal] =
 {
-    "none",
     "trace",
     "debug",
     "info",
     "warning",
     "error",
+    "none",
 };
 
 int CTypeToString::LogLevelFromString( const good::string& sLevel )
@@ -536,7 +590,7 @@ int CTypeToString::LogLevelFromString( const good::string& sLevel )
     return EnumFromString( sLevel, good::ELogLevelTotal, aLogLevels );
 }
 
-#ifdef BOTRIX_MOD_BORZH
+#ifdef BOTRIX_BORZH
 
 //----------------------------------------------------------------------------------------------------------------
 // Ordered by TBotAction.
@@ -603,4 +657,4 @@ const good::string& CTypeToString::BorzhTaskToString( int iTask )
     return EnumToString( iTask, EBorzhTaskTotal, aBorzhTasks, sUnknown );
 }
 
-#endif // BOTRIX_MOD_BORZH
+#endif // BOTRIX_BORZH

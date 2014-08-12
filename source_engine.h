@@ -139,7 +139,7 @@ public:
     }
 
     /// Util function that defines when one point 'touches' another one.
-    static bool IsPointTouch3d( Vector const& v1, Vector const& v2, int iSqrDiffZ = iPointTouchSquaredZ, int iSqrDiffXY = iPointTouchSquaredXY )
+    static bool IsPointTouch3d( Vector const& v1, Vector const& v2, int iSqrDiffZ, int iSqrDiffXY )
     {
         //return v2.DistToSqr(v1) < 40*40;
         float zDiff = v1.z - v2.z;
@@ -174,43 +174,6 @@ public: // Members.
     static bool bLogMessageToFile;          ///< Set to true to log messages to botrix.log.
     static const int iMaxMapSize = 32768;   ///< This is max map size for HL2 (-16384..16383).
     static const int iHalfMaxMapSize = iMaxMapSize/2;
-
-    // Mod dependant variables that should be set at plugin load.
-    // https://developer.valvesoftware.com/wiki/Dimensions
-    static int iPlayerHeight;                ///< Player's height. 72 by default (HL2 defines).
-    static int iPlayerHeightCrouched;        ///< Player's height while crouching. 36 by default.
-    static int iPlayerWidth;                 ///< Player's width & length. 32 by default.
-    static Vector vPlayerCollisionHull;      ///< Maxs of player collision box with origin in (0, 0, 0).
-
-    static int iPlayerEyeLevel;              ///< Player's eye position. 64 by default.
-    static int iPlayerEyeLevelCrouched;      ///< Player's eye position crouched. 28 by default.
-
-    static int iPlayerMaxObstacleHeight;     ///< Max obstacle height that a player can walk over (18).
-    static int iPlayerNormalJumpHeight;      ///< Z distance that a player can jump without crouching (20).
-    static int iPlayerJumpCrouchHeight;      ///< Z distance that a player can jump with crouching (56).
-
-    static int iPlayerMaxHeightNoFallDamage; ///< Max height to not take any damage if fall (185).
-
-    static int iPlayerRadius;                ///< Player's radius (used to check if bot is stucked).
-    static int iNearItemMaxDistanceSqr;      ///< Max distance to consider item to be near to player.
-    static int iItemPickUpDistance;          ///< Additional distance from player to item to consider it taken.
-                                             // Item is picked, if distance-to-player < player's-radius + item's-radius + this-distance.
-
-    /// This is the maximum slope angle, in degrees from the horizontal, that the player can scale (45 degrees).
-    static int iPlayerMaxSlopeGradient;
-
-    static int iPlayerMaxArmor;              ///< Maximum amount of armor, that player can have (100 by default).
-    static int iPlayerMaxHealth;             ///< Maximum amount of health, that player can have (100 by default).
-
-    static float fMinNonStuckSpeed;          ///< Minimum velocity to consider that bot is moving and non stucked.
-    static float fMaxCrouchVelocity;         ///< Maximum velocity while crouching.
-    static float fMaxWalkVelocity;           ///< Maximum velocity while walking.
-    static float fMaxRunVelocity;            ///< Maximum velocity while running.
-    static float fMaxSprintVelocity;         ///< Maximum velocity while sprinting.
-
-    static int iPointTouchSquaredXY;         ///< Squared distance to consider that we are touching waypoint.
-    static int iPointTouchSquaredZ;          ///< Z distance to consider that we are touching waypoint. Should be no more than player can jump.
-    static int iPointTouchLadderSquaredZ;    ///< Z distance to consider that we are touching waypoint while on ladder.
 
     static const Vector vZero;               ///< Zero vector.
     static const QAngle angZero;             ///< Zero angle.

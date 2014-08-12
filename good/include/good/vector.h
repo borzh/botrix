@@ -36,7 +36,7 @@ namespace good
     public:
 
         typedef T value_type; ///< Typedef to value type.
-        typedef size_t size_type; ///< Typedef to size type.
+        typedef int size_type; ///< Typedef to size type.
 
         //========================================================================================================
         /// Const iterator of vector.
@@ -288,7 +288,7 @@ namespace good
                 {
                     clear();
                     m_iSize = aOther.m_iSize;
-                    for ( size_t i=0; i < m_iSize; ++i )
+                    for ( size_type i=0; i < m_iSize; ++i )
                         m_pBuffer[i] = aOther.m_pBuffer[i];
                 }
             }
@@ -415,7 +415,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         void clear()
         {
-            for ( size_t i=0; i<m_iSize; ++i )
+            for ( int i=0; i<m_iSize; ++i )
                 m_cAlloc.destroy(&m_pBuffer[i]);
             m_iSize = 0;
         }
@@ -441,12 +441,12 @@ namespace good
             if (iSize >= m_iSize)
             {
                 reserve(iSize);
-                for (size_t i=m_iSize; i<iSize; ++i)
+                for ( size_type i=m_iSize; i<iSize; ++i )
                     m_cAlloc.construct(&m_pBuffer[i], elem);
             }
             else
             {
-                for (size_t i=iSize; i<m_iSize; ++i)
+                for ( size_type i=iSize; i<m_iSize; ++i )
                     m_cAlloc.destroy(&m_pBuffer[i]);
             }
             m_iSize = iSize;
@@ -457,7 +457,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         void increment( size_type iBySize = 1 )
         {
-            size_t desired = m_iSize + iBySize;
+            size_type desired = m_iSize + iBySize;
             if ( desired > m_iCapacity )
             {
                 iBySize = m_iCapacity;

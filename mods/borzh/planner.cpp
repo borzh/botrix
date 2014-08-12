@@ -1,4 +1,4 @@
-#ifdef BOTRIX_MOD_BORZH
+#ifdef BOTRIX_BORZH
 
 #include "good/string_buffer.h"
 #include "good/process.h"
@@ -571,4 +571,4 @@ planner_thread_end:
     bIsPlannerRunning = false;
 }
 
-#endif // BOTRIX_MOD_BORZH
+#endif // BOTRIX_BORZH

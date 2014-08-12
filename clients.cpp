@@ -73,7 +73,7 @@ void CClient::PreThink()
         if ( CWaypoint::IsValid(iLastWaypoint) )
         {
             float zDist = GetPlayerInfo()->GetPlayerMaxs().z - GetPlayerInfo()->GetPlayerMins().z;
-            bool bIsCrouched = (zDist < CUtil::iPlayerHeight);
+            bool bIsCrouched = (zDist < CMod::iPlayerHeight);
 
             CWaypoints::CreatePathsWithAutoFlags(iLastWaypoint, iCurrentWaypoint, bIsCrouched);
             iDestinationWaypoint = iLastWaypoint;

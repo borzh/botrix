@@ -10,6 +10,7 @@
 #include "waypoint.h"
 #include "mods/borzh/bot_borzh.h"
 #include "mods/hl2dm/bot_hl2dm.h"
+#include "mods/tf2/bot_tf2.h"
 
 extern char* szMainBuffer;
 extern int iMainBufferSize;
@@ -28,13 +29,11 @@ int CPlayers::m_iBotsCount = 0;
     bool CPlayers::m_bClientDebuggingEvents = false;
 #endif
 
-static bool bAddingBot = false;
-
-
 
 //----------------------------------------------------------------------------------------------------------------
 void CPlayer::Activated()
 {
+    m_iIndex = CPlayers::Get(m_pEdict);
     m_pPlayerInfo = CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo( m_pEdict );
     BASSERT( m_pPlayerInfo, CPlayers::PlayerDisconnected(m_pEdict) );
 
@@ -150,78 +149,6 @@ void CPlayers::Clear()
 
 
 //----------------------------------------------------------------------------------------------------------------
-CPlayer* CPlayers::AddBot( TBotIntelligence iIntelligence )
-{
-    if ( GetPlayersCount() == Size() )
-        return NULL;
-
-    TModId iModId = CMod::GetModId();
-    if ( iModId == EModId_Invalid )
-    {
-        BLOG_E("Error, can't create bot: unknown mod.");
-        return NULL;
-    }
-
-    const good::string& sName = CMod::GetRandomBotName(iIntelligence);
-    const char* szName;
-
-    if ( CMod::bIntelligenceInBotName )
-    {
-        good::string_buffer sbNameWithIntelligence(szMainBuffer, iMainBufferSize, false); // Don't deallocate.
-        sbNameWithIntelligence = sName;
-        sbNameWithIntelligence.append(' ');
-        sbNameWithIntelligence.append('(');
-        sbNameWithIntelligence.append(CTypeToString::IntelligenceToString(iIntelligence));
-        sbNameWithIntelligence.append(')');
-        szName = sbNameWithIntelligence.c_str();
-    }
-    else
-        szName = sName.c_str();
-
-    bAddingBot = true;
-    edict_t* pEdict = CBotrixPlugin::pBotManager->CreateBot( szName );
-    bAddingBot = false;
-
-    if ( !pEdict )
-        return NULL;
-
-    TPlayerIndex iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
-    BASSERT(iIdx >= 0, return NULL);
-
-    CPlayer* pPlayer = NULL;
-    switch ( iModId )
-    {
-        case EModId_HL2DM:
-            pPlayer = new CBot_HL2DM(pEdict, iIdx, iIntelligence);
-            break;
-#ifdef BOTRIX_MOD_BORZH
-        case EModId_Borzh:
-            pPlayer = new CBotBorzh(pEdict, iIdx, iIntelligence);
-            break;
-#endif
-        default:
-            BreakDebugger();
-            return NULL;
-    }
-
-    pPlayer->Activated(); // Event active is not created for bots.
-
-    m_aPlayers[iIdx] = CPlayerPtr(pPlayer);
-    m_iBotsCount++;
-
-#ifdef BOTRIX_CHAT
-    if ( CChat::iPlayerVar != EChatVariableInvalid )
-    {
-        good::string sName(pPlayer->GetName(), true, true); // Copy and deallocate.
-        sName.lower_case();
-        CChat::SetVariableValue( CChat::iPlayerVar, iIdx, sName );
-    }
-#endif
-
-    return pPlayer;
-}
-
-//----------------------------------------------------------------------------------------------------------------
 void CPlayers::KickBot( CPlayer* pPlayer )
 {
     BASSERT( pPlayer && pPlayer->IsBot() );
@@ -281,14 +208,15 @@ bool CPlayers::KickRandomBotOnTeam( int iTeam )
 //----------------------------------------------------------------------------------------------------------------
 void CPlayers::PlayerConnected( edict_t* pEdict )
 {
-    TPlayerIndex iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
-    BASSERT( iIdx >= 0, return ); // Valve should not allow this assert.
-
-    if ( !bAddingBot )
+    IPlayerInfo* pPlayerInfo = CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo(pEdict);
+    if ( pPlayerInfo && pPlayerInfo->IsFakeClient() ) // IsPlayer()
     {
-        BASSERT( m_aPlayers[iIdx].get() == NULL, return ); // Should be fatal assert.
+        TPlayerIndex iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
+        GoodAssert( iIdx >= 0 ); // Valve should not allow this assert.
 
-        CPlayer* pPlayer = new CClient(pEdict, iIdx);
+        BASSERT( m_aPlayers[iIdx].get() == NULL, return ); // Should not happend.
+
+        CPlayer* pPlayer = new CClient(pEdict);
         pPlayer->Activated();
 
         if ( !CBotrixPlugin::pEngineServer->IsDedicatedServer() && (m_pListenServerClient == NULL) )
@@ -317,7 +245,7 @@ void CPlayers::PlayerConnected( edict_t* pEdict )
 void CPlayers::PlayerDisconnected( edict_t* pEdict )
 {
     int iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
-    BASSERT(iIdx >= 0, return); // Valve should not allow this assert.
+    GoodAssert( iIdx >= 0 ); // Valve should not allow this assert.
 
     if ( m_aPlayers[iIdx].get() == NULL )
         return; // Happens when starting new map and pressing cancel button. Valve issue.

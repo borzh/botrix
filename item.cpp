@@ -117,7 +117,7 @@ TEntityIndex CItems::GetNearestItem( TEntityType iEntityType, const Vector& vOri
     TEntityIndex iResult = -1;
     float fSqrDistResult = 0.0f;
 
-    for ( size_t i = 0; i < aItems.size(); ++i )
+    for ( int i = 0; i < aItems.size(); ++i )
     {
         CEntity& cItem = aItems[i];
         if ( (cItem.pEdict == NULL) || !CWaypoint::IsValid(cItem.iWaypoint) )
@@ -159,6 +159,8 @@ void CItems::Freed( const edict_t* pEdict )
         return;
 
     int iIndex = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict);
+    GoodAssert( iIndex > 0 ); // Valve should not allow this assert.
+
     // Check only server entities.
     if ( !m_aUsedItems.test(iIndex) )
         return;
@@ -172,7 +174,7 @@ void CItems::Freed( const edict_t* pEdict )
             m_iFreeIndex[EEntityTypeWeapon] = i;
             return;
         }
-    BASSERT(false); // Only weapons are allocated/deallocated while map is running.
+    //BASSERT(false); // Only weapons are allocated/deallocated while map is running.
 }
 #endif // SOURCE_ENGINE_2006
 
@@ -187,7 +189,7 @@ void CItems::MapUnloaded()
         aItems.clear();
         m_iFreeIndex[iEntityType] = -1;      // Invalidate free entity index.
 
-        for ( size_t i = 0; i < aClasses.size(); ++i )
+        for ( int i = 0; i < aClasses.size(); ++i )
         {
             aClasses[i].szEngineName = NULL; // Invalidate class name, because it was loaded in previous map.
             aItems.reserve(64);              // At least.
@@ -286,7 +288,7 @@ void CItems::Update()
     }
     m_iCurrentEntity = (iTo == iCount) ? CPlayers::Size()+1: iTo;
 #else
-    for ( size_t i = 0; i < m_aNewEntities.size(); ++i )
+    for ( int i = 0; i < m_aNewEntities.size(); ++i )
         CheckNewEntity( m_aNewEntities[i] );
     m_aNewEntities.clear();
 #endif // SOURCE_ENGINE_2006
@@ -300,7 +302,7 @@ TEntityType CItems::GetEntityType( const char* szClassName, CEntityClass* & pEnt
     {
         good::vector<CEntityClass>& aItemClasses = m_aItemClasses[iEntityType];
 
-        for ( size_t j = 0; j < aItemClasses.size(); ++j )
+        for ( int j = 0; j < aItemClasses.size(); ++j )
         {
             CEntityClass& cEntityClass = aItemClasses[j];
 
@@ -371,6 +373,7 @@ void CItems::CheckNewEntity( edict_t* pEdict )
 #endif
         {
             int iIndex = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict);
+            GoodAssert( iIndex > 0 ); // Valve should not allow this assert.
             m_aUsedItems.set(iIndex);
         }
     }
@@ -393,7 +396,7 @@ TEntityIndex CItems::InsertEntity( int iEntityType, const CEntity& cEntity )
             return iIndex;
         }
 
-        for ( size_t i=0; i < aItems.size(); ++i ) // TODO: add free count.
+        for ( int i=0; i < aItems.size(); ++i ) // TODO: add free count.
             if ( aItems[i].pEdict == NULL )
             {
                 aItems[i] = cEntity;
@@ -464,7 +467,7 @@ TEntityIndex CItems::AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityC
         float fMaxsRadiusSqr = pCollidable->OBBMaxs().LengthSqr();
         float fMinsRadiusSqr = pCollidable->OBBMins().LengthSqr();
         fRadiusSqr = powf( MAX2(fMaxsRadiusSqr, fMinsRadiusSqr), 0.5f );
-        fRadiusSqr += CUtil::iPlayerRadius + CUtil::iItemPickUpDistance;
+        fRadiusSqr += CMod::iPlayerRadius + CMod::iItemPickUpDistance;
         fRadiusSqr *= fRadiusSqr;
         pItemClass->fRadiusSqr = fRadiusSqr;
     }
@@ -495,7 +498,7 @@ void CItems::AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServ
     float fMaxsRadiusSqr = pCollidable->OBBMaxs().LengthSqr();
     float fMinsRadiusSqr = pCollidable->OBBMins().LengthSqr();
     fMaxsRadiusSqr = powf( MAX2(fMaxsRadiusSqr, fMinsRadiusSqr), 0.5f );
-    fMaxsRadiusSqr += CUtil::iPlayerRadius;
+    fMaxsRadiusSqr += CMod::iPlayerRadius;
     fMaxsRadiusSqr *= fMaxsRadiusSqr;
 
     int iFlags = pObjectClass->iFlags;
@@ -504,7 +507,7 @@ void CItems::AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServ
     if ( m_aObjectFlagsForModels.size() )
     {
         good::string sModel = STRING( pServerEntity->GetModelName() );
-        for ( size_t i = 0; i < m_aObjectFlagsForModels.size(); ++i )
+        for ( int i = 0; i < m_aObjectFlagsForModels.size(); ++i )
             if ( sModel.find( m_aObjectFlagsForModels[i].first ) != good::string::npos )
             {
                 FLAG_SET(m_aObjectFlagsForModels[i].second, iFlags);
@@ -524,7 +527,7 @@ void CItems::AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServ
             return;
         }
 
-        for ( size_t i=0; i < aItems.size(); ++i )
+        for ( int i=0; i < aItems.size(); ++i )
             if ( aItems[i].pEdict == NULL )
             {
                 aItems[i] = cObject;
@@ -640,7 +643,7 @@ void CItems::WaypointDeleted( TWaypointId id )
     {
         good::vector<CEntity>& aItems = m_aItems[iEntityType];
 
-        for ( size_t i = 0; i < aItems.size(); ++i )
+        for ( int i = 0; i < aItems.size(); ++i )
         {
             CEntity& cItem = aItems[i];
             if ( cItem.iWaypoint == id )

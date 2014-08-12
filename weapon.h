@@ -7,6 +7,7 @@
 #include "server_plugin.h"
 
 #include <good/bitset.h>
+#include <good/memory.h>
 
 #include "public/mathlib/vector.h"
 
@@ -43,8 +44,11 @@ public:
 
     TWeaponId iId;                               ///< Weapon id.
     const CEntityClass* pWeaponClass;            ///< Pointer to weapon class.
+
+    TClass iClass;                               ///< Classes that can uses this weapon. Those are really flags.
+    TTeam iTeam;                                 ///< Only this team can buy this weapon.
+
     TWeaponType iType;                           ///< Weapon type.
-    int iTeamOnly;                               ///< Only this class can buy this weapon.
 
     bool bHasSecondary:1;                        ///< True if weapon can perform secondary attacks.
     bool bSecondaryUseSameBullets:1;             ///< True if secondary attack uses same bullets as primary (shotgun for example).
@@ -123,6 +127,9 @@ public:
             return true;
         return false;
     }
+
+    /// Set weapon presence.
+    void SetPresent( bool bPresent ) { m_bWeaponPresent = bPresent; }
 
     /// Return false if there is only ammo for this weapon, but without weapon itself.
     bool IsPresent() const { return m_bWeaponPresent && !m_pWeapon->bForbidden; }
@@ -292,6 +299,9 @@ protected:
 };
 
 
+typedef good::unique_ptr<CWeaponWithAmmo> CWeaponWithAmmoPtr; ///< Unique pointer for weapon with ammo.
+
+
 
 //****************************************************************************************************************
 /// Available weapons.
@@ -320,18 +330,18 @@ public:
     static void Clear()
     {
         m_aWeapons.reserve(16);
-        for ( size_t i=0; i < m_aWeapons.size(); ++i )
+        for ( int i=0; i < m_aWeapons.size(); ++i )
             delete m_aWeapons[i].GetBaseWeapon();
         m_aWeapons.clear();
     }
 
     /// Get default weapons with which player respawns.
-    static void GetRespawnWeapons( good::vector<CWeaponWithAmmo>& aWeapons, int iTeam );
+    static void GetRespawnWeapons( good::vector<CWeaponWithAmmo>& aWeapons, TTeam iTeam, TClass iClass );
 
     /// Get weapon from weapon name.
     static TWeaponId GetIdFromWeaponName( const good::string& sName )
     {
-        for ( size_t i=0; i < m_aWeapons.size(); ++i )
+        for ( int i=0; i < m_aWeapons.size(); ++i )
             if ( m_aWeapons[i].GetName() == sName )
                 return i;
         return -1;
@@ -340,7 +350,7 @@ public:
     /// Get weapon from weapon class. Faster.
     static TWeaponId GetIdFromWeaponClass( const CEntityClass* pWeaponClass )
     {
-        for ( size_t i=0; i < m_aWeapons.size(); ++i )
+        for ( int i=0; i < m_aWeapons.size(); ++i )
             if ( m_aWeapons[i].GetBaseWeapon()->pWeaponClass == pWeaponClass )
                 return i;
         return -1;
@@ -349,11 +359,11 @@ public:
     /// Get weapon, ammo's count from weapon's ammo.
     static TWeaponId GetIdFromAmmo( const CEntityClass* pAmmoClass, bool& bSecondary, int& iAmmoCount )
     {
-        for ( size_t i=0; i < m_aWeapons.size(); ++i )
+        for ( int i=0; i < m_aWeapons.size(); ++i )
         {
             const CWeapon* pWeapon = m_aWeapons[i].GetBaseWeapon();
             for ( int bSec=0; bSec <= 1; ++bSec )
-                for ( size_t j=0; j < pWeapon->aAmmos[bSec].size(); ++j )
+                for ( int j=0; j < pWeapon->aAmmos[bSec].size(); ++j )
                     if ( pWeapon->aAmmos[bSec][j] == pAmmoClass )
                     {
                         bSecondary = bSec != 0;

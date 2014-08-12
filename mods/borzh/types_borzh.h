@@ -1,4 +1,4 @@
-#ifdef BOTRIX_MOD_BORZH
+#ifdef BOTRIX_BORZH
 
 #ifndef __BOTRIX_TYPES_BORZH_H__
 #define __BOTRIX_TYPES_BORZH_H__
@@ -70,4 +70,4 @@ typedef int TBotAction;                          ///< Bot action.
 
 #endif // __BOTRIX_TYPES_BORZH_H__
 
-#endif // BOTRIX_MOD_BORZH
+#endif // BOTRIX_BORZH

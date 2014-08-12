@@ -20,6 +20,7 @@ enum TModIds
 {
     EModId_Invalid = -1,                         ///< Unknown mods will be using HL2DM mod.
     EModId_HL2DM = 0,                            ///< Half Life 2 Deathmatch. Unknown mods will be using this one.
+    EModId_TF2,                                  ///< Team fortress 2.
     EModId_CSS,                                  ///< Counter Strike Source.
     EModId_Borzh,                                ///< BorzhMod.
 
@@ -467,7 +468,11 @@ enum TWaitConditions
 typedef int TWaitCondition;                      ///< Wait conditions for bot commands.
 
 
-typedef good::vector<good::string> StringVector; ///< Useful typedef.
+typedef int TTeam;                               ///< Team of bot.
+typedef int TClass;                              ///< Class of bot.
+
+
+typedef good::vector<good::string> StringVector; ///< Useful typedef for vector of strings.
 
 
 #endif // __BOTRIX_TYPES_H__

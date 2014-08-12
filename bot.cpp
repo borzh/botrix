@@ -28,9 +28,9 @@ float CBot::m_fTimeIntervalCheckUsingMachines = 0.5f;
 int CBot::m_iCheckEntitiesPerFrame = 4;
 
 //----------------------------------------------------------------------------------------------------------------
-CBot::CBot( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence iIntelligence ):
-    CPlayer(pEdict, iIndex, true),
-    m_iIntelligence(iIntelligence), r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ),
+CBot::CBot( edict_t* pEdict, TBotIntelligence iIntelligence, TClass iClass ):
+    CPlayer(pEdict, true),
+    m_iIntelligence(iIntelligence), m_iClass(iClass), r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ),
     m_aNearPlayers(CPlayers::Size()), m_aSeenEnemies(CPlayers::Size()), m_aEnemies(CPlayers::Size()),
     m_bTest(false), m_bPaused(false),
 #if defined(DEBUG) || defined(_DEBUG)
@@ -51,23 +51,6 @@ CBot::CBot( edict_t* pEdict, TPlayerIndex iIndex, TBotIntelligence iIntelligence
     }
 }
 
-//----------------------------------------------------------------------------------------------------------------
-void CBot::TestWaypoints( TWaypointId iFrom, TWaypointId iTo )
-{
-    BASSERT( CWaypoints::IsValid(iFrom) && CWaypoints::IsValid(iTo), CPlayers::KickBot(this) );
-    CWaypoint& wFrom = CWaypoints::Get(iFrom);
-
-    Vector vSetOrigin = wFrom.vOrigin;
-    vSetOrigin.z -= CUtil::iPlayerEyeLevel; // Make bot appear on the ground (waypoints are at eye level).
-
-    m_pController->SetAbsOrigin(vSetOrigin);
-
-    iCurrentWaypoint = iFrom;
-    m_iDestinationWaypoint = iTo;
-
-    m_bTest = true;
-}
-
 
 //----------------------------------------------------------------------------------------------------------------
 static char szBotBuffer[2048];
@@ -82,6 +65,7 @@ void CBot::ConsoleCommand(const char* szFormat, ...)
 
     CBotrixPlugin::pServerPluginHelpers->ClientCommand(m_pEdict, szBotBuffer);
 }
+
 
 //----------------------------------------------------------------------------------------------------------------
 // Class used to send say messages to server.
@@ -144,6 +128,26 @@ void CBot::Say(bool bTeamOnly, const char* szFormat, ...)
 
     CBotrixPlugin::instance->GenerateSayEvent(m_pEdict, &szBotBuffer[iSize], bTeamOnly);
 }
+
+
+//----------------------------------------------------------------------------------------------------------------
+void CBot::TestWaypoints( TWaypointId iFrom, TWaypointId iTo )
+{
+    BASSERT( CWaypoints::IsValid(iFrom) && CWaypoints::IsValid(iTo), CPlayers::KickBot(this) );
+    CWaypoint& wFrom = CWaypoints::Get(iFrom);
+
+    Vector vSetOrigin = wFrom.vOrigin;
+    vSetOrigin.z -= CMod::iPlayerEyeLevel; // Make bot appear on the ground (waypoints are at eye level).
+
+    m_pController->SetAbsOrigin(vSetOrigin);
+
+    iCurrentWaypoint = iFrom;
+    m_iDestinationWaypoint = iTo;
+
+    m_bTest = true;
+}
+
+
 //----------------------------------------------------------------------------------------------------------------
 void CBot::Activated()
 {
@@ -151,13 +155,6 @@ void CBot::Activated()
 
     m_pPlayerInfo = CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo(m_pEdict);
     m_pController = CBotrixPlugin::pBotManager->GetBotController(m_pEdict);
-
-#ifndef BOTRIX_HL2DM_MOD
-    CBotrixPlugin::pEngineServer->SetFakeClientConVarValue( m_pEdict, "cl_team", "default" );
-    const good::string* sModel = CMod::GetRandomModel( m_pPlayerInfo->GetTeamIndex() );
-    if ( sModel )
-        CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(m_pEdict, "cl_playermodel", sModel->c_str());
-#endif
 
     m_bFirstRespawn = true;
 
@@ -200,11 +197,11 @@ void CBot::Respawned()
     // Don't clear picked items, as bot still know which were taken previously.
     m_iCurrentPickedItem = 0;
 
-    CWeapons::GetRespawnWeapons( m_aWeapons, m_pPlayerInfo->GetTeamIndex() );
+    CWeapons::GetRespawnWeapons( m_aWeapons, m_pPlayerInfo->GetTeamIndex(), m_iClass );
 
     // Check if bot has physcannon / manual weapon.
     m_iPhyscannon = m_iManualWeapon = -1;
-    for ( size_t i=0; i < m_aWeapons.size(); ++i)
+    for ( int i=0; i < m_aWeapons.size(); ++i)
     {
         if ( m_aWeapons[i].IsPresent() )
         {
@@ -224,9 +221,9 @@ void CBot::Respawned()
 
     m_iBestWeapon = m_iWeapon;
 
-    const good::string& sWeaponName = m_aWeapons[m_iWeapon].GetName();
-    m_pController->SetActiveWeapon( sWeaponName.c_str() );
-    BASSERT( sWeaponName == m_pPlayerInfo->GetWeaponName() );
+    //const good::string& sWeaponName = m_aWeapons[m_iWeapon].GetName();
+    //m_pController->SetActiveWeapon( sWeaponName.c_str() );
+    //BASSERT( sWeaponName == m_pPlayerInfo->GetWeaponName() );
 
     // Set default flags.
 #ifdef BOTRIX_CHAT
@@ -271,7 +268,7 @@ void CBot::Respawned()
             float fDistSqr = vFoot.DistToSqr( pItem->CurrentPosition() );
             if ( fDistSqr <= pItem->fRadiusSqr*4 )
                 aNearest.push_back(i);
-            else if ( fDistSqr <= CUtil::iNearItemMaxDistanceSqr ) // Item is close.
+            else if ( fDistSqr <= CMod::iNearItemMaxDistanceSqr ) // Item is close.
                 aNear.push_back(i);
         }
     }
@@ -512,14 +509,14 @@ void CBot::PreThink()
                 for ( TEntityType iType=0; iType < EEntityTypeTotal; ++iType)
                 {
                     const good::vector<CEntity>& aItems = CItems::GetItems(iType);
-                    for ( size_t i=0; i < m_aNearItems[iType].size(); ++i) // Draw near items with white color.
+                    for ( int i=0; i < m_aNearItems[iType].size(); ++i) // Draw near items with white color.
                     {
                         ICollideable* pCollide = aItems[ m_aNearItems[iType][i] ].pEdict->GetCollideable();
                         CUtil::DrawBox(pCollide->GetCollisionOrigin(), pCollide->OBBMins(), pCollide->OBBMaxs(),
                                        fDrawNearObjectsTime, 0xFF, 0xFF, 0xFF, pCollide->GetCollisionAngles());
                     }
 
-                    for ( size_t i=0; i < m_aNearestItems[iType].size(); ++i) // Draw nearest items with red color.
+                    for ( int i=0; i < m_aNearestItems[iType].size(); ++i) // Draw nearest items with red color.
                     {
                         ICollideable* pCollide = aItems[ m_aNearestItems[iType][i] ].pEdict->GetCollideable();
                         CUtil::DrawBox(pCollide->GetCollisionOrigin(), pCollide->OBBMins(), pCollide->OBBMaxs(),
@@ -620,7 +617,7 @@ bool CBot::DoWaypointAction()
         else if ( FLAG_SOME_SET(FWaypointArmorMachine, w.iFlags) )
         {
             m_iLastHealthArmor = m_pPlayerInfo->GetArmorValue();
-            m_bNeedUse = m_iLastHealthArmor < CUtil::iPlayerMaxArmor;
+            m_bNeedUse = m_iLastHealthArmor < CMod::iPlayerMaxArmor;
             m_bUsingHealthMachine = false;
         }
 
@@ -910,11 +907,22 @@ void CBot::UpdateWorld()
     }
 
     // Update bot's weapon.
-    m_aWeapons[m_iWeapon].GameFrame();
-    if ( m_aWeapons[m_iWeapon].GetName() != m_pPlayerInfo->GetWeaponName() ) // Happens when out of bullets automatically.
+    if ( CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsPresent() )
     {
-        BotMessage( "%s -> Current weapon %s, should be %s.", GetName(), m_pPlayerInfo->GetWeaponName(), m_aWeapons[m_iWeapon].GetName().c_str() );
-        m_pController->SetActiveWeapon(m_aWeapons[m_iWeapon].GetName().c_str());
+        CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
+        const good::string& sWeapon = cWeapon.GetName();
+        if ( sWeapon != m_pPlayerInfo->GetWeaponName() ) // Happens when out of bullets automatically.
+        {
+            BotMessage( "%s -> Current weapon %s, should be %s.", GetName(), m_pPlayerInfo->GetWeaponName(), sWeapon.c_str() );
+            m_pController->SetActiveWeapon( sWeapon.c_str() );
+            if ( sWeapon != m_pPlayerInfo->GetWeaponName() )
+            {
+                BotMessage( "%s -> could not set weapon %s, not present.", GetName(), sWeapon.c_str() );
+                cWeapon.SetPresent(false);
+            }
+        }
+        else
+            cWeapon.GameFrame();
     }
 
     // Get near items.
@@ -969,7 +977,7 @@ void CBot::UpdateWorld()
             {
                 float fDistSqr = vFoot.DistToSqr( cItem.CurrentPosition() );
 
-                if ( fDistSqr > CUtil::iNearItemMaxDistanceSqr ) // Item becomes far.
+                if ( fDistSqr > CMod::iNearItemMaxDistanceSqr ) // Item becomes far.
                 {
                     aNear.erase(aNear.begin() + i);
                     --iNearSize;
@@ -989,11 +997,11 @@ void CBot::UpdateWorld()
         }
 
         // Check if bot becomes close to items to consider them near (m_iCheckEntitiesPerFrame items max).
-        size_t iCheckTo = m_iNextNearItem[iType] + m_iCheckEntitiesPerFrame;
+        int iCheckTo = m_iNextNearItem[iType] + m_iCheckEntitiesPerFrame;
         if ( iCheckTo > aItems.size() )
             iCheckTo = aItems.size();
 
-        for ( size_t i = m_iNextNearItem[iType]; i < iCheckTo; ++i )
+        for ( int i = m_iNextNearItem[iType]; i < iCheckTo; ++i )
         {
             const CEntity* pItem = &aItems[i];
 
@@ -1005,7 +1013,7 @@ void CBot::UpdateWorld()
             float fDistSqr = vFoot.DistToSqr( pItem->CurrentPosition() );
             if ( fDistSqr <= pItem->fRadiusSqr )
                 aNearest.push_back(i);
-            else if ( fDistSqr <= CUtil::iNearItemMaxDistanceSqr ) // Item is close.
+            else if ( fDistSqr <= CMod::iNearItemMaxDistanceSqr ) // Item is close.
                 aNear.push_back(i);
         }
         m_iNextNearItem[iType] = ( iCheckTo == aItems.size() ) ? 0 : iCheckTo;
@@ -1029,12 +1037,12 @@ void CBot::UpdateWorld()
         if ( pEnemy->IsAlive() )
         {
             float fDistSqr = m_vHead.DistToSqr( pEnemy->GetHead() );
-            if ( fDistSqr <= CUtil::iNearItemMaxDistanceSqr )
+            if ( fDistSqr <= CMod::iNearItemMaxDistanceSqr )
             {
                 m_aNearPlayers.set(m_iNextCheckPlayer);
 
                 // Check if players are not stucked with each other.
-                if ( !m_bStuckTryingSide && ( fDistSqr <= (SQR(CUtil::iPlayerRadius) << 2) ) )
+                if ( !m_bStuckTryingSide && ( fDistSqr <= (SQR(CMod::iPlayerRadius) << 2) ) )
                 {
                     Vector vNeeded(m_vDestination), vOther( pEnemy->GetHead() );
                     vNeeded -= m_vHead;
@@ -1129,7 +1137,7 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
                 if ( !m_bNeedDuck && !m_bAttackDuck ) // Duck only if not ducking already.
                 {
                     Vector vSrc(m_vHead);
-                    vSrc.z -= CUtil::iPlayerEyeLevel - CUtil::iPlayerEyeLevelCrouched;
+                    vSrc.z -= CMod::iPlayerEyeLevel - CMod::iPlayerEyeLevelCrouched;
                     m_bAttackDuck = CUtil::IsVisible( vSrc, m_pCurrentEnemy->GetHead()); // Duck, if enemy is visible while ducking.
                 }
             }
@@ -1208,7 +1216,7 @@ void CBot::CheckWeapon()
         }
 
         int iIdx = -1;
-        for ( size_t i = 0; i < m_aWeapons.size(); ++i )
+        for ( int i = 0; i < m_aWeapons.size(); ++i )
             if ( m_aWeapons[i].IsPresent() && (m_aWeapons[i].NeedReload(0) || m_aWeapons[i].NeedReload(1)) )
             {
                 iIdx = i;
@@ -1264,6 +1272,11 @@ void CBot::SetActiveWeapon( int iIndex )
         cOld.Holster( cNew );
         BotMessage( "%s -> Set weapon %s", GetName(), sWeaponName.c_str() );
         m_iWeapon = iIndex;
+    }
+    else
+    {
+        BotMessage( "%s -> could not set weapon %s, not present.", GetName(), sWeaponName.c_str() );
+        cNew.SetPresent(false);
     }
 }
 
@@ -1444,7 +1457,7 @@ bool CBot::ResolveStuckMove()
             Vector vMins, vMaxs;
             pObject->pEdict->GetCollideable()->WorldSpaceSurroundingBounds(&vMins, &vMaxs);
             float zDistance = vMaxs.z - vMins.z;
-            if ( zDistance <= CUtil::iPlayerJumpCrouchHeight ) // Can jump on it.
+            if ( zDistance <= CMod::iPlayerJumpCrouchHeight ) // Can jump on it.
             {
                 m_bNeedJump = m_bNeedJumpDuck = true;
                 m_fStartActionTime = CBotrixPlugin::fTime;
@@ -1626,7 +1639,7 @@ bool CBot::NavigatorMove()
 //----------------------------------------------------------------------------------------------------------------
 bool CBot::NormalMove()
 {
-    bool bArrived = CUtil::IsPointTouch3d(m_vHead, m_vDestination);
+    bool bArrived = CUtil::IsPointTouch3d(m_vHead, m_vDestination, CMod::iPointTouchSquaredZ, CMod::iPointTouchSquaredXY);
     return bArrived;
 }
 
@@ -1747,7 +1760,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
             m_bNeedCheckStuck = false;
 
             // Distance that bot moves since m_fStuckCheckTime.
-            if ( m_vStuckCheck.DistToSqr(m_vHead) < SQR(CUtil::fMinNonStuckSpeed) )
+            if ( m_vStuckCheck.DistToSqr(m_vHead) < SQR(CMod::fMinNonStuckSpeed) )
             {
                 m_bNeedCheckStuck = true;
                 m_fStuckCheckTime = CBotrixPlugin::fTime + 5.0f; // Try again in 5 secs.
@@ -1779,8 +1792,8 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
         else
         {
             //m_bNeedSprint = true;
-            fSpeed = (m_bNeedSprint) ? CUtil::fMaxSprintVelocity :
-                     (m_bNeedWalk) ? CUtil::fMaxWalkVelocity : CUtil::fMaxRunVelocity;
+            fSpeed = (m_bNeedSprint) ? CMod::fMaxSprintVelocity :
+                     (m_bNeedWalk) ? CMod::fMaxWalkVelocity : CMod::fMaxRunVelocity;
 
             vNeededVelocity -= m_vHead; // Destination - head (absolute vector).
 

@@ -29,7 +29,9 @@
 
 // Source headers.
 // Ugly fix for Source Engine.
-#include "public/minmax.h"
+/*#undef MINMAX_H
+#undef min
+#undef max*/
 #include "cbase.h"
 #include "filesystem.h"
 #include "interface.h"
@@ -323,6 +325,12 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 
     // Load mod configuration.
     CMod::Load(iModId);
+
+    //BLOG_W("  No weapons available.");
+    //BLOG_W("  No models of type 'object' available.");
+    //else if ( (iType != EEntityTypeAmmo) && (iType != EEntityTypeWeapon) ) // Will load ammo&weapons later.
+    //    BLOG_W("  No entities of type '%s' available.", CTypeToString::EntityTypeToString(iType).c_str());
+
 
 #ifdef SOURCE_ENGINE_2006
     MathLib_Init(1.0, 1.0, 1.0, 1.0, false, true, false, true);

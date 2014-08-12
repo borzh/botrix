@@ -3,14 +3,15 @@
 
 
 #include <stdlib.h> // rand()
-#include <good/memory.h> // unique_ptr
+#include <good/ini_file.h>
 
 #include "event.h"
 #include "item.h"
 
 //****************************************************************************************************************
-/// Mod interface.
 /**
+ * @brief Mod interface.
+ *
  * Used to get strings, colors from types or flags. TODO:
  */
 //****************************************************************************************************************
@@ -18,13 +19,25 @@ abstract class IMod
 {
 public: // Methods.
 
-    ///
-    virtual void LoadConfig(const good::string& sModName) = 0;
-    // ProcessUnknownSection(const good::inifile::inisection...);
+    // Virtual destructor.
+    virtual ~IMod() {}
+
+    /// Return last error.
+    const good::string& GetLastError() { return m_sLastError; }
+
+    /// Process configuration file.
+    virtual bool ProcessConfig( good::ini_file cIni ) = 0;
 
 
     /// Called when map is loaded, after waypoints and items has been loaded.
     virtual void MapLoaded() = 0;
+
+    /// Called when map is unloaded.
+    virtual void MapFinished() = 0;
+
+    /// Add bot with given name, intelligence, class and other optional parameters.
+    virtual CPlayer* AddBot( const char* szName, TBotIntelligence iIntelligence, TTeam iTeam,
+                             TClass iClass, int iParamsCount, const char **aParams ) = 0;
 
 
     /// Get waypoint type count.
@@ -46,23 +59,11 @@ public: // Methods.
     /// Get waypoints path colors.
     virtual const int* GetWaypointPathColors() = 0;
 
-
-    /// Get bot's objective count.
-    virtual int GetObjectivesCount() = 0;
-
-    /// Get bot's objective names.
-    virtual const good::string* GetObjectiveNames() = 0;
-
-
-    /// Get chat count.
-    virtual int GetChatCount() = 0;
-
-    /// Get chat names.
-    virtual const good::string* GetChatNames() = 0;
-
     /// Mod think function.
     virtual void Think() = 0;
 
+protected:
+    good::string m_sLastError;
 
 };
 
@@ -92,9 +93,10 @@ public: // Methods.
         m_iModId = EModId_Invalid;
         sModName = "";
         aTeamsNames.clear();
-        m_aBotNames.clear();
-        m_aModels.clear();
+        aBotNames.clear();
         m_aEvents.clear();
+        delete pCurrentMod;
+        pCurrentMod = NULL;
     }
 
     /// Called when map finished loading items and waypoints.
@@ -106,28 +108,14 @@ public: // Methods.
     /// Get team index from team name.
     static int GetTeamIndex( const good::string& sTeam )
     {
-        for ( size_t i=0; i < aTeamsNames.size(); ++i )
+        for ( good::string::size_type i=0; i < aTeamsNames.size(); ++i )
             if ( sTeam == aTeamsNames[i] )
                 return i;
         return -1;
     }
 
     /// Get random bot name from [General] section, key bot_names.
-    static const good::string* GetRandomModel( int iTeam )
-    {
-        // TODO: check if works with CSS.
-        BASSERT( iTeam != iSpectatorTeam, return NULL );
-        if ( (iTeam == iUnassignedTeam) && (m_aModels[iTeam].size() == 0) )
-        {
-            do {
-                iTeam =  rand() % m_aModels.size();
-            } while ( (iTeam == iUnassignedTeam) || (iTeam == iSpectatorTeam) );
-        }
-        return m_aModels[iTeam].size() ? &m_aModels[iTeam][rand() % m_aModels[iTeam].size()] : NULL;
-    }
-
-    /// Get random bot name from [General] section, key bot_names.
-	static const good::string& GetRandomBotName( TBotIntelligence iIntelligence );
+    static const good::string& GetRandomBotName( TBotIntelligence iIntelligence );
 
     /// Execute event.
     static void ExecuteEvent( void* pEvent, TEventType iType );
@@ -138,7 +126,48 @@ public: // Static members.
     static StringVector aTeamsNames;         ///< Name of teams.
     static int iUnassignedTeam;              ///< Index of unassigned (deathmatch) team.
     static int iSpectatorTeam;               ///< Index of spectator team.
+
+    static StringVector aBotNames;           ///< Available bot names.
+    static StringVector aClassNames;         ///< Name of player's classes.
+
     static bool bIntelligenceInBotName;      ///< Use bot's intelligence as part of his name.
+
+    // Mod dependant variables that should be set at plugin load.
+    // https://developer.valvesoftware.com/wiki/Dimensions
+    static int iPlayerHeight;                ///< Player's height. 72 by default (HL2DM defines).
+    static int iPlayerHeightCrouched;        ///< Player's height while crouching. 36 by default.
+    static int iPlayerWidth;                 ///< Player's width & length. 32 by default.
+    static Vector vPlayerCollisionHull;      ///< Maxs of player collision box with origin in (0, 0, 0).
+
+    static int iPlayerEyeLevel;              ///< Player's eye position. 64 by default.
+    static int iPlayerEyeLevelCrouched;      ///< Player's eye position crouched. 28 by default.
+
+    static int iPlayerMaxObstacleHeight;     ///< Max obstacle height that a player can walk over (18).
+    static int iPlayerNormalJumpHeight;      ///< Z distance that a player can jump without crouching (20).
+    static int iPlayerJumpCrouchHeight;      ///< Z distance that a player can jump with crouching (56).
+
+    static int iPlayerMaxHeightNoFallDamage; ///< Max height to not take any damage if fall (185).
+
+    static int iPlayerRadius;                ///< Player's radius (used to check if bot is stucked).
+    static int iNearItemMaxDistanceSqr;      ///< Max distance to consider item to be near to player.
+    static int iItemPickUpDistance;          ///< Additional distance from player to item to consider it taken.
+                                             // Item is picked, if distance-to-player < player's-radius + item's-radius + this-distance.
+
+    /// This is the maximum slope angle, in degrees from the horizontal, that the player can scale (45 degrees).
+    static int iPlayerMaxSlopeGradient;
+
+    static int iPlayerMaxArmor;              ///< Maximum amount of armor, that player can have (100 by default).
+    static int iPlayerMaxHealth;             ///< Maximum amount of health, that player can have (100 by default).
+
+    static float fMinNonStuckSpeed;          ///< Minimum velocity to consider that bot is moving and non stucked.
+    static float fMaxCrouchVelocity;         ///< Maximum velocity while crouching.
+    static float fMaxWalkVelocity;           ///< Maximum velocity while walking.
+    static float fMaxRunVelocity;            ///< Maximum velocity while running.
+    static float fMaxSprintVelocity;         ///< Maximum velocity while sprinting.
+
+    static int iPointTouchSquaredXY;         ///< Squared distance to consider that we are touching waypoint.
+    static int iPointTouchSquaredZ;          ///< Z distance to consider that we are touching waypoint. Should be no more than player can jump.
+    static int iPointTouchLadderSquaredZ;    ///< Z distance to consider that we are touching waypoint while on ladder.
 
 
 protected: // Methods.
@@ -147,23 +176,10 @@ protected: // Methods.
     // Returns true there is a player/bot with name cName.
     static bool IsNameTaken(const good::string& cName, TBotIntelligence iIntelligence);
 
-    // Set bot names.
-    static void SetBotNames( const StringVector& aBotNames ) { m_aBotNames = aBotNames; }
-
-    // Set bot models for team index.
-    static void SetBotModels( const StringVector& aModels, int iTeam  )
-    {
-        if ( (StringVector::size_type)iTeam >= m_aModels.size() )
-            m_aModels.resize(iTeam+1);
-        m_aModels[iTeam] = aModels;
-    }
-
 
 protected: // Members.
     static TModId m_iModId;                                  // Mod id.
-    static StringVector m_aBotNames;                         // Available bot names.
-    static good::vector<StringVector> m_aModels;              // Available models for teams.
-    static good::vector<CEventPtr> m_aEvents;                 // Events this mod handles.
+    static good::vector<CEventPtr> m_aEvents;                // Events this mod handles.
     static bool m_bMapHas[EEntityTypeTotal-1];               // To check if map has items or waypoints of types: health, armor, weapon, ammo.
 };
 

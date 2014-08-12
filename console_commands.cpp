@@ -87,7 +87,7 @@ int CConsoleCommand::AutoComplete( const char* partial, int partialLength, char 
                         maxLength = COMMAND_COMPLETION_ITEM_LENGTH - (charIndex + lastSpace) - 1; // Save one space for trailing 0.
                         if (maxLength > 0) // There is still space in autocomplete field.
                         {
-                            for (size_t i = 0; i < m_cAutoCompleteArguments.size(); ++i)
+                            for (int i = 0; i < m_cAutoCompleteArguments.size(); ++i)
                             {
                                 const good::string& arg = m_cAutoCompleteArguments[i];
                                 if (good::starts_with(arg, partArg))
@@ -166,7 +166,7 @@ int CConsoleCommandContainer::AutoComplete( const char* partial, int partialLeng
 
             int charIdx = charIndex + command_size + 1; // 1 is for space
 
-            for ( size_t i = 0; i < m_commands.size(); i ++ )
+            for ( int i = 0; i < m_commands.size(); i ++ )
             {
                 int count = m_commands[i]->AutoComplete(partial, partialLength, commands, strIndex, charIdx);
                 for ( int j = 0; j < count; j ++ )
@@ -187,7 +187,7 @@ TCommandResult CConsoleCommandContainer::Execute( CClient* pClient, int argc, co
 {
     if (argc > 0)
     {
-        for ( size_t i = 0; i < m_commands.size(); i ++ )
+        for ( int i = 0; i < m_commands.size(); i ++ )
         {
             CConsoleCommand *pCommand = m_commands[i].get();
 
@@ -214,7 +214,7 @@ void CConsoleCommandContainer::PrintCommand( edict_t* pPrintTo, int indent )
 
     BULOG_I( pPrintTo, "%s[%s]", szMainBuffer, m_sCommand.c_str() );
 
-    for ( size_t i = 0; i < m_commands.size(); i ++ )
+    for ( int i = 0; i < m_commands.size(); i ++ )
         m_commands[i]->PrintCommand( pPrintTo, indent+1 );
 }
 
@@ -325,7 +325,7 @@ TCommandResult CWaypointCreateCommand::Execute( CClient* pClient, int /*argc*/, 
 
     // Check if player is crouched.
     float height = pClient->GetPlayerInfo()->GetPlayerMaxs().z - pClient->GetPlayerInfo()->GetPlayerMins().z;
-    bool bIsCrouched = ( height < CUtil::iPlayerHeight );
+    bool bIsCrouched = ( height < CMod::iPlayerHeight );
 
     if (pClient->bAutoCreatePaths)
         CWaypoints::CreateAutoPaths(id, bIsCrouched);
@@ -1016,7 +1016,7 @@ TCommandResult CWaypointAreaRenameCommand::Execute( CClient* pClient, int argc, 
     sbBuffer.erase( sbBuffer.size()-1, 1 ); // Erase last space.
 
     StringVector& cAreas = CWaypoints::GetAreas();
-    for ( size_t i=1; i < cAreas.size(); ++i ) // Do not take default area in account.
+    for ( int i=1; i < cAreas.size(); ++i ) // Do not take default area in account.
     {
         StringVector::value_type& sArea = cAreas[i];
         if ( good::starts_with((good::string)sbBuffer, sArea) )
@@ -1096,7 +1096,7 @@ TCommandResult CWaypointAreaShowCommand::Execute( CClient* pClient, int /*argc*/
 
     good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false); // Don't deallocate after use.
 
-    for ( size_t i=0; i < CWaypoints::GetAreas().size(); ++i )
+    for ( int i=0; i < CWaypoints::GetAreas().size(); ++i )
         sbBuffer << "   - " <<  CWaypoints::GetAreas()[i] << '\n';
     sbBuffer.erase( sbBuffer.size()-1, 1 ); // Erase last \n.
 
@@ -1247,7 +1247,7 @@ TCommandResult CPathCreateCommand::Execute( CClient* pClient, int argc, const ch
     if ( pClient->IsAlive() )
     {
         float zDist = pClient->GetPlayerInfo()->GetPlayerMaxs().z - pClient->GetPlayerInfo()->GetPlayerMins().z;
-        if (zDist < CUtil::iPlayerHeight)
+        if (zDist < CMod::iPlayerHeight)
             iFlags = FPathCrouch;
     }
 
@@ -1600,20 +1600,76 @@ TCommandResult CBotWeaponForbidCommand::Execute( CClient* pClient, int argc, con
 }
 
 
-TCommandResult CBotAddCommand::Execute( CClient* pClient, int /*argc*/, const char** /*argv*/ )
+TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-    TBotIntelligence iIntelligence = rand() % EBotIntelligenceTotal; // EBotIntelligenceTotal-1;
-    CPlayer* pPlayer = CPlayers::AddBot(iIntelligence);
-    if ( pPlayer )
+    // Second argument: intelligence.
+    TBotIntelligence iIntelligence = ( argc < 2 )
+            ? ( rand() % EBotIntelligenceTotal )
+            : CTypeToString::IntelligenceFromString(argv[1]);
+
+    if ( iIntelligence == -1 )
     {
-        BULOG_I(pEdict, "Bot added: %s (%d).", pPlayer->GetName(), iIntelligence);
+        BULOG_W(pEdict, "Invalid bot intelligence: %s.", argv[1] );
+        //TODO: BULOG_W( pEdict, "  Must be one of: ", CTypeToString::AllIntelligences() );
+        return ECommandError;
+    }
+
+    // First argument: name.
+    const char* szName;
+    if ( argc == 0 )
+    {
+        const good::string& sName = CMod::GetRandomBotName(iIntelligence);
+
+        if ( CMod::bIntelligenceInBotName )
+        {
+            good::string_buffer sbNameWithIntelligence(szMainBuffer, iMainBufferSize, false); // Don't deallocate.
+            sbNameWithIntelligence = sName;
+            sbNameWithIntelligence.append(' ');
+            sbNameWithIntelligence.append('(');
+            sbNameWithIntelligence.append(CTypeToString::IntelligenceToString(iIntelligence));
+            sbNameWithIntelligence.append(')');
+            szName = sbNameWithIntelligence.c_str();
+        }
+        else
+            szName = sName.c_str();
+    }
+    else
+        szName = argv[0];
+
+    TTeam iTeam = 0;
+    if ( argc >= 3 )
+    {
+        iTeam = CTypeToString::TeamFromString(argv[2]);
+        if ( iTeam == -1 )
+        {
+            BULOG_W(pEdict, "Invalid team: %s.", argv[2]);
+            return ECommandError;
+        }
+    }
+
+    TClass iClass = 0;
+    if ( CMod::aClassNames.size() && (argc >= 4) )
+    {
+        iClass = CTypeToString::ClassFromString(argv[2]);
+        if ( iClass == -1 )
+        {
+            BULOG_W(pEdict, "Invalid class: %s.", argv[2]);
+            return ECommandError;
+        }
+    }
+
+    CPlayer* pBot = CMod::pCurrentMod->AddBot( szName, iIntelligence, iTeam, iClass, MAX2(0, argc-3), &argv[3] );
+    if ( pBot )
+    {
+        CPlayers::AddBot(pBot);
+        BULOG_I( pEdict, "Bot added: %s.", pBot->GetName() );
         return ECommandPerformed;
     }
     else
     {
-        BULOG_W(pEdict, "Error, can't add bot (server full?)");
+        BULOG_W( pEdict, CMod::pCurrentMod->GetLastError().c_str() );
         return ECommandError;
     }
 }
@@ -1843,17 +1899,17 @@ TCommandResult CBotTestPathCommand::Execute( CClient* pClient, int argc, const c
         return ECommandError;
     }
 
-    CPlayer* pPlayer = CPlayers::AddBot();
+    CPlayer* pPlayer = CMod::pCurrentMod->AddBot("test", EBotPro, 0, 0, 0, NULL);
     if ( pPlayer )
     {
-        BASSERT( pPlayer->IsBot(), return ECommandError );
+        CPlayers::AddBot(pPlayer);
         ((CBot*)pPlayer)->TestWaypoints(iPathFrom, iPathTo);
-        BULOG_I(pClient->GetEdict(), "Bot added: %s. Testing path from %d to %d.", pPlayer->GetName(), iPathFrom, iPathTo);
+        BULOG_I( pClient->GetEdict(), "Bot added: %s. Testing path from %d to %d.", pPlayer->GetName(), iPathFrom, iPathTo );
         return ECommandPerformed;
     }
     else
     {
-        BULOG_W(pClient->GetEdict(), "Error, couldn't create bot (check maxplayers).");
+        BULOG_W( pClient->GetEdict(), CMod::pCurrentMod->GetLastError().c_str() );
         return ECommandError;
     }
 }

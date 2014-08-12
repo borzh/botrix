@@ -52,12 +52,13 @@ add_subdirectory ( good )
 # Defines. Don't put comments between them :).
 # Not used: -DDONT_USE_VALVE_FUNCTIONS -DBOTRIX_SHOW_PERFORMANCE
 add_definitions(
+    -DBOTRIX_TF2
+    -DBOTRIX_HL2DM
     -DGOOD_INI_ONE_KV_SEPARATOR
     -DGOOD_INI_ONE_COMMENT_CHAR
     -DGOOD_LOG_FLUSH
     -DGOOD_LOG_USE_ENDL
     -DBOTRIX_SOURCE_2013
-    -DBOTRIX_HL2DM_MOD
     -DLINUX=1
     -D_LINUX=1
     -DPOSIX=1
@@ -78,6 +79,8 @@ file( GLOB PROJECT_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/hl2dm/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/hl2dm/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mods/tf2/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mods/tf2/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/css/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/css/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/borzh/*.h"
@@ -130,36 +133,23 @@ target_link_libraries( ${PROJECT_NAME} ${PROJECT_LINK_LIBS} )
 # Post-build: copy runtime files and botrix plugin to source-sdk-2013.
 get_target_property( BOTRIX_LIB_PATH ${PROJECT_NAME} LOCATION )
 set( RUNTIME_PATH "${CMAKE_CURRENT_SOURCE_DIR}/runtime" )
-set( SDK_2013_MOD_PATH "${SOURCE_SDK_2013_PATH}/mp/game/mod_hl2mp" )
-set( HL2DM_MOD_PATH "$ENV{HOME}/.steam/steam/SteamApps/common/Half-Life 2 Deathmatch/hl2mp" )
-set( SRCDS_HL2DM_MOD_PATH "$ENV{HOME}/steamcmd/hl2dm/hl2mp" )
+set( INSTALL_PATHS
+    "${SOURCE_SDK_2013_PATH}/mp/game/mod_hl2mp"
+    "$ENV{HOME}/steamcmd/hl2dm/hl2mp"
+    "$ENV{HOME}/.steam/steam/SteamApps/common/Half-Life 2 Deathmatch/hl2mp"
+    "$ENV{HOME}/.steam/steam/SteamApps/common/Team Fortress 2/tf"
+)
 
-# Post-build: copy runtime files and botrix plugin to Source SDK 2013 mp mod.
-if( EXISTS "${SRCDS_HL2DM_MOD_PATH}/" )
-    add_custom_command(
-        TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND cp -r "${RUNTIME_PATH}/*" "${SDK_2013_MOD_PATH}/"
-        COMMAND cp "${BOTRIX_LIB_PATH}" "${SDK_2013_MOD_PATH}/addons/botrix.so"
-        COMMAND /bin/echo -e "'\\e[0;32m'Copying Botrix runtime files to Source SDK 2013: ${SDK_2013_MOD_PATH}'\\e[0m'"
-    )
-endif()
-
-# Post-build: copy runtime files and botrix plugin to Source Dedicated Server.
-if( EXISTS "${SRCDS_HL2DM_MOD_PATH}/" )
-    add_custom_command(
-        TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND cp -r "${RUNTIME_PATH}/*" "${SRCDS_HL2DM_MOD_PATH}/"
-        COMMAND cp "${BOTRIX_LIB_PATH}" "${SRCDS_HL2DM_MOD_PATH}/addons/botrix.so"
-        COMMAND /bin/echo -e "'\\e[0;32m'Copying Botrix runtime files to SRCDS: ${SRCDS_HL2DM_MOD_PATH}'\\e[0m'"
-    )
-endif()
-
-# Post-build: copy runtime files and botrix plugin to HL2DM.
-if( EXISTS "${HL2DM_MOD_PATH}/" )
-    add_custom_command(
-        TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND cp -r "${RUNTIME_PATH}/*" "${HL2DM_MOD_PATH}/"
-        COMMAND cp "${BOTRIX_LIB_PATH}" "${HL2DM_MOD_PATH}/addons/botrix.so"
-        COMMAND /bin/echo -e "'\\e[0;32m'Copying Botrix runtime files to HL2DM: ${HL2DM_MOD_PATH}'\\e[0m'"
-    )
-endif()
+# Post-build: copy runtime files and botrix plugin to INSTALL_PATHS.
+foreach( DIR ${INSTALL_PATHS} )
+    if( EXISTS "${DIR}/" )
+        add_custom_command(
+            TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND cp -r "${RUNTIME_PATH}/*" "${DIR}/"
+            COMMAND cp "${BOTRIX_LIB_PATH}" "${DIR}/addons/botrix.so"
+            COMMAND /bin/echo -e "'\\e[0;32m'Copying Botrix runtime files to ${DIR}'\\e[0m'"
+        )
+    else()
+        message( "${DIR} doesn't exist" )
+    endif()
+endforeach()

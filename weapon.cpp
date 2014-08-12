@@ -17,7 +17,7 @@ void CWeaponWithAmmo::GetLook( const Vector& vAim, float fDistance, bool bDuck,
 
     Vector v(vAim);
     if ( iBotIntelligence < EBotSmart ) // Aim at body instead of head.
-        v.z -= bDuck ? (CUtil::iPlayerEyeLevelCrouched/3) : (CUtil::iPlayerEyeLevel/3);
+        v.z -= bDuck ? (CMod::iPlayerEyeLevelCrouched/3) : (CMod::iPlayerEyeLevel/3);
 
     VectorAngles(v, angResult);
 
@@ -166,32 +166,20 @@ void CWeaponWithAmmo::EndReload()
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CWeapons::GetRespawnWeapons( good::vector<CWeaponWithAmmo>& aWeapons, int iTeam )
+void CWeapons::GetRespawnWeapons( good::vector<CWeaponWithAmmo>& aWeapons, TTeam iTeam, TClass iClass )
 {
     BASSERT( (aWeapons.size() == 0) || (aWeapons.size() == m_aWeapons.size()), aWeapons.clear() );
 
+    aWeapons.clear();
     aWeapons.reserve( m_aWeapons.size() );
 
-    if ( aWeapons.size() == 0 )
+    int iClassFlag = 1 << iClass;
+    for ( int i=0; i < m_aWeapons.size(); ++i )
     {
-        for ( size_t i=0; i < m_aWeapons.size(); ++i )
+        TTeam iWeaponTeam = m_aWeapons[i].GetBaseWeapon()->iTeam;
+        if ( ( (iWeaponTeam == CMod::iUnassignedTeam) || (iWeaponTeam == iTeam) ) &&
+             FLAG_SOME_SET(iClassFlag, m_aWeapons[i].GetBaseWeapon()->iClass) )
             aWeapons.push_back( m_aWeapons[i] );
-    }
-    else
-    {
-        for ( size_t i=0; i < m_aWeapons.size(); ++i )
-            aWeapons[i] = m_aWeapons[i];
-    }
-
-    // Remove default weapons that are not for that team.
-    if (iTeam != CMod::iUnassignedTeam)
-    {
-        for ( size_t i=0; i < m_aWeapons.size(); ++i )
-        {
-            int iTeamOnly = m_aWeapons[i].GetBaseWeapon()->iTeamOnly;
-            if ( (iTeamOnly != CMod::iUnassignedTeam) && (iTeamOnly != iTeam) )
-                aWeapons[i].RemoveWeapon();
-        }
     }
 }
 
@@ -203,7 +191,7 @@ TWeaponId CWeapons::GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aW
     bool bCanKill = false, bOneBullet = false;
     int iIdx = -1, iDamage = 0;
     float fDamagePerSec = 0.0f;
-    for ( size_t i=0; i < aWeapons.size(); ++i )
+    for ( int i=0; i < aWeapons.size(); ++i )
     {
         const CWeaponWithAmmo& cWeapon = aWeapons[i];
 
@@ -212,8 +200,8 @@ TWeaponId CWeapons::GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aW
 
         int iDamage0 = cWeapon.Damage(0);
         int iDamage1 = cWeapon.Damage(1);
-        bool bOneBullet0 = (iDamage0 >= CUtil::iPlayerMaxHealth);
-        bool bOneBullet1 = (iDamage1 >= CUtil::iPlayerMaxHealth);
+        bool bOneBullet0 = (iDamage0 >= CMod::iPlayerMaxHealth);
+        bool bOneBullet1 = (iDamage1 >= CMod::iPlayerMaxHealth);
 
         // Check if can kill with one bullet first.
         if ( bOneBullet0 && cWeapon.HasAmmoInClip(0) && (!bOneBullet || (iDamage < iDamage0)) )
@@ -236,7 +224,7 @@ TWeaponId CWeapons::GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aW
 
         // Check if weapon has sufficient bullets to kill.
         iDamage0 = cWeapon.TotalDamage();
-        bool bCanKill0 = iDamage0 >= CUtil::iPlayerMaxHealth;          // Has enough bullets to kill?
+        bool bCanKill0 = iDamage0 >= CMod::iPlayerMaxHealth;          // Has enough bullets to kill?
         float fDamagePerSec0 = cWeapon.DamagePerSecond(); // How fast this weapon kills.
 
         if ( bCanKill0 && (!bCanKill || (fDamagePerSec < fDamagePerSec0)) )

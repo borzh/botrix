@@ -1,16 +1,19 @@
-#ifdef BOTRIX_HL2DM
+#ifdef BOTRIX_TF2
 
-#ifndef __BOTRIX_TYPES_HL2DM_H__
-#define __BOTRIX_TYPES_HL2DM_H__
+#ifndef __BOTRIX_TYPES_TF2_H__
+#define __BOTRIX_TYPES_TF2_H__
 
 
 #include "types.h"
 
 
+typedef int TBotClass;                           ///< Bot class.
+
+
 //****************************************************************************************************************
-/// Bot task for hl2dm.
+/// Bot task for tf2.
 //****************************************************************************************************************
-enum TBotTasksHL2DM
+enum TBotTaskTF2Id
 {
     EBotTaskInvalid = -1,                        ///< Bot has no tasks.
     EBotTaskFindHealth = 0,                      ///< Find health.
@@ -21,9 +24,9 @@ enum TBotTasksHL2DM
     EBotTaskFindEnemy,                           ///< Run randomly around and check if can see an enemy.
     EBotTasksTotal,                              ///< This should be first task number of enums of mod tasks.
 };
-typedef int TBotTaskHL2DM;                       ///< Bot task.
+typedef int TBotTaskTF2;                         ///< Bot task.
 
 
-#endif // __BOTRIX_TYPES_HL2DM_H__
+#endif // __BOTRIX_TYPES_TF2_H__
 
-#endif // BOTRIX_HL2DM
+#endif // BOTRIX_TF2

@@ -230,7 +230,7 @@ namespace good
         bool operator== ( const Char* other ) const
         {
             GoodAssert(other != NULL);
-            return ( c_str() == other )  ||  ( strcmp( c_str(), other ) == 0 );
+            return (c_str() == other)  ||  ( (other != NULL) &&  (strcmp( c_str(), other ) == 0) );
         }
 
         //--------------------------------------------------------------------------------------------------------

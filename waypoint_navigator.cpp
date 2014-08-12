@@ -44,8 +44,8 @@ void CWaypointNavigator::DrawPath( unsigned char r, unsigned char g, unsigned ch
 
     // Draw waypoints paths lower (can't see it when spectating bot, because its  height is at eye level).
     Vector v1(vOrigin), v2(first.vertex.vOrigin);
-    v1.z -= CUtil::iPlayerEyeLevel/4;
-    v2.z -= CUtil::iPlayerEyeLevel/4;
+    v1.z -= CMod::iPlayerEyeLevel/4;
+    v2.z -= CMod::iPlayerEyeLevel/4;
 
     if ( FLAG_ALL_SET(FPathDrawBeam, iPathDrawFlags) )
         CUtil::DrawBeam(v1, v2, 4, fDrawTime, r, g, b);
@@ -53,12 +53,12 @@ void CWaypointNavigator::DrawPath( unsigned char r, unsigned char g, unsigned ch
     if ( FLAG_ALL_SET(FPathDrawLine, iPathDrawFlags) )
         CUtil::DrawLine(v1, v2, fDrawTime, r, g, b);
 
-    for ( size_t i = index; i < m_cAstar.path().size()-1; ++i )
+    for ( int i = index; i < m_cAstar.path().size()-1; ++i )
     {
         v1 = CWaypoints::Get(path[i]).vOrigin;
         v2 = CWaypoints::Get(path[i+1]).vOrigin;
-        v1.z -= CUtil::iPlayerEyeLevel/4;
-        v2.z -= CUtil::iPlayerEyeLevel/4;
+        v1.z -= CMod::iPlayerEyeLevel/4;
+        v2.z -= CMod::iPlayerEyeLevel/4;
         if ( FLAG_ALL_SET(FPathDrawBeam, iPathDrawFlags) )
             CUtil::DrawBeam(v1, v2, 4, fDrawTime, r, g, b);
         if ( FLAG_ALL_SET(FPathDrawLine, iPathDrawFlags) )

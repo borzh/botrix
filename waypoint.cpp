@@ -113,7 +113,7 @@ void CWaypoint::Draw( TWaypointId iWaypointId, TWaypointDrawFlags iDrawType, flo
     unsigned char r, g, b; // Red, green, blue.
     GetColor(r, g, b);
 
-    Vector vEnd = Vector(vOrigin.x, vOrigin.y, vOrigin.z - CUtil::iPlayerEyeLevel);
+    Vector vEnd = Vector(vOrigin.x, vOrigin.y, vOrigin.z - CMod::iPlayerEyeLevel);
 
     if ( FLAG_ALL_SET(FWaypointDrawBeam, iDrawType) )
         CUtil::DrawBeam(vOrigin, vEnd, WIDTH, fDrawTime, r, g, b);
@@ -123,8 +123,8 @@ void CWaypoint::Draw( TWaypointId iWaypointId, TWaypointDrawFlags iDrawType, flo
 
     if ( FLAG_ALL_SET(FWaypointDrawBox, iDrawType) )
     {
-        Vector vBoxOrigin(vOrigin.x - CUtil::iPlayerWidth/2, vOrigin.y - CUtil::iPlayerWidth/2, vOrigin.z - CUtil::iPlayerEyeLevel);
-        CUtil::DrawBox(vBoxOrigin, CUtil::vZero, CUtil::vPlayerCollisionHull, fDrawTime, r, g, b);
+        Vector vBoxOrigin(vOrigin.x - CMod::iPlayerWidth/2, vOrigin.y - CMod::iPlayerWidth/2, vOrigin.z - CMod::iPlayerEyeLevel);
+        CUtil::DrawBox(vBoxOrigin, CUtil::vZero, CMod::vPlayerCollisionHull, fDrawTime, r, g, b);
     }
 
     if ( FLAG_ALL_SET(FWaypointDrawText, iDrawType) )
@@ -352,7 +352,7 @@ bool CWaypoints::Load()
 */
     fclose(f);
 
-    BLOG_I("Waypoints loaded for map %s.", CBotrixPlugin::instance->sMapName.c_str());
+    BLOG_I("%d waypoints loaded for map %s.", CWaypoints::Size(), CBotrixPlugin::instance->sMapName.c_str());
 
     return true;
 }
@@ -701,7 +701,7 @@ void CWaypoints::DrawWaypointPaths( TWaypointId id, TPathDrawFlags iPathDrawFlag
     WaypointNode& w = m_cGraph[id];
 
     unsigned char r, g, b;
-    Vector diff(0, 0, -CUtil::iPlayerEyeLevel/4);
+    Vector diff(0, 0, -CMod::iPlayerEyeLevel/4);
     float fDrawTime = CWaypoint::DRAW_INTERVAL + (2.0f / CBotrixPlugin::iFPS); // Add two frames to not flick.
 
     for (WaypointArcIt it = w.neighbours.begin(); it != w.neighbours.end(); ++it)

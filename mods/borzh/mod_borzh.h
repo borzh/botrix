@@ -1,7 +1,7 @@
-#ifdef BOTRIX_MOD_BORZH
+#ifdef BOTRIX_BORZH
 
-#ifndef __BOTRIX_MOD_BORZH_H__
-#define __BOTRIX_MOD_BORZH_H__
+#ifndef __BOTRIX_BORZH_H__
+#define __BOTRIX_BORZH_H__
 
 
 #include "chat.h"
@@ -157,6 +157,6 @@ protected:
 
 };
 
-#endif // __BOTRIX_MOD_BORZH_H__
+#endif // __BOTRIX_BORZH_H__
 
-#endif // BOTRIX_MOD_BORZH
+#endif // BOTRIX_BORZH

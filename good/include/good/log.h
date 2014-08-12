@@ -47,12 +47,12 @@ namespace good
     /// Enum for log levels.
     enum TLogLevelId
     {
-        ELogLevelOff = 0,              ///< No logging.
-        ELogLevelTrace,                ///< Trace log level.
+        ELogLevelTrace = 0,            ///< Trace log level.
         ELogLevelDebug,                ///< Debug log level.
         ELogLevelInfo,                 ///< Info log level.
         ELogLevelWarning,              ///< Warning log level.
         ELogLevelError,                ///< Error log level.
+        ELogLevelOff,                  ///< No logging.
         ELogLevelTotal                 ///< Amount of log levels.
     };
 

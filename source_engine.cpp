@@ -38,10 +38,10 @@ TReach CanClimbSlope( Vector const& vSrc, Vector const& vDest )
     QAngle ang;
     VectorAngles(vDiff, ang); // Get pitch to know if gradient is too big.
 
-    if (ang.x < -CUtil::iPlayerMaxSlopeGradient) // Destination is higher and slope is more than 45 degrees, can't climb it.
+    if (ang.x < -CMod::iPlayerMaxSlopeGradient) // Destination is higher and slope is more than 45 degrees, can't climb it.
         return EReachNotReachable;
-    else if ( (ang.x > CUtil::iPlayerMaxSlopeGradient) &&       // Slope is more than 45 degrees.
-              (vDiff.z > CUtil::iPlayerMaxHeightNoFallDamage) ) // Source is higher.
+    else if ( (ang.x > CMod::iPlayerMaxSlopeGradient) &&       // Slope is more than 45 degrees.
+              (vDiff.z > CMod::iPlayerMaxHeightNoFallDamage) ) // Source is higher.
         return EReachFallDamage; // Can take damage at fall.
     else
         return EReachReachable; // Slope gradient is less than 45 degrees.
@@ -59,9 +59,9 @@ bool CanPassOrJump( Vector& vStart, Vector& vGround, Vector& vHit, Vector& vDire
     vHit = vGround;
     vHit += vDirectionInc;
 
-    if ( zDist <= CUtil::iPlayerMaxObstacleHeight ) // Can walk?
+    if ( zDist <= CMod::iPlayerMaxObstacleHeight ) // Can walk?
     {
-        vHit.z = vGround.z + CUtil::iPlayerMaxObstacleHeight + 1;
+        vHit.z = vGround.z + CMod::iPlayerMaxObstacleHeight + 1;
         CUtil::TraceLine(vStart, vHit, MASK_SOLID_BRUSHONLY, &filter); // Trace again.
         if ( !CUtil::IsTraceHitSomething() ) // We can stand on vHit after jump.
         {
@@ -70,9 +70,9 @@ bool CanPassOrJump( Vector& vStart, Vector& vGround, Vector& vHit, Vector& vDire
         }
     }
 
-    if ( zDist <= CUtil::iPlayerJumpCrouchHeight ) // Can perform jump?
+    if ( zDist <= CMod::iPlayerJumpCrouchHeight ) // Can perform jump?
     {
-        vHit.z = vGround.z + CUtil::iPlayerJumpCrouchHeight + 1;
+        vHit.z = vGround.z + CMod::iPlayerJumpCrouchHeight + 1;
         CUtil::TraceLine(vStart, vHit, MASK_SOLID_BRUSHONLY, &filter); // Trace again.
         if ( !CUtil::IsTraceHitSomething() ) // We can stand on vHit after jump.
         {
@@ -95,37 +95,6 @@ bool CanPassOrJump( Vector& vStart, Vector& vGround, Vector& vHit, Vector& vDire
 
 //****************************************************************************************************************
 good::TLogLevel CUtil::iLogLevel = good::ELogLevelInfo;
-int CUtil::iPlayerHeight = 72;
-int CUtil::iPlayerHeightCrouched = 36;
-int CUtil::iPlayerWidth = 36;
-Vector CUtil::vPlayerCollisionHull(iPlayerWidth, iPlayerWidth, iPlayerHeight);
-
-int CUtil::iPlayerEyeLevel = 64;
-int CUtil::iPlayerEyeLevelCrouched = 28;
-
-int CUtil::iPlayerMaxObstacleHeight = 18;
-int CUtil::iPlayerNormalJumpHeight = 20;
-int CUtil::iPlayerJumpCrouchHeight = 56;
-
-int CUtil::iPlayerRadius = ceilf( powf(2 * SQR(iPlayerWidth/2), 0.5f) );
-int CUtil::iNearItemMaxDistanceSqr = SQR(256);
-int CUtil::iItemPickUpDistance = 40;
-
-int CUtil::iPlayerMaxSlopeGradient = 45;
-int CUtil::iPlayerMaxHeightNoFallDamage = 185;
-
-int CUtil::iPlayerMaxArmor = 100;
-int CUtil::iPlayerMaxHealth = 100;
-
-float CUtil::fMaxCrouchVelocity = 63.33f;
-float CUtil::fMaxWalkVelocity = 150.0f;
-float CUtil::fMaxRunVelocity = 190.0f;
-float CUtil::fMaxSprintVelocity = 327.5f;
-float CUtil::fMinNonStuckSpeed = fMaxCrouchVelocity / 2.0f;
-
-int CUtil::iPointTouchSquaredXY = SQR(iPlayerWidth/4);
-int CUtil::iPointTouchSquaredZ = SQR(iPlayerJumpCrouchHeight);
-int CUtil::iPointTouchLadderSquaredZ = SQR(2);
 
 const Vector CUtil::vZero(0, 0, 0);
 const QAngle CUtil::angZero(0, 0, 0);
@@ -415,8 +384,8 @@ void CUtil::EntityCenter( edict_t* pEntity, Vector& v )
 //================================================================================================================
 bool CUtil::IsTouchBoundingBox2d( const Vector2D &a1, const Vector2D &a2, const Vector2D &bmins, const Vector2D &bmaxs )
 {
-    Vector2D amins = Vector2D(min(a1.x,a2.x),min(a1.y,a2.y));
-    Vector2D amaxs = Vector2D(max(a1.x,a2.x),max(a1.y,a2.y));
+    Vector2D amins = Vector2D(MIN2(a1.x,a2.x),MIN2(a1.y,a2.y));
+    Vector2D amaxs = Vector2D(MAX2(a1.x,a2.x),MAX2(a1.y,a2.y));
 
     return (((bmins.x >= amins.x) && (bmins.y >= amins.y) && (bmins.x <= amaxs.x) && (bmins.y <= amaxs.y)) ||
             ((bmaxs.x >= amins.x) && (bmaxs.y >= amins.y) && (bmaxs.x <= amaxs.x) && (bmaxs.y <= amaxs.y)));
@@ -425,8 +394,8 @@ bool CUtil::IsTouchBoundingBox2d( const Vector2D &a1, const Vector2D &a2, const 
 //----------------------------------------------------------------------------------------------------------------
 bool CUtil::IsTouchBoundingBox3d( Vector const& a1, Vector const& a2, Vector const& bmins, Vector const& bmaxs )
 {
-    Vector amins = Vector(min(a1.x,a2.x),min(a1.y,a2.y),min(a1.z,a2.z));
-    Vector amaxs = Vector(max(a1.x,a2.x),max(a1.y,a2.y),max(a1.z,a2.z));
+    Vector amins = Vector(MIN2(a1.x,a2.x),MIN2(a1.y,a2.y),MIN2(a1.z,a2.z));
+    Vector amaxs = Vector(MAX2(a1.x,a2.x),MAX2(a1.y,a2.y),MAX2(a1.z,a2.z));
 
     return (((bmins.x >= amins.x) && (bmins.y >= amins.y) && (bmins.z >= amins.z) && (bmins.x <= amaxs.x) && (bmins.y <= amaxs.y) && (bmins.z <= amaxs.z)) ||
             ((bmaxs.x >= amins.x) && (bmaxs.y >= amins.y) && (bmaxs.z >= amins.z) && (bmaxs.x <= amaxs.x) && (bmaxs.y <= amaxs.y) && (bmaxs.z <= amaxs.z)));
@@ -485,16 +454,18 @@ void CUtil::Message( good::TLogLevel iLevel, edict_t* pEntity, const char* szMsg
         case good::ELogLevelDebug:
         case good::ELogLevelInfo:
             Msg(szMsg);
+//            fprintf(stdout, "%s", szMsg);
             break;
         case good::ELogLevelWarning:
         case good::ELogLevelError:
             Warning(szMsg);
+//            fprintf(stdout, "%s", szMsg);
             break;
         }
-#ifdef GOOD_LOG_FLUSH
+/*#ifdef GOOD_LOG_FLUSH
         fflush(stdout);
         fflush(stderr);
-#endif
+#endif*/
     }
 }
 

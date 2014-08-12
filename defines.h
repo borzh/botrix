@@ -19,14 +19,14 @@
         }\
     } while (false)
 
-// Botrix log with level. Log to stdout/stderr and server.
+// Botrix log with level. Log to server.
 #define BLOG_T(...)        BLOG(NULL, good::ELogLevelTrace,   __VA_ARGS__)
 #define BLOG_D(...)        BLOG(NULL, good::ELogLevelDebug,   __VA_ARGS__)
 #define BLOG_I(...)        BLOG(NULL, good::ELogLevelInfo,    __VA_ARGS__)
 #define BLOG_W(...)        BLOG(NULL, good::ELogLevelWarning, __VA_ARGS__)
 #define BLOG_E(...)        BLOG(NULL, good::ELogLevelError,   __VA_ARGS__)
 
-// Log to stdout and user.
+// Log to server and also log to user.
 #define BULOG_T(user, ...) BLOG(user, good::ELogLevelTrace,   __VA_ARGS__)
 #define BULOG_D(user, ...) BLOG(user, good::ELogLevelDebug,   __VA_ARGS__)
 #define BULOG_I(user, ...) BLOG(user, good::ELogLevelInfo,    __VA_ARGS__)

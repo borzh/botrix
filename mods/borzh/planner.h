@@ -1,4 +1,4 @@
-#ifdef BOTRIX_MOD_BORZH
+#ifdef BOTRIX_BORZH
 
 #ifndef __BOTRIX_PLANNER_H__
 #define __BOTRIX_PLANNER_H__
@@ -65,4 +65,4 @@ protected:
 
 #endif // __BOTRIX_PLANNER_H__
 
-#endif // BOTRIX_MOD_BORZH
+#endif // BOTRIX_BORZH

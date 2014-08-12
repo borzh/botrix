@@ -1,39 +1,45 @@
-#ifdef BOTRIX_HL2DM
+#ifdef BOTRIX_TF2
 
 
-#include "mods/hl2dm/mod_hl2dm.h"
-#include "mods/hl2dm/bot_hl2dm.h"
+#include <good/string_buffer.h>
 
+#include "bot_tf2.h"
 #include "clients.h"
 #include "type2string.h"
+#include "types_tf2.h"
+
+
+extern char* szMainBuffer;
+extern int iMainBufferSize;
 
 
 //----------------------------------------------------------------------------------------------------------------
-CBot_HL2DM::CBot_HL2DM( edict_t* pEdict, TBotIntelligence iIntelligence ):
-    CBot(pEdict, iIntelligence, 0), m_aWaypoints(CWaypoints::Size()),
-    m_cItemToSearch(-1, -1), m_cSkipWeapons( CWeapons::Size() )
+CBot_TF2::CBot_TF2( edict_t* pEdict, TBotIntelligence iIntelligence, int iTeam, int iClass ):
+    CBot(pEdict, iIntelligence, iClass), m_aWaypoints(CWaypoints::Size()),
+    m_cItemToSearch(-1, -1), m_cSkipWeapons( CWeapons::Size() ), m_iDesiredTeam(iTeam)
 {
-    CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(pEdict, "cl_autowepswitch", "0");
-    CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(pEdict, "cl_defaultweapon", "weapon_smg1");
     m_bShootAtHead = false;
 }
 
-
 //----------------------------------------------------------------------------------------------------------------
-void CBot_HL2DM::Activated()
+void CBot_TF2::Activated()
 {
     CBot::Activated();
 
-#if 1//NO_NEED_FOR_THIS
-    CBotrixPlugin::pEngineServer->SetFakeClientConVarValue( m_pEdict, "cl_team", "default" );
-    const good::string* sModel = ((CModHL2DM*)CMod::pCurrentMod)->GetRandomModel( m_pPlayerInfo->GetTeamIndex() );
-    if ( sModel )
-        CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(m_pEdict, "cl_playermodel", sModel->c_str());
-#endif
+    //CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, "joingame" );
+    if ( (m_iDesiredTeam == 0) /*&& CBotrixPlugin::instance->bTeamPlay*/ ) // Automatic team: join random team.
+        m_iDesiredTeam = 2 + ( rand()&1 );
+
+    m_pPlayerInfo->ChangeTeam(m_iDesiredTeam);
+    //CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, "jointeam red" );
+
+    good::string_buffer sb(szMainBuffer, iMainBufferSize, false);
+    sb << "joinclass " << CTypeToString::ClassToString(m_iClass);
+    CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, sb.c_str() );
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot_HL2DM::Respawned()
+void CBot_TF2::Respawned()
 {
     CBot::Respawned();
     m_aWaypoints.reset();
@@ -44,12 +50,12 @@ void CBot_HL2DM::Respawned()
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot_HL2DM::KilledEnemy( int /*iPlayerIndex*/, CPlayer* /*pVictim*/ )
+void CBot_TF2::KilledEnemy( int /*iPlayerIndex*/, CPlayer* /*pVictim*/ )
 {
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot_HL2DM::HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow )
+void CBot_TF2::HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow )
 {
     if ( pAttacker && (pAttacker != this) )
         CheckEnemy(iPlayerIndex, pAttacker, false);
@@ -58,7 +64,7 @@ void CBot_HL2DM::HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow )
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot_HL2DM::Think()
+void CBot_TF2::Think()
 {
     if ( !m_bAlive )
     {
@@ -110,13 +116,13 @@ void CBot_HL2DM::Think()
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot_HL2DM::ReceiveChat( int /*iPlayerIndex*/, CPlayer* /*pPlayer*/, bool /*bTeamOnly*/, const char* /*szText*/ )
+void CBot_TF2::ReceiveChat( int /*iPlayerIndex*/, CPlayer* /*pPlayer*/, bool /*bTeamOnly*/, const char* /*szText*/ )
 {
 
 }
 
 //----------------------------------------------------------------------------------------------------------------
-bool CBot_HL2DM::DoWaypointAction()
+bool CBot_TF2::DoWaypointAction()
 {
     if ( iCurrentWaypoint == m_iTaskDestination )
     {
@@ -127,9 +133,9 @@ bool CBot_HL2DM::DoWaypointAction()
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
+void CBot_TF2::CheckNewTasks( bool bForceTaskChange )
 {
-    TBotTaskHL2DM iNewTask = EBotTaskInvalid;
+    TBotTaskTF2 iNewTask = EBotTaskInvalid;
     bool bForce = bForceTaskChange || (m_iCurrentTask == EBotTaskInvalid);
 
     const CWeapon* pWeapon = m_aWeapons[m_iBestWeapon].GetBaseWeapon();
@@ -334,7 +340,7 @@ restart_find_task: // TODO: remove gotos.
     m_cSkipWeapons.reset();
 }
 
-void CBot_HL2DM::TaskFinished()
+void CBot_TF2::TaskFinished()
 {
     if ( (EBotTaskFindHealth <= m_cItemToSearch.iType) && (m_cItemToSearch.iType <= EBotTaskFindAmmo) )
     {
@@ -357,4 +363,4 @@ void CBot_HL2DM::TaskFinished()
 
 }
 
-#endif // BOTRIX_HL2DM
+#endif // BOTRIX_TF2

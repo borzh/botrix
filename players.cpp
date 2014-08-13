@@ -17,6 +17,8 @@ extern int iMainBufferSize;
 
 
 //----------------------------------------------------------------------------------------------------------------
+bool CPlayers::bAddingBot = false;
+
 good::vector<CPlayerPtr> CPlayers::m_aPlayers(16);
 CClient* CPlayers::m_pListenServerClient = NULL;
 
@@ -208,8 +210,13 @@ bool CPlayers::KickRandomBotOnTeam( int iTeam )
 //----------------------------------------------------------------------------------------------------------------
 void CPlayers::PlayerConnected( edict_t* pEdict )
 {
-    IPlayerInfo* pPlayerInfo = CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo(pEdict);
-    if ( pPlayerInfo && pPlayerInfo->IsFakeClient() ) // IsPlayer()
+    //IPlayerInfo* pPlayerInfo = CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo(pEdict);
+    //if ( pPlayerInfo && pPlayerInfo->IsConnected() ) // IsPlayer() IsFakeClient() not working
+    if ( bAddingBot )
+    {
+        m_iBotsCount++;
+    }
+    else
     {
         TPlayerIndex iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
         GoodAssert( iIdx >= 0 ); // Valve should not allow this assert.

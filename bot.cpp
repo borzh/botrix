@@ -156,8 +156,6 @@ void CBot::Activated()
     m_pPlayerInfo = CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo(m_pEdict);
     m_pController = CBotrixPlugin::pBotManager->GetBotController(m_pEdict);
 
-    m_bFirstRespawn = true;
-
 #ifdef BOTRIX_CHAT
     m_iPrevChatMate = m_iPrevTalk = -1;
     m_bTalkStarted = false;
@@ -465,12 +463,6 @@ void CBot::PreThink()
         m_bPaused = true;
     }
 
-    if ( m_bFirstRespawn )
-    {
-        Respawned(); // Force respawn, as first time bot appeares on map, Respawned() is not called.
-        m_bFirstRespawn = false;
-    }
-
     Vector vPrevOrigin = m_vHead;
     int iPrevCurrWaypoint = iCurrentWaypoint;
 
@@ -767,13 +759,10 @@ void CBot::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex
     }
     case EEntityTypeAmmo:
     {
-        bool bSec;
-        int iAmmo;
-        TWeaponId iWeaponId = CWeapons::GetIdFromAmmo(cItem.pItemClass, bSec, iAmmo);
-        BASSERT( iWeaponId >= 0, return );
-        m_aWeapons[iWeaponId].AddBullets(iAmmo, bSec);
-
-        BotMessage("%s -> Picked %s (%d, %d).", GetName(), cItem.pItemClass->sClassName.c_str(), m_aWeapons[iWeaponId].ExtraBullets(0), m_aWeapons[iWeaponId].ExtraBullets(1));
+        if ( CWeapons::AddAmmo(cItem.pItemClass, m_aWeapons) )
+            BotMessage( "%s -> Picked ammo %s.", GetName(), cItem.pItemClass->sClassName.c_str() );
+        else
+            BLOG_W("%s -> Picked ammo %s, but bot appears not to have that weapon.", GetName(), cItem.pItemClass->sClassName.c_str() );
 
         CheckWeapon();
         break;

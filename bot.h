@@ -21,7 +21,7 @@
 #include "game/shared/in_buttons.h"
 
 
-#define BotMessage(...)             { if ( m_bDebugging ) BLOG_I(__VA_ARGS__); }
+#define BotMessage(...)             GOOD_SCOPE_START if ( m_bDebugging ) BLOG_I(__VA_ARGS__); GOOD_SCOPE_END
 
 
 class CBotChat; // Forward declaration.
@@ -92,6 +92,9 @@ public: // Methods.
 
     /// Respawned on map. Reset all variables, waypoint navigator.
     virtual void Respawned();
+
+    /// Called when player's team changed.
+    virtual void ChangeTeam( TTeam iTeam ) = 0;
 
     /// Called when player becomes dead. Will kick it if bot was created for testing purposes.
     virtual void Dead();
@@ -319,7 +322,6 @@ protected: // Members.
 
 
 protected: // Bot flags.
-    bool m_bFirstRespawn:1;                                        // Spawn event is called before bot constructor returns. So first time we call Respawned() manually. TODO: dont create bot in bot constructor.
     bool m_bTest:1;                                                // Bot was created only for testing purposes, it will be eliminated after reaching needed waypoint.
     bool m_bPaused:1;                                              // Bot is paused.
     bool m_bDebugging:1;                                           // Currently debugging this bot.

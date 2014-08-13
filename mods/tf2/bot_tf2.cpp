@@ -25,6 +25,7 @@ CBot_TF2::CBot_TF2( edict_t* pEdict, TBotIntelligence iIntelligence, int iTeam, 
 void CBot_TF2::Activated()
 {
     CBot::Activated();
+    m_bAlive = false;
 
     //CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, "joingame" );
     if ( (m_iDesiredTeam == 0) /*&& CBotrixPlugin::instance->bTeamPlay*/ ) // Automatic team: join random team.
@@ -33,6 +34,11 @@ void CBot_TF2::Activated()
     m_pPlayerInfo->ChangeTeam(m_iDesiredTeam);
     //CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, "jointeam red" );
 
+}
+
+//----------------------------------------------------------------------------------------------------------------
+void CBot_TF2::ChangeTeam( TTeam /*iTeam*/ )
+{
     good::string_buffer sb(szMainBuffer, iMainBufferSize, false);
     sb << "joinclass " << CTypeToString::ClassToString(m_iClass);
     CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, sb.c_str() );
@@ -163,10 +169,9 @@ restart_find_task: // TODO: remove gotos.
     retries++;
     if ( retries == 5 )
     {
-        m_bNeedTaskCheck = true;
-        BASSERT(m_iCurrentTask == EBotTaskInvalid, m_iCurrentTask = EBotTaskInvalid);
-        BotMessage("%s -> No task, will continue to look for task on new frame.", GetName());
-        return;
+        iNewTask = EBotTaskFindEnemy;
+        pEntityClass = NULL;
+        goto find_enemy;
     }
 
     if ( bNeedHealthBad ) // Need health pretty much.
@@ -281,6 +286,7 @@ restart_find_task: // TODO: remove gotos.
 
     BASSERT( iNewTask != EBotTaskInvalid, return );
 
+find_enemy:
     // Check if need task switch.
     if ( bForce || (m_iCurrentTask != iNewTask) )
     {

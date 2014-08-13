@@ -16,6 +16,7 @@ CBot_HL2DM::CBot_HL2DM( edict_t* pEdict, TBotIntelligence iIntelligence ):
     CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(pEdict, "cl_autowepswitch", "0");
     CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(pEdict, "cl_defaultweapon", "weapon_smg1");
     m_bShootAtHead = false;
+    m_bFirstRespawn = true;
 }
 
 
@@ -30,6 +31,12 @@ void CBot_HL2DM::Activated()
     if ( sModel )
         CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(m_pEdict, "cl_playermodel", sModel->c_str());
 #endif
+
+    if ( m_bFirstRespawn )
+    {
+        Respawned(); // Force respawn, as first time bot appeares on map, Respawned() is not called.
+        m_bFirstRespawn = false;
+    }
 }
 
 //----------------------------------------------------------------------------------------------------------------

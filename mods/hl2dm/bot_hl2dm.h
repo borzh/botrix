@@ -26,6 +26,9 @@ public:
     /// Called when player becomes active, before first respawn. Sets players model and team.
     void Activated();
 
+    /// Called when player's team changed.
+    virtual void ChangeTeam( TTeam /*iTeam*/ ) { Dead(); }
+
     /// Called each time bot is respawned.
     virtual void Respawned();
 
@@ -79,6 +82,7 @@ protected:
 protected: // Flags.
 
     bool m_bNeedTaskCheck:1;                             // True if there is need to check for new tasks.
+    bool m_bFirstRespawn:1;                                        // Spawn event is called before bot constructor returns. So first time we call Respawned() manually. TODO: dont create bot in bot constructor.
 
 };
 

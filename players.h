@@ -132,6 +132,9 @@ typedef good::shared_ptr<CPlayer> CPlayerPtr; ///< Typedef for unique_ptr of CPl
 class CPlayers
 {
 public:
+
+    static bool bAddingBot; /// True if currently adding bot.
+
     /// Get count of players on this server.
     static int Size() { return (int)m_aPlayers.size(); };
 

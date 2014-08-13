@@ -114,13 +114,14 @@ void CPlayerActivateEvent::Execute( IEventInterface* pEvent )
 void CPlayerTeamEvent::Execute( IEventInterface* pEvent )
 {
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
+    TTeam iTeam = pEvent->GetInt("team");
 
     int iIdx = CPlayers::Get(pActivator);
     BASSERT( iIdx >= 0, return );
 
     CPlayer* pPlayer = CPlayers::Get(iIdx);
-    if (pPlayer)
-        pPlayer->Dead();
+    if ( pPlayer && pPlayer->IsBot() )
+        ((CBot*)pPlayer)->ChangeTeam( iTeam );
 }
 
 

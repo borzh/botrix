@@ -168,8 +168,6 @@ void CWeaponWithAmmo::EndReload()
 //----------------------------------------------------------------------------------------------------------------
 void CWeapons::GetRespawnWeapons( good::vector<CWeaponWithAmmo>& aWeapons, TTeam iTeam, TClass iClass )
 {
-    BASSERT( (aWeapons.size() == 0) || (aWeapons.size() == m_aWeapons.size()), aWeapons.clear() );
-
     aWeapons.clear();
     aWeapons.reserve( m_aWeapons.size() );
 

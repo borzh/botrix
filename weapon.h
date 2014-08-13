@@ -356,23 +356,23 @@ public:
         return -1;
     }
 
-    /// Get weapon, ammo's count from weapon's ammo.
-    static TWeaponId GetIdFromAmmo( const CEntityClass* pAmmoClass, bool& bSecondary, int& iAmmoCount )
+    /// Add ammo to weapons.
+    static bool AddAmmo( const CEntityClass* pAmmoClass, good::vector<CWeaponWithAmmo>& aWeapons )
     {
-        for ( int i=0; i < m_aWeapons.size(); ++i )
+        bool bResult = false;
+        for ( int i=0; i < aWeapons.size(); ++i )
         {
-            const CWeapon* pWeapon = m_aWeapons[i].GetBaseWeapon();
-            for ( int bSec=0; bSec <= 1; ++bSec )
-                for ( int j=0; j < pWeapon->aAmmos[bSec].size(); ++j )
-                    if ( pWeapon->aAmmos[bSec][j] == pAmmoClass )
+            const good::vector<const CEntityClass*>* aAmmos = aWeapons[i].GetBaseWeapon()->aAmmos;
+            for ( int bSec=CWeapon::PRIMARY; bSec <= CWeapon::SECONDARY; ++bSec )
+                for ( int j=0; j < aAmmos[bSec].size(); ++j )
+                    if ( aAmmos[bSec][j] == pAmmoClass )
                     {
-                        bSecondary = bSec != 0;
-                        iAmmoCount = pWeapon->aAmmos[bSec][j]->GetArgument();
-                        return i;
+                        int iAmmoCount = aAmmos[bSec][j]->GetArgument();
+                        aWeapons[i].AddBullets(iAmmoCount, bSec);
+                        bResult = true;
                     }
         }
-        BASSERT(false);
-        return -1;
+        return bResult;
     }
 
     /// Allow given weapon.

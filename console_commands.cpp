@@ -1605,9 +1605,9 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     // Second argument: intelligence.
-    TBotIntelligence iIntelligence = ( argc < 2 )
-            ? ( rand() % EBotIntelligenceTotal )
-            : CTypeToString::IntelligenceFromString(argv[1]);
+    TBotIntelligence iIntelligence = ( argc > 1 )
+            ? CTypeToString::IntelligenceFromString(argv[1])
+            : ( rand() % EBotIntelligenceTotal );
 
     if ( iIntelligence == -1 )
     {
@@ -1638,8 +1638,9 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
     else
         szName = argv[0];
 
+    // TODO: detect deathmatch.
     TTeam iTeam = 0;
-    if ( argc >= 3 )
+    if ( argc > 2 )
     {
         iTeam = CTypeToString::TeamFromString(argv[2]);
         if ( iTeam == -1 )
@@ -1649,18 +1650,29 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
         }
     }
 
+    int iTotal = 3;
+
+    // Mod can have no classes.
     TClass iClass = 0;
-    if ( CMod::aClassNames.size() && (argc >= 4) )
+    if ( CMod::aClassNames.size() )
     {
-        iClass = CTypeToString::ClassFromString(argv[2]);
-        if ( iClass == -1 )
+        iTotal++;
+        if ( argc > 3 )
         {
-            BULOG_W(pEdict, "Invalid class: %s.", argv[2]);
-            return ECommandError;
+            iClass = CTypeToString::ClassFromString(argv[3]);
+            if ( iClass == -1 )
+            {
+                BULOG_W(pEdict, "Invalid class: %s.", argv[3]);
+                return ECommandError;
+            }
         }
+        else
+             iClass = rand() % CMod::aClassNames.size();
     }
 
-    CPlayer* pBot = CMod::pCurrentMod->AddBot( szName, iIntelligence, iTeam, iClass, MAX2(0, argc-3), &argv[3] );
+    CPlayers::bAddingBot = true;
+    CPlayer* pBot = CMod::pCurrentMod->AddBot( szName, iIntelligence, iTeam, iClass, MAX2(0, argc-iTotal), &argv[iTotal] );
+    CPlayers::bAddingBot = false;
     if ( pBot )
     {
         CPlayers::AddBot(pBot);
@@ -1678,7 +1690,8 @@ TCommandResult CBotKickCommand::Execute( CClient* pClient, int argc, const char*
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-    if ( argc == 0 || argv[0] == NULL )
+    // TODO: finish params
+    if ( argc == 0 )
     {
         if ( !CPlayers::KickRandomBot() )
             BULOG_W(pEdict,"Error, no bots to kick");
@@ -1899,7 +1912,9 @@ TCommandResult CBotTestPathCommand::Execute( CClient* pClient, int argc, const c
         return ECommandError;
     }
 
-    CPlayer* pPlayer = CMod::pCurrentMod->AddBot("test", EBotPro, 0, 0, 0, NULL);
+    CPlayers::bAddingBot = true;
+    CPlayer* pPlayer = CMod::pCurrentMod->AddBot("test", EBotFool, 0, 0, 0, NULL);
+    CPlayers::bAddingBot = false;
     if ( pPlayer )
     {
         CPlayers::AddBot(pPlayer);

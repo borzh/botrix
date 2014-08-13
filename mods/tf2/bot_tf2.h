@@ -25,6 +25,9 @@ public:
     /// Called when player becomes active, before first respawn. Sets players model and team.
     virtual void Activated();
 
+    /// Called when player's team changed.
+    virtual void ChangeTeam( TTeam iTeam );
+
     /// Called each time bot is respawned.
     virtual void Respawned();
 

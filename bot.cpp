@@ -1009,23 +1009,23 @@ void CBot::UpdateWorld()
     }
 
     // Check only 1 player per frame.
-    CPlayer* pEnemy = NULL;
+    CPlayer* pCheckPlayer = NULL;
     while ( m_iNextCheckPlayer < CPlayers::Size() )
     {
         CPlayer* pPlayer = CPlayers::Get(m_iNextCheckPlayer);
-        if ( pPlayer && (this != pPlayer) )
+        if ( pPlayer && (this != pPlayer) && (pPlayer->GetTeam() != CMod::iSpectatorTeam) )
         {
-            pEnemy = pPlayer;
+            pCheckPlayer = pPlayer;
             break;
         }
         m_iNextCheckPlayer++;
     }
 
-    if ( pEnemy )
+    if ( pCheckPlayer )
     {
-        if ( pEnemy->IsAlive() )
+        if ( pCheckPlayer->IsAlive() )
         {
-            float fDistSqr = m_vHead.DistToSqr( pEnemy->GetHead() );
+            float fDistSqr = m_vHead.DistToSqr( pCheckPlayer->GetHead() );
             if ( fDistSqr <= CMod::iNearItemMaxDistanceSqr )
             {
                 m_aNearPlayers.set(m_iNextCheckPlayer);
@@ -1033,7 +1033,7 @@ void CBot::UpdateWorld()
                 // Check if players are not stucked with each other.
                 if ( !m_bStuckTryingSide && ( fDistSqr <= (SQR(CMod::iPlayerRadius) << 2) ) )
                 {
-                    Vector vNeeded(m_vDestination), vOther( pEnemy->GetHead() );
+                    Vector vNeeded(m_vDestination), vOther( pCheckPlayer->GetHead() );
                     vNeeded -= m_vHead;
                     vOther -= m_vHead;
 
@@ -1060,8 +1060,8 @@ void CBot::UpdateWorld()
             m_aNearPlayers.reset(m_iNextCheckPlayer);
 
         // Check if this enemy can be seen / should be attacked.
-        if ( IsEnemy(pEnemy) )
-            CheckEnemy(m_iNextCheckPlayer, pEnemy, true);
+        if ( IsEnemy(pCheckPlayer) )
+            CheckEnemy(m_iNextCheckPlayer, pCheckPlayer, true);
     }
 
     m_iNextCheckPlayer++;

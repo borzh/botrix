@@ -47,7 +47,7 @@ public:
     edict_t* GetEdict() const { return m_pEdict; }
 
     /// Return player's team.
-    int GetTeam() { return m_pPlayerInfo->GetTeamIndex(); }
+    int GetTeam() const { return m_pPlayerInfo->GetTeamIndex(); }
 
     /// Get player's info.
     IPlayerInfo* GetPlayerInfo() const { return m_pPlayerInfo; }

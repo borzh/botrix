@@ -156,9 +156,9 @@ protected: // Mod dependend protected functions.
     // Return true if given player is enemy. Really it is mod's dependant.
     virtual bool IsEnemy( CPlayer* pPlayer ) const
     {
-        int idx = m_pPlayerInfo->GetTeamIndex();
-        return ( (idx != pPlayer->GetPlayerInfo()->GetTeamIndex()) && (idx != CMod::iSpectatorTeam) ) ||
-               ( idx == CMod::iUnassignedTeam ); // TODO: it is deathmatch team.
+        int idx = pPlayer->GetTeam();
+        return (idx != CMod::iSpectatorTeam) &&
+               ( (idx != GetTeam()) || (idx == CMod::iUnassignedTeam) ); // Deathmatch team?
     }
 
     // Bot just picked up given item.

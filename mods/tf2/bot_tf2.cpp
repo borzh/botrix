@@ -2,6 +2,7 @@
 
 
 #include <good/string_buffer.h>
+#include <good/string_utils.h>
 
 #include "bot_tf2.h"
 #include "clients.h"
@@ -27,11 +28,16 @@ void CBot_TF2::Activated()
     CBot::Activated();
     m_bAlive = false;
 
-    //CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, "joingame" );
     if ( (m_iDesiredTeam == 0) /*&& CBotrixPlugin::instance->bTeamPlay*/ ) // Automatic team: join random team.
-        m_iDesiredTeam = 2 + ( rand()&1 );
+    {
+        if ( good::starts_with( CBotrixPlugin::instance->sMapName, "arena_" ) )
+            m_iDesiredTeam = 1 + ( rand() % 3 ); // 1, 2, or 3.
+        else
+            m_iDesiredTeam = 2 + ( rand() & 1 ); // 2 or 3.
+    }
 
     m_pPlayerInfo->ChangeTeam(m_iDesiredTeam);
+    ChangeTeam(m_iDesiredTeam);
     //CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, "jointeam red" );
 
 }
@@ -74,7 +80,7 @@ void CBot_TF2::Think()
 {
     if ( !m_bAlive )
     {
-        m_cCmd.buttons = rand() & IN_ATTACK; // Force bot to respawn by hitting randomly attack button.
+        m_cCmd.buttons = rand() & (IN_ATTACK | IN_JUMP | IN_SCORE) ; // Force bot to respawn by hitting randomly attack button.
         return;
     }
 

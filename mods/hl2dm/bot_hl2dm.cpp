@@ -154,7 +154,7 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 
     if ( bAlmostDead )
     {
-        m_bDontAttack = true; // TODO: try to not to pass to zones with enemy.
+        m_bDontAttack = (m_iIntelligence <= EBotNormal);
         m_bFlee = true;
     }
 

@@ -7,6 +7,8 @@
 #include "bot.h"
 #include "server_plugin.h"
 
+#include "mods/tf2/types_tf2.h"
+
 
 //****************************************************************************************************************
 /// Class representing a bot for Half Life 2 Deathmatch.
@@ -46,10 +48,13 @@ public:
 
 protected:
 
-    // Inherited from CBot. Will check if arrived at m_iTaskDestination and invalidates current task.
+    /// Inherited from CBot. Will check if arrived at m_iTaskDestination and invalidates current task.
     virtual bool DoWaypointAction();
 
-    // Bot just picked up given item.
+    /// Inherited from CBot.
+    virtual void DoPathAction();
+
+    /// Bot just picked up given item.
     virtual void PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex iIndex )
     {
         CBot::PickItem( cItem, iEntityType, iIndex );
@@ -60,29 +65,46 @@ protected:
         }
     }
 
-    // Check if new tasks are needed.
+    /// Chase enemy.
+    void ChaseEnemy()
+    {
+        m_bChasing = FollowEnemy(m_pChasedEnemy);
+        if ( !m_bChasing ) // Dead or flying?
+        {
+            m_pChasedEnemy = NULL;
+            m_iCurrentTask = EBotTaskTf2Invalid;
+            m_bNeedTaskCheck = true;
+        }
+    }
+
+    /// Check if new tasks are needed.
     void CheckNewTasks( bool bForceTaskChange );
 
-    // Mark task as finished.
+    /// Mark task as finished.
     void TaskFinished();
 
-    good::bitset m_aWaypoints;                           // Waypoints, that bot can't use.
+    static const int m_iFleeHealth = 25;                 ///< Start to flee at this health amount.
 
-    int m_iCurrentTask;                                  // Current task.
-    TWaypointId m_iTaskDestination;                      // Waypoint for task destination.
-    CPickedItem m_cItemToSearch;                         // Item, we are searching right now. If iType is -1 then iIndex
-                                                         // is waypoint (found no items, so heading to waypoint of that type).
+    good::bitset m_aWaypoints;                           ///< Waypoints, that bot can't use.
 
-    TWaypointId m_iFailWaypoint;                         // Waypoint id where bot stucks.
-    int m_iFailsCount;                                   // Times bot stucks at m_iFailWaypoint (at 3 times will change destination).
+    TBotTaskTf2 m_iCurrentTask;                          ///< Current task.
+    TWaypointId m_iTaskDestination;                      ///< Waypoint for task destination.
+    CPickedItem m_cItemToSearch;                         ///< Item, we are searching right now. If iType is -1 then iIndex
+                                                         ///< is waypoint (found no items, so heading to waypoint of that type).
 
-    good::bitset m_cSkipWeapons;                         // Weapons to skip searching.
+    TWaypointId m_iFailWaypoint;                         ///< Waypoint id where bot stucks.
+    int m_iFailsCount;                                   ///< Times bot stucks at m_iFailWaypoint (at 3 times will change destination).
 
-    int m_iDesiredTeam;                                  // Desired team to join when activated. TODO: use var in bot.h.
+    good::bitset m_cSkipWeapons;                         ///< Weapons to skip searching.
+
+    TTeam m_iDesiredTeam;                                ///< Desired team to join when activated. TODO: use var in bot.h.
+
+    CPlayer* m_pChasedEnemy;                             ///< Enemy we are following.
 
 protected: // Flags.
 
-    bool m_bNeedTaskCheck:1;                             // True if there is need to check for new tasks.
+    bool m_bNeedTaskCheck:1;                             ///< True if there is need to check for new tasks.
+    bool m_bChasing:1;                                   ///< Currently chasing enemy out of sight.
 
 };
 

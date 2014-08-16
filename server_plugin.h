@@ -8,6 +8,11 @@
 *
 * @section Changelog
 *
+* 0.0.3
+* @li Plugin is working on Team Fortress 2.
+* @li Fix bots shooting at spectator :)
+* @li Added logic for bot to pursue enemy.
+*
 * 0.0.2
 * @li Default base folder location is <MOD DIRECTORY>/addons/botrix.
 * @li Searching for base folder in 4 different locations.

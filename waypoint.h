@@ -210,7 +210,14 @@ public: // Methods.
     /// Get waypoint.
     static CWaypoint& Get( TWaypointId id ) { return m_cGraph[id].vertex; }
 
-    // Return true if there is a path from waypoint source to waypoint dest.
+    /// Get random neighbour.
+    static TWaypointId GetRandomNeighbour( TWaypointId iWaypoint )
+    {
+        const CWaypoints::WaypointNode& cNode = CWaypoints::GetNode(iWaypoint);
+        return cNode.neighbours[ rand() % cNode.neighbours.size() ].target;
+    }
+
+    /// Return true if there is a path from waypoint source to waypoint dest.
     static bool HasPath(TWaypointId source, TWaypointId dest)
     {
         WaypointNode& w = m_cGraph[source];

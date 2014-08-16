@@ -173,7 +173,7 @@ protected: // Methods.
     void Speak( bool bTeamSay );
 
     // Return true if entity is inside bot's view cone.
-    bool IsVisible( CPlayer* pPlayer ) const;
+    bool IsVisible( CPlayer* pPlayer, bool bViewCone ) const;
 
     // Move failure is produced when current waypoint is invalid or when using navigator,
     // there is no path from current to next waypoint.
@@ -183,13 +183,16 @@ protected: // Methods.
         {
             if ( !CWaypoint::IsValid(iCurrentWaypoint) )
                 m_bMoveFailure = true;
-            else if ( m_bNeedMove && m_bUseNavigatorToMove && m_pNavigator.SearchEnded() && !m_bDestinationChanged &&
+            else if ( m_bNeedMove && m_bUseNavigatorToMove && m_cNavigator.SearchEnded() && !m_bDestinationChanged &&
                     ( !CWaypoint::IsValid(iNextWaypoint) ||
                     ( (iCurrentWaypoint != iNextWaypoint) && !CWaypoints::HasPath(iCurrentWaypoint, iNextWaypoint) ) ) )
                 m_bMoveFailure = true;
         }
         return m_bMoveFailure;
     }
+
+    // Move between current and next waypoints. Return true if next waypoint is reached.
+    bool MoveBetweenWaypoints();
 
     // Get time to end aiming to sinchronize angles. Depends on how much 'mouse' distance there are and bot's intelligence.
     float GetEndLookTime();
@@ -199,6 +202,18 @@ protected: // Methods.
 
     // Check if this enemy can be seen / should be attacked.
     void CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility );
+
+    // Try to follow enemy.
+    bool FollowEnemy( CPlayer* pEnemy )
+    {
+        if ( !pEnemy->IsAlive() || !CWaypoint::IsValid(pEnemy->iCurrentWaypoint) )
+            return false;
+
+        BotMessage( "%s -> Follow enemy %s.", GetName(), pEnemy->GetName() );
+        m_iDestinationWaypoint = pEnemy->iCurrentWaypoint;
+        m_bUseNavigatorToMove = m_bNeedMove = m_bDestinationChanged = true;
+        return true;
+    }
 
     // Aim at enemy.
     void EnemyAim();
@@ -287,7 +302,7 @@ protected: // Members.
 
     unsigned char r, g, b;                                         // Bot's path color.
 
-    CWaypointNavigator m_pNavigator;                               // Waypoint navigator.
+    CWaypointNavigator m_cNavigator;                               // Waypoint navigator.
     good::vector<TAreaId> m_aAvoidAreas;                           // Array of areas waypoint navigator must avoid.
 
     good::vector<TEntityIndex> m_aNearestItems[EEntityTypeTotal];  // Nearest items from m_aNearItems that are checked every frame (to know if bot picked them up).

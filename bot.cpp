@@ -99,7 +99,7 @@ void CBot::Say(bool bTeamOnly, const char* szFormat, ...)
 
     //CBotrixPlugin::pServerPluginHelpers->ClientCommand(m_pEdict, szBotBuffer);
 
-#ifndef BOTRIX_DONT_SEND_BOT_CHAT
+#ifdef BOTRIX_SEND_BOT_CHAT
     for ( int i = 0; i <= CPlayers::GetPlayersCount(); i++ )
     {
         CPlayer* pPlayer = CPlayers::Get(i);
@@ -172,7 +172,7 @@ void CBot::Respawned()
     m_cCmd.Reset();
     m_cCmd.viewangles = m_pController->GetLocalAngles();
 
-    m_pNavigator.Stop();
+    m_cNavigator.Stop();
 
     //m_vLastVelocity.x = m_vLastVelocity.y = m_vLastVelocity.z = 0.0f;
 
@@ -488,8 +488,8 @@ void CBot::PreThink()
     {
         PerformMove( iPrevCurrWaypoint, vPrevOrigin );
 
-        if ( m_bNeedMove && m_bUseNavigatorToMove && m_pNavigator.SearchEnded() )
-            m_pNavigator.DrawPath(r, g, b, m_vHead);
+        if ( m_bNeedMove && m_bUseNavigatorToMove && m_cNavigator.SearchEnded() )
+            m_cNavigator.DrawPath(r, g, b, m_vHead);
 
         // Show near items in white and nearest in red.
         if ( m_bDebugging )
@@ -544,7 +544,7 @@ void CBot::CurrentWaypointJustChanged()
 {
     if ( m_bNeedMove && m_bUseNavigatorToMove )
     {
-        if ( m_pNavigator.SearchEnded() )
+        if ( m_cNavigator.SearchEnded() )
         {
             if ( iCurrentWaypoint == iNextWaypoint ) // Bot becomes closer to next waypoint in path.
             {
@@ -574,7 +574,7 @@ void CBot::CurrentWaypointJustChanged()
 #endif
                 m_bMoveFailure = true;
                 iCurrentWaypoint = EWaypointIdInvalid;
-                m_pNavigator.Stop();
+                m_cNavigator.Stop();
             }
         }
         else
@@ -645,7 +645,7 @@ bool CBot::DoWaypointAction()
 //----------------------------------------------------------------------------------------------------------------
 void CBot::ApplyPathFlags()
 {
-    BASSERT( m_bNeedMove && m_bUseNavigatorToMove, return );
+    BASSERT( m_bNeedMove, return );
     //BotMessage("%s -> waypoint %d", m_pPlayerInfo->GetName(), iCurrentWaypoint);
 
     // Release buttons and locks.
@@ -809,7 +809,7 @@ void CBot::Speak( bool ) {}
 
 
 //----------------------------------------------------------------------------------------------------------------
-bool CBot::IsVisible( CPlayer* pPlayer ) const
+bool CBot::IsVisible( CPlayer* pPlayer, bool bViewCone ) const
 {
     // Check PVS first. Get visible clusters from player's position.
     Vector vAim(pPlayer->GetHead());
@@ -822,17 +822,23 @@ bool CBot::IsVisible( CPlayer* pPlayer ) const
     static const float fFovHorizontal = 60.0f;              // Giving 120 degree of view horizontally.
     static const float fFovVertical = fFovHorizontal * 3/4; // Normal monitor has 4:3 aspect ratio.
 
-    vAim -= m_vHead; // vAim contains vector to enemy relative from bot.
+    if ( bViewCone ) // Check view cone.
+    {
+        vAim -= m_vHead; // vAim contains vector to enemy relative from bot.
 
-    QAngle angPlayer;
-    VectorAngles(vAim, angPlayer);
+        QAngle angPlayer;
+        VectorAngles(vAim, angPlayer);
 
-    CUtil::GetAngleDifference(angPlayer, m_cCmd.viewangles, angPlayer);
-    if ( (-fFovHorizontal <= angPlayer.x) && (angPlayer.x <= fFovHorizontal) &&
-         (-fFovVertical <= angPlayer.y) && (angPlayer.y <= fFovVertical) )
-         return CUtil::IsVisible( m_vHead, pPlayer->GetEdict() ); // CUtil::IsVisible( m_vHead, vAim, FVisibilityAll );
+        CUtil::GetAngleDifference(angPlayer, m_cCmd.viewangles, angPlayer);
+        bViewCone = ( (-fFovHorizontal <= angPlayer.x) && (angPlayer.x <= fFovHorizontal) &&
+                      (-fFovVertical <= angPlayer.y) && (angPlayer.y <= fFovVertical) );
+
+    }
     else
-        return false;
+        bViewCone = true; // Assume enemy is in view cone.
+
+    // CUtil::IsVisible( m_vHead, vAim, FVisibilityAll );
+    return bViewCone ? CUtil::IsVisible( m_vHead, pPlayer->GetEdict() ) : false;
 }
 
 
@@ -1081,15 +1087,21 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
         return;
     }
 
+    // Assume that current enemy is in view cone.
+    bool bIsDifferentEnemy = ( m_pCurrentEnemy != pPlayer );
+
     bool bEnemyChanged = false;
 
-    if ( pPlayer->IsAlive() && ( !bCheckVisibility || IsVisible(pPlayer) ) ) // Currently seeing this player.
+    if ( pPlayer->IsAlive() && ( !bCheckVisibility || IsVisible(pPlayer, bIsDifferentEnemy) ) )
     {
+        // Currently seeing this player.
         m_aSeenEnemies.set(iPlayerIndex);
 
         float fDistanceSqr = m_vHead.DistToSqr( pPlayer->GetHead() );
-        bEnemyChanged = ( (m_pCurrentEnemy == NULL) ||
-                        ( (m_pCurrentEnemy != pPlayer) && (fDistanceSqr < m_fDistanceSqrToEnemy + 256) ) ); // Add 16^2 to not to change enemy too often.
+
+        // Add 16 units to not to change enemy too often.
+        bEnemyChanged = ( m_pCurrentEnemy == NULL ) ||
+                        ( bIsDifferentEnemy && (fDistanceSqr < m_fDistanceSqrToEnemy + 256) );
         if ( bEnemyChanged )
         {
             m_pCurrentEnemy = pPlayer;
@@ -1175,7 +1187,7 @@ void CBot::EnemyAim()
     }
 
     m_fEndAimTime += CBotrixPlugin::fTime;
-    m_bNeedAim = true;
+    m_bNeedAim = m_bLockAim = true;
 }
 
 
@@ -1237,8 +1249,6 @@ void CBot::CheckWeapon()
         SetActiveWeapon(m_iBestWeapon);
 
     m_bNeedSetWeapon = false;
-
-    //m_bFlee = (m_pCurrentEnemy != NULL); // Run away if enemy is seen.
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -1393,7 +1403,7 @@ bool CBot::ResolveStuckMove()
     if ( !CWaypoint::IsValid(iCurrentWaypoint) )
     {
         m_bMoveFailure = true;
-        m_pNavigator.Stop();
+        m_cNavigator.Stop();
         return false;
     }
 
@@ -1475,9 +1485,9 @@ bool CBot::ResolveStuckMove()
             if ( bTouch || m_bStuckGotoCurrent )
             {
                 // Force to make action again.
-                m_pNavigator.SetPreviousPathPosition();
-                m_pNavigator.SetPreviousPathPosition();
-                m_pNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
+                m_cNavigator.SetPreviousPathPosition();
+                m_cNavigator.SetPreviousPathPosition();
+                m_cNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
 
                 m_bRepeatWaypointAction = true;
 
@@ -1533,48 +1543,33 @@ bool CBot::ResolveStuckMove()
             else // Lost path and stucked, move failure.
                 m_bMoveFailure = true; // Let mod decide what to do.
 
-            m_pNavigator.Stop();
+            m_cNavigator.Stop();
         }
     }
     else // Not using navigator and stucked?
     {
         m_bMoveFailure = true; // Let mod decide what to do.
-        m_pNavigator.Stop();
+        m_cNavigator.Stop();
     }
     return false;
 }
 
 //----------------------------------------------------------------------------------------------------------------
-bool CBot::NavigatorMove()
+bool CBot::MoveBetweenWaypoints()
 {
-    bool bArrived = false;
+    if ( !CWaypoints::Get(iNextWaypoint).IsTouching(m_vHead, m_bLadderMove) )
+        return false;
 
-    if ( m_bDestinationChanged )
+    iCurrentWaypoint = iNextWaypoint; // Force current waypoint become the one we just reached.
+
+    bool bDoingAction = DoWaypointAction();
+
+    if ( m_bUseNavigatorToMove )
     {
-        // Destination changed, make sure to start new path search.
-        m_bDestinationChanged = false;
-        m_pNavigator.Stop();
-
-        BASSERT( CWaypoint::IsValid(iCurrentWaypoint) && CWaypoint::IsValid(m_iDestinationWaypoint) &&
-                     (m_iDestinationWaypoint != iCurrentWaypoint), return true );
-        m_bMoveFailure = !m_pNavigator.SearchSetup( iCurrentWaypoint, m_iDestinationWaypoint, m_aAvoidAreas );
-        iPrevWaypoint = iCurrentWaypoint;
-    }
-
-    // Check if bot arrived to destination. Set up new destination to next waypoint in path.
-    else if ( m_pNavigator.PathFound() )
-    {
-        if ( !CWaypoints::Get(iNextWaypoint).IsTouching(m_vHead, m_bLadderMove) )
-            return false;
-
-        iCurrentWaypoint = iNextWaypoint; // Force current waypoint become the one we just reached.
-
-        bool bDoingAction = DoWaypointAction();
-
-        m_bNeedMove = m_bNeedMove && m_pNavigator.HasMoreCoords();
+        m_bNeedMove = m_bNeedMove && m_cNavigator.HasMoreCoords();
         if ( m_bNeedMove )
         {
-            m_pNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
+            m_cNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
             if ( !bDoingAction ) // If not doing some waypoint action.
             {
                 ApplyPathFlags();
@@ -1582,19 +1577,47 @@ bool CBot::NavigatorMove()
             }
         }
         else
-            m_iAfterNextWaypoint = iNextWaypoint = -1;
-
-        return true; // We arrived to next waypoint.
+            m_iAfterNextWaypoint = iNextWaypoint = EWaypointIdInvalid;
     }
+    else
+    {
+        iNextWaypoint = EWaypointIdInvalid;
+        m_bNeedMove = false;
+    }
+
+    return true; // We arrived to next waypoint.
+}
+
+//----------------------------------------------------------------------------------------------------------------
+bool CBot::NavigatorMove()
+{
+    GoodAssert( m_bUseNavigatorToMove );
+    bool bArrived = false;
+
+    if ( m_bDestinationChanged )
+    {
+        // Destination changed, make sure to start new path search.
+        m_bDestinationChanged = false;
+        m_cNavigator.Stop();
+
+        BASSERT( CWaypoint::IsValid(iCurrentWaypoint) && CWaypoint::IsValid(m_iDestinationWaypoint) &&
+                (m_iDestinationWaypoint != iCurrentWaypoint), return true );
+        m_bMoveFailure = !m_cNavigator.SearchSetup( iCurrentWaypoint, m_iDestinationWaypoint, m_aAvoidAreas );
+        iPrevWaypoint = iCurrentWaypoint;
+    }
+
+    // Check if bot arrived to destination. Set up new destination to next waypoint in path.
+    else if ( m_cNavigator.PathFound() )
+        return MoveBetweenWaypoints();
 
     if ( !m_bMoveFailure )
     {
         // Here search is still not finished.
-        bArrived = m_pNavigator.SearchStep();
+        bArrived = m_cNavigator.SearchStep();
 
         if ( bArrived ) // Ended search just now.
         {
-            m_bMoveFailure = !m_pNavigator.PathFound();
+            m_bMoveFailure = !m_cNavigator.PathFound();
 
             if ( m_bMoveFailure )
             {
@@ -1602,8 +1625,8 @@ bool CBot::NavigatorMove()
             }
             else
             {
-                BASSERT( m_pNavigator.PathFound() && m_pNavigator.HasMoreCoords(), m_bMoveFailure=true; return true );
-                m_pNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
+                BASSERT( m_cNavigator.PathFound() && m_cNavigator.HasMoreCoords(), m_bMoveFailure=true; return true );
+                m_cNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
                 ApplyPathFlags();
 
                 // First coord in path must be current waypoint.
@@ -1612,7 +1635,7 @@ bool CBot::NavigatorMove()
                 // If lost and iCurrentWaypoint == iNextWaypoint, perform waypoint 'touch'.
                 if ( CWaypoints::Get(iNextWaypoint).IsTouching(m_vHead, m_bLadderMove) )
                 {
-                    m_pNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
+                    m_cNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
                     if ( DoWaypointAction() == false ) // No need to perform waypoint action.
                     {
                         ApplyPathFlags();
@@ -1628,7 +1651,23 @@ bool CBot::NavigatorMove()
 //----------------------------------------------------------------------------------------------------------------
 bool CBot::NormalMove()
 {
-    bool bArrived = CUtil::IsPointTouch3d(m_vHead, m_vDestination, CMod::iPointTouchSquaredZ, CMod::iPointTouchSquaredXY);
+    GoodAssert( m_bNeedMove );
+    bool bArrived = false;
+    if ( m_bDestinationChanged )
+    {
+        BASSERT( !CWaypoint::IsValid(iNextWaypoint) || (iNextWaypoint != iCurrentWaypoint) );
+        m_vDestination = CWaypoints::Get(iNextWaypoint).vOrigin;
+        DoPathAction();
+        m_bDestinationChanged = false;
+    }
+    else
+    {
+        // Need to move only when not arrived.
+        bArrived = CWaypoint::IsValid(iNextWaypoint)
+            ? MoveBetweenWaypoints()
+            : CUtil::IsPointTouch3d(m_vHead, m_vDestination, CMod::iPointTouchSquaredZ, CMod::iPointTouchSquaredXY);
+        m_bNeedMove = !bArrived;
+    }
     return bArrived;
 }
 
@@ -1649,7 +1688,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
 
     if  ( CheckMoveFailure() )
     {
-        m_pNavigator.Stop();
+        m_cNavigator.Stop();
         return;
     }
 
@@ -1664,16 +1703,16 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
     if ( bCurrentWaypointChanged )
         CurrentWaypointJustChanged();
 
-    bool bTouchedWaypoint = false; // Set to true if reached next waypoint in path or path searching just finished (then touched start waypoint).
+    bool bArrived = false; // Set to true if reached next waypoint in path or path searching just finished (then touched start waypoint).
     if ( m_bNeedMove && !m_bMoveFailure )
-        bTouchedWaypoint = ( m_bUseNavigatorToMove ) ? NavigatorMove() : NormalMove();
+        bArrived = ( m_bUseNavigatorToMove ) ? NavigatorMove() : NormalMove();
 
     bool bMove = m_bNeedMove && !m_bMoveFailure && !m_bStuckBreakObject && !m_bStuckUsePhyscannon;
-    if ( m_bUseNavigatorToMove && ( !m_pNavigator.SearchEnded() || m_bLockNavigatorMove ) )
+    if ( m_bUseNavigatorToMove && ( !m_cNavigator.SearchEnded() || m_bLockNavigatorMove ) )
         bMove = false; // Check if search is finished (m_bMoveFailure will be set if search fails).
 
     // Check if need to look left/right/back/forward.
-    CheckSideLook(bMove, bTouchedWaypoint);
+    CheckSideLook(bMove, bArrived);
 
     // Need to aim somewhere? TODO: faster...
     if ( m_bNeedAim )

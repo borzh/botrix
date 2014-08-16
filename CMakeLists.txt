@@ -81,10 +81,10 @@ file( GLOB PROJECT_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/hl2dm/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/tf2/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/tf2/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mods/css/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mods/css/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mods/borzh/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mods/borzh/*.cpp"
+#    "${CMAKE_CURRENT_SOURCE_DIR}/mods/css/*.h"
+#    "${CMAKE_CURRENT_SOURCE_DIR}/mods/css/*.cpp"
+#    "${CMAKE_CURRENT_SOURCE_DIR}/mods/borzh/*.h"
+#    "${CMAKE_CURRENT_SOURCE_DIR}/mods/borzh/*.cpp"
 )
 
 set( SOURCE_SDK_2013_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013" )

@@ -22,6 +22,7 @@ CBot_TF2::CBot_TF2( edict_t* pEdict, TBotIntelligence iIntelligence, int iTeam, 
     m_bShootAtHead = false;
 }
 
+
 //----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::Activated()
 {
@@ -30,9 +31,9 @@ void CBot_TF2::Activated()
 
     if ( (m_iDesiredTeam == 0) /*&& CBotrixPlugin::instance->bTeamPlay*/ ) // Automatic team: join random team.
     {
-        if ( good::starts_with( CBotrixPlugin::instance->sMapName, "arena_" ) )
+        /*if ( good::starts_with( CBotrixPlugin::instance->sMapName, "arena_" ) )
             m_iDesiredTeam = 1 + ( rand() % 3 ); // 1, 2, or 3.
-        else
+        else*/
             m_iDesiredTeam = 2 + ( rand() & 1 ); // 2 or 3.
     }
 
@@ -40,13 +41,18 @@ void CBot_TF2::Activated()
     ChangeTeam(m_iDesiredTeam);
 }
 
+
 //----------------------------------------------------------------------------------------------------------------
-void CBot_TF2::ChangeTeam( TTeam /*iTeam*/ )
+void CBot_TF2::ChangeTeam( TTeam iTeam )
 {
     good::string_buffer sb(szMainBuffer, iMainBufferSize, false);
-    sb << "joinclass " << CTypeToString::ClassToString(m_iClass);
+    const good::string& sClass = CTypeToString::ClassToString(m_iClass);
+    sb << "joinclass " << sClass;
     CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, sb.c_str() );
+    BotMessage( "%s -> jointeam %s, joinclass %s.", GetName(),
+                CTypeToString::TeamToString(iTeam).c_str(), sClass.c_str() );
 }
+
 
 //----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::Respawned()
@@ -60,10 +66,12 @@ void CBot_TF2::Respawned()
     m_bChasing = false;
 }
 
+
 //----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::KilledEnemy( int /*iPlayerIndex*/, CPlayer* /*pVictim*/ )
 {
 }
+
 
 //----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow )
@@ -73,6 +81,7 @@ void CBot_TF2::HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow )
     if ( iHealthNow < (CMod::iPlayerMaxHealth/2) )
         m_bNeedTaskCheck = true; // Check if need search for health.
 }
+
 
 //----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::Think()
@@ -156,11 +165,13 @@ void CBot_TF2::Think()
     }
 }
 
+
 //----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::ReceiveChat( int /*iPlayerIndex*/, CPlayer* /*pPlayer*/, bool /*bTeamOnly*/, const char* /*szText*/ )
 {
 
 }
+
 
 //----------------------------------------------------------------------------------------------------------------
 bool CBot_TF2::DoWaypointAction()
@@ -173,11 +184,23 @@ bool CBot_TF2::DoWaypointAction()
     return CBot::DoWaypointAction();
 }
 
+
 //----------------------------------------------------------------------------------------------------------------
-void CBot_TF2::DoPathAction()
+/*void CBot_TF2::DoPathAction()
 {
     CBot::DoPathAction();
+}*/
+
+
+//----------------------------------------------------------------------------------------------------------------
+bool CBot_TF2::SetActiveWeapon( const good::string& sWeapon )
+{
+    good::string_buffer sb(szMainBuffer, iMainBufferSize, false);
+    sb << "use " << sWeapon;
+    CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, sb.c_str() );
+    return ( sWeapon == m_pPlayerInfo->GetWeaponName() );
 }
+
 
 //----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::CheckNewTasks( bool bForceTaskChange )
@@ -387,6 +410,8 @@ find_enemy:
     m_cSkipWeapons.reset();
 }
 
+
+//----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::TaskFinished()
 {
     if ( (EBotTaskTf2FindHealth <= m_cItemToSearch.iType) && (m_cItemToSearch.iType <= EBotTaskTf2FindAmmo) )

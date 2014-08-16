@@ -116,8 +116,7 @@ void CConsoleCommand::PrintCommand( edict_t* pPrintTo, int indent )
 
     if ( pPrintTo )
     {
-        int iIdx = CPlayers::Get( pPrintTo );
-        CPlayer* pPlayer = CPlayers::Get( iIdx );
+        CPlayer* pPlayer = CPlayers::Get( pPrintTo );
         BASSERT( pPlayer && !pPlayer->IsBot(), return );
         CClient* pClient = (CClient*)pPlayer;
         bHasAccess = HasAccess(pClient);
@@ -324,7 +323,7 @@ TCommandResult CWaypointCreateCommand::Execute( CClient* pClient, int /*argc*/, 
     pClient->iCurrentWaypoint = id;
 
     // Check if player is crouched.
-    float height = pClient->GetPlayerInfo()->GetPlayerMaxs().z - pClient->GetPlayerInfo()->GetPlayerMins().z;
+    float height = pClient->GetPlayerInfo()->GetPlayerMaxs().z - pClient->GetPlayerInfo()->GetPlayerMins().z + 1;
     bool bIsCrouched = ( height < CMod::iPlayerHeight );
 
     if (pClient->bAutoCreatePaths)
@@ -1246,8 +1245,8 @@ TCommandResult CPathCreateCommand::Execute( CClient* pClient, int argc, const ch
     TPathFlags iFlags = FPathNone;
     if ( pClient->IsAlive() )
     {
-        float zDist = pClient->GetPlayerInfo()->GetPlayerMaxs().z - pClient->GetPlayerInfo()->GetPlayerMins().z;
-        if (zDist < CMod::iPlayerHeight)
+        float fHeight = pClient->GetPlayerInfo()->GetPlayerMaxs().z - pClient->GetPlayerInfo()->GetPlayerMins().z + 1;
+        if (fHeight < CMod::iPlayerHeight)
             iFlags = FPathCrouch;
     }
 

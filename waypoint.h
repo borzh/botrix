@@ -282,9 +282,9 @@ protected:
     static void DrawWaypointPaths( TWaypointId id, TPathDrawFlags iPathDrawFlags );
 
     // Buckets are 3D areas that we will use to optimize nearest waypoints finding.
-    static const int BUCKETS_SIZE_X = 128;
-    static const int BUCKETS_SIZE_Y = 128;
-    static const int BUCKETS_SIZE_Z = 128;
+    static const int BUCKETS_SIZE_X = 96;
+    static const int BUCKETS_SIZE_Y = 96;
+    static const int BUCKETS_SIZE_Z = 96;
 
     static const int BUCKETS_SPACE_X = CUtil::iMaxMapSize/BUCKETS_SIZE_X;
     static const int BUCKETS_SPACE_Y = CUtil::iMaxMapSize/BUCKETS_SIZE_Y;

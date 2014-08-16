@@ -585,10 +585,7 @@ PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &ar
         return PLUGIN_CONTINUE; // Not a "botrix" command.
 #endif
 
-    int iIdx = CPlayers::Get(pEntity);
-    BASSERT(iIdx >= 0, return PLUGIN_CONTINUE);
-
-    CPlayer* pPlayer = CPlayers::Get(iIdx);
+    CPlayer* pPlayer = CPlayers::Get(pEntity);
     BASSERT(pPlayer && !pPlayer->IsBot(), return PLUGIN_CONTINUE); // Valve check.
 
     CClient* pClient = (CClient*)pPlayer;

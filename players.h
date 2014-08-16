@@ -150,8 +150,11 @@ public:
     /// Get player from index.
     static CPlayer* Get( TPlayerIndex iIndex ) { return m_aPlayers[iIndex].get(); }
 
+    /// Get player from index.
+    static CPlayer* Get( edict_t* pEdict ) { return m_aPlayers[ GetIndex(pEdict) ].get(); }
+
     /// Get player index from edict.
-    static int Get( edict_t* pPlayer )
+    static int GetIndex( edict_t* pPlayer )
     {
         return CBotrixPlugin::pEngineServer->IndexOfEdict(pPlayer)-1;
     }

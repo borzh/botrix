@@ -443,7 +443,8 @@ bool CUtil::IsLineTouch3d(Vector const& amins, Vector const& amaxs, Vector const
 //================================================================================================================
 void CUtil::Message( good::TLogLevel iLevel, edict_t* pEntity, const char* szMsg )
 {
-    if ( pEntity )
+    if ( pEntity && ( CBotrixPlugin::pEngineServer->IsDedicatedServer() ||
+                      CPlayers::Get(pEntity) != CPlayers::GetListenServerClient() ) )
         CBotrixPlugin::pEngineServer->ClientPrintf(pEntity, szMsg);
 
     if ( iLevel >= iLogLevel )

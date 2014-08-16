@@ -35,7 +35,7 @@ int CPlayers::m_iBotsCount = 0;
 //----------------------------------------------------------------------------------------------------------------
 void CPlayer::Activated()
 {
-    m_iIndex = CPlayers::Get(m_pEdict);
+    m_iIndex = CPlayers::GetIndex(m_pEdict);
     m_pPlayerInfo = CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo( m_pEdict );
     BASSERT( m_pPlayerInfo, CPlayers::PlayerDisconnected(m_pEdict) );
 

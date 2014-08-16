@@ -101,7 +101,7 @@ void CPlayerActivateEvent::Execute( IEventInterface* pEvent )
 {
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
 
-    int iIdx = CPlayers::Get(pActivator);
+    int iIdx = CPlayers::GetIndex(pActivator);
     BASSERT( iIdx >= 0, return );
 
     CPlayer* pPlayer = CPlayers::Get(iIdx);
@@ -116,7 +116,7 @@ void CPlayerTeamEvent::Execute( IEventInterface* pEvent )
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
     TTeam iTeam = pEvent->GetInt("team");
 
-    int iIdx = CPlayers::Get(pActivator);
+    int iIdx = CPlayers::GetIndex(pActivator);
     BASSERT( iIdx >= 0, return );
 
     CPlayer* pPlayer = CPlayers::Get(iIdx);
@@ -130,7 +130,7 @@ void CPlayerSpawnEvent::Execute( IEventInterface* pEvent )
 {
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
 
-    int iIdx = CPlayers::Get(pActivator);
+    int iIdx = CPlayers::GetIndex(pActivator);
     BASSERT( iIdx >= 0, return );
 
     CPlayer* pPlayer = CPlayers::Get(iIdx);
@@ -154,11 +154,11 @@ void CPlayerChatEvent::Execute( IEventInterface* pEvent )
 void CPlayerHurtEvent::Execute( IEventInterface* pEvent )
 {
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
-    int iActivator = CPlayers::Get(pActivator);
+    int iActivator = CPlayers::GetIndex(pActivator);
     BASSERT( iActivator >= 0, return );
 
     edict_t* pAttacker = CUtil::GetEntityByUserId( pEvent->GetInt("attacker") );
-    int iAttacker = pAttacker ? CPlayers::Get(pAttacker) : iActivator; // May hurt himself.
+    int iAttacker = pAttacker ? CPlayers::GetIndex(pAttacker) : iActivator; // May hurt himself.
 
     CPlayer *pPlayer = CPlayers::Get(iActivator);
     CPlayer *pPlayerAttacker = iAttacker >= 0 ? CPlayers::Get(iAttacker) : NULL;
@@ -173,7 +173,7 @@ void CPlayerDeathEvent::Execute( IEventInterface* pEvent )
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
     edict_t* pAttacker = CUtil::GetEntityByUserId( pEvent->GetInt("attacker") );
 
-    int iActivator = CPlayers::Get(pActivator);
+    int iActivator = CPlayers::GetIndex(pActivator);
     BASSERT( iActivator >= 0, return );
 
     CPlayer* pPlayerActivator = CPlayers::Get(iActivator);
@@ -182,7 +182,7 @@ void CPlayerDeathEvent::Execute( IEventInterface* pEvent )
 
     if ( pAttacker )
     {
-        int iAttacker = CPlayers::Get(pAttacker);
+        int iAttacker = CPlayers::GetIndex(pAttacker);
         BASSERT( iAttacker >= 0, return );
 
         CPlayer* pPlayerAttacker = CPlayers::Get(iAttacker);

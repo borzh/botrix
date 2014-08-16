@@ -12,6 +12,8 @@
 * @li Plugin is working on Team Fortress 2.
 * @li Fix bots shooting at spectator :)
 * @li Added logic for bot to pursue enemy.
+* @li Added logic for bot to run randomly while engaging enemy.
+* @li Stupied bots will sit down and shoot if enemy is near.
 *
 * 0.0.2
 * @li Default base folder location is <MOD DIRECTORY>/addons/botrix.

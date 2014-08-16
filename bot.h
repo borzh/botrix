@@ -203,6 +203,9 @@ protected: // Methods.
     // Check if this enemy can be seen / should be attacked.
     void CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility );
 
+    // Check if need to duck to attack.
+    void CheckAttackDuck( CPlayer* pPlayer );
+
     // Try to follow enemy.
     bool FollowEnemy( CPlayer* pEnemy )
     {
@@ -221,8 +224,15 @@ protected: // Methods.
     // Choose best attack weapon from available weapons.
     void CheckWeapon();
 
-    // Set active weapon.
-    void SetActiveWeapon( int iIndex );
+    // Set active weapon. Mod dependent. Instant, doensn't take in account parameters from config.ini
+    virtual bool SetActiveWeapon( const good::string& sWeapon )
+    {
+        m_pController->SetActiveWeapon(sWeapon.c_str());
+        return ( sWeapon == m_pPlayerInfo->GetWeaponName() );
+    }
+
+    // Try to swith to other weapon.
+    void ChangeWeapon( int iIndex );
 
     // Shoot current weapon.
     void Shoot( bool bSecondary = false );
@@ -330,6 +340,8 @@ protected: // Members.
     TBotChat m_iPrevTalk;                                          // Last chat talk.
     float m_fEndTalkActionTime;                                    // Time for bot to stop doing what other player asked (30 secs).
 
+    good::pair<int, int> m_cAttackDuckRangeSqr;                    // Will duck if attacking & m_bFeatureAttackDuckEnabled & in range.
+
 #ifdef BOTRIX_CHAT
     CBotChat m_cChat;                                              // Last spoken phrase.
     TPlayerIndex m_iPrevChatMate;                                  // Previous chat mate.
@@ -394,7 +406,6 @@ protected: // Bot flags.
     bool m_bDontAttack:1;                                          // Set to true to ignore enemy (for example if defusing the bomb).
 
     bool m_bUnderAttack:1;                                         // True if engaging enemy.
-    bool m_bCloseAttack:1;                                         // True if need to stop, while attacking enemy.
     bool m_bFlee:1;                                                // True, if currenly running away from enemy.
     bool m_bAttackDuck:1;                                          // True if need to duck, while attacking enemy.
     bool m_bNeedSetWeapon:1;                                       // Need to set best weapon.
@@ -404,6 +415,9 @@ protected: // Bot flags.
     bool m_bShootAtHead:1;                                         // If true, then will shoot at head instead of body.
 
     bool m_bObjectiveChanged:1;                                    // If true, then objective was changed, recalculate next move.
+
+    // Features.
+    bool m_bFeatureAttackDuckEnabled:1;                            // Duck while attacking. Will duck if in attack duck range.
 
 #ifdef BOTRIX_CHAT
     bool m_bTalkStarted:1;                                         // Conversation started.

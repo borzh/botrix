@@ -52,7 +52,7 @@ protected:
     virtual bool DoWaypointAction();
 
     /// Inherited from CBot.
-    virtual void DoPathAction();
+    //virtual void DoPathAction();
 
     /// Bot just picked up given item.
     virtual void PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex iIndex )
@@ -64,6 +64,9 @@ protected:
             m_bDontAttack = m_bFlee;
         }
     }
+
+    // Set active weapon. Mod dependent. Instant, doensn't take in account parameters from config.ini
+    virtual bool SetActiveWeapon( const good::string& sWeapon );
 
     /// Chase enemy.
     void ChaseEnemy()

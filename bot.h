@@ -48,6 +48,9 @@ public: // Methods.
     /// Destructor.
     virtual ~CBot() {}
 
+    /// Get bot's controller.
+    IBotController* GetBotController() const { return m_pController; }
+
     /// Get bot's intelligence.
     TBotIntelligence GetIntelligence() { return m_iIntelligence; }
 

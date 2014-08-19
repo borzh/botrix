@@ -434,6 +434,19 @@ public:
 //****************************************************************************************************************
 // Weapon commands.
 //****************************************************************************************************************
+class CBotWeaponAddCommand: public CConsoleCommand
+{
+public:
+    CBotWeaponAddCommand()
+    {
+        m_sCommand = "add";
+        m_sHelp = "add a weapon to bot";
+        m_iAccessLevel = FCommandAccessBot;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
 class CBotWeaponAllowCommand: public CConsoleCommand
 {
 public:
@@ -618,6 +631,7 @@ public:
     CBotWeaponCommand()
     {
         m_sCommand = "weapon";
+        Add(new CBotWeaponAddCommand());
         Add(new CBotWeaponAllowCommand());
         Add(new CBotWeaponForbidCommand());
         Add(new CBotWeaponUnknownCommand());

@@ -26,9 +26,7 @@ class CPlayer
 {
 public:
     /// Constructor.
-    CPlayer(edict_t* pEdict, bool bIsBot):
-        iCurrentWaypoint(-1), iNextWaypoint(-1), iPrevWaypoint(-1), iChatMate(-1),
-        m_pEdict(pEdict), m_iIndex(-1), m_pPlayerInfo(NULL), m_bBot(bIsBot), m_bAlive(false) {}
+    CPlayer(edict_t* pEdict, bool bIsBot);
 
     /// Destructor.
     virtual ~CPlayer() {}
@@ -73,7 +71,7 @@ public:
     /// Get player's view angles.
     void GetEyeAngles( QAngle& a ) const
     {
-        CBotCmd cCmd= m_pPlayerInfo->GetLastUserCommand();
+        CBotCmd cCmd = m_pPlayerInfo->GetLastUserCommand();
         a = cCmd.viewangles;
     }
 
@@ -136,7 +134,7 @@ public:
     static bool bAddingBot; /// True if currently adding bot.
 
     /// Get count of players on this server.
-    static int Size() { return (int)m_aPlayers.size(); };
+    static int Size() { return m_aPlayers.size(); };
 
     /// Get bots count.
     static int GetBotsCount() { return m_iBotsCount; }

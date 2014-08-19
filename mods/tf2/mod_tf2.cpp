@@ -30,10 +30,7 @@ CPlayer* CModTF2::AddBot( const char* szName, TBotIntelligence iIntelligence, TT
         return NULL;
     }
 
-    CPlayer* pPlayer = new CBot_TF2(pEdict, iIntelligence, iTeam, iClass);
-    pPlayer->Activated(); // Event "activated" is not sent for bots.
-
-    return pPlayer;
+    return new CBot_TF2(pEdict, iIntelligence, iTeam, iClass);
 }
 
 

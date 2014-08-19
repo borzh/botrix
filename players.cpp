@@ -33,11 +33,18 @@ int CPlayers::m_iBotsCount = 0;
 
 
 //----------------------------------------------------------------------------------------------------------------
+CPlayer::CPlayer(edict_t* pEdict, bool bIsBot):
+    iCurrentWaypoint(-1), iNextWaypoint(-1), iPrevWaypoint(-1), iChatMate(-1),
+    m_pEdict(pEdict), m_iIndex(-1), 
+    m_pPlayerInfo(CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo(m_pEdict)), 
+    m_bBot(bIsBot), m_bAlive(false) {}
+        
+//----------------------------------------------------------------------------------------------------------------
 void CPlayer::Activated()
 {
     m_iIndex = CPlayers::GetIndex(m_pEdict);
-    m_pPlayerInfo = CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo( m_pEdict );
-    BASSERT( m_pPlayerInfo, CPlayers::PlayerDisconnected(m_pEdict) );
+
+    BLOG_T( "Player %s activated.", GetName() );
 
     m_sName.assign(GetName(), good::string::npos, true);
     good::lower_case(m_sName);
@@ -46,6 +53,8 @@ void CPlayer::Activated()
 //----------------------------------------------------------------------------------------------------------------
 void CPlayer::Respawned()
 {
+    BLOG_T( "Player %s respawned.", GetName() );
+
 #if DRAW_PLAYER_HULL
     m_fNextDrawHullTime = 0.0f;
 #endif
@@ -224,7 +233,6 @@ void CPlayers::PlayerConnected( edict_t* pEdict )
         BASSERT( m_aPlayers[iIdx].get() == NULL, return ); // Should not happend.
 
         CPlayer* pPlayer = new CClient(pEdict);
-        pPlayer->Activated();
 
         if ( !CBotrixPlugin::pEngineServer->IsDedicatedServer() && (m_pListenServerClient == NULL) )
         {

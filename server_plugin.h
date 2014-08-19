@@ -2,17 +2,19 @@
 * @mainpage Botrix plugin.
 * @author Botrix ( botrix.plugin\@gmail.com )
 *
-* @version 0.0.2
+* @version 0.0.3
 *
 * <h2>Bots plugin for Valve Games made with Source SDK.</h2>
 *
 * @section Changelog
 *
 * 0.0.3
-* @li Plugin is working on Team Fortress 2.
-* @li Fix bots shooting at spectator :)
+* @li Plugin is working with Team Fortress 2.
+* @li Fix bug: bots sometimes shooting at spectator :)
+* @li Fix bug: when bot was trying to use weapon he actually was creating it.
+* @li Bots can use manual weapons now.
 * @li Added logic for bot to pursue enemy.
-* @li Added logic for bot to run randomly while engaging enemy.
+* @li Added logic for bot to run randomly near engaged enemy.
 * @li Stupied bots will sit down and shoot if enemy is near.
 *
 * 0.0.2

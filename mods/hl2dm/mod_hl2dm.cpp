@@ -17,18 +17,19 @@ extern int iMainBufferSize;
 //----------------------------------------------------------------------------------------------------------------
 CModHL2DM::CModHL2DM()
 {
+    m_aModels.resize( CMod::aTeamsNames.size() );
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
-bool CModHL2DM::ProcessConfig( good::ini_file cIni )
+bool CModHL2DM::ProcessConfig( const good::ini_file& cIni )
 {
     // Find section "<mod name>.models".
     good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
     sbBuffer = CMod::sModName;
     sbBuffer << ".models";
 
-    good::ini_file::iterator it = cIni.find( sbBuffer );
+    good::ini_file::const_iterator it = cIni.find( sbBuffer );
     if ( it != cIni.end() )
     {
         StringVector aModels;
@@ -40,7 +41,7 @@ bool CModHL2DM::ProcessConfig( good::ini_file cIni )
             sbBuffer = "models ";
             sbBuffer << CMod::aTeamsNames[i];
 
-            good::ini_section::iterator models = it->find(sbBuffer);
+            good::ini_section::const_iterator models = it->find(sbBuffer);
             if ( models != it->end() )
             {
                 sbBuffer = models->value;
@@ -80,10 +81,7 @@ CPlayer* CModHL2DM::AddBot( const char* szName, TBotIntelligence iIntelligence, 
     TPlayerIndex iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
     GoodAssert( iIdx >= 0 ); // Valve should not allow this assert.
 
-    CPlayer* pPlayer = new CBot_HL2DM(pEdict, iIntelligence);
-    pPlayer->Activated(); // Event "activated" is not sent for bots.
-
-    return pPlayer;
+    return new CBot_HL2DM(pEdict, iIntelligence);
 }
 
 

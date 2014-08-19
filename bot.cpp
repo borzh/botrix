@@ -30,7 +30,7 @@ int CBot::m_iCheckEntitiesPerFrame = 4;
 
 //----------------------------------------------------------------------------------------------------------------
 CBot::CBot( edict_t* pEdict, TBotIntelligence iIntelligence, TClass iClass ):
-    CPlayer(pEdict, true),
+    CPlayer(pEdict, true), m_pController( CBotrixPlugin::pBotManager->GetBotController(m_pEdict) ),
     m_iIntelligence(iIntelligence), m_iClass(iClass), r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ),
     m_aNearPlayers(CPlayers::Size()), m_aSeenEnemies(CPlayers::Size()), m_aEnemies(CPlayers::Size()),
     m_cAttackDuckRangeSqr(0, SQR(400)),
@@ -40,8 +40,8 @@ CBot::CBot( edict_t* pEdict, TBotIntelligence iIntelligence, TClass iClass ):
 #else
     m_bDebugging(false),
 #endif
-    m_bDontBreakObjects(false), m_bDontThrowObjects(false),
-    m_bFeatureAttackDuckEnabled(iIntelligence < EBotNormal)
+    m_bScanWeapons(false), m_bDontBreakObjects(false), m_bDontThrowObjects(false),
+    m_bFeatureAttackDuckEnabled(iIntelligence < EBotNormal), m_bFeatureWeaponCheck(true)
 {
     m_aPickedItems.reserve(16);
     for ( TEntityType i=0; i < EEntityTypeTotal; ++i )
@@ -78,11 +78,11 @@ class UserRecipientFilter: public IRecipientFilter
 public:
     UserRecipientFilter(int iUserIndex): m_iUserIndex(iUserIndex) {}
 
-    virtual bool	IsReliable() const { return true; }
-    virtual bool	IsInitMessage() const { return false; }
+    virtual bool    IsReliable() const { return true; }
+    virtual bool    IsInitMessage() const { return false; }
 
-    virtual int		GetRecipientCount() const { return 1; }
-    virtual int		GetRecipientIndex( int ) const { return m_iUserIndex;}
+    virtual int        GetRecipientCount() const { return 1; }
+    virtual int        GetRecipientIndex( int ) const { return m_iUserIndex;}
 protected:
     int m_iUserIndex;
 };
@@ -147,7 +147,7 @@ void CBot::TestWaypoints( TWaypointId iFrom, TWaypointId iTo )
     iCurrentWaypoint = iFrom;
     m_iDestinationWaypoint = iTo;
 
-    m_bTest = true;
+    m_bDontAttack = m_bDestinationChanged = m_bNeedMove = m_bLastNeedMove = m_bUseNavigatorToMove = m_bTest = true;
 }
 
 
@@ -155,22 +155,22 @@ void CBot::TestWaypoints( TWaypointId iFrom, TWaypointId iTo )
 void CBot::Activated()
 {
     CPlayer::Activated();
-
-    m_pPlayerInfo = CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo(m_pEdict);
-    m_pController = CBotrixPlugin::pBotManager->GetBotController(m_pEdict);
-
-#ifdef BOTRIX_CHAT
-    m_iPrevChatMate = m_iPrevTalk = -1;
-    m_bTalkStarted = false;
-
-    m_cChat.iSpeaker = m_iIndex;
-#endif
+    BotMessage( "%s -> activated.", GetName() );
 }
 
 //----------------------------------------------------------------------------------------------------------------
 void CBot::Respawned()
 {
     CPlayer::Respawned();
+    BotMessage( "%s -> respawned.", GetName() );
+
+#ifdef BOTRIX_CHAT
+    m_iPrevChatMate = m_iPrevTalk = -1;
+    m_bTalkStarted = false;
+
+    m_cChat.iSpeaker = m_iIndex;
+    m_iObjective = EBotChatUnknown;
+#endif
 
     m_cCmd.Reset();
     m_cCmd.viewangles = m_pController->GetLocalAngles();
@@ -193,35 +193,9 @@ void CBot::Respawned()
     m_aNearPlayers.reset();
     m_aSeenEnemies.reset();
     m_pCurrentEnemy = NULL;
-    m_iObjective = EBotChatUnknown;
 
     // Don't clear picked items, as bot still know which were taken previously.
     m_iCurrentPickedItem = 0;
-
-    CWeapons::GetRespawnWeapons( m_aWeapons, m_pPlayerInfo->GetTeamIndex(), m_iClass );
-
-    // Check if bot has physcannon / manual weapon.
-    m_iPhyscannon = m_iManualWeapon = -1;
-    for ( int i=0; i < m_aWeapons.size(); ++i)
-    {
-        if ( m_aWeapons[i].IsPresent() )
-        {
-            if ( m_aWeapons[i].IsPhysics() )
-                m_iPhyscannon = i;
-            else if ( m_aWeapons[i].IsManual() )
-                m_iManualWeapon = i;
-        }
-    }
-
-    // Set bot's best weapon.
-    m_iWeapon = CWeapons::GetBestRangedWeapon(m_aWeapons);
-    if ( m_iWeapon == -1 )
-        m_iWeapon = m_iManualWeapon; // Get manual weapon.
-
-    m_iBestWeapon = m_iWeapon;
-
-    const good::string& sWeaponName = m_aWeapons[m_iWeapon].GetName();
-    SetActiveWeapon( sWeaponName );
 
     // Set default flags.
 #ifdef BOTRIX_CHAT
@@ -270,6 +244,9 @@ void CBot::Respawned()
                 aNear.push_back(i);
         }
     }
+
+    CWeapons::GetRespawnWeapons( m_aWeapons, m_pPlayerInfo->GetTeamIndex(), m_iClass );
+    WeaponsScan();
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -290,7 +267,6 @@ void CBot::PlayerDisconnect( int iPlayerIndex, CPlayer* pPlayer )
     {
         m_pCurrentEnemy = NULL;
         m_bUnderAttack = m_bAttackDuck = false;
-        //CheckEnemy();
     }
 }
 
@@ -527,7 +503,7 @@ void CBot::PreThink()
     m_fPrevThinkTime = CBotrixPlugin::fTime;
 
     // Bot created for testing and couldn't find path or reached destination and finished using health/armor machine.
-    if ( m_bTest && ( m_bMoveFailure || (!m_bNeedMove && !m_bNeedUse) ) )
+    if ( m_bTest && ( /*m_bMoveFailure || */(!m_bNeedMove && !m_bNeedUse) ) )
         CPlayers::KickBot(this);
 }
 
@@ -635,7 +611,7 @@ bool CBot::DoWaypointAction()
     // To stop, bot must not start from current waypoint.
     //if ( CWaypoint::IsValid(iPrevWaypoint) && (iCurrentWaypoint != iPrevWaypoint) &&
     //     FLAG_SOME_SET(FWaypointStop, CWaypoints::Get(iCurrentWaypoint).iFlags) )
-    //	m_bNeedStop = true;
+    //    m_bNeedStop = true;
 
     m_bNeedStop = FLAG_SOME_SET(FWaypointStop, CWaypoints::Get(iCurrentWaypoint).iFlags);
 
@@ -645,7 +621,7 @@ bool CBot::DoWaypointAction()
 //----------------------------------------------------------------------------------------------------------------
 void CBot::ApplyPathFlags()
 {
-    BASSERT( m_bNeedMove, return );
+    GoodAssert( m_bNeedMove );
     //BotMessage("%s -> waypoint %d", m_pPlayerInfo->GetName(), iCurrentWaypoint);
 
     // Release buttons and locks.
@@ -747,33 +723,32 @@ void CBot::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex
         BotMessage("%s -> Picked %s. Armor now %d.", GetName(), cItem.pItemClass->sClassName.c_str(), m_pPlayerInfo->GetArmorValue());
         break;
     case EEntityTypeWeapon:
-    {
-        TWeaponId iWeaponId = CWeapons::GetIdFromWeaponName(cItem.pItemClass->sClassName);
-        for ( TWeaponId iWeapon = 0; iWeapon < m_aWeapons.size(); ++iWeapon )
+        if ( m_bFeatureWeaponCheck )
         {
-            if ( m_aWeapons[iWeapon].GetBaseWeapon()->iId == iWeaponId )
+            if ( CWeapons::AddWeapon(cItem.pItemClass, m_aWeapons) )
             {
-                m_aWeapons[iWeapon].AddWeapon();
-                BotMessage( "%s -> Picked %s (%d, %d).", GetName(), cItem.pItemClass->sClassName.c_str(),
-                            m_aWeapons[iWeapon].ExtraBullets(0), m_aWeapons[iWeapon].ExtraBullets(1) );
-                CheckWeapon();
-                break;
+                BotMessage( "%s -> Picked weapon %s.", GetName(), cItem.pItemClass->sClassName.c_str() );
+                if ( !m_pCurrentEnemy )
+                    WeaponChoose();
             }
+            else
+                BLOG_W( "%s -> Picked weapon %s, but there is no such weapon for class %s.", GetName(), 
+                        cItem.pItemClass->sClassName.c_str(), CTypeToString::ClassToString(m_iClass).c_str() );
         }
-        BLOG_W( "%s -> Picked %s, but there is no such weapon for class %s.", GetName(), cItem.pItemClass->sClassName.c_str(),
-                CTypeToString::ClassToString(m_iClass).c_str() );
         break;
-    }
     case EEntityTypeAmmo:
-    {
-        if ( CWeapons::AddAmmo(cItem.pItemClass, m_aWeapons) )
-            BotMessage( "%s -> Picked ammo %s.", GetName(), cItem.pItemClass->sClassName.c_str() );
-        else
-            BLOG_W("%s -> Picked ammo %s, but bot doesn't have that weapon.", GetName(), cItem.pItemClass->sClassName.c_str() );
-
-        CheckWeapon();
+        if ( m_bFeatureWeaponCheck )
+        {
+            if ( CWeapons::AddAmmo(cItem.pItemClass, m_aWeapons) )
+            {
+                BotMessage( "%s -> Picked ammo %s.", GetName(), cItem.pItemClass->sClassName.c_str() );
+                if ( !m_pCurrentEnemy )
+                    WeaponChoose();
+            }
+            else
+                BLOG_W("%s -> Picked ammo %s, but bot doesn't have that weapon.", GetName(), cItem.pItemClass->sClassName.c_str() );
+        }
         break;
-    }
     case EEntityTypeObject:
         BotMessage("%s -> Breaked object %s", GetName(), cItem.pItemClass->sClassName.c_str());
         break;
@@ -895,6 +870,111 @@ float CBot::GetEndLookTime()
 
 
 //----------------------------------------------------------------------------------------------------------------
+void CBot::WeaponsScan()
+{
+    m_bScanWeapons = false;
+    BotMessage( "%s -> scan weapons.", GetName() );
+
+    // Check if bot has physcannon / manual weapon.
+    m_iPhyscannon = m_iManualWeapon = -1;
+    for ( int i=0; i < m_aWeapons.size(); ++i)
+    {
+        if ( !m_bFeatureWeaponCheck )
+            continue;
+
+        bool bPresent = WeaponSet( m_aWeapons[i].GetName() );
+        m_aWeapons[i].SetPresent( bPresent );
+        if ( bPresent )
+        {
+            if ( m_aWeapons[i].IsPhysics() )
+                m_iPhyscannon = i;
+            else if ( m_aWeapons[i].IsManual() )
+                m_iManualWeapon = i;
+        }
+    }
+
+    // Set bot's best weapon.
+    m_iWeapon = CWeapons::GetBestRangedWeapon(m_aWeapons);
+    if ( m_iWeapon == EWeaponIdInvalid )
+        m_iWeapon = m_iManualWeapon; // Get manual weapon.
+
+    m_iBestWeapon = m_iWeapon;
+    if ( m_iWeapon == EWeaponIdInvalid )
+    {
+        m_bDontAttack = m_bScanWeapons = true; // Don't attack, try later to scan weapons.
+        m_fNextWeaponScanTime = CBotrixPlugin::fTime + 1.0f;
+    }
+    else
+    {
+        const good::string& sWeaponName = m_aWeapons[m_iWeapon].GetName();
+        WeaponSet( sWeaponName );
+    }
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+void CBot::UpdateWeapon()
+{
+    if ( !m_bFeatureWeaponCheck )
+        return;
+
+    if ( m_bScanWeapons )
+    {
+        if ( CBotrixPlugin::fTime >= m_fNextWeaponScanTime )
+            WeaponsScan();
+        return;
+    }
+
+    const char *szCurrentWeapon = m_pPlayerInfo->GetWeaponName();
+    if ( !szCurrentWeapon )
+    {
+        m_bScanWeapons = true;
+        m_fNextWeaponScanTime = CBotrixPlugin::fTime + 1.0f;
+        return;
+    }
+
+    bool bChooseWeapon = false;
+    if ( CWeapon::IsValid(m_iWeapon) )
+    {
+        CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
+        const good::string& sWeapon = cWeapon.GetName();
+
+        if ( sWeapon != szCurrentWeapon ) // Happens when out of bullets automatically.
+        {
+            BotError( "%s -> Current weapon %s, should be %s.", GetName(), szCurrentWeapon, sWeapon.c_str() );
+            m_iWeapon = WeaponSearch(szCurrentWeapon);
+            if ( m_iWeapon == EWeaponIdInvalid )
+            {
+                BotError( "%s -> Unknown weapon %s.", GetName(), szCurrentWeapon );
+                bChooseWeapon = true;
+            }
+            else
+                WeaponChange(m_iWeapon); // As if just switching to new weapon.
+        }
+        else
+        {
+            cWeapon.GameFrame();
+
+            if ( cWeapon.CanUse() )
+            {
+                if ( cWeapon.GetBaseWeapon()->bForbidden ) // Select other weapon.
+                    bChooseWeapon = true;
+
+                // Automatic reload for just in case.
+                else if ( cWeapon.ShouldReload(CWeapon::PRIMARY) )
+                    WeaponReload();
+            }
+        }
+    }
+    else
+        bChooseWeapon = true;
+
+    if ( bChooseWeapon )
+        WeaponChoose();
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
 void CBot::UpdateWorld()
 {
     // Update picked items.
@@ -909,23 +989,7 @@ void CBot::UpdateWorld()
     }
 
     // Update bot's weapon.
-    if ( CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsPresent() )
-    {
-        CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
-        const good::string& sWeapon = cWeapon.GetName();
-        if ( sWeapon != m_pPlayerInfo->GetWeaponName() ) // Happens when out of bullets automatically.
-        {
-            BotMessage( "%s -> Current weapon %s, should be %s.", GetName(), m_pPlayerInfo->GetWeaponName(), sWeapon.c_str() );
-            SetActiveWeapon( sWeapon );
-            if ( sWeapon != m_pPlayerInfo->GetWeaponName() )
-            {
-                BotMessage( "%s -> could not set weapon %s, not present.", GetName(), sWeapon.c_str() );
-                cWeapon.SetPresent(false);
-            }
-        }
-        else
-            cWeapon.GameFrame();
-    }
+    UpdateWeapon();
 
     // Get near items.
     Vector vFoot = m_pController->GetLocalOrigin();
@@ -1114,6 +1178,15 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
             m_pCurrentEnemy = pPlayer;
             m_fDistanceSqrToEnemy = fDistanceSqr;
         }
+
+        if (  CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsManual() && m_aWeapons[m_iWeapon].CanUse() &&
+              ( fDistanceSqr <= (SQR(CMod::iPlayerRadius) << 2) ) )
+        {
+            if ( m_aWeapons[m_iWeapon].GetBaseWeapon()->bHasSecondary )
+                WeaponShoot(CWeapon::SECONDARY); // TODO: really prefer secondary?
+            else
+                WeaponShoot(CWeapon::PRIMARY);
+        }
     }
     else // Can't see this player anymore or player is dead.
     {
@@ -1141,7 +1214,14 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
 //----------------------------------------------------------------------------------------------------------------
 void CBot::CheckAttackDuck( CPlayer* pPlayer )
 {
-    GoodAssert( m_bFeatureAttackDuckEnabled );
+    GoodAssert( m_bFeatureAttackDuckEnabled && !m_bDontAttack );
+
+    // Don't duck if using manual weapon.
+    if ( CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsManual() )
+    {
+        m_bAttackDuck = false;
+        return;
+    }
 
     if ( m_bUnderAttack && (m_pCurrentEnemy == pPlayer) ) // Check if need to duck to attack.
     {
@@ -1200,27 +1280,20 @@ void CBot::EnemyAim()
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot::CheckWeapon()
+void CBot::WeaponChoose()
 {
-    CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
-    if ( !cWeapon.IsPresent() )
-        return; // No weapons?
+    CWeaponWithAmmo* pWeapon = CWeapon::IsValid(m_iWeapon) ? &m_aWeapons[m_iWeapon] : NULL;
 
-    if ( m_pCurrentEnemy && cWeapon.CanUse(m_fDistanceSqrToEnemy) )
-        return;
-
-    if ( !cWeapon.CanChange() ) // Currently shooting, can't change.
-        return;
+    if ( pWeapon && !pWeapon->GetBaseWeapon()->bForbidden &&
+         ( !pWeapon->CanChange() || (m_pCurrentEnemy && pWeapon->CanUse(m_fDistanceSqrToEnemy)) ) )
+        return; // Don't change weapon if enemy is close... TODO: check it.
 
     // If not engaging enemy, reload some weapons.
     if ( (m_pCurrentEnemy == NULL) && m_bNeedReload )
     {
-        if ( !cWeapon.CanUse() ) // Currently reloading or changing.
-            return;
-
-        if ( cWeapon.NeedReload(0) )
+        if ( pWeapon && pWeapon->CanUse() && pWeapon->NeedReload(0) )
         {
-            Reload();
+            WeaponReload();
             return;
         }
 
@@ -1236,7 +1309,8 @@ void CBot::CheckWeapon()
             m_bNeedReload = false; // Continue to select best weapon.
         else
         {
-            ChangeWeapon(iIdx);
+            if ( iIdx != m_iWeapon ) // Will reload current weapon.
+                WeaponChange(iIdx);
             return;
         }
     }
@@ -1254,56 +1328,89 @@ void CBot::CheckWeapon()
             m_bStayReloading = true;
     }
     else
-        ChangeWeapon(m_iBestWeapon);
+        WeaponChange(m_iBestWeapon);
 
     m_bNeedSetWeapon = false;
 }
 
+
 //----------------------------------------------------------------------------------------------------------------
-void CBot::ChangeWeapon( int iIndex )
+bool CBot::WeaponSet( const good::string& sWeapon )
 {
-    if ( iIndex == m_iWeapon )
-        return;
+    GoodAssert( m_bFeatureWeaponCheck );
 
-    BASSERT( CWeapon::IsValid(iIndex) && CWeapon::IsValid(m_iWeapon), return );
+    // This will create new weapon to the bot. It is not what we need.
+    // m_pController->WeaponSet(sWeapon.c_str());
+    good::string_buffer sb(szMainBuffer, iMainBufferSize, false);
+    sb << "use " << sWeapon;
+    CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, sb.c_str() );
+    const char* szWeapon = m_pPlayerInfo->GetWeaponName();
+    bool bOk = ( szWeapon && (sWeapon == szWeapon) );
+    BotMessage( "%s -> Set active weapon %s: %s.", GetName(), sWeapon.c_str(), bOk ? "ok" : "error" );
+    return bOk;
+}
 
-    CWeaponWithAmmo& cOld = m_aWeapons[m_iWeapon];
+
+//----------------------------------------------------------------------------------------------------------------
+void CBot::WeaponChange( int iIndex )
+{
+    //GoodAssert( iIndex != m_iWeapon ); // This can happen when out of bullets, and autoswitch is made to other weapon.
+    GoodAssert( !m_bScanWeapons && m_bFeatureWeaponCheck && CWeapon::IsValid(iIndex) );
+
+    CWeaponWithAmmo* pOld = NULL;
+    if ( CWeapon::IsValid(m_iWeapon) )
+        pOld = &m_aWeapons[m_iWeapon];
+
     CWeaponWithAmmo& cNew = m_aWeapons[iIndex];
-    BASSERT( cOld.IsPresent() && cNew.IsPresent(), return );
+    // GoodAssert( cNew.IsPresent() ); // Happens when out of bullets & forbidden.
 
     const good::string& sWeaponName = cNew.GetName();
-    SetActiveWeapon( sWeaponName );
-
-    if ( sWeaponName == m_pPlayerInfo->GetWeaponName() )
+    if ( WeaponSet( sWeaponName ) )
     {
-        cOld.Holster( cNew );
+        CWeaponWithAmmo::Holster( pOld, cNew );
         BotMessage( "%s -> Set weapon %s", GetName(), sWeaponName.c_str() );
         m_iWeapon = iIndex;
     }
-    else
+    else if ( m_pPlayerInfo->GetWeaponName() )
     {
-        BotMessage( "%s -> could not set weapon %s, not present.", GetName(), sWeaponName.c_str() );
-        cNew.SetPresent(false);
+        BotError( "%s -> could not set weapon %s, no bullets?", GetName(), sWeaponName.c_str() );
+        cNew.SetNoBullets();
+    }
+    else // Current weapon is null, rescan in one second.
+    {
+        m_fNextWeaponScanTime = CBotrixPlugin::fTime + 1.0f;
+        m_bScanWeapons = true;
     }
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot::Shoot( bool bSecondary )
+void CBot::WeaponShoot( int iSecondary )
 {
-    BASSERT( CWeapon::IsValid(m_iWeapon), return );
+    GoodAssert( !m_bScanWeapons && CWeapon::IsValid(m_iWeapon) );
+
+    if ( !m_bFeatureWeaponCheck )
+    {
+        FLAG_SET(iSecondary ? IN_ATTACK2 : IN_ATTACK, m_cCmd.buttons);
+        return;
+    }
+
     CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
-    BASSERT( cWeapon.IsPresent(), return );
+    if ( cWeapon.GetBaseWeapon()->bForbidden )
+    {
+        WeaponChoose();
+        return;
+    }
 
     if ( !cWeapon.CanUse() )
         return;
-    BotMessage( "%s -> Shoot %s %s, ammo %d/%d.", GetName(), bSecondary ? "secondary" : "primary", cWeapon.GetName().c_str(),
-                  cWeapon.Bullets(bSecondary), cWeapon.ExtraBullets(bSecondary) );
 
-    cWeapon.Shoot(bSecondary);
-    FLAG_SET(bSecondary ? IN_ATTACK2 : IN_ATTACK, m_cCmd.buttons);
+    cWeapon.Shoot(iSecondary);
+    m_bNeedReload = cWeapon.IsRanged();
 
-    if ( cWeapon.IsRanged() )
-        m_bNeedReload = true;
+    FLAG_SET(iSecondary ? IN_ATTACK2 : IN_ATTACK, m_cCmd.buttons);
+
+    BotMessage( "%s -> shoot %s %s, ammo %d/%d.", GetName(), (iSecondary) ? "secondary" : "primary",
+                cWeapon.GetName().c_str(), cWeapon.Bullets(iSecondary), cWeapon.ExtraBullets(iSecondary) );
 }
 
 
@@ -1541,8 +1648,7 @@ bool CBot::ResolveStuckMove()
             m_bLockAim = m_bLockNavigatorMove = false; // Release locks.
             m_bNeedJumpDuck = m_bNeedJump = m_bNeedAttack2 = m_bNeedAttack = m_bNeedSprint = m_bNeedDuck = m_bNeedWalk = false;
 
-            BotMessage("Stucked and lost, because of failure following path. Trying again...");
-
+            BotMessage( "%s -> stucked and lost, because of failure following path.", GetName() );
             if ( m_bTest )
             {
                 m_bStuck = false;
@@ -1632,21 +1738,29 @@ bool CBot::NavigatorMove()
             }
             else
             {
-                BASSERT( m_cNavigator.PathFound() && m_cNavigator.HasMoreCoords(), m_bMoveFailure=true; return true );
+                GoodAssert( m_cNavigator.PathFound() && m_cNavigator.HasMoreCoords() );
                 m_cNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
                 ApplyPathFlags();
 
                 // First coord in path must be current waypoint.
-                BASSERT( iCurrentWaypoint == iNextWaypoint, m_bMoveFailure=true; return true );
+                GoodAssert( iCurrentWaypoint == iNextWaypoint );
 
                 // If lost and iCurrentWaypoint == iNextWaypoint, perform waypoint 'touch'.
                 if ( CWaypoints::Get(iNextWaypoint).IsTouching(m_vHead, m_bLadderMove) )
                 {
-                    m_cNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
-                    if ( DoWaypointAction() == false ) // No need to perform waypoint action.
+                    if ( m_cNavigator.HasMoreCoords() )
                     {
-                        ApplyPathFlags();
-                        DoPathAction();
+                        m_cNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
+                        if ( DoWaypointAction() == false ) // No need to perform waypoint action.
+                        {
+                            ApplyPathFlags();
+                            DoPathAction();
+                        }
+                    }
+                    else
+                    {
+                        GoodAssert( iCurrentWaypoint == m_iDestinationWaypoint );
+                        m_bNeedMove = false; // We have arrived at destination. 
                     }
                 }
             }
@@ -1687,10 +1801,10 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
     // Don't perform navigator moves when under attack.
     //if ( m_bUnderAttack )
     //{
-    //	if ( m_iIntelligence >= EBotSmart)
-    //	{
-    //		// Move left/stop-shoot/right/stop-shoot.
-    //	}
+    //    if ( m_iIntelligence >= EBotSmart)
+    //    {
+    //        // Move left/stop-shoot/right/stop-shoot.
+    //    }
     //}
 
     if  ( CheckMoveFailure() )
@@ -1700,10 +1814,8 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
     }
 
     if ( !m_bLastNeedMove && m_bNeedMove ) // Bot started to move just now, update stuck check time.
-    {
         m_fStuckCheckTime = CBotrixPlugin::fTime + 1.0f;
-        m_bLastNeedMove = m_bNeedMove;
-    }
+    m_bLastNeedMove = m_bNeedMove;
 
     // Waypoint just changed from previous and valid waypoint.
     bool bCurrentWaypointChanged = CWaypoint::IsValid(iPrevCurrentWaypoint) && (iPrevCurrentWaypoint != iCurrentWaypoint);
@@ -1925,16 +2037,16 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
                             bool bNeedZoom = cWeapon.ShouldZoom(m_fDistanceSqrToEnemy);
                             if ( (  bNeedZoom && !cWeapon.IsUsingZoom() ) ||
                                  ( !bNeedZoom &&  cWeapon.IsUsingZoom() ) )
-                                ToggleZoom();
+                                WeaponToggleZoom();
                         }
 
                         // Prefer secondary attack.
                         if ( cWeapon.HasAmmoInClip(1) && cWeapon.IsDistanceSafe(m_fDistanceSqrToEnemy, 1) )
-                            Shoot(1);
+                            WeaponShoot(CWeapon::SECONDARY);
                         else if ( cWeapon.HasAmmoInClip(0) && cWeapon.IsDistanceSafe(m_fDistanceSqrToEnemy, 0) )
-                            Shoot(0);
+                            WeaponShoot(CWeapon::PRIMARY);
                         else
-                            CheckWeapon(); // No more bullets, select another weapon.
+                            WeaponChoose(); // No more bullets, select another weapon.
                     }
                 }
             }
@@ -1942,9 +2054,9 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
                 m_bUnderAttack = m_bAttackDuck = false; // Bot is not under attack now.
         }
         else if ( cWeapon.IsSniper() && cWeapon.IsUsingZoom() && cWeapon.CanUse() )
-            ToggleZoom();
+            WeaponToggleZoom();
         else if ( m_bNeedReload && !m_bStuckUsePhyscannon && !m_bStuckBreakObject )
-            CheckWeapon();
+            WeaponChoose();
     }
 
     //---------------------------------------------------------------
@@ -2000,7 +2112,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
         if ( (m_iWeapon != m_iManualWeapon) && CWeapon::IsValid(m_iManualWeapon) )
         {
             if ( m_aWeapons[m_iWeapon].CanChange() )
-                ChangeWeapon(m_iManualWeapon);
+                WeaponChange(m_iManualWeapon);
         }
         else
         {
@@ -2015,7 +2127,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
                 m_bNeedAttack = false;
             }
             else if ( CBotrixPlugin::fTime < m_fEndActionTime ) // Stop attacking after m_fEndActionTime.
-                Shoot(0);
+                WeaponShoot();
             else
             {
                 m_bNeedAttack = false;
@@ -2040,8 +2152,8 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
             {
                 if ( m_aWeapons[m_iWeapon].CanChange() )
                 {
-                    ChangeWeapon(m_iPhyscannon);
-                    float fPhyscannonUseTime = m_aWeapons[m_iWeapon].GetEndTime();
+                    WeaponChange(m_iPhyscannon);
+                    float fPhyscannonUseTime = m_aWeapons[m_iPhyscannon].GetEndTime();
                     if ( fPhyscannonUseTime > m_fEndAimTime )
                     {
                         // Time we can use physcannon is after aim time, so re calculate action times.
@@ -2055,13 +2167,12 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
                 if ( (CBotrixPlugin::fTime >= m_fEndAimTime) ) // Aimed either at object, can use physcannon now.
                 {
                     if ( CBotrixPlugin::fTime < m_fStartActionTime + 0.5f )
-                        Shoot(1); // Attract object for half second.
+                        WeaponShoot(CWeapon::SECONDARY); // Attract object for half second.
                     else
                     {
-                        // Bot should be holding object.
                         if ( pObject && (pObject->CurrentPosition() == m_vDisturbingObjectPosition) )
                         {
-                            // Object position didn't change, so bot cant pick it up.
+                            // Object position didn't change, so bot can't pick it up.
                             FLAG_SET(FObjectHeavy, ((CEntity*)pObject)->iFlags);
                             m_bStuckUsePhyscannon = m_bLockAim = false;
                             m_bNeedSetWeapon = true;
@@ -2082,7 +2193,8 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
         }
         else // Throw object and restore previous weapon.
         {
-            Shoot(0);
+            // Bot should be holding object, throw it away.
+            WeaponShoot();
             m_bStuckUsePhyscannon = m_bLockAim = false;
             m_bNeedSetWeapon = true;
         }
@@ -2094,7 +2206,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
         BASSERT( m_bTest || !m_bUnderAttack, return );
 
         if ( CWeapon::IsValid(m_iManualWeapon) && (m_iWeapon != m_iManualWeapon) && m_aWeapons[m_iWeapon].CanChange() )
-            ChangeWeapon(m_iManualWeapon);
+            WeaponChange(m_iManualWeapon);
 
         if ( CBotrixPlugin::fTime >= m_fStartActionTime )
         {
@@ -2104,7 +2216,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
 
             if ( pObject && pObject->IsBreakable() && !pObject->IsExplosive() ) // Object still there.
             {
-                Shoot(0);
+                WeaponShoot();
 
                 if ( (CBotrixPlugin::fTime >= m_fEndAimTime + 1.0f) ) // Maybe object moved.
                 {
@@ -2141,5 +2253,5 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
     }
 
     if ( m_bNeedSetWeapon )
-        CheckWeapon();
+        WeaponChoose();
 }

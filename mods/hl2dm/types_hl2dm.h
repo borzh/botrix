@@ -17,7 +17,7 @@ enum TBotTasksHL2DM
     EBotTaskFindArmor,                           ///< Find armor.
     EBotTaskFindWeapon,                          ///< Find weapon.
     EBotTaskFindAmmo,                            ///< Find ammo for weapon.
-    EBotTaskChaseEnemy,                          ///< Run after fleeing enemy (if health is bigger than enemy health).
+    EBotTaskEngageEnemy,                         ///< Run after fleeing enemy (if health is bigger than enemy health).
     EBotTaskFindEnemy,                           ///< Run randomly around and check if can see an enemy.
     EBotTasksTotal,                              ///< This should be first task number of enums of mod tasks.
 };

@@ -30,6 +30,18 @@ typedef int TModId;                              ///< Supported Source Mods.
 
 
 //****************************************************************************************************************
+/// Enum that represent events that need to be executed in next frame after being received.
+//****************************************************************************************************************
+enum TFrameEventId
+{
+    EFrameEventActivated = 0,                    ///< Player put in server.
+    EFrameEventRespawned,                        ///< Player respawned.
+    EFrameEventTotal                             ///< Amount of frame events.
+};
+typedef int TFrameEvent;                         ///< Events that need to be executed in next frame after being received.
+
+
+//****************************************************************************************************************
 /// Bot intelligence.
 //****************************************************************************************************************
 enum TBotIntelligences
@@ -43,7 +55,6 @@ enum TBotIntelligences
     EBotIntelligenceTotal                        ///< Amount of available intelligences.
 };
 typedef int TBotIntelligence;                    ///< Bot intelligence.
-
 
 
 //****************************************************************************************************************
@@ -404,74 +415,23 @@ enum TWeaponTypes
     EWeaponTotal                                 ///< Amount of weapon flags.
 
 };
+
 typedef int TWeaponType;                         ///< Weapon type.
 typedef int TWeaponId;                           ///< Weapon id.
-
-
-//****************************************************************************************************************
-/// Bot atomic actions.
-//****************************************************************************************************************
-enum TBotAtomicActions
-{
-    EActionAim = 0,                              ///< Aim to given vector.
-    EActionAimEnemy,                             ///< Maintain aim at given enemy.
-    EActionLockAim,                              ///< Don't change the aim.
-    EActionMove,                                 ///< Move to given vector.
-    EActionMoveWaypoint,                         ///< Move to given waypoint straight, not using waypoint navigator.
-    EActionNavigate,                             ///< Navigate to given waypoint.
-
-    EActionStop,                                 ///< Stop.
-    EActionDuck,                                 ///< Duck.
-    EActionWalk,                                 ///< Walk.
-    EActionRun,                                  ///< Run.
-    EActionSprint,                               ///< Sprint.
-    EActionJump,                                 ///< Jump once.
-    EActionJumpWithDuck,                         ///< Jump once with duck.
-
-    EActionSetWeapon,                            ///< Set new given weapon.
-    EActionSetBestWeapon,                        ///< Set best weapon.
-
-    EActionAttack,                               ///< Press attack button for given time.
-    EActionAttack2,                              ///< Press secondary attack button for given time.
-
-    EActionUse,                                  ///< Press USE button (to use buttons, machines).
-    EActionFlashlightOn,                         ///< Turn on flashlight.
-    EActionFlashlightOff,                        ///< Turn off flashlight.
-
-    EActionWait,                                 ///< Wait for certain condition.
-};
-typedef int TBotAtomicAction;                    ///< Bot atomic actions.
-
-
-//****************************************************************************************************************
-/// Wait conditions for bot commands. Wait means to delay execution of next command.
-//****************************************************************************************************************
-enum TWaitConditions
-{
-    EWaitNone = 0,                               ///< Don't wait.
-    EWaitTime,                                   ///< Wait for given amount of time.
-
-    EWaitAim,                                    ///< Wait until aiming is finished.
-    EWaitMove,                                   ///< Wait until moving to destination is finished.
-    EWaitCloseWaypoint,                          ///< Wait until next waypoint becomes closer than the current one.
-    EWaitNextWaypoint,                           ///< Wait until next waypoint is reached.
-    EWaitNavigate,                               ///< Wait until destination waypoint is reached.
-
-    EWaitActionStart,                            ///< Wait until action start time.
-    EWaitActionEnd,                              ///< Wait until action end time.
-
-    EWaitItemTouch,                              ///< Wait until bot is touching an item.
-    EWaitObjectGone,                             ///< Wait until certain object becomes broken or goes far away (not disturbing anymore).
-    EWaitEnemyGone,                              ///< Wait until enemy is dead or not visible.
-    EWaitMachine,                                ///< Wait until ends using machine.
-};
-typedef int TWaitCondition;                      ///< Wait conditions for bot commands.
-
 
 typedef int TTeam;                               ///< Team of bot.
 typedef int TClass;                              ///< Class of bot.
 
 
+///< Enum of useful flags for deathmatch mode.
+/*enum TDeathmatchFlagId
+{
+    FDeathmatchTeamAllWeapons  = 1<<0,           ///< In deathmatch mode users can grab weapons of "other" teams.
+    FDeathmatchClassAllWeapons = 1<<1,           ///< In deathmatch mode users can grab weapons of "other" classes.
+};
+
+typedef int TDeathmatchFlags;                    ///< Useful flags for deathmatch mode.
+*/
 typedef good::vector<good::string> StringVector; ///< Useful typedef for vector of strings.
 
 

@@ -59,11 +59,6 @@ add_definitions(
     -DGOOD_LOG_FLUSH
     -DGOOD_LOG_USE_ENDL
     -DBOTRIX_SOURCE_2013
-    -DLINUX=1
-    -D_LINUX=1
-    -DPOSIX=1
-    -DGNUC=1
-    -DCOMPILER_GCC
     -DVECTOR
     -DGAME_DLL
     -DHL2_DLL
@@ -71,6 +66,11 @@ add_definitions(
     -DHL2_EPISODIC
     -DMP_SDK
     -DVPC
+    -DLINUX=1
+    -D_LINUX=1
+    -DPOSIX=1
+    -DGNUC=1
+    -DCOMPILER_GCC
 )
 
 # Get files list.

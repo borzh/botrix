@@ -102,11 +102,9 @@ void CPlayerActivateEvent::Execute( IEventInterface* pEvent )
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
 
     int iIdx = CPlayers::GetIndex(pActivator);
-    BASSERT( iIdx >= 0, return );
+    GoodAssert( iIdx >= 0 );
 
-    CPlayer* pPlayer = CPlayers::Get(iIdx);
-    if (pPlayer)
-        pPlayer->Activated();
+    CMod::AddFrameEvent(iIdx, EFrameEventActivated);
 }
 
 
@@ -117,7 +115,7 @@ void CPlayerTeamEvent::Execute( IEventInterface* pEvent )
     TTeam iTeam = pEvent->GetInt("team");
 
     int iIdx = CPlayers::GetIndex(pActivator);
-    BASSERT( iIdx >= 0, return );
+    GoodAssert( iIdx >= 0 );
 
     CPlayer* pPlayer = CPlayers::Get(iIdx);
     if ( pPlayer && pPlayer->IsBot() )
@@ -131,11 +129,9 @@ void CPlayerSpawnEvent::Execute( IEventInterface* pEvent )
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
 
     int iIdx = CPlayers::GetIndex(pActivator);
-    BASSERT( iIdx >= 0, return );
+    GoodAssert( iIdx >= 0 );
 
-    CPlayer* pPlayer = CPlayers::Get(iIdx);
-    if (pPlayer)
-        pPlayer->Respawned();
+    CMod::AddFrameEvent(iIdx, EFrameEventRespawned);
 }
 
 

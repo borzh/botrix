@@ -433,6 +433,11 @@ const good::string& CTypeToString::TeamToString( int iTeam )
     return EnumToString( iTeam, CMod::aTeamsNames, sUnknown );
 }
 
+const good::string& CTypeToString::TeamFlagsToString( int iTeams )
+{
+    return FlagsToString( iTeams, CMod::aTeamsNames );
+}
+
 int CTypeToString::TeamFromString( const good::string& sTeam )
 {
     return EnumFromString( sTeam, CMod::aTeamsNames );

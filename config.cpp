@@ -518,7 +518,7 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                                 bError = true;
                                 break;
                             }
-                            pWeapon->iTeam = iValue;
+                            pWeapon->iTeam = 1 << iValue;
                         }
                         else if ( aCurrent[0] == "range" )
                         {
@@ -630,10 +630,18 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                     BLOG_D( "    id %d", pWeapon->iId );
 
                     if ( pWeapon->iTeam )
-                        BLOG_D( "    team %s", CTypeToString::TeamToString(pWeapon->iTeam).c_str() );
+                    {
+                        BLOG_D( "    team %s", CTypeToString::TeamFlagsToString(pWeapon->iTeam).c_str() );
+                        //if ( FLAGS_SOME_SET(FDeathmatchTeamAllWeapons, CMod::iDeathmatchFlags) )
+                        pWeapon->iTeam |= 1 << CMod::iUnassignedTeam;
+                    }
+                    else
+                        pWeapon->iTeam = -1; // Mark to use by any flag.
 
                     if ( CMod::aClassNames.size() )
                         BLOG_D( "    class %s", CTypeToString::ClassFlagsToString(pWeapon->iClass).c_str() );
+                    else
+                        pWeapon->iClass = -1; // Mark to use by any flag.
 
                     // Add weapon class.
                     CEntityClass cEntityClass;

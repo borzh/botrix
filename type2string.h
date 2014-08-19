@@ -150,6 +150,9 @@ public:
     static const good::string& TeamToString( int iTeam );
 
     /// Get bot class from string.
+    static const good::string& TeamFlagsToString( int iTeams );
+
+    /// Get bot class from string.
     static int TeamFromString( const good::string& sTeam );
 
 

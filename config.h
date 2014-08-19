@@ -19,6 +19,8 @@ public: // Methods.
     /// Set ini file name.
     static void SetFileName( const good::string& sFileName ) { m_iniFile.name.assign(sFileName, true); }
 
+    static const good::ini_file& GetIniFile() { return m_iniFile; }
+
     /// Load configuration file. You need also provide game and mod folders in order to detect mod to use.
     static TModId Load( const good::string& sGameDir, const good::string& sModDir );
 
@@ -49,6 +51,7 @@ public: // Methods.
 
 
 protected: // Members.
+    friend class CBotrixPlugin; // Access to ini file.
     static good::ini_file m_iniFile; // Ini file.
     static bool m_bModified;         // True if something was modified (to save later).
 

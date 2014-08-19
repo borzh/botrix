@@ -19,7 +19,7 @@ public: // Methods.
     // Implementation of IMod inteface.
     //------------------------------------------------------------------------------------------------------------
     /// Process configuration file.
-    virtual bool ProcessConfig( good::ini_file cIni );
+    virtual bool ProcessConfig( const good::ini_file& cIni );
 
 
     /// Called when map is loaded, after waypoints and items has been loaded.
@@ -68,16 +68,20 @@ public: // Methods.
     /// Get random bot model.
     const good::string* GetRandomModel( int iTeam )
     {
-        BASSERT( iTeam != CMod::iSpectatorTeam, return NULL );
-
-        // Get random team if iTeam is unassigned (deathmatch) team.
-        if ( (iTeam == CMod::iUnassignedTeam) && (m_aModels[iTeam].size() == 0) )
-        {
-            do {
-                iTeam = rand() % m_aModels.size();
-            } while ( (iTeam == CMod::iUnassignedTeam) || (iTeam == CMod::iSpectatorTeam) );
-        }
+        GoodAssert( (iTeam != CMod::iSpectatorTeam) && (iTeam != CMod::iUnassignedTeam) );
         return m_aModels[iTeam].size() ? &m_aModels[iTeam][rand() % m_aModels[iTeam].size()] : NULL;
+    }
+
+    /// Get team for model.
+    TTeam GetTeamOfModel( const good::string& sModel )
+    {
+        for ( int iTeam = 0; iTeam < m_aModels.size(); ++iTeam )
+        {
+            StringVector::const_iterator it = good::find(m_aModels[iTeam], sModel);
+            if ( it != m_aModels[iTeam].end() )
+                return iTeam;
+        }
+        return -1;
     }
 
 

@@ -19,7 +19,7 @@ public: // Methods.
     // Implementation of IMod inteface.
     //------------------------------------------------------------------------------------------------------------
     /// Process configuration file.
-    virtual bool ProcessConfig( good::ini_file /*cIni*/ ) { return true; }
+    virtual bool ProcessConfig( const good::ini_file& /*cIni*/ ) { return true; }
 
 
     /// Called when map is loaded, after waypoints and items has been loaded.

@@ -263,22 +263,22 @@ namespace good {
         //--------------------------------------------------------------------------------------------------------
         /// Array subscript.
         //--------------------------------------------------------------------------------------------------------
-        T& operator[] ( int iIndex ) { GoodAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
+        T& operator[] ( int iIndex ) { GoodAssert(0 <= iIndex && iIndex < m_iSize); return m_pBuffer[iIndex]; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Array subscript const.
         //--------------------------------------------------------------------------------------------------------
-        T const& operator[] ( int iIndex ) const { GoodAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
+        T const& operator[] ( int iIndex ) const { GoodAssert(0 <= iIndex && iIndex < m_iSize); return m_pBuffer[iIndex]; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Element at index.
         //--------------------------------------------------------------------------------------------------------
-        T& at( int iIndex ) { GoodAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
+        T& at( int iIndex ) { GoodAssert(0 <= iIndex && iIndex < m_iSize); return m_pBuffer[iIndex]; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Element at index.
         //--------------------------------------------------------------------------------------------------------
-        T const& at( int iIndex ) const { GoodAssert(iIndex < m_iSize); return m_pBuffer[iIndex]; }
+        T const& at( int iIndex ) const { GoodAssert(0 <= iIndex && iIndex < m_iSize); return m_pBuffer[iIndex]; }
 
         //--------------------------------------------------------------------------------------------------------
         /// Get first array element.

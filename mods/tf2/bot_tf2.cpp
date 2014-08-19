@@ -24,10 +24,17 @@ CBot_TF2::CBot_TF2( edict_t* pEdict, TBotIntelligence iIntelligence, int iTeam, 
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot_TF2::Activated()
+void CBot_TF2::Respawned()
 {
-    CBot::Activated();
-    m_bAlive = false;
+    CBot::Respawned();
+    m_bAlive = true;
+
+    m_aWaypoints.reset();
+    m_iFailWaypoint = EWaypointIdInvalid;
+
+    m_iCurrentTask = EBotTaskTf2Invalid;
+    m_bNeedTaskCheck = true;
+    m_bChasing = false;
 
     if ( (m_iDesiredTeam == 0) /*&& CBotrixPlugin::instance->bTeamPlay*/ ) // Automatic team: join random team.
     {
@@ -55,19 +62,6 @@ void CBot_TF2::ChangeTeam( TTeam iTeam )
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot_TF2::Respawned()
-{
-    CBot::Respawned();
-    m_aWaypoints.reset();
-    m_iFailWaypoint = EWaypointIdInvalid;
-
-    m_iCurrentTask = EBotTaskTf2Invalid;
-    m_bNeedTaskCheck = true;
-    m_bChasing = false;
-}
-
-
-//----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::KilledEnemy( int /*iPlayerIndex*/, CPlayer* /*pVictim*/ )
 {
 }
@@ -86,9 +80,10 @@ void CBot_TF2::HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow )
 //----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::Think()
 {
+    GoodAssert( !m_bTest );
     if ( !m_bAlive )
     {
-        m_cCmd.buttons = rand() & IN_ATTACK ; // Force bot to respawn by hitting randomly attack button.
+        m_cCmd.buttons = rand() & IN_ATTACK; // Force bot to respawn by hitting randomly attack button.
         return;
     }
 
@@ -127,8 +122,12 @@ void CBot_TF2::Think()
     if ( m_bNeedTaskCheck )
     {
         m_bNeedTaskCheck = false;
-        if ( bForceNewTask || m_bFlee || (!m_bObjectiveChanged && (m_iObjective == EBotChatUnknown)) )
-            CheckNewTasks(bForceNewTask);
+        /*if ( bForceNewTask || m_bFlee 
+#ifdef BOTRIX_CHAT
+            || ( !m_bObjectiveChanged && (m_iObjective == EBotChatUnknown) )
+#endif
+            )*/
+        CheckNewTasks(bForceNewTask);
     }
 
     if ( m_pCurrentEnemy && !m_bFlee && (m_iCurrentTask != EBotTaskTf2EngageEnemy) )
@@ -186,35 +185,21 @@ bool CBot_TF2::DoWaypointAction()
 
 
 //----------------------------------------------------------------------------------------------------------------
-/*void CBot_TF2::DoPathAction()
-{
-    CBot::DoPathAction();
-}*/
-
-
-//----------------------------------------------------------------------------------------------------------------
-bool CBot_TF2::SetActiveWeapon( const good::string& sWeapon )
-{
-    good::string_buffer sb(szMainBuffer, iMainBufferSize, false);
-    sb << "use " << sWeapon;
-    CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, sb.c_str() );
-    return ( sWeapon == m_pPlayerInfo->GetWeaponName() );
-}
-
-
-//----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::CheckNewTasks( bool bForceTaskChange )
 {
     TBotTaskTf2 iNewTask = EBotTaskTf2Invalid;
     bool bForce = bForceTaskChange || (m_iCurrentTask == EBotTaskTf2Invalid);
 
-    const CWeapon* pWeapon = m_aWeapons[m_iBestWeapon].GetBaseWeapon();
+    const CWeapon* pWeapon = ( m_bFeatureWeaponCheck && CWeapon::IsValid(m_iBestWeapon) ) 
+        ? m_aWeapons[m_iBestWeapon].GetBaseWeapon() 
+        : NULL;
     TBotIntelligence iWeaponPreference = m_iIntelligence;
 
     bool bNeedHealth = CMod::HasMapItems(EEntityTypeHealth) && ( m_pPlayerInfo->GetHealth() < CMod::iPlayerMaxHealth );
     bool bNeedHealthBad = bNeedHealth && ( m_pPlayerInfo->GetHealth() < (CMod::iPlayerMaxHealth/2) );
     bool bAlmostDead = bNeedHealthBad && ( m_pPlayerInfo->GetHealth() < (CMod::iPlayerMaxHealth/5) );
-    bool bNeedWeapon = CMod::HasMapItems(EEntityTypeWeapon), bNeedAmmo = CMod::HasMapItems(EEntityTypeAmmo);
+    bool bNeedWeapon = pWeapon && CMod::HasMapItems(EEntityTypeWeapon);
+	bool bNeedAmmo = pWeapon && CMod::HasMapItems(EEntityTypeAmmo);
 
     TWeaponId iWeapon = EWeaponIdInvalid;
     bool bSecondary = false;
@@ -270,12 +255,12 @@ restart_find_task: // TODO: remove gotos.
             iNewTask = EBotTaskTf2FindWeapon;
             iWeaponPreference = pWeapon->iBotPreference+1;
         }
-        else if ( CMod::HasMapItems(EEntityTypeAmmo) && !m_aWeapons[m_iBestWeapon].FullAmmo(1) ) // Check if weapon needs secondary ammo.
+        else if ( !m_aWeapons[m_iBestWeapon].FullAmmo(1) ) // Check if weapon needs secondary ammo.
         {
             iNewTask = EBotTaskTf2FindAmmo;
             bSecondary = true;
         }
-        else if ( CMod::HasMapItems(EEntityTypeAmmo) && !m_aWeapons[m_iBestWeapon].FullAmmo(0) ) // Check if weapon needs primary ammo.
+        else if ( !m_aWeapons[m_iBestWeapon].FullAmmo(0) ) // Check if weapon needs primary ammo.
         {
             iNewTask = EBotTaskTf2FindAmmo;
             bSecondary = false;
@@ -283,6 +268,8 @@ restart_find_task: // TODO: remove gotos.
         else
             iNewTask = EBotTaskTf2FindEnemy;
     }
+    else
+        iNewTask = EBotTaskTf2FindEnemy;
 
     switch(iNewTask)
     {

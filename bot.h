@@ -22,30 +22,9 @@
 
 
 #define BotMessage(...)             GOOD_SCOPE_START if ( m_bDebugging ) BLOG_I(__VA_ARGS__); GOOD_SCOPE_END
-
+#define BotError(...)               BLOG_E(__VA_ARGS__)
 
 class CBotChat; // Forward declaration.
-
-
-//****************************************************************************************************************
-/// Class that represents atomic command, such as aim or move or attack, etc.
-/** The execution will first perform command, and then will wait until given condition becomes true. */
-//****************************************************************************************************************
-class CBotAction
-{
-public:
-    TBotAtomicAction iActionType;   ///< Action type, like aim or move.
-    union UArgument {
-        TWaypointId iWaypointId;    ///< Waypoint id.
-        int iWeapon;                ///< Weapon index.
-        float vPosition[3];         ///< Vector.
-        float vAngles[2];           ///< Angles: pitch and yaw.
-        float fTime[2];             ///< Action start time (0) and action end time (1). Relative, not absolute.
-    } uniArgument;                  ///< Argument of action.
-
-    TWaitCondition iWaitCondition;  ///< Wait condition after execution of this action.
-    void* pWaitArgument;            ///< Pointer to CPlayer, CEntity or wait time (as float).
-};
 
 
 //****************************************************************************************************************
@@ -181,12 +160,10 @@ protected: // Methods.
     {
         if ( !m_bMoveFailure )
         {
-            if ( !CWaypoint::IsValid(iCurrentWaypoint) )
-                m_bMoveFailure = true;
-            else if ( m_bNeedMove && m_bUseNavigatorToMove && m_cNavigator.SearchEnded() && !m_bDestinationChanged &&
-                    ( !CWaypoint::IsValid(iNextWaypoint) ||
-                    ( (iCurrentWaypoint != iNextWaypoint) && !CWaypoints::HasPath(iCurrentWaypoint, iNextWaypoint) ) ) )
-                m_bMoveFailure = true;
+            m_bMoveFailure =  ( !CWaypoint::IsValid(iCurrentWaypoint) ) ||
+                ( m_bNeedMove && m_bUseNavigatorToMove && m_cNavigator.SearchEnded() && !m_bDestinationChanged &&
+                ( !CWaypoint::IsValid(iNextWaypoint) ||
+                ( (iCurrentWaypoint != iNextWaypoint) && !CWaypoints::HasPath(iCurrentWaypoint, iNextWaypoint) ) ) );
         }
         return m_bMoveFailure;
     }
@@ -196,6 +173,12 @@ protected: // Methods.
 
     // Get time to end aiming to sinchronize angles. Depends on how much 'mouse' distance there are and bot's intelligence.
     float GetEndLookTime();
+
+    // Scan bot's weapon.
+    void WeaponsScan();
+
+    // Update bot's weapon.
+    void UpdateWeapon();
 
     // Update nearest objects, players, items and weapons.
     void UpdateWorld();
@@ -221,24 +204,29 @@ protected: // Methods.
     // Aim at enemy.
     void EnemyAim();
 
-    // Choose best attack weapon from available weapons.
-    void CheckWeapon();
-
-    // Set active weapon. Mod dependent. Instant, doensn't take in account parameters from config.ini
-    virtual bool SetActiveWeapon( const good::string& sWeapon )
+    // Get current weapon id.
+    TWeaponId WeaponSearch( const char* szWeapon )
     {
-        m_pController->SetActiveWeapon(sWeapon.c_str());
-        return ( sWeapon == m_pPlayerInfo->GetWeaponName() );
+        for ( TWeaponId i = 0; i < m_aWeapons.size(); ++i )
+            if ( m_aWeapons[i].GetName() == szWeapon )
+                return i;
+        return EWaypointIdInvalid;
     }
 
+    // Choose best attack weapon from available weapons.
+    void WeaponChoose();
+
+    // Set active weapon. Mod dependent. Instant, doensn't take in account parameters from config.ini
+    virtual bool WeaponSet( const good::string& sWeapon );
+
     // Try to swith to other weapon.
-    void ChangeWeapon( int iIndex );
+    void WeaponChange( int iIndex );
 
     // Shoot current weapon.
-    void Shoot( bool bSecondary = false );
+    void WeaponShoot( int iSecondary = CWeapon::PRIMARY );
 
     // Toggle zoom.
-    void ToggleZoom()
+    void WeaponToggleZoom()
     {
         CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
         BASSERT( cWeapon.IsSniper() && cWeapon.CanUse(), return );
@@ -251,7 +239,7 @@ protected: // Methods.
     }
 
     // Reload current weapon.
-    void Reload()
+    void WeaponReload()
     {
         BotMessage( "%s -> Reload %s.", GetName(), m_aWeapons[m_iWeapon].GetName().c_str() );
         m_aWeapons[m_iWeapon].Reload(0);
@@ -336,13 +324,15 @@ protected: // Members.
 
     float m_fNextDrawNearObjectsTime;                              // Next time to draw near objects.
 
+    good::pair<int, int> m_cAttackDuckRangeSqr;                    // Will duck if attacking & m_bFeatureAttackDuckEnabled & in range.
+
+    float m_fNextWeaponScanTime;
+
+#ifdef BOTRIX_CHAT
     TBotChat m_iObjective, m_iPrevRequest;                         // Current and last chat request.
     TBotChat m_iPrevTalk;                                          // Last chat talk.
     float m_fEndTalkActionTime;                                    // Time for bot to stop doing what other player asked (30 secs).
 
-    good::pair<int, int> m_cAttackDuckRangeSqr;                    // Will duck if attacking & m_bFeatureAttackDuckEnabled & in range.
-
-#ifdef BOTRIX_CHAT
     CBotChat m_cChat;                                              // Last spoken phrase.
     TPlayerIndex m_iPrevChatMate;                                  // Previous chat mate.
 #endif
@@ -399,7 +389,7 @@ protected: // Bot flags.
     bool m_bNeedJump:1;                                            // Will jump once at m_fStartActionTime.
     bool m_bNeedJumpDuck:1;                                        // Will start ducking at m_fStartActionTime and hold duck until m_fEndActionTime.
 
-    bool m_bConditionSatisfied;                                    // True if action condition has been satisfied.
+    bool m_bScanWeapons;                                           // Need to rescan weapons at m_fNextWeaponScanTime.
 
     bool m_bDontBreakObjects:1;                                    // Set to true to not to break nearby objects.
     bool m_bDontThrowObjects:1;                                    // Set to true to not to throw nearby objects.
@@ -418,6 +408,7 @@ protected: // Bot flags.
 
     // Features.
     bool m_bFeatureAttackDuckEnabled:1;                            // Duck while attacking. Will duck if in attack duck range.
+    bool m_bFeatureWeaponCheck:1;                                  // Check or not weapons.
 
 #ifdef BOTRIX_CHAT
     bool m_bTalkStarted:1;                                         // Conversation started.

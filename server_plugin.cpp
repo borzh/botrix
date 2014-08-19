@@ -325,6 +325,8 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 
     // Load mod configuration.
     CMod::Load(iModId);
+    if ( CMod::pCurrentMod )
+        CMod::pCurrentMod->ProcessConfig( CConfiguration::m_iniFile );
 
     //BLOG_W("  No weapons available.");
     //BLOG_W("  No models of type 'object' available.");
@@ -452,8 +454,7 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
 
     if ( bMapRunning )
     {
-        if ( CMod::pCurrentMod )
-            CMod::pCurrentMod->Think();
+        CMod::Think();
 
         // Show fps.
         //m_iFramesCount++;

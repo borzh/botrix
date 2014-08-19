@@ -26,7 +26,7 @@ public: // Methods.
     const good::string& GetLastError() { return m_sLastError; }
 
     /// Process configuration file.
-    virtual bool ProcessConfig( good::ini_file cIni ) = 0;
+    virtual bool ProcessConfig( const good::ini_file& cIni ) = 0;
 
 
     /// Called when map is loaded, after waypoints and items has been loaded.
@@ -102,6 +102,15 @@ public: // Methods.
     /// Called when map finished loading items and waypoints.
     static void MapLoaded();
 
+    /// Mod's think function.
+    static void Think();
+
+    /// Add frame event.
+    static void AddFrameEvent( TPlayerIndex iPlayer, TFrameEvent iEvent )
+    {
+        m_aFrameEvents.push_back( good::pair<TFrameEvent, TPlayerIndex>(iEvent, iPlayer) );
+    }
+
     /// Return true if map has items or waypoint's of given type.
     static bool HasMapItems( TEntityType iEntityType ) { return m_bMapHas[iEntityType]; }
 
@@ -131,6 +140,8 @@ public: // Static members.
     static StringVector aClassNames;         ///< Name of player's classes.
 
     static bool bIntelligenceInBotName;      ///< Use bot's intelligence as part of his name.
+
+//    static TDeathmatchFlags iDeathmatchFlags;///< Flags for deathmatch mode.
 
     // Mod dependant variables that should be set at plugin load.
     // https://developer.valvesoftware.com/wiki/Dimensions
@@ -178,9 +189,13 @@ protected: // Methods.
 
 
 protected: // Members.
+
     static TModId m_iModId;                                  // Mod id.
     static good::vector<CEventPtr> m_aEvents;                // Events this mod handles.
     static bool m_bMapHas[EEntityTypeTotal-1];               // To check if map has items or waypoints of types: health, armor, weapon, ammo.
+    
+    // Events that happend on this frame.
+    static good::vector< good::pair<TFrameEvent, TPlayerIndex> > m_aFrameEvents;
 };
 
 

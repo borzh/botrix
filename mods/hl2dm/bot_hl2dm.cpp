@@ -1,22 +1,25 @@
 #ifdef BOTRIX_HL2DM
 
 
-#include "mods/hl2dm/mod_hl2dm.h"
-#include "mods/hl2dm/bot_hl2dm.h"
+#include <good/string_buffer.h>
+#include <good/string_utils.h>
 
 #include "clients.h"
 #include "type2string.h"
 
+#include "mods/hl2dm/bot_hl2dm.h"
+#include "mods/hl2dm/mod_hl2dm.h"
+
+
+extern char* szMainBuffer;
+extern int iMainBufferSize;
 
 //----------------------------------------------------------------------------------------------------------------
 CBot_HL2DM::CBot_HL2DM( edict_t* pEdict, TBotIntelligence iIntelligence ):
     CBot(pEdict, iIntelligence, 0), m_aWaypoints(CWaypoints::Size()),
     m_cItemToSearch(-1, -1), m_cSkipWeapons( CWeapons::Size() )
 {
-    CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(pEdict, "cl_autowepswitch", "0");
-    CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(pEdict, "cl_defaultweapon", "weapon_smg1");
     m_bShootAtHead = false;
-    m_bFirstRespawn = true;
 }
 
 
@@ -24,36 +27,51 @@ CBot_HL2DM::CBot_HL2DM( edict_t* pEdict, TBotIntelligence iIntelligence ):
 void CBot_HL2DM::Activated()
 {
     CBot::Activated();
+    GoodAssert( m_pPlayerInfo && m_pController );
 
-#if 1//NO_NEED_FOR_THIS
-    CBotrixPlugin::pEngineServer->SetFakeClientConVarValue( m_pEdict, "cl_team", "default" );
-    const good::string* sModel = ((CModHL2DM*)CMod::pCurrentMod)->GetRandomModel( m_pPlayerInfo->GetTeamIndex() );
-    if ( sModel )
-        CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(m_pEdict, "cl_playermodel", sModel->c_str());
-#endif
+    CBotrixPlugin::pEngineServer->SetFakeClientConVarValue( m_pEdict, "cl_autowepswitch", "0" );
+    CBotrixPlugin::pEngineServer->SetFakeClientConVarValue( m_pEdict, "cl_defaultweapon", "weapon_smg1" );
 
-    if ( m_bFirstRespawn )
+    TTeam iTeam = GetTeam();
+    if ( iTeam == CMod::iUnassignedTeam ) // Deathmatch.
+        iTeam = 2 + ( rand()&1 ); // 0 = deathmatch, 1 = spectator, 2 = rebels, 3 = combines.
+
+    const good::string* pModel = ((CModHL2DM*)CMod::pCurrentMod)->GetRandomModel(iTeam);
+    if ( pModel )
     {
-        Respawned(); // Force respawn, as first time bot appeares on map, Respawned() is not called.
-        m_bFirstRespawn = false;
+        //CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, "cl_playermodel" + pModel->c_str() );
+        CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(m_pEdict, "cl_playermodel", pModel->c_str());
     }
-}
 
-//----------------------------------------------------------------------------------------------------------------
-void CBot_HL2DM::Respawned()
-{
-    CBot::Respawned();
     m_aWaypoints.reset();
     m_iFailWaypoint = EWaypointIdInvalid;
 
     m_iCurrentTask = EBotTaskInvalid;
     m_bNeedTaskCheck = true;
+    m_bChasing = false;
 }
+
+
+//----------------------------------------------------------------------------------------------------------------
+void CBot_HL2DM::Respawned()
+{
+    CBot::Respawned();
+    GoodAssert( m_pPlayerInfo && m_pController );
+
+    m_aWaypoints.reset();
+    m_iFailWaypoint = EWaypointIdInvalid;
+
+    m_iCurrentTask = EBotTaskInvalid;
+    m_bNeedTaskCheck = true;
+    m_bChasing = false;
+}
+
 
 //----------------------------------------------------------------------------------------------------------------
 void CBot_HL2DM::KilledEnemy( int /*iPlayerIndex*/, CPlayer* /*pVictim*/ )
 {
 }
+
 
 //----------------------------------------------------------------------------------------------------------------
 void CBot_HL2DM::HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow )
@@ -64,9 +82,11 @@ void CBot_HL2DM::HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow )
         m_bNeedTaskCheck = true; // Check if need search for health.
 }
 
+
 //----------------------------------------------------------------------------------------------------------------
 void CBot_HL2DM::Think()
 {
+    GoodAssert( !m_bTest );
     if ( !m_bAlive )
     {
         m_cCmd.buttons = rand() & IN_ATTACK; // Force bot to respawn by hitting randomly attack button.
@@ -104,17 +124,55 @@ void CBot_HL2DM::Think()
         m_bMoveFailure = m_bStuck = false;
     }
 
-    // Check if needs to add new tasks. Objectives have more priority than task, but not when bot flees.
+    // Check if needs to add new tasks.
     if ( m_bNeedTaskCheck )
     {
         m_bNeedTaskCheck = false;
-        if ( bForceNewTask || m_bFlee || (!m_bObjectiveChanged && (m_iObjective == EBotChatUnknown)) )
-            CheckNewTasks(bForceNewTask);
+        /*if ( bForceNewTask || m_bFlee 
+#ifdef BOTRIX_CHAT
+            || ( !m_bObjectiveChanged && (m_iObjective == EBotChatUnknown) )
+#endif
+            )*/
+        CheckNewTasks(bForceNewTask);
+    }
+
+    if ( m_pCurrentEnemy && !m_bFlee && (m_iCurrentTask != EBotTaskEngageEnemy) )
+    {
+        m_iCurrentTask = EBotTaskEngageEnemy;
+        m_pChasedEnemy = m_pCurrentEnemy;
+        m_bNeedMove = false;
+    }
+
+    if ( m_iCurrentTask == EBotTaskEngageEnemy )
+    {
+        if ( !m_bNeedMove ||
+            (!m_bUseNavigatorToMove && !CWaypoint::IsValid(iNextWaypoint) ) )
+        {
+            // TODO: come close if very far. Vector vDiff =
+            if ( m_bChasing && (m_pCurrentEnemy != m_pChasedEnemy) &&    // Bot not seeing enemy, arrived where enemy was.
+                (m_pChasedEnemy->iCurrentWaypoint != iCurrentWaypoint) ) // Should not be at the same waypoint.
+                ChaseEnemy();
+            else // Bot arrived at adyacent waypoint or is seeing enemy.
+            {
+                m_bNeedMove = m_bDestinationChanged = true;
+                m_bUseNavigatorToMove = m_bChasing = false;
+                iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint);
+                BotMessage( "%s -> Moving to waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+            }
+        }
+        if ( m_pCurrentEnemy != m_pChasedEnemy ) // Start/stop seeing enemy or enemy change.
+        {
+            if ( m_pCurrentEnemy ) // Seeing new enemy.
+                m_pChasedEnemy = m_pCurrentEnemy;
+            else if ( !m_bChasing ) // Lost sight of enemy, chase.
+                ChaseEnemy();
+        }
     }
 
     if ( m_bFlee )
         m_bNeedSprint = true; // Force bot to move rapidly. TODO: check if stops.
 }
+
 
 //----------------------------------------------------------------------------------------------------------------
 void CBot_HL2DM::ReceiveChat( int /*iPlayerIndex*/, CPlayer* /*pPlayer*/, bool /*bTeamOnly*/, const char* /*szText*/ )
@@ -122,10 +180,11 @@ void CBot_HL2DM::ReceiveChat( int /*iPlayerIndex*/, CPlayer* /*pPlayer*/, bool /
 
 }
 
+
 //----------------------------------------------------------------------------------------------------------------
 bool CBot_HL2DM::DoWaypointAction()
 {
-    if ( iCurrentWaypoint == m_iTaskDestination )
+    if ( m_bUseNavigatorToMove && (iCurrentWaypoint == m_iTaskDestination) )
     {
         m_iCurrentTask = EBotTaskInvalid;
         m_bNeedTaskCheck = true;
@@ -133,19 +192,21 @@ bool CBot_HL2DM::DoWaypointAction()
     return CBot::DoWaypointAction();
 }
 
+
 //----------------------------------------------------------------------------------------------------------------
 void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 {
     TBotTaskHL2DM iNewTask = EBotTaskInvalid;
     bool bForce = bForceTaskChange || (m_iCurrentTask == EBotTaskInvalid);
 
-    const CWeapon* pWeapon = m_aWeapons[m_iBestWeapon].GetBaseWeapon();
+	const CWeapon* pWeapon = ( m_bFeatureWeaponCheck && CWeapon::IsValid(m_iBestWeapon) ) ? m_aWeapons[m_iBestWeapon].GetBaseWeapon() : NULL;
     TBotIntelligence iWeaponPreference = m_iIntelligence;
 
     bool bNeedHealth = CMod::HasMapItems(EEntityTypeHealth) && ( m_pPlayerInfo->GetHealth() < CMod::iPlayerMaxHealth );
     bool bNeedHealthBad = bNeedHealth && ( m_pPlayerInfo->GetHealth() < (CMod::iPlayerMaxHealth/2) );
     bool bAlmostDead = bNeedHealthBad && ( m_pPlayerInfo->GetHealth() < (CMod::iPlayerMaxHealth/5) );
-    bool bNeedWeapon = CMod::HasMapItems(EEntityTypeWeapon), bNeedAmmo = CMod::HasMapItems(EEntityTypeAmmo);
+    bool bNeedWeapon = pWeapon && CMod::HasMapItems(EEntityTypeWeapon);
+	bool bNeedAmmo = pWeapon && CMod::HasMapItems(EEntityTypeAmmo);
 
     TWeaponId iWeapon = EWeaponIdInvalid;
     bool bSecondary = false;
@@ -164,10 +225,9 @@ restart_find_task: // TODO: remove gotos.
     retries++;
     if ( retries == 5 )
     {
-        m_bNeedTaskCheck = true;
-        BASSERT(m_iCurrentTask == EBotTaskInvalid, m_iCurrentTask = EBotTaskInvalid);
-        BotMessage("%s -> No task, will continue to look for task on new frame.", GetName());
-        return;
+        iNewTask = EBotTaskFindEnemy;
+        pEntityClass = NULL;
+        goto find_enemy;
     }
 
     if ( bNeedHealthBad ) // Need health pretty much.
@@ -202,12 +262,12 @@ restart_find_task: // TODO: remove gotos.
             iNewTask = EBotTaskFindWeapon;
             iWeaponPreference = pWeapon->iBotPreference+1;
         }
-        else if ( CMod::HasMapItems(EEntityTypeAmmo) && !m_aWeapons[m_iBestWeapon].FullAmmo(1) ) // Check if weapon needs secondary ammo.
+        else if ( !m_aWeapons[m_iBestWeapon].FullAmmo(1) ) // Check if weapon needs secondary ammo.
         {
             iNewTask = EBotTaskFindAmmo;
             bSecondary = true;
         }
-        else if ( CMod::HasMapItems(EEntityTypeAmmo) && !m_aWeapons[m_iBestWeapon].FullAmmo(0) ) // Check if weapon needs primary ammo.
+        else if ( !m_aWeapons[m_iBestWeapon].FullAmmo(0) ) // Check if weapon needs primary ammo.
         {
             iNewTask = EBotTaskFindAmmo;
             bSecondary = false;
@@ -215,6 +275,8 @@ restart_find_task: // TODO: remove gotos.
         else
             iNewTask = EBotTaskFindEnemy;
     }
+    else
+        iNewTask = EBotTaskFindEnemy;
 
     switch(iNewTask)
     {
@@ -282,6 +344,7 @@ restart_find_task: // TODO: remove gotos.
 
     BASSERT( iNewTask != EBotTaskInvalid, return );
 
+find_enemy:
     // Check if need task switch.
     if ( bForce || (m_iCurrentTask != iNewTask) )
     {
@@ -341,6 +404,8 @@ restart_find_task: // TODO: remove gotos.
     m_cSkipWeapons.reset();
 }
 
+
+//----------------------------------------------------------------------------------------------------------------
 void CBot_HL2DM::TaskFinished()
 {
     if ( (EBotTaskFindHealth <= m_cItemToSearch.iType) && (m_cItemToSearch.iType <= EBotTaskFindAmmo) )
@@ -360,8 +425,7 @@ void CBot_HL2DM::TaskFinished()
         m_cItemToSearch.fRemoveTime = CBotrixPlugin::fTime + 60.0f; // Do not go at that waypoint again at least for 1 minute.
         m_aPickedItems.push_back(m_cItemToSearch);
     }
-
-
 }
+
 
 #endif // BOTRIX_HL2DM

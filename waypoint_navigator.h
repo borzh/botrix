@@ -58,7 +58,7 @@ public:
     void GetNextWaypoints( TWaypointId& iNext, TWaypointId& iAfterNext )
     {
         iNext = m_cAstar.path()[m_iPathIndex++];
-        iAfterNext = ( m_iPathIndex == (int)m_cAstar.path().size() )  ?  -1  :  m_cAstar.path()[m_iPathIndex];
+        iAfterNext = ( m_iPathIndex == m_cAstar.path().size() ) ? -1 : m_cAstar.path()[m_iPathIndex];
     }
 
     /// Decrement path position. Used in case of some bot action didn't work, to perform waypoint touch again.

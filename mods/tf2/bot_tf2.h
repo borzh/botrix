@@ -25,13 +25,24 @@ public:
     // Next functions are mod dependent. You need to implement those in order to make bot moving around.
     //------------------------------------------------------------------------------------------------------------
     /// Called when player becomes active, before first respawn. Sets players model and team.
-    virtual void Activated();
+    //virtual void Activated();
+
+    /// Called each time bot is respawned.
+    virtual void Respawned();
 
     /// Called when player's team changed.
     virtual void ChangeTeam( TTeam iTeam );
 
-    /// Called each time bot is respawned.
-    virtual void Respawned();
+    /// Called when player got disconnected / kicked.
+    virtual void PlayerDisconnect( int iPlayerIndex, CPlayer* pPlayer )
+    {
+        CBot::PlayerDisconnect(iPlayerIndex, pPlayer);
+        if ( m_bChasing && (m_pChasedEnemy == pPlayer) )
+        {
+            m_bChasing = false;
+            m_pChasedEnemy = NULL;
+        }
+    }
 
     /// Called when this bot just killed an enemy.
     virtual void KilledEnemy( int iPlayerIndex, CPlayer* pVictim );
@@ -39,7 +50,7 @@ public:
     /// Called when enemy just shot this bot.
     virtual void HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow );
 
-    /// Set move and aim variables. You can also set shooting/crouching/jumping buttons in m_cCmd.buttons.
+    /// Set move and aim variables. You can also set ShootWeaponing/crouching/jumping buttons in m_cCmd.buttons.
     virtual void Think();
 
     /// Called when chat arrives from other player.
@@ -65,9 +76,6 @@ protected:
         }
     }
 
-    // Set active weapon. Mod dependent. Instant, doensn't take in account parameters from config.ini
-    virtual bool SetActiveWeapon( const good::string& sWeapon );
-
     /// Chase enemy.
     void ChaseEnemy()
     {
@@ -85,8 +93,6 @@ protected:
 
     /// Mark task as finished.
     void TaskFinished();
-
-    static const int m_iFleeHealth = 25;                 ///< Start to flee at this health amount.
 
     good::bitset m_aWaypoints;                           ///< Waypoints, that bot can't use.
 

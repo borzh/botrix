@@ -72,8 +72,8 @@ void CClient::PreThink()
         // Add paths from previous to current.
         if ( CWaypoint::IsValid(iLastWaypoint) )
         {
-            float zDist = GetPlayerInfo()->GetPlayerMaxs().z - GetPlayerInfo()->GetPlayerMins().z;
-            bool bIsCrouched = (zDist < CMod::iPlayerHeight);
+            float fHeight = GetPlayerInfo()->GetPlayerMaxs().z - GetPlayerInfo()->GetPlayerMins().z + 1;
+            bool bIsCrouched = (fHeight < CMod::iPlayerHeight);
 
             CWaypoints::CreatePathsWithAutoFlags(iLastWaypoint, iCurrentWaypoint, bIsCrouched);
             iDestinationWaypoint = iLastWaypoint;

@@ -26,19 +26,30 @@ public:
     /// Called when player becomes active, before first respawn. Sets players model and team.
     void Activated();
 
-    /// Called when player's team changed.
-    virtual void ChangeTeam( TTeam /*iTeam*/ ) { Dead(); }
-
     /// Called each time bot is respawned.
     virtual void Respawned();
 
+    /// Called when player's team changed.
+    virtual void ChangeTeam( TTeam /*iTeam*/ ) { Dead(); }
+
+    /// Called when player got disconnected / kicked.
+    virtual void PlayerDisconnect( int iPlayerIndex, CPlayer* pPlayer )
+    {
+        CBot::PlayerDisconnect(iPlayerIndex, pPlayer);
+        if ( m_bChasing && (m_pChasedEnemy == pPlayer) )
+        {
+            m_bChasing = false;
+            m_pChasedEnemy = NULL;
+        }
+    }
+    
     /// Called when this bot just killed an enemy.
     virtual void KilledEnemy( int iPlayerIndex, CPlayer* pVictim );
 
     /// Called when enemy just shot this bot.
     virtual void HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow );
 
-    /// Set move and aim variables. You can also set shooting/crouching/jumping buttons in m_cCmd.buttons.
+    /// Set move and aim variables. You can also set ShootWeaponing/crouching/jumping buttons in m_cCmd.buttons.
     virtual void Think();
 
     /// Called when chat arrives from other player.
@@ -61,28 +72,42 @@ protected:
         }
     }
 
-    // Check if new tasks are needed.
+    /// Chase enemy.
+    void ChaseEnemy()
+    {
+        m_bChasing = FollowEnemy(m_pChasedEnemy);
+        if ( !m_bChasing ) // Dead or flying?
+        {
+            m_pChasedEnemy = NULL;
+            m_iCurrentTask = EBotTaskInvalid;
+            m_bNeedTaskCheck = true;
+        }
+    }
+
+    /// Check if new tasks are needed.
     void CheckNewTasks( bool bForceTaskChange );
 
-    // Mark task as finished.
+    /// Mark task as finished.
     void TaskFinished();
 
-    good::bitset m_aWaypoints;                           // Waypoints, that bot can't use.
+    good::bitset m_aWaypoints;                           ///< Waypoints, that bot can't use.
 
-    TBotTaskHL2DM m_iCurrentTask;                        // Current task.
-    TWaypointId m_iTaskDestination;                      // Waypoint for task destination.
-    CPickedItem m_cItemToSearch;                         // Item, we are searching right now. If iType is -1 then iIndex
-                                                         // is waypoint (found no items, so heading to waypoint of that type).
+    TBotTaskHL2DM m_iCurrentTask;                        ///< Current task.
+    TWaypointId m_iTaskDestination;                      ///< Waypoint for task destination.
+    CPickedItem m_cItemToSearch;                         ///< Item, we are searching right now. If iType is -1 then iIndex
+                                                         ///< is waypoint (found no items, so heading to waypoint of that type).
 
-    TWaypointId m_iFailWaypoint;                         // Waypoint id where bot stucks.
-    int m_iFailsCount;                                   // Times bot stucks at m_iFailWaypoint (at 3 times will change destination).
+    TWaypointId m_iFailWaypoint;                         ///< Waypoint id where bot stucks.
+    int m_iFailsCount;                                   ///< Times bot stucks at m_iFailWaypoint (at 3 times will change destination).
 
-    good::bitset m_cSkipWeapons;
+    good::bitset m_cSkipWeapons;                         ///< Weapons to skip searching.
+
+    CPlayer* m_pChasedEnemy;                             ///< Enemy we are following.
 
 protected: // Flags.
 
     bool m_bNeedTaskCheck:1;                             // True if there is need to check for new tasks.
-    bool m_bFirstRespawn:1;                                        // Spawn event is called before bot constructor returns. So first time we call Respawned() manually. TODO: dont create bot in bot constructor.
+    bool m_bChasing:1;                                   ///< Currently chasing enemy out of sight.
 
 };
 

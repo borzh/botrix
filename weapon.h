@@ -46,7 +46,7 @@ public:
     const CEntityClass* pWeaponClass;            ///< Pointer to weapon class.
 
     TClass iClass;                               ///< Classes that can uses this weapon. Those are really flags.
-    TTeam iTeam;                                 ///< Only this team can buy this weapon.
+    TTeam iTeam;                                 ///< Only this team can buy this weapon. Those are really flags.
 
     TWeaponType iType;                           ///< Weapon type.
 
@@ -106,6 +106,9 @@ public:
     /// Return weapon's entity name.
     const good::string& GetName() const { return m_pWeapon->pWeaponClass->sClassName; }
 
+    /// Return true if this weapon has no bullets.
+    bool Empty() { return  m_iBulletsInClip[0] || m_iBulletsInClip[1] || m_iBulletsExtra[0] || m_iBulletsExtra[1]; }
+
     /// Return true if weapon is not reloading or shooting or changing zoom or changing to other weapon.
     bool CanUse() const { return !IsShooting() && !IsReloading() && !IsChanging() && !IsChangingZoom(); }
 
@@ -130,6 +133,9 @@ public:
 
     /// Set weapon presence.
     void SetPresent( bool bPresent ) { m_bWeaponPresent = bPresent; }
+
+    /// Set no bullets for this weapon.
+    void SetNoBullets() { m_iBulletsInClip[0] = m_iBulletsInClip[1] = 0; m_iBulletsExtra[0] = m_iBulletsExtra[1] = 0; }
 
     /// Return false if there is only ammo for this weapon, but without weapon itself.
     bool IsPresent() const { return m_bWeaponPresent && !m_pWeapon->bForbidden; }
@@ -165,10 +171,10 @@ public:
     bool IsChangingZoom() const { return m_bChangingZoom && IsSniper(); }
 
     // Return true if can use this weapon for given distance to enemy (it is safe).
-    bool IsDistanceSafe( float fDistanceSqr, bool bSecondary ) const
+    bool IsDistanceSafe( float fDistanceSqr, int iSecondary ) const
     {
-        bool bMinPass = m_pWeapon->fMinDistanceSqr[bSecondary] <= fDistanceSqr;
-        bool bMaxPass = (m_pWeapon->fMaxDistanceSqr[bSecondary] == 0.0f) || (fDistanceSqr <= m_pWeapon->fMaxDistanceSqr[bSecondary]);
+        bool bMinPass = m_pWeapon->fMinDistanceSqr[iSecondary] <= fDistanceSqr;
+        bool bMaxPass = (m_pWeapon->fMaxDistanceSqr[iSecondary] == 0.0f) || (fDistanceSqr <= m_pWeapon->fMaxDistanceSqr[iSecondary]);
         return bMinPass && bMaxPass;
     }
 
@@ -176,22 +182,25 @@ public:
     float DamagePerSecond() const { return (float)m_pWeapon->iDamage[0] / m_pWeapon->fShotTime[0]; }
 
     /// Return amount of bullets this weapon has for primary or secondary attacks.
-    int Bullets( bool bSecondary ) const { return m_iBulletsInClip[bSecondary]; }
+    int Bullets( int iSecondary ) const { return m_iBulletsInClip[iSecondary]; }
 
     /// Return amount of extra bullets this weapon has for primary or secondary attacks.
-    int ExtraBullets( bool bSecondary ) const { return m_iBulletsExtra[bSecondary]; }
+    int ExtraBullets( int iSecondary ) const { return m_iBulletsExtra[iSecondary]; }
 
     /// Return approximate damage this weapon can do with bullets in clip.
-    int Damage( bool bSecondary ) const { return m_pWeapon->iDamage[bSecondary]; }
+    int Damage( int iSecondary ) const { return m_pWeapon->iDamage[iSecondary]; }
 
     /// Return approximate damage this weapon can do with bullets in clip.
-    int TotalDamage( bool bSecondary ) const { return Bullets(bSecondary) * m_pWeapon->iDamage[bSecondary]; }
+    int TotalDamage( int iSecondary ) const { return Bullets(iSecondary) * m_pWeapon->iDamage[iSecondary]; }
 
     /// Return approximate damage this weapon can do without reload.
     int TotalDamage() const { return TotalDamage(0) + TotalDamage(1); }
 
     /// Return true if weapon needs to be reloaded.
-    bool NeedReload( bool bSecondary ) const { return (m_iBulletsInClip[bSecondary] < m_pWeapon->iClipSize[bSecondary]) && HasAmmoExtra(bSecondary); }
+    bool NeedReload( int iSecondary ) const { return (m_iBulletsInClip[iSecondary] < m_pWeapon->iClipSize[iSecondary]) && HasAmmoExtra(iSecondary); }
+
+    /// Return true if weapon should be reloaded.
+    bool ShouldReload( int iSecondary ) const { return (m_iBulletsInClip[iSecondary] == 0) && HasAmmoExtra(iSecondary); }
 
     /// Return true if need to use zoom.
     bool ShouldZoom( float fDistanceToEnemySqr ) const
@@ -201,27 +210,29 @@ public:
     }
 
     /// Return true if weapon has ammo.
-    bool HasAmmoInClip( bool bSecondary ) const { return m_iBulletsInClip[bSecondary] > 0; }
+    bool HasAmmoInClip( int iSecondary ) const { return m_iBulletsInClip[iSecondary] > 0; }
 
     /// Return true if weapon has ammo, beside the ammo in clip.
-    bool HasAmmoExtra( bool bSecondary ) const { return m_iBulletsExtra[bSecondary] > 0; }
+    bool HasAmmoExtra( int iSecondary ) const { return m_iBulletsExtra[iSecondary] > 0; }
 
     /// Return true if weapon has full ammunition.
-    bool FullAmmo( bool bSecondary ) const { return m_iBulletsExtra[bSecondary] == m_pWeapon->iMaxAmmo[bSecondary]; }
+    bool FullAmmo( int iSecondary ) const { return m_iBulletsExtra[iSecondary] == m_pWeapon->iMaxAmmo[iSecondary]; }
 
     /// Return true if weapon has ammo.
     bool HasAmmo() const { return HasAmmoInClip(0) || HasAmmoInClip(1) || HasAmmoExtra(0) || HasAmmoExtra(1); }
 
     /// Start to shoot weapon.
-    void Shoot( bool bSecondary );
+    void Shoot( int iSecondary );
 
     /// Start to reload weapon.
-    void Reload( bool bSecondary )
+    void Reload( int iSecondary )
     {
-        BASSERT( NeedReload(bSecondary) && CanUse(), return );
+        GoodAssert( NeedReload(iSecondary) && CanUse() );
         m_bReloading = true;
-        m_bSecondary = bSecondary;
-        m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadTime[bSecondary];
+        m_bSecondary = (iSecondary != 0);
+        m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadTime[iSecondary];
+        if ( m_pWeapon->fReloadTime[0] == 0.0f )
+            EndReload();
     }
 
     /// Remove this weapon (called when player's team is different from this weapons's team).
@@ -250,15 +261,15 @@ public:
     }
 
     /// Add bullets to this weapon.
-    void AddBullets( int iCount, bool bSecondary )
+    void AddBullets( int iCount, int iSecondary )
     {
-        m_iBulletsExtra[bSecondary] += iCount;
-        if ( m_iBulletsExtra[bSecondary] > m_pWeapon->iMaxAmmo[bSecondary] )
-            m_iBulletsExtra[bSecondary] = m_pWeapon->iMaxAmmo[bSecondary];
+        m_iBulletsExtra[iSecondary] += iCount;
+        if ( m_iBulletsExtra[iSecondary] > m_pWeapon->iMaxAmmo[iSecondary] )
+            m_iBulletsExtra[iSecondary] = m_pWeapon->iMaxAmmo[iSecondary];
     }
 
     /// Change weapon.
-    void Holster( CWeaponWithAmmo& cSwitchTo );
+    static void Holster( CWeaponWithAmmo* pSwitchFrom, CWeaponWithAmmo& cSwitchTo );
 
     /// Zoom in.
     void ZoomIn()
@@ -356,7 +367,21 @@ public:
         return -1;
     }
 
-    /// Add ammo to weapons.
+    /// Add weapon to weapons.
+    static bool AddWeapon( const CEntityClass* pWeaponClass, good::vector<CWeaponWithAmmo>& aWeapons )
+    {
+        for ( TWeaponId iWeapon = 0; iWeapon < aWeapons.size(); ++iWeapon )
+        {
+            if ( aWeapons[iWeapon].GetBaseWeapon()->pWeaponClass == pWeaponClass )
+            {
+                aWeapons[iWeapon].AddWeapon();
+				return true;
+            }
+        }
+		return false;
+    }
+
+	/// Add ammo to weapons.
     static bool AddAmmo( const CEntityClass* pAmmoClass, good::vector<CWeaponWithAmmo>& aWeapons )
     {
         bool bResult = false;

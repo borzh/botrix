@@ -323,8 +323,8 @@ TCommandResult CWaypointCreateCommand::Execute( CClient* pClient, int /*argc*/, 
     pClient->iCurrentWaypoint = id;
 
     // Check if player is crouched.
-    float height = pClient->GetPlayerInfo()->GetPlayerMaxs().z - pClient->GetPlayerInfo()->GetPlayerMins().z + 1;
-    bool bIsCrouched = ( height < CMod::iPlayerHeight );
+    float fHeight = pClient->GetPlayerInfo()->GetPlayerMaxs().z - pClient->GetPlayerInfo()->GetPlayerMins().z + 1;
+    bool bIsCrouched = ( fHeight < CMod::iPlayerHeight );
 
     if (pClient->bAutoCreatePaths)
         CWaypoints::CreateAutoPaths(id, bIsCrouched);
@@ -1675,7 +1675,7 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
     if ( pBot )
     {
         CPlayers::AddBot(pBot);
-        BULOG_I( pEdict, "Bot added: %s.", pBot->GetName() );
+        BULOG_I( pEdict, "Bot added: %s.", szName );
         return ECommandPerformed;
     }
     else

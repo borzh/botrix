@@ -7,14 +7,11 @@
     <Filter Include="mods">
       <UniqueIdentifier>{2ebb66cd-4841-4878-ac76-3bd379115294}</UniqueIdentifier>
     </Filter>
-    <Filter Include="mods\borzh">
-      <UniqueIdentifier>{9bc9d9bc-c541-4f1a-9faf-05678d19c048}</UniqueIdentifier>
-    </Filter>
     <Filter Include="mods\hl2dm">
       <UniqueIdentifier>{56d3e086-7707-4384-a083-e8714815a8ee}</UniqueIdentifier>
     </Filter>
-    <Filter Include="mods\css">
-      <UniqueIdentifier>{d995789f-492f-45fd-9cd4-51988edd4546}</UniqueIdentifier>
+    <Filter Include="mods\tf2">
+      <UniqueIdentifier>{7a53e568-a48c-4603-872c-24ce40b8809e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -78,29 +75,11 @@
     <ClInclude Include="good\include\good\vector.h">
       <Filter>good</Filter>
     </ClInclude>
-    <ClInclude Include="mods\borzh\bot_borzh.h">
-      <Filter>mods\borzh</Filter>
-    </ClInclude>
-    <ClInclude Include="mods\borzh\mod_borzh.h">
-      <Filter>mods\borzh</Filter>
-    </ClInclude>
-    <ClInclude Include="mods\borzh\planner.h">
-      <Filter>mods\borzh</Filter>
-    </ClInclude>
-    <ClInclude Include="mods\borzh\types_borzh.h">
-      <Filter>mods\borzh</Filter>
-    </ClInclude>
     <ClInclude Include="mods\hl2dm\bot_hl2dm.h">
       <Filter>mods\hl2dm</Filter>
     </ClInclude>
     <ClInclude Include="mods\hl2dm\types_hl2dm.h">
       <Filter>mods\hl2dm</Filter>
-    </ClInclude>
-    <ClInclude Include="mods\css\event_css.h">
-      <Filter>mods\css</Filter>
-    </ClInclude>
-    <ClInclude Include="mods\css\types_css.h">
-      <Filter>mods\css</Filter>
     </ClInclude>
     <ClInclude Include="bot.h" />
     <ClInclude Include="chat.h" />
@@ -131,6 +110,18 @@
     <ClInclude Include="good\include\good\string_utils.h">
       <Filter>good</Filter>
     </ClInclude>
+    <ClInclude Include="mods\tf2\bot_tf2.h">
+      <Filter>mods\tf2</Filter>
+    </ClInclude>
+    <ClInclude Include="mods\tf2\mod_tf2.h">
+      <Filter>mods\tf2</Filter>
+    </ClInclude>
+    <ClInclude Include="mods\tf2\types_tf2.h">
+      <Filter>mods\tf2</Filter>
+    </ClInclude>
+    <ClInclude Include="mods\hl2dm\mod_hl2dm.h">
+      <Filter>mods\hl2dm</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="good\src\file.cpp">
@@ -148,20 +139,8 @@
     <ClCompile Include="good\src\thread.cpp">
       <Filter>good</Filter>
     </ClCompile>
-    <ClCompile Include="mods\borzh\bot_borzh.cpp">
-      <Filter>mods\borzh</Filter>
-    </ClCompile>
-    <ClCompile Include="mods\borzh\mod_borzh.cpp">
-      <Filter>mods\borzh</Filter>
-    </ClCompile>
-    <ClCompile Include="mods\borzh\planner.cpp">
-      <Filter>mods\borzh</Filter>
-    </ClCompile>
     <ClCompile Include="mods\hl2dm\bot_hl2dm.cpp">
       <Filter>mods\hl2dm</Filter>
-    </ClCompile>
-    <ClCompile Include="mods\css\event_css.cpp">
-      <Filter>mods\css</Filter>
     </ClCompile>
     <ClCompile Include="bot.cpp" />
     <ClCompile Include="chat.cpp" />
@@ -181,13 +160,22 @@
     <ClCompile Include="good\src\log.cpp">
       <Filter>good</Filter>
     </ClCompile>
+    <ClCompile Include="mods\tf2\bot_tf2.cpp">
+      <Filter>mods\tf2</Filter>
+    </ClCompile>
+    <ClCompile Include="mods\tf2\mod_tf2.cpp">
+      <Filter>mods\tf2</Filter>
+    </ClCompile>
+    <ClCompile Include="mods\hl2dm\mod_hl2dm.cpp">
+      <Filter>mods\hl2dm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="mods\borzh\readme.txt">
-      <Filter>mods\borzh</Filter>
-    </None>
     <None Include="mods\hl2dm\readme.txt">
       <Filter>mods\hl2dm</Filter>
+    </None>
+    <None Include="mods\tf2\readme.txt">
+      <Filter>mods\tf2</Filter>
     </None>
   </ItemGroup>
 </Project>

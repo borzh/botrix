@@ -19,6 +19,7 @@ IMod* CMod::pCurrentMod = NULL;
 
 StringVector CMod::aBotNames;
 good::vector<CEventPtr> CMod::m_aEvents;
+good::vector< good::pair<TFrameEvent, TPlayerIndex> > CMod::m_aFrameEvents;
 
 bool CMod::m_bMapHas[EEntityTypeTotal-1]; // Health, armor, weapon, ammo.
 
@@ -29,6 +30,8 @@ int CMod::iSpectatorTeam = 1;
 StringVector CMod::aClassNames;
 
 bool CMod::bIntelligenceInBotName = true;
+
+//TDeathmatchFlags CMod::iDeathmatchFlags = -1;
 
 int CMod::iPlayerHeight = 72;
 int CMod::iPlayerHeightCrouched = 36;
@@ -68,6 +71,10 @@ bool CMod::Load( TModId iModId )
 {
     m_iModId = iModId;
     m_aEvents.clear();
+    m_aEvents.reserve(16);
+
+    m_aFrameEvents.clear();
+    m_aFrameEvents.reserve(8);
 
     bool bResult = true;
     switch ( iModId )
@@ -225,6 +232,7 @@ void CMod::ExecuteEvent( void* pEvent, TEventType iType )
         return;
 
     const char* szEventName = pInterface->GetName();
+    GoodAssert( szEventName );
 
     for ( good::vector<CEventPtr>::iterator it = m_aEvents.begin(); it != m_aEvents.end(); ++it )
     {
@@ -234,8 +242,6 @@ void CMod::ExecuteEvent( void* pEvent, TEventType iType )
             break;
         }
     }
-
-    delete pInterface;
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -251,3 +257,32 @@ bool CMod::IsNameTaken( const good::string& cName, TBotIntelligence iIntelligenc
     return false;
 }
 
+//----------------------------------------------------------------------------------------------------------------
+void CMod::Think()
+{
+    if ( pCurrentMod )
+        pCurrentMod->Think();
+
+    for ( int i = 0; i < m_aFrameEvents.size(); ++i )
+    {
+        CPlayer* pPlayer = CPlayers::Get( m_aFrameEvents[i].second );
+        if ( pPlayer == NULL )
+            BLOG_E( "Player with index %d is not present to receive event %d.", m_aFrameEvents[i].second, m_aFrameEvents[i].first );
+        else
+        {
+            switch ( m_aFrameEvents[i].first )
+            {
+            case EFrameEventActivated:
+                pPlayer->Activated();
+                break;
+            case EFrameEventRespawned:
+                pPlayer->Respawned();
+                break;
+            default:
+                GoodAssert(false);
+            }
+        }
+    }
+
+    m_aFrameEvents.clear();
+}

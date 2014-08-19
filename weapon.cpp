@@ -87,62 +87,59 @@ void CWeaponWithAmmo::GameFrame()
             return;
     }
 
-    // Check to reload secondary ammo.
+    // Check to reload secondary ammo. It is automatic, no need to press reload button.
     if ( m_pWeapon->bHasSecondary && !m_pWeapon->bSecondaryUseSameBullets && !HasAmmoInClip(1) && HasAmmoExtra(1) )
-    {
         Reload(1);
-        if ( m_pWeapon->fReloadTime[1] == 0.0f )
-            EndReload();
-    }
 
+#ifdef BOTRIX_AUTO_RELOAD_WEAPONS
     // Check to reload primary ammo.
     if ( !HasAmmoInClip(0) && HasAmmoExtra(0) )
-    {
         Reload(0);
-        if ( m_pWeapon->fReloadTime[0] == 0.0f )
-            EndReload();
-    }
+#endif
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CWeaponWithAmmo::Shoot( bool bSecondary )
+void CWeaponWithAmmo::Shoot( int iSecondary )
 {
-    BASSERT( CanUse() && (HasAmmoInClip(bSecondary) || ( IsManual() || IsPhysics() ) ), return );
-    if ( bSecondary && m_pWeapon->bSecondaryUseSameBullets )
-        m_iBulletsInClip[0] -= m_pWeapon->iAttackBullets[bSecondary]; // Shotgun type: uses same bullets for primary and secondary attack.
+    GoodAssert( CanUse() && (HasAmmoInClip(iSecondary) || ( IsManual() || IsPhysics() ) ) );
+    if ( iSecondary && m_pWeapon->bSecondaryUseSameBullets )
+        m_iBulletsInClip[0] -= m_pWeapon->iAttackBullets[iSecondary]; // Shotgun type: uses same bullets for primary and secondary attack.
     else
-        m_iBulletsInClip[bSecondary] -= m_pWeapon->iAttackBullets[bSecondary];
+        m_iBulletsInClip[iSecondary] -= m_pWeapon->iAttackBullets[iSecondary];
     m_bShooting = true;
-    m_bSecondary = bSecondary;
-    m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fShotTime[bSecondary];
+    m_bSecondary = (iSecondary != 0);
+    m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fShotTime[iSecondary];
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CWeaponWithAmmo::Holster( CWeaponWithAmmo& cSwitchTo )
+void CWeaponWithAmmo::Holster( CWeaponWithAmmo* pSwitchFrom, CWeaponWithAmmo& cSwitchTo )
 {
-    BASSERT( !m_bShooting, return );
+    if ( pSwitchFrom )
+    {
+        GoodAssert( !pSwitchFrom->m_bShooting );
 
-    m_bChanging = m_bReloading = m_bChangingZoom = m_bUsingZoom = false;
-    m_fEndTime = CBotrixPlugin::fTime; // Save time when switched weapon.
+        pSwitchFrom->m_bChanging = pSwitchFrom->m_bReloading = pSwitchFrom->m_bChangingZoom = pSwitchFrom->m_bUsingZoom = false;
+        pSwitchFrom->m_fEndTime = CBotrixPlugin::fTime; // Save time when switched weapon.
+    }
 
     if ( cSwitchTo.m_pWeapon->bBackgroundReload && !cSwitchTo.HasAmmoInClip(0) && cSwitchTo.HasAmmoExtra(0) &&
-         CBotrixPlugin::fTime >= cSwitchTo.m_fEndTime + m_pWeapon->fReloadTime[0] )
+         CBotrixPlugin::fTime >= cSwitchTo.m_fEndTime + cSwitchTo.m_pWeapon->fReloadTime[0] )
     {
         cSwitchTo.m_bReloading = true;
         cSwitchTo.EndReload();
     }
 
     cSwitchTo.m_bChanging = true;
-    cSwitchTo.m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fHolsterTime;
+    cSwitchTo.m_fEndTime = CBotrixPlugin::fTime + cSwitchTo.m_pWeapon->fHolsterTime;
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
 void CWeaponWithAmmo::EndReload()
 {
-    BASSERT( m_bReloading && (m_iBulletsInClip[m_bSecondary] < m_pWeapon->iClipSize[m_bSecondary]) );
+    GoodAssert( m_bReloading && (m_iBulletsInClip[m_bSecondary] < m_pWeapon->iClipSize[m_bSecondary]) );
 
     if ( m_pWeapon->iType == EWeaponShotgun ) // Reload one bullet.
     {
@@ -169,13 +166,13 @@ void CWeaponWithAmmo::EndReload()
 void CWeapons::GetRespawnWeapons( good::vector<CWeaponWithAmmo>& aWeapons, TTeam iTeam, TClass iClass )
 {
     aWeapons.clear();
-    aWeapons.reserve( m_aWeapons.size() );
+    aWeapons.reserve( 8 );
 
+    int iTeamFlag = 1 << iTeam;
     int iClassFlag = 1 << iClass;
     for ( int i=0; i < m_aWeapons.size(); ++i )
     {
-        TTeam iWeaponTeam = m_aWeapons[i].GetBaseWeapon()->iTeam;
-        if ( ( (iWeaponTeam == CMod::iUnassignedTeam) || (iWeaponTeam == iTeam) ) &&
+        if ( FLAG_SOME_SET(iTeamFlag, m_aWeapons[i].GetBaseWeapon()->iTeam) &&
              FLAG_SOME_SET(iClassFlag, m_aWeapons[i].GetBaseWeapon()->iClass) )
             aWeapons.push_back( m_aWeapons[i] );
     }
@@ -187,13 +184,14 @@ TWeaponId CWeapons::GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aW
 {
     // Choose best weapon. Skip grenades.
     bool bCanKill = false, bOneBullet = false;
-    int iIdx = -1, iDamage = 0;
+    int iIdx = EWeaponIdInvalid, iDamage = 0;
     float fDamagePerSec = 0.0f;
     for ( int i=0; i < aWeapons.size(); ++i )
     {
         const CWeaponWithAmmo& cWeapon = aWeapons[i];
 
-        if ( !cWeapon.IsPresent() || !cWeapon.IsRanged() || !cWeapon.HasAmmo() ) // Skip all manuals, grenades and physics or without ammo.
+        if ( cWeapon.GetBaseWeapon()->bForbidden || !cWeapon.IsPresent() || 
+            !cWeapon.IsRanged() || !cWeapon.HasAmmo() ) // Skip all manuals, grenades and physics or without ammo.
             continue;
 
         int iDamage0 = cWeapon.Damage(0);
@@ -256,17 +254,17 @@ TWeaponId CWeapons::GetRandomWeapon( TBotIntelligence iIntelligence, const good:
     {
         CWeaponWithAmmo& cWeapon = m_aWeapons[i];
         const CWeapon* pWeapon = cWeapon.GetBaseWeapon();
-        if ( cWeapon.IsRanged() && (iIntelligence <= pWeapon->iBotPreference) && CItems::ExistsOnMap(pWeapon->pWeaponClass))
-            if ( !cSkipWeapons.test(i) )
-                return i;
+        if ( !pWeapon->bForbidden && cWeapon.IsRanged() && (iIntelligence <= pWeapon->iBotPreference) && 
+             CItems::ExistsOnMap(pWeapon->pWeaponClass) && !cSkipWeapons.test(i) )
+            return i;
     }
     for ( TWeaponId i = iIdx; i >= 0; --i )
     {
         CWeaponWithAmmo& cWeapon = m_aWeapons[i];
         const CWeapon* pWeapon = cWeapon.GetBaseWeapon();
-        if ( cWeapon.IsRanged() && (iIntelligence <= pWeapon->iBotPreference) && CItems::ExistsOnMap(pWeapon->pWeaponClass))
-            if ( !cSkipWeapons.test(i) )
-                return i;
+        if ( !pWeapon->bForbidden && cWeapon.IsRanged() && (iIntelligence <= pWeapon->iBotPreference) && 
+             CItems::ExistsOnMap(pWeapon->pWeaponClass) && !cSkipWeapons.test(i) )
+            return i;
     }
 
     return -1;

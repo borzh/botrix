@@ -70,7 +70,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;BOTRIX_SOURCE_2013;BOTRIX_HL2DM_MOD;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BOTRIX_TF2;BOTRIX_HL2DM;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;BOTRIX_SOURCE_2013;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -111,17 +111,25 @@
       <MapExports>true</MapExports>
     </Link>
     <PostBuildEvent>
-      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp\addons" (
+      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+    xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
     copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
     copy /Y "$(OutDir)botrix.pdb" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
 )
-if exist "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons" (
-    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons"
-    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons"
+if exist "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
 )
-if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons" (
-    copy /Y "$(OutDir)botrix.dll" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons"
+if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons\"
     copy /Y "$(OutDir)botrix.pdb" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons"
+)
+if exist "D:\Steam\SteamApps\common\team fortress 2\tf\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\Steam\SteamApps\common\team fortress 2\tf\"
+    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\team fortress 2\tf\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\team fortress 2\tf\addons"
 )
 </Command>
     </PostBuildEvent>
@@ -151,7 +159,7 @@ if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons" (
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;BOTRIX_SOURCE_2013;BOTRIX_HL2DM_MOD;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BOTRIX_TF2;BOTRIX_HL2DM;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;BOTRIX_SOURCE_2013;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -194,17 +202,25 @@ if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons" (
       <AdditionalOptions> /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp\addons" (
+      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+    xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
     copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
     copy /Y "$(OutDir)botrix.pdb" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
 )
-if exist "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons" (
-    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons"
-    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons"
+if exist "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
 )
-if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons" (
-    copy /Y "$(OutDir)botrix.dll" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons"
+if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons\"
     copy /Y "$(OutDir)botrix.pdb" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons"
+)
+if exist "D:\Steam\SteamApps\common\team fortress 2\tf\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\Steam\SteamApps\common\team fortress 2\tf\"
+    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\team fortress 2\tf\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\team fortress 2\tf\addons"
 )
 </Command>
     </PostBuildEvent>
@@ -238,14 +254,9 @@ if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons" (
     <ClInclude Include="good\include\good\thread.h" />
     <ClInclude Include="good\include\good\utility.h" />
     <ClInclude Include="good\include\good\vector.h" />
-    <ClInclude Include="mods\borzh\bot_borzh.h" />
-    <ClInclude Include="mods\borzh\mod_borzh.h" />
-    <ClInclude Include="mods\borzh\planner.h" />
-    <ClInclude Include="mods\borzh\types_borzh.h" />
     <ClInclude Include="mods\hl2dm\bot_hl2dm.h" />
+    <ClInclude Include="mods\hl2dm\mod_hl2dm.h" />
     <ClInclude Include="mods\hl2dm\types_hl2dm.h" />
-    <ClInclude Include="mods\css\event_css.h" />
-    <ClInclude Include="mods\css\types_css.h" />
     <ClInclude Include="bot.h" />
     <ClInclude Include="chat.h" />
     <ClInclude Include="clients.h" />
@@ -254,6 +265,9 @@ if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons" (
     <ClInclude Include="event.h" />
     <ClInclude Include="item.h" />
     <ClInclude Include="mod.h" />
+    <ClInclude Include="mods\tf2\bot_tf2.h" />
+    <ClInclude Include="mods\tf2\mod_tf2.h" />
+    <ClInclude Include="mods\tf2\types_tf2.h" />
     <ClInclude Include="players.h" />
     <ClInclude Include="server_plugin.h" />
     <ClInclude Include="source_engine.h" />
@@ -270,11 +284,7 @@ if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons" (
     <ClCompile Include="good\src\mutex.cpp" />
     <ClCompile Include="good\src\process.cpp" />
     <ClCompile Include="good\src\thread.cpp" />
-    <ClCompile Include="mods\borzh\bot_borzh.cpp" />
-    <ClCompile Include="mods\borzh\mod_borzh.cpp" />
-    <ClCompile Include="mods\borzh\planner.cpp" />
     <ClCompile Include="mods\hl2dm\bot_hl2dm.cpp" />
-    <ClCompile Include="mods\css\event_css.cpp" />
     <ClCompile Include="bot.cpp" />
     <ClCompile Include="chat.cpp" />
     <ClCompile Include="clients.cpp" />
@@ -283,6 +293,9 @@ if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons" (
     <ClCompile Include="event.cpp" />
     <ClCompile Include="item.cpp" />
     <ClCompile Include="mod.cpp" />
+    <ClCompile Include="mods\hl2dm\mod_hl2dm.cpp" />
+    <ClCompile Include="mods\tf2\bot_tf2.cpp" />
+    <ClCompile Include="mods\tf2\mod_tf2.cpp" />
     <ClCompile Include="players.cpp" />
     <ClCompile Include="server_plugin.cpp" />
     <ClCompile Include="source_engine.cpp" />
@@ -292,8 +305,8 @@ if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons" (
     <ClCompile Include="weapon.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="mods\borzh\readme.txt" />
     <None Include="mods\hl2dm\readme.txt" />
+    <None Include="mods\tf2\readme.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

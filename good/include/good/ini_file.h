@@ -113,7 +113,7 @@ namespace good
         {
             config(): key(), value(), junk(), junkIsComment(false), eolAterJunk(false) {}
 
-            config( ini_string const& sKey, ini_string const& sValue, ini_string const& sJunk, bool bIsComment, bool bEOLAfterJunk )
+            config( const ini_string& sKey, const ini_string& sValue, const ini_string& sJunk, bool bIsComment, bool bEOLAfterJunk )
                 :key(sKey), value(sValue), junk(sJunk), junkIsComment(bIsComment), eolAterJunk(bEOLAfterJunk) {}
 
             ini_string key;       ///< Key of this configuration.
@@ -143,7 +143,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Constructor with name.
         //--------------------------------------------------------------------------------------------------------
-        ini_section( ini_string const& sName ): name(sName), junkAfterName(""), m_lKeyValues() {}
+        ini_section( const ini_string& sName ): name(sName), junkAfterName(""), m_lKeyValues() {}
 
         //--------------------------------------------------------------------------------------------------------
         /// Get count of key-values.
@@ -155,7 +155,7 @@ namespace good
          *  If junk is not empty, when saving it, if bIsComment is true then ';' will be used before; and if bEOL
          *  is true then end of line will be used after junk. */
         //--------------------------------------------------------------------------------------------------------
-        iterator add( ini_string const& sKey, ini_string const& sValue, ini_string const& sJunk = "", bool bIsComment = false, bool bEOLAfterJunk = false )
+        iterator add( const ini_string& sKey, const ini_string& sValue, const ini_string& sJunk = "", bool bIsComment = false, bool bEOLAfterJunk = false )
         {
             return m_lKeyValues.insert( m_lKeyValues.end(), config(sKey, sValue, sJunk, bIsComment, bEOLAfterJunk));
         }
@@ -163,7 +163,17 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get value for a key.
         //--------------------------------------------------------------------------------------------------------
-        iterator find( ini_string const& sKey )
+        const_iterator find( const ini_string& sKey ) const
+        {
+            for (const_iterator it = m_lKeyValues.begin(); it != m_lKeyValues.end(); ++it)
+                if (it->key == sKey)
+                    return it;
+            return m_lKeyValues.end();
+        }
+        //--------------------------------------------------------------------------------------------------------
+        /// Get value for a key.
+        //--------------------------------------------------------------------------------------------------------
+        iterator find( const ini_string& sKey )
         {
             for (iterator it = m_lKeyValues.begin(); it != m_lKeyValues.end(); ++it)
                 if (it->key == sKey)
@@ -174,7 +184,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get value for a key. Insert empty value if not exists.
         //--------------------------------------------------------------------------------------------------------
-        ini_string& operator[]( ini_string const& sKey )
+        ini_string& operator[]( const ini_string& sKey )
         {
             iterator it = find(sKey);
             if (it == end())
@@ -185,7 +195,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get junk for a key.
         //--------------------------------------------------------------------------------------------------------
-        ini_string& junk( ini_string const& sKey )
+        ini_string& junk( const ini_string& sKey )
         {
             iterator it = find(sKey);
             return it->value;
@@ -300,7 +310,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get section iterator from section name.
         //--------------------------------------------------------------------------------------------------------
-        ini_section& operator[]( ini_string const& sSection )
+        ini_section& operator[]( const ini_string& sSection )
         {
             for (iterator it = m_lSections.begin(); it != m_lSections.end(); ++it)
                 if (it->name == sSection)
@@ -311,7 +321,18 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get section iterator from section name.
         //--------------------------------------------------------------------------------------------------------
-        iterator find( ini_string const& sSection )
+        const_iterator find( const ini_string& sSection ) const
+        {
+            for (const_iterator it = m_lSections.begin(); it != m_lSections.end(); ++it)
+                if (it->name == sSection)
+                    return it;
+            return m_lSections.end();
+        }
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Get section iterator from section name.
+        //--------------------------------------------------------------------------------------------------------
+        iterator find( const ini_string& sSection )
         {
             for (iterator it = m_lSections.begin(); it != m_lSections.end(); ++it)
                 if (it->name == sSection)

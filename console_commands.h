@@ -466,8 +466,8 @@ public:
     CBotWeaponUnknownCommand()
     {
         m_sCommand = "unknown";
-        m_sHelp = "bot assumption about unknown weapons ('manual' or 'ranged').";
-        m_sDescription = "If bot respawns with or grabs unknown weapon, choose it to be marked as manual or ranged.";
+        m_sHelp = "bot assumption about unknown weapons ('manual' or 'ranged')";
+        m_sDescription = "If bot respawns with or grabs unknown weapon, choose it to be marked as manual or ranged";
         m_iAccessLevel = FCommandAccessBot;
     }
 
@@ -515,6 +515,61 @@ public:
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CBotDefaultIntelligenceCommand: public CConsoleCommand
+{
+public:
+    CBotDefaultIntelligenceCommand()
+    {
+        m_sCommand = "intelligence";
+        m_sHelp = "set default bot intelligence";
+        m_sDescription = "Can be one of: random fool stupied normal smart pro";// TODO: intelligence flags to string.
+        m_iAccessLevel = FCommandAccessBot;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CBotDefaultTeamCommand: public CConsoleCommand
+{
+public:
+    CBotDefaultTeamCommand()
+    {
+        m_sCommand = "team";
+        m_sHelp = "set default bot team";
+        m_sDescription = good::string("Can be one of: ") + CTypeToString::TeamFlagsToString(-1);
+        m_iAccessLevel = FCommandAccessBot;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CBotDefaultClassCommand: public CConsoleCommand
+{
+public:
+    CBotDefaultClassCommand()
+    {
+        m_sCommand = "team";
+        m_sHelp = "set default bot class";
+        m_sDescription = good::string("Can be one of: random ") + CTypeToString::ClassFlagsToString(-1);
+        m_iAccessLevel = FCommandAccessBot;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CBotDefaultCommand: public CConsoleCommandContainer
+{
+public:
+    CBotDefaultCommand()
+    {
+        m_sCommand = "default";
+        Add(new CBotDefaultIntelligenceCommand());
+        Add(new CBotDefaultTeamCommand());
+        if ( CMod::aClassNames.size() )
+            Add(new CBotDefaultClassCommand());
+    }
 };
 
 class CBotDrawPathCommand: public CConsoleCommand
@@ -781,6 +836,7 @@ public:
         Add(new CBotAddCommand());
         Add(new CBotDebugCommand());
         Add(new CBotDrawPathCommand());
+        Add(new CBotDefaultCommand());
         Add(new CBotKickCommand());
         Add(new CBotPauseCommand());
         Add(new CBotTestPathCommand());

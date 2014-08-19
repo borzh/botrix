@@ -36,7 +36,10 @@ class CBot: public CPlayer
 {
 
 public: // Members.
-    static bool bAssumeUnknownWeaponManual; ///< Assume that unknown weapon are manuals.
+    static bool bAssumeUnknownWeaponManual;       ///< Assume that unknown weapon are manuals.
+    static TBotIntelligence iDefaultIntelligence; ///< Default team when adding bots without specify team.
+    static TTeam iDefaultTeam;                    ///< Default team when adding bots without specify team.
+    static TClass iDefaultClass;                  ///< Default class when adding bots without specify class.
 
 public: // Methods.
     /// Constructor.

@@ -26,6 +26,11 @@ extern int iMainBufferSize;
 
 //----------------------------------------------------------------------------------------------------------------
 bool CBot::bAssumeUnknownWeaponManual = false;
+TBotIntelligence CBot::iDefaultIntelligence = -1;
+TTeam CBot::iDefaultTeam = 0;
+TClass CBot::iDefaultClass = -1;
+
+
 float CBot::m_fTimeIntervalCheckUsingMachines = 0.5f;
 int CBot::m_iCheckEntitiesPerFrame = 4;
 

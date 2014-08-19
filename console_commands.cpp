@@ -1632,16 +1632,22 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     // Second argument: intelligence.
-    TBotIntelligence iIntelligence = ( argc > 1 )
-            ? CTypeToString::IntelligenceFromString(argv[1])
-            : ( rand() % EBotIntelligenceTotal );
+    TBotIntelligence iIntelligence = CBot::iDefaultIntelligence;
+    if ( argc > 1 )
+    {
+        good::string sIntelligence( argv[1] );
+        iIntelligence = CTypeToString::IntelligenceFromString(sIntelligence);
+        if ( (iIntelligence == -1) && (sIntelligence != "random") )
+        {
+            BULOG_W(pEdict, "Invalid bot intelligence: %s.", argv[1] );
+            //TODO: BULOG_W( pEdict, "  Must be one of: ", CTypeToString::AllIntelligences() );
+            return ECommandError;
+        }
+    }
 
     if ( iIntelligence == -1 )
-    {
-        BULOG_W(pEdict, "Invalid bot intelligence: %s.", argv[1] );
-        //TODO: BULOG_W( pEdict, "  Must be one of: ", CTypeToString::AllIntelligences() );
-        return ECommandError;
-    }
+        iIntelligence = rand() % EBotIntelligenceTotal;
+
 
     // First argument: name.
     const char* szName;
@@ -1665,8 +1671,7 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
     else
         szName = argv[0];
 
-    // TODO: detect deathmatch.
-    TTeam iTeam = 0;
+    TTeam iTeam = CBot::iDefaultTeam;
     if ( argc > 2 )
     {
         iTeam = CTypeToString::TeamFromString(argv[2]);
@@ -1680,20 +1685,21 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
     int iTotal = 3;
 
     // Mod can have no classes.
-    TClass iClass = 0;
+    TClass iClass = CBot::iDefaultClass;
     if ( CMod::aClassNames.size() )
     {
         iTotal++;
         if ( argc > 3 )
         {
-            iClass = CTypeToString::ClassFromString(argv[3]);
-            if ( iClass == -1 )
+            good::string sClass( argv[3] );
+            iClass = CTypeToString::ClassFromString(sClass);
+            if ( (iClass == -1) && (sClass != "random") )
             {
                 BULOG_W(pEdict, "Invalid class: %s.", argv[3]);
                 return ECommandError;
             }
         }
-        else
+        if ( iClass == -1 )
              iClass = rand() % CMod::aClassNames.size();
     }
 
@@ -1784,6 +1790,110 @@ TCommandResult CBotDebugCommand::Execute( CClient* pClient, int argc, const char
         BULOG_W( pEdict, "Error, no such bot: %s.", argv[0] );
         return ECommandError;
     }
+}
+
+TCommandResult CBotDefaultIntelligenceCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    TCommandResult iResult = ECommandPerformed;
+    if ( argc == 0 )
+    {
+        const char* szIntelligence = (CBot::iDefaultIntelligence == -1)
+            ? "random"
+            : CTypeToString::IntelligenceToString(CBot::iDefaultIntelligence).c_str();
+        BULOG_I( pEdict, "Bot's default intelligence: %s.", szIntelligence );
+    }
+    else if ( argc == 1 )
+    {
+        good::string sIntelligence( argv[0] );
+        TBotIntelligence iIntelligence = CTypeToString::IntelligenceFromString(sIntelligence);
+        if ( (iIntelligence == -1) && (sIntelligence != "random") )
+        {
+            BULOG_W( pEdict, "Error, invalid intelligence: %s.", argv[0] );
+            BULOG_W( pEdict, "Can be one of: random fool stupied normal smart pro" );
+            iResult = ECommandError;
+        }
+        else
+        {
+            BULOG_I( pEdict, "Bot's default intelligence: %s.", argv[0] );
+            CBot::iDefaultIntelligence = iIntelligence;
+        }
+    }
+    else
+    {
+        BULOG_W( pEdict, "Error, invalid arguments count." );
+        iResult = ECommandError;
+    }
+    return iResult;
+}
+
+TCommandResult CBotDefaultTeamCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    TCommandResult iResult = ECommandPerformed;
+    if ( argc == 0 )
+    {
+        BULOG_I( pEdict, "Bot's default team: %s.", CTypeToString::TeamToString(CBot::iDefaultTeam).c_str() );
+    }
+    else if ( argc == 1 )
+    {
+        TTeam iTeam = CTypeToString::TeamFromString(argv[0]);
+        if ( iTeam == -1 )
+        {
+            BULOG_W( pEdict, "Error, invalid team: %s.", argv[0] );
+            BULOG_W( pEdict, "Can be one of: %s", CTypeToString::TeamFlagsToString(-1).c_str() );
+            iResult = ECommandError;
+        }
+        else
+        {
+            BULOG_I( pEdict, "Bot's default team: %s.", argv[0] );
+            CBot::iDefaultTeam = iTeam;
+        }
+    }
+    else
+    {
+        BULOG_W( pEdict, "Error, invalid arguments count." );
+        iResult = ECommandError;
+    }
+    return iResult;
+}
+
+TCommandResult CBotDefaultClassCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    TCommandResult iResult = ECommandPerformed;
+    if ( argc == 0 )
+    {
+        const char* szClass = (CBot::iDefaultClass == -1)
+            ? "random"
+            : CTypeToString::ClassToString(CBot::iDefaultClass).c_str();
+        BULOG_I( pEdict, "Bot's default class: %s.", szClass );
+    }
+    else if ( argc == 1 )
+    {
+        good::string sClass( argv[0] );
+        TClass iClass = CTypeToString::ClassFromString(sClass);
+        if ( (iClass == -1) && (sClass != "random") )
+        {
+            BULOG_W( pEdict, "Error, invalid class: %s.", argv[0] );
+            BULOG_W( pEdict, "Can be one of: random %s.", CTypeToString::ClassFlagsToString(-1).c_str() );
+            iResult = ECommandError;
+        }
+        else
+        {
+            BULOG_I( pEdict, "Bot's default class: %s.", argv[0] );
+            CBot::iDefaultClass = iClass;
+        }
+    }
+    else
+    {
+        BULOG_W( pEdict, "Error, invalid arguments count." );
+        iResult = ECommandError;
+    }
+    return iResult;
 }
 
 TCommandResult CBotDrawPathCommand::Execute( CClient* pClient, int argc, const char** argv )

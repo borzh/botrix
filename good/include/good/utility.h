@@ -105,7 +105,7 @@ namespace good
     template <typename T, typename Container>
     typename Container::const_iterator find( const Container& aContainer, const T& elem )
     {
-        return good::find<T, Container::const_iterator>(aContainer.begin(), aContainer.end(), elem);
+        return good::find<T, typename Container::const_iterator>(aContainer.begin(), aContainer.end(), elem);
     }
 
 
@@ -115,7 +115,7 @@ namespace good
     template <typename T, typename Container>
     typename Container::iterator find( Container& aContainer, const T& elem )
     {
-        return good::find<T, Container::iterator>(aContainer.begin(), aContainer.end(), elem);
+        return good::find<T, typename Container::iterator>(aContainer.begin(), aContainer.end(), elem);
     }
 
 

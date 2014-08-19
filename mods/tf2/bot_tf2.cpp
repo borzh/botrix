@@ -41,17 +41,16 @@ void CBot_TF2::Respawned()
         /*if ( good::starts_with( CBotrixPlugin::instance->sMapName, "arena_" ) )
             m_iDesiredTeam = 1 + ( rand() % 3 ); // 1, 2, or 3.
         else*/
-            m_iDesiredTeam = 2 + ( rand() & 1 ); // 2 or 3.
+        m_iDesiredTeam = 2 + ( rand() & 1 ); // 2 or 3.
+        m_pPlayerInfo->ChangeTeam(m_iDesiredTeam);
     }
-
-    m_pPlayerInfo->ChangeTeam(m_iDesiredTeam);
-    ChangeTeam(m_iDesiredTeam);
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::ChangeTeam( TTeam iTeam )
 {
+    m_iDesiredTeam = iTeam;
     good::string_buffer sb(szMainBuffer, iMainBufferSize, false);
     const good::string& sClass = CTypeToString::ClassToString(m_iClass);
     sb << "joinclass " << sClass;
@@ -122,7 +121,7 @@ void CBot_TF2::Think()
     if ( m_bNeedTaskCheck )
     {
         m_bNeedTaskCheck = false;
-        /*if ( bForceNewTask || m_bFlee 
+        /*if ( bForceNewTask || m_bFlee
 #ifdef BOTRIX_CHAT
             || ( !m_bObjectiveChanged && (m_iObjective == EBotChatUnknown) )
 #endif
@@ -190,8 +189,8 @@ void CBot_TF2::CheckNewTasks( bool bForceTaskChange )
     TBotTaskTf2 iNewTask = EBotTaskTf2Invalid;
     bool bForce = bForceTaskChange || (m_iCurrentTask == EBotTaskTf2Invalid);
 
-    const CWeapon* pWeapon = ( m_bFeatureWeaponCheck && CWeapon::IsValid(m_iBestWeapon) ) 
-        ? m_aWeapons[m_iBestWeapon].GetBaseWeapon() 
+    const CWeapon* pWeapon = ( m_bFeatureWeaponCheck && CWeapon::IsValid(m_iBestWeapon) )
+        ? m_aWeapons[m_iBestWeapon].GetBaseWeapon()
         : NULL;
     TBotIntelligence iWeaponPreference = m_iIntelligence;
 
@@ -199,7 +198,7 @@ void CBot_TF2::CheckNewTasks( bool bForceTaskChange )
     bool bNeedHealthBad = bNeedHealth && ( m_pPlayerInfo->GetHealth() < (CMod::iPlayerMaxHealth/2) );
     bool bAlmostDead = bNeedHealthBad && ( m_pPlayerInfo->GetHealth() < (CMod::iPlayerMaxHealth/5) );
     bool bNeedWeapon = pWeapon && CMod::HasMapItems(EEntityTypeWeapon);
-	bool bNeedAmmo = pWeapon && CMod::HasMapItems(EEntityTypeAmmo);
+    bool bNeedAmmo = pWeapon && CMod::HasMapItems(EEntityTypeAmmo);
 
     TWeaponId iWeapon = EWeaponIdInvalid;
     bool bSecondary = false;

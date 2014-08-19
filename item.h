@@ -175,8 +175,8 @@ public:
     /// Draw items for a given client.
     static void Draw( CClient* pClient );
 
-
 protected:
+    /// Get entity type and class given entity name.
     static TEntityType GetEntityType( const char* szClassName, CEntityClass* & pEntityClass,
                                       TEntityType iFrom, TEntityType iTo, bool bFastCmp = false );
 

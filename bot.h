@@ -35,6 +35,9 @@ class CBotChat; // Forward declaration.
 class CBot: public CPlayer
 {
 
+public: // Members.
+    static bool bAssumeUnknownWeaponManual; ///< Assume that unknown weapon are manuals.
+
 public: // Methods.
     /// Constructor.
     CBot( edict_t* pEdict, TBotIntelligence iIntelligence, TClass iClass );
@@ -173,6 +176,9 @@ protected: // Methods.
 
     // Get time to end aiming to sinchronize angles. Depends on how much 'mouse' distance there are and bot's intelligence.
     float GetEndLookTime();
+
+    // Check current's bot weapon.
+    void WeaponCheckCurrent( bool bAddToBotWeapons );
 
     // Scan bot's weapon.
     void WeaponsScan();

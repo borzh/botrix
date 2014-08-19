@@ -325,15 +325,14 @@ public:
     static int Size() { return m_aWeapons.size(); }
 
     /// Get weapon from weapon id.
-    static const CWeapon* Get( TWeaponId iWeaponId ) { return m_aWeapons[iWeaponId].GetBaseWeapon(); }
+    static const CWeaponWithAmmo& Get( TWeaponId iWeaponId ) { return m_aWeapons[iWeaponId]; }
 
     /// Add weapon.
-    static void Add( CWeaponWithAmmo& cWeapon ) { m_aWeapons.push_back(cWeapon); }
+    static TWeaponId Add( CWeaponWithAmmo& cWeapon ) { m_aWeapons.push_back(cWeapon); return m_aWeapons.size()-1; }
 
     /// Add default weapon.
-    static void SetDefault( TWeaponId iWeaponId, int iExtraAmmo0, int iExtraAmmo1 )
+    static void SetDefault( TWeaponId iWeaponId, int iExtraAmmo0 = -1, int iExtraAmmo1 = -1 )
     {
-        BASSERT( iWeaponId < (int)m_aWeapons.size() );
         m_aWeapons[iWeaponId].AddWeapon(iExtraAmmo0, iExtraAmmo1);
     }
 
@@ -355,7 +354,7 @@ public:
         for ( int i=0; i < m_aWeapons.size(); ++i )
             if ( m_aWeapons[i].GetName() == sName )
                 return i;
-        return -1;
+        return EWeaponIdInvalid;
     }
 
     /// Get weapon from weapon class. Faster.
@@ -364,7 +363,7 @@ public:
         for ( int i=0; i < m_aWeapons.size(); ++i )
             if ( m_aWeapons[i].GetBaseWeapon()->pWeaponClass == pWeaponClass )
                 return i;
-        return -1;
+        return EWeaponIdInvalid;
     }
 
     /// Add weapon to weapons.
@@ -375,13 +374,13 @@ public:
             if ( aWeapons[iWeapon].GetBaseWeapon()->pWeaponClass == pWeaponClass )
             {
                 aWeapons[iWeapon].AddWeapon();
-				return true;
+                return true;
             }
         }
-		return false;
+        return false;
     }
 
-	/// Add ammo to weapons.
+    /// Add ammo to weapons.
     static bool AddAmmo( const CEntityClass* pAmmoClass, good::vector<CWeaponWithAmmo>& aWeapons )
     {
         bool bResult = false;

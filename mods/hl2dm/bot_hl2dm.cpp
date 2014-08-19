@@ -128,7 +128,7 @@ void CBot_HL2DM::Think()
     if ( m_bNeedTaskCheck )
     {
         m_bNeedTaskCheck = false;
-        /*if ( bForceNewTask || m_bFlee 
+        /*if ( bForceNewTask || m_bFlee
 #ifdef BOTRIX_CHAT
             || ( !m_bObjectiveChanged && (m_iObjective == EBotChatUnknown) )
 #endif
@@ -199,14 +199,14 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
     TBotTaskHL2DM iNewTask = EBotTaskInvalid;
     bool bForce = bForceTaskChange || (m_iCurrentTask == EBotTaskInvalid);
 
-	const CWeapon* pWeapon = ( m_bFeatureWeaponCheck && CWeapon::IsValid(m_iBestWeapon) ) ? m_aWeapons[m_iBestWeapon].GetBaseWeapon() : NULL;
+    const CWeapon* pWeapon = ( m_bFeatureWeaponCheck && CWeapon::IsValid(m_iBestWeapon) ) ? m_aWeapons[m_iBestWeapon].GetBaseWeapon() : NULL;
     TBotIntelligence iWeaponPreference = m_iIntelligence;
 
     bool bNeedHealth = CMod::HasMapItems(EEntityTypeHealth) && ( m_pPlayerInfo->GetHealth() < CMod::iPlayerMaxHealth );
     bool bNeedHealthBad = bNeedHealth && ( m_pPlayerInfo->GetHealth() < (CMod::iPlayerMaxHealth/2) );
     bool bAlmostDead = bNeedHealthBad && ( m_pPlayerInfo->GetHealth() < (CMod::iPlayerMaxHealth/5) );
     bool bNeedWeapon = pWeapon && CMod::HasMapItems(EEntityTypeWeapon);
-	bool bNeedAmmo = pWeapon && CMod::HasMapItems(EEntityTypeAmmo);
+    bool bNeedAmmo = pWeapon && CMod::HasMapItems(EEntityTypeAmmo);
 
     TWeaponId iWeapon = EWeaponIdInvalid;
     bool bSecondary = false;
@@ -289,7 +289,7 @@ restart_find_task: // TODO: remove gotos.
             iWeapon = CWeapons::GetRandomWeapon(iPreference, m_cSkipWeapons);
             if ( iWeapon != EWeaponIdInvalid )
             {
-                pEntityClass = CWeapons::Get(iWeapon)->pWeaponClass;
+                pEntityClass = CWeapons::Get(iWeapon).GetBaseWeapon()->pWeaponClass;
                 break;
             }
         }
@@ -301,7 +301,7 @@ restart_find_task: // TODO: remove gotos.
                 iWeapon = CWeapons::GetRandomWeapon(iPreference, m_cSkipWeapons);
                 if ( iWeapon != EWeaponIdInvalid )
                 {
-                    pEntityClass = CWeapons::Get(iWeapon)->pWeaponClass;
+                    pEntityClass = CWeapons::Get(iWeapon).GetBaseWeapon()->pWeaponClass;
                     break;
                 }
             }

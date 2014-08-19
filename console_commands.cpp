@@ -1557,7 +1557,7 @@ TCommandResult AllowOrForbid( bool bForbid, CClient* pClient, int argc, const ch
     {
         for ( TWeaponId i=0; i < CWeapons::Size(); ++i )
         {
-            const CWeapon* pWeapon = CWeapons::Get(i);
+            const CWeapon* pWeapon = CWeapons::Get(i).GetBaseWeapon();
             BULOG_I(pEdict, "%s is %s.", pWeapon->pWeaponClass->sClassName.c_str(), pWeapon->bForbidden ? "forbidden" : "allowed" );
         }
     }
@@ -1565,7 +1565,7 @@ TCommandResult AllowOrForbid( bool bForbid, CClient* pClient, int argc, const ch
     {
         for ( TWeaponId i=0; i < CWeapons::Size(); ++i )
         {
-            const CWeapon* pWeapon = CWeapons::Get(i);
+            const CWeapon* pWeapon = CWeapons::Get(i).GetBaseWeapon();
             ((CWeapon*)pWeapon)->bForbidden = bForbid;
             BULOG_I(pEdict, "%s is %s.", pWeapon->pWeaponClass->sClassName.c_str(), pWeapon->bForbidden ? "forbidden" : "allowed" );
         }
@@ -1577,7 +1577,7 @@ TCommandResult AllowOrForbid( bool bForbid, CClient* pClient, int argc, const ch
             TWeaponId iWeaponId = CWeapons::GetIdFromWeaponName( argv[i] );
             if ( CWeapon::IsValid(iWeaponId) )
             {
-                const CWeapon* pWeapon = CWeapons::Get(iWeaponId);
+                const CWeapon* pWeapon = CWeapons::Get(iWeaponId).GetBaseWeapon();
                 ((CWeapon*)pWeapon)->bForbidden = bForbid;
                 BULOG_I(pEdict, "%s is %s.", argv[i], bForbid ? "forbidden" : "allowed" );
             }
@@ -1598,6 +1598,34 @@ TCommandResult CBotWeaponForbidCommand::Execute( CClient* pClient, int argc, con
     return AllowOrForbid(true, pClient, argc, argv);
 }
 
+TCommandResult CBotWeaponUnknownCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    bool bAssume;
+
+    if ( argc == 1 )
+    {
+        good::string sArg( argv[0] );
+        if ( sArg == "manual" )
+            bAssume = true;
+        else if ( sArg == "ranged" )
+            bAssume = false;
+        else
+        {
+            BULOG_W( pEdict, "Invalid parameter: %s. Should be 'manual' or 'ranged'", argv[0] );
+            return ECommandError;
+        }
+    }
+    else
+    {
+        BULOG_W( pEdict, "Invalid parameters count." );
+        return ECommandError;
+    }
+
+    CBot::bAssumeUnknownWeaponManual = bAssume;
+    return ECommandPerformed;
+}
 
 TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
@@ -2213,7 +2241,7 @@ CMainCommand::CMainCommand()
     Add(new CWaypointCommand);
     Add(new CPathCommand);
     Add(new CItemCommand);
-    Add(new CBotChatCommand);
+    Add(new CBotCommand);
     Add(new CConfigCommand);
     Add(new CVersionCommand);
 

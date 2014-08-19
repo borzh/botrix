@@ -430,6 +430,7 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
+
 //****************************************************************************************************************
 // Weapon commands.
 //****************************************************************************************************************
@@ -446,7 +447,6 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-
 class CBotWeaponForbidCommand: public CConsoleCommand
 {
 public:
@@ -454,6 +454,20 @@ public:
     {
         m_sCommand = "forbid";
         m_sHelp = "forbid bots to use given weapons";
+        m_iAccessLevel = FCommandAccessBot;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CBotWeaponUnknownCommand: public CConsoleCommand
+{
+public:
+    CBotWeaponUnknownCommand()
+    {
+        m_sCommand = "unknown";
+        m_sHelp = "bot assumption about unknown weapons ('manual' or 'ranged').";
+        m_sDescription = "If bot respawns with or grabs unknown weapon, choose it to be marked as manual or ranged.";
         m_iAccessLevel = FCommandAccessBot;
     }
 
@@ -551,6 +565,7 @@ public:
         m_sCommand = "weapon";
         Add(new CBotWeaponAllowCommand());
         Add(new CBotWeaponForbidCommand());
+        Add(new CBotWeaponUnknownCommand());
     }
 };
 
@@ -757,10 +772,10 @@ public:
 //****************************************************************************************************************
 // Container of all commands starting with "bot".
 //****************************************************************************************************************
-class CBotChatCommand: public CConsoleCommandContainer
+class CBotCommand: public CConsoleCommandContainer
 {
 public:
-    CBotChatCommand()
+    CBotCommand()
     {
         m_sCommand = "bot";
         Add(new CBotAddCommand());

@@ -281,7 +281,7 @@ restart_find_task: // TODO: remove gotos.
             iWeapon = CWeapons::GetRandomWeapon(iPreference, m_cSkipWeapons);
             if ( iWeapon != EWeaponIdInvalid )
             {
-                pEntityClass = CWeapons::Get(iWeapon)->pWeaponClass;
+                pEntityClass = CWeapons::Get(iWeapon).GetBaseWeapon()->pWeaponClass;
                 break;
             }
         }
@@ -293,7 +293,7 @@ restart_find_task: // TODO: remove gotos.
                 iWeapon = CWeapons::GetRandomWeapon(iPreference, m_cSkipWeapons);
                 if ( iWeapon != EWeaponIdInvalid )
                 {
-                    pEntityClass = CWeapons::Get(iWeapon)->pWeaponClass;
+                    pEntityClass = CWeapons::Get(iWeapon).GetBaseWeapon()->pWeaponClass;
                     break;
                 }
             }

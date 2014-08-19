@@ -357,7 +357,7 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                                        m_iniFile.name.c_str(), it->name.c_str(), aCurrent[0].c_str());
                         continue;
                     }
-                    const CWeapon* pWeapon = CWeapons::Get(iWeaponId);
+                    const CWeapon* pWeapon = CWeapons::Get(iWeaponId).GetBaseWeapon();
 
                     int iNeedArgument = 1;
 

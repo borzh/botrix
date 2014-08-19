@@ -25,6 +25,7 @@ extern int iMainBufferSize;
 
 
 //----------------------------------------------------------------------------------------------------------------
+bool CBot::bAssumeUnknownWeaponManual = false;
 float CBot::m_fTimeIntervalCheckUsingMachines = 0.5f;
 int CBot::m_iCheckEntitiesPerFrame = 4;
 
@@ -245,6 +246,9 @@ void CBot::Respawned()
         }
     }
 
+    WeaponCheckCurrent(false);
+
+    // Get default weapons.
     CWeapons::GetRespawnWeapons( m_aWeapons, m_pPlayerInfo->GetTeamIndex(), m_iClass );
     WeaponsScan();
 }
@@ -732,7 +736,7 @@ void CBot::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex
                     WeaponChoose();
             }
             else
-                BLOG_W( "%s -> Picked weapon %s, but there is no such weapon for class %s.", GetName(), 
+                BLOG_W( "%s -> Picked weapon %s, but there is no such weapon for class %s.", GetName(),
                         cItem.pItemClass->sClassName.c_str(), CTypeToString::ClassToString(m_iClass).c_str() );
         }
         break;
@@ -870,6 +874,62 @@ float CBot::GetEndLookTime()
 
 
 //----------------------------------------------------------------------------------------------------------------
+void CBot::WeaponCheckCurrent( bool bAddToBotWeapons )
+{
+    // Check weapon bot has.
+    const char* szCurrentWeapon = m_pPlayerInfo->GetWeaponName();
+    if ( szCurrentWeapon )
+    {
+        good::string sCurrentWeapon( szCurrentWeapon );
+        TWeaponId iId = CWeapons::GetIdFromWeaponName( sCurrentWeapon );
+        if ( iId == EWeaponIdInvalid )
+        {
+            // Add weapon class first.
+            BotMessage( "%s -> adding new weapon class %s.", GetName(), szCurrentWeapon );
+            CEntityClass cWeaponClass;
+            cWeaponClass.fRadiusSqr = SQR(CMod::iPlayerRadius);
+            cWeaponClass.szEngineName = szCurrentWeapon;
+            cWeaponClass.sClassName = szCurrentWeapon;
+            const CEntityClass* pClass = CItems::AddItemClassFor( EEntityTypeWeapon, cWeaponClass );
+
+            // Add new weapon to default weapons.
+            BotMessage( "%s -> adding new weapon %s, %s.", GetName(), szCurrentWeapon,
+                        bAssumeUnknownWeaponManual ? "manual" : "ranged" );
+            CWeapon* pNewWeapon = new CWeapon();
+            pNewWeapon->pWeaponClass = pClass;
+
+            // Make it usable by all classes and teams.
+            pNewWeapon->iClass = -1;
+            pNewWeapon->iTeam = -1;
+
+            // Make it has infinite ammo.
+            pNewWeapon->iAttackBullets[CWeapon::PRIMARY] = 0;
+
+            if ( bAssumeUnknownWeaponManual )
+            {
+                pNewWeapon->iType = EWeaponManual;
+            }
+            else
+            {
+                pNewWeapon->iType = EWeaponRifle;
+                pNewWeapon->iClipSize[CWeapon::PRIMARY] = 1;
+                pNewWeapon->iDefaultAmmo[CWeapon::PRIMARY] = 1;
+            }
+            CWeaponWithAmmo cNewWeapon(pNewWeapon);
+            iId = CWeapons::Add(cNewWeapon);
+
+            CWeapons::SetDefault(iId); // Set default ammo.
+
+            if ( bAddToBotWeapons )
+                m_aWeapons.push_back( CWeapons::Get(iId) );
+        }
+        else if ( bAddToBotWeapons )
+            m_aWeapons.push_back( CWeapons::Get(iId) );
+    }
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
 void CBot::WeaponsScan()
 {
     m_bScanWeapons = false;
@@ -893,21 +953,24 @@ void CBot::WeaponsScan()
         }
     }
 
-    // Set bot's best weapon.
-    m_iWeapon = CWeapons::GetBestRangedWeapon(m_aWeapons);
-    if ( m_iWeapon == EWeaponIdInvalid )
-        m_iWeapon = m_iManualWeapon; // Get manual weapon.
+    if ( m_bFeatureWeaponCheck )
+    {
+        // Set bot's best weapon.
+        m_iWeapon = CWeapons::GetBestRangedWeapon(m_aWeapons);
+        if ( m_iWeapon == EWeaponIdInvalid )
+            m_iWeapon = m_iManualWeapon; // Get manual weapon.
 
-    m_iBestWeapon = m_iWeapon;
-    if ( m_iWeapon == EWeaponIdInvalid )
-    {
-        m_bDontAttack = m_bScanWeapons = true; // Don't attack, try later to scan weapons.
-        m_fNextWeaponScanTime = CBotrixPlugin::fTime + 1.0f;
-    }
-    else
-    {
-        const good::string& sWeaponName = m_aWeapons[m_iWeapon].GetName();
-        WeaponSet( sWeaponName );
+        m_iBestWeapon = m_iWeapon;
+        if ( m_iWeapon == EWeaponIdInvalid )
+        {
+            //m_bDontAttack = m_bScanWeapons = true; // Don't attack, try later to scan weapons.
+            //m_fNextWeaponScanTime = CBotrixPlugin::fTime + 1.0f;
+        }
+        else
+        {
+            const good::string& sWeaponName = m_aWeapons[m_iWeapon].GetName();
+            WeaponSet( sWeaponName );
+        }
     }
 }
 
@@ -942,14 +1005,14 @@ void CBot::UpdateWeapon()
         if ( sWeapon != szCurrentWeapon ) // Happens when out of bullets automatically.
         {
             BotError( "%s -> Current weapon %s, should be %s.", GetName(), szCurrentWeapon, sWeapon.c_str() );
-            m_iWeapon = WeaponSearch(szCurrentWeapon);
-            if ( m_iWeapon == EWeaponIdInvalid )
+            TWeaponId iCurrentWeapon = WeaponSearch(szCurrentWeapon);
+            if ( iCurrentWeapon == EWeaponIdInvalid )
             {
                 BotError( "%s -> Unknown weapon %s.", GetName(), szCurrentWeapon );
-                bChooseWeapon = true;
+                WeaponCheckCurrent( true );
             }
             else
-                WeaponChange(m_iWeapon); // As if just switching to new weapon.
+                WeaponChange(iCurrentWeapon); // As if just switching to this weapon.
         }
         else
         {
@@ -1760,7 +1823,7 @@ bool CBot::NavigatorMove()
                     else
                     {
                         GoodAssert( iCurrentWaypoint == m_iDestinationWaypoint );
-                        m_bNeedMove = false; // We have arrived at destination. 
+                        m_bNeedMove = false; // We have arrived at destination.
                     }
                 }
             }

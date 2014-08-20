@@ -223,6 +223,16 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                 BLOG_D( "  %s", CMod::aTeamsNames[i].c_str() );
             }
         }
+        else
+        {
+            BLOG_E( "File \"%s\", section [%s], missing team information.",
+                    m_iniFile.name.c_str(), it->name.c_str() );
+            BLOG_E( "Using default teams (unassigned, spectator, unknown1, unknown2)." );
+            CMod::aTeamsNames.push_back("unassigned");
+            CMod::aTeamsNames.push_back("spectator");
+            CMod::aTeamsNames.push_back("unknown1");
+            CMod::aTeamsNames.push_back("unknown2");
+        }
 
         // Get player classes.
         itSect = it->find("classes");
@@ -234,13 +244,7 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
 
             BLOG_D("Classes names:");
             for ( int i = 0; i < CMod::aTeamsNames.size(); ++i )
-            {
-                if ( CMod::aTeamsNames[i] == "unassigned" )
-                    CMod::iUnassignedTeam = i;
-                else if ( CMod::aTeamsNames[i] == "spectators" )
-                    CMod::iSpectatorTeam = i;
                 BLOG_D( "  %s", CMod::aTeamsNames[i].c_str() );
-            }
         }
     }
 

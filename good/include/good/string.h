@@ -292,7 +292,7 @@ namespace good
                 iCount = length() - iPos;
             if (iCount == 0)
                 return *this;
-            GoodAssert( (iCount > 0) && (iPos < this->length()) && (iPos+iCount <= length()) );
+            GoodAssert( (iCount > 0) && (iPos >= 0) && (iPos < this->length()) && (iPos+iCount <= length()) );
             memmove( &m_pBuffer[iPos], &m_pBuffer[iPos+iCount], (length() - iPos + 1) * sizeof(Char) );
             m_iSize -= iCount;
             return *this;

@@ -231,7 +231,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         base_string_buffer& insert( const string& sOther, int iPos )
         {
-            GoodAssert( iPos <= this->length() );
+            GoodAssert( (0 <= iPos) && (iPos <= this->length()) );
             GoodAssert( sOther.length() > 0 );
             increment( sOther.length() );
             memmove( &this->m_pBuffer[iPos + sOther.length()], &this->m_pBuffer[iPos], (this->length() - iPos) * sizeof(Char) );

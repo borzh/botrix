@@ -318,6 +318,13 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
         sbBuffer << PATH_SEPARATOR << "config.ini";
         CConfiguration::SetFileName(sbBuffer);
         CConfiguration::SetClientAccessLevel("STEAM_ID_LAN", FCommandAccessAll);
+
+        /*BLOG_W( "Using default teams (unassigned, spectator, unknown1, unknown2)." );
+        CMod::aTeamsNames.push_back("unassigned");
+        CMod::aTeamsNames.push_back("spectator");
+        CMod::aTeamsNames.push_back("unknown1");
+        CMod::aTeamsNames.push_back("unknown2");*/
+
     }
 
     // Create console command instance.

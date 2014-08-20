@@ -33,17 +33,15 @@ int EnumFromString( const good::string& s, int iEnumCount, const good::string aS
 
 
 //================================================================================================================
-const good::string& EnumToString( int iEnum, const StringVector& aStrings, const good::string& sDefault )
+inline const good::string& EnumToString( int iEnum, const StringVector& aStrings, const good::string& sDefault )
 {
-    return (0 <= iEnum && iEnum < aStrings.size()) ? aStrings[iEnum] : sDefault;
+    return EnumToString( iEnum, aStrings.size(), aStrings.data(), sDefault );
 }
 
-int EnumFromString( const good::string& s, const StringVector& aStrings )
+inline int EnumFromString( const good::string& s, const StringVector& aStrings )
 {
-    for ( int i=0; i < aStrings.size(); ++i )
-        if ( s == aStrings[i] )
-            return i;
-    return -1;
+    return EnumFromString( s, aStrings.size(), aStrings.data() );
+
 }
 
 
@@ -60,7 +58,8 @@ const good::string& FlagsToString( int iFlags, int iFlagsCount, const good::stri
         if ( FLAG_ALL_SET(1<<i, iFlags) )
             sbBuffer <<  aStrings[i] << ' ';
 
-    sbBuffer.erase(sbBuffer.length()-1, 1); // Erase last space.
+    if ( sbBuffer.size() )
+        sbBuffer.erase(sbBuffer.size()-1, 1); // Erase last space.
     return sbBuffer;
 }
 
@@ -94,9 +93,6 @@ int FlagsFromString( const good::string& s, int iFlagsCount, const good::string 
 }
 
 
-
-
-
 //****************************************************************************************************************
 const good::string& CTypeToString::StringVectorToString( const StringVector& aStrings )
 {
@@ -106,20 +102,25 @@ const good::string& CTypeToString::StringVectorToString( const StringVector& aSt
     for ( StringVector::const_iterator it = aStrings.begin(); it != aStrings.end(); ++it )
         sbBuffer << *it << ' ';
 
+    if ( sbBuffer.size() )
+        sbBuffer.erase(sbBuffer.size()-1, 1); // Erase last space.
+
     return sbBuffer;
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
-const int iYesNoSynonims = 3;
+const int iYesNoSynonims = 4;
 good::string aBools[2*iYesNoSynonims] =
 {
-    "off",
     "false",
     "no",
-    "on",
+    "off",
+    "disable",
     "true",
-    "yes"
+    "yes",
+    "on",
+    "enable",
 };
 
 int CTypeToString::BoolFromString( const good::string& sBool )

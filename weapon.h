@@ -62,8 +62,8 @@ public:
     float fHolsterTime;                          ///< Time from change weapon to be able to shoot.
     float fShotTime[2];                          ///< Duration of shoot (primary and secondary).
     float fReloadTime[2];                        ///< Duration of reload (primary and secondary).
+    float fDamage[2];                            ///< How much damage one bullet does.
 
-    unsigned char iDamage[2];                    ///< How much damage one bullet does.
     unsigned char iClipSize[2];                  ///< How much bullets fit in one clip.
     unsigned char iDefaultAmmo[2];               ///< Count of bullets this weapon gives by default.
     unsigned char iMaxAmmo[2];                   ///< Count of max bullets this weapon can have (besides the clip in the weapon).
@@ -179,7 +179,7 @@ public:
     }
 
     /// Return damage per second this weapon can do with primary ammo.
-    float DamagePerSecond() const { return (float)m_pWeapon->iDamage[0] / m_pWeapon->fShotTime[0]; }
+    float DamagePerSecond() const { return (float)m_pWeapon->fDamage[0] / m_pWeapon->fShotTime[0]; }
 
     /// Return amount of bullets this weapon has for primary or secondary attacks.
     int Bullets( int iSecondary ) const { return m_iBulletsInClip[iSecondary]; }
@@ -188,13 +188,13 @@ public:
     int ExtraBullets( int iSecondary ) const { return m_iBulletsExtra[iSecondary]; }
 
     /// Return approximate damage this weapon can do with bullets in clip.
-    int Damage( int iSecondary ) const { return m_pWeapon->iDamage[iSecondary]; }
+    float Damage( int iSecondary ) const { return m_pWeapon->fDamage[iSecondary]; }
 
     /// Return approximate damage this weapon can do with bullets in clip.
-    int TotalDamage( int iSecondary ) const { return Bullets(iSecondary) * m_pWeapon->iDamage[iSecondary]; }
+    float TotalDamage( int iSecondary ) const { return Bullets(iSecondary) * m_pWeapon->fDamage[iSecondary]; }
 
     /// Return approximate damage this weapon can do without reload.
-    int TotalDamage() const { return TotalDamage(0) + TotalDamage(1); }
+    float TotalDamage() const { return TotalDamage(0) + TotalDamage(1); }
 
     /// Return true if weapon needs to be reloaded.
     bool NeedReload( int iSecondary ) const { return (m_iBulletsInClip[iSecondary] < m_pWeapon->iClipSize[iSecondary]) && HasAmmoExtra(iSecondary); }

@@ -156,6 +156,15 @@ void CBot::TestWaypoints( TWaypointId iFrom, TWaypointId iTo )
     m_bDontAttack = m_bDestinationChanged = m_bNeedMove = m_bLastNeedMove = m_bUseNavigatorToMove = m_bTest = true;
 }
 
+//----------------------------------------------------------------------------------------------------------------
+void CBot::AddWeapon( const char* szWeaponName )
+{
+    m_pController->SetActiveWeapon(szWeaponName);
+    TWeaponId iId = WeaponSearch(szWeaponName);
+    if ( CWeapon::IsValid(iId) )
+        m_aWeapons[iId].AddWeapon();
+}
+
 
 //----------------------------------------------------------------------------------------------------------------
 void CBot::Activated()
@@ -893,7 +902,8 @@ void CBot::WeaponCheckCurrent( bool bAddToBotWeapons )
             BotMessage( "%s -> adding new weapon class %s.", GetName(), szCurrentWeapon );
             CEntityClass cWeaponClass;
             cWeaponClass.fRadiusSqr = SQR(CMod::iPlayerRadius);
-            cWeaponClass.szEngineName = szCurrentWeapon;
+            // Don't set engine name so mod will think that there is no such weapon in this map.
+            //cWeaponClass.szEngineName = szCurrentWeapon;
             cWeaponClass.sClassName = szCurrentWeapon;
             const CEntityClass* pClass = CItems::AddItemClassFor( EEntityTypeWeapon, cWeaponClass );
 
@@ -906,6 +916,7 @@ void CBot::WeaponCheckCurrent( bool bAddToBotWeapons )
             // Make it usable by all classes and teams.
             pNewWeapon->iClass = -1;
             pNewWeapon->iTeam = -1;
+            pNewWeapon->fDamage[0] = 0.01; // DamagePerSecond() will be low to not select unknown weapons by default.
 
             // Make it has infinite ammo.
             pNewWeapon->iAttackBullets[CWeapon::PRIMARY] = 0;
@@ -913,12 +924,14 @@ void CBot::WeaponCheckCurrent( bool bAddToBotWeapons )
             if ( bAssumeUnknownWeaponManual )
             {
                 pNewWeapon->iType = EWeaponManual;
+                pNewWeapon->fShotTime[0] = 0.2f; // Manual weapon: 5 times in a second.
             }
             else
             {
                 pNewWeapon->iType = EWeaponRifle;
                 pNewWeapon->iClipSize[CWeapon::PRIMARY] = 1;
                 pNewWeapon->iDefaultAmmo[CWeapon::PRIMARY] = 1;
+                pNewWeapon->fShotTime[0] = 0.01f; // This will make bot always press attack button.
             }
             CWeaponWithAmmo cNewWeapon(pNewWeapon);
             iId = CWeapons::Add(cNewWeapon);
@@ -1957,7 +1970,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
         vSpeed /= fDeltaTime; // v = (x - x0)/t
 
         // Cancel stuck check if bot needs to stop, or use, or perform action, or it is stucked already.
-        if ( m_bUnderAttack || m_bNeedStop || m_bNeedUse || m_bStuck ||
+        if ( m_bAttackDuck || m_bNeedStop || m_bNeedUse || m_bStuck ||
              m_bStuckBreakObject || m_bStuckUsePhyscannon || m_bStuckTryingSide ||
             (CBotrixPlugin::fTime <= m_fEndActionTime) )
         {

@@ -541,7 +541,7 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                                 pWeapon->iClipSize[bSecondary] = iValue;
 
                             else if ( aCurrent[0] == "damage" )
-                                pWeapon->iDamage[bSecondary] = iValue;
+                                pWeapon->fDamage[bSecondary] = iValue;
 
                             else if ( aCurrent[0] == "delay" )
                                 pWeapon->fShotTime[bSecondary] = iValue / 1000.0f;

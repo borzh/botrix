@@ -27,7 +27,7 @@ CBot_TF2::CBot_TF2( edict_t* pEdict, TBotIntelligence iIntelligence, int iTeam, 
 void CBot_TF2::Respawned()
 {
     CBot::Respawned();
-    m_bAlive = true;
+    m_bAlive = (m_pPlayerInfo->GetHealth() > 0);
 
     m_aWaypoints.reset();
     m_iFailWaypoint = EWaypointIdInvalid;
@@ -42,8 +42,9 @@ void CBot_TF2::Respawned()
             m_iDesiredTeam = 1 + ( rand() % 3 ); // 1, 2, or 3.
         else*/
         m_iDesiredTeam = 2 + ( rand() & 1 ); // 2 or 3.
-        m_pPlayerInfo->ChangeTeam(m_iDesiredTeam);
     }
+    if ( m_iDesiredTeam != GetTeam() )
+        m_pPlayerInfo->ChangeTeam(m_iDesiredTeam);
 }
 
 
@@ -54,9 +55,9 @@ void CBot_TF2::ChangeTeam( TTeam iTeam )
     good::string_buffer sb(szMainBuffer, iMainBufferSize, false);
     const good::string& sClass = CTypeToString::ClassToString(m_iClass);
     sb << "joinclass " << sClass;
-    CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, sb.c_str() );
-    BotMessage( "%s -> jointeam %s, joinclass %s.", GetName(),
+    BotMessage( "%s -> team %s, will joinclass %s.", GetName(),
                 CTypeToString::TeamToString(iTeam).c_str(), sClass.c_str() );
+    CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, sb.c_str() );
 }
 
 

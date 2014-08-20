@@ -1608,7 +1608,7 @@ TCommandResult CBotWeaponAddCommand::Execute( CClient* pClient, int argc, const 
         {
             good::string sBotName = pPlayer->GetName();
             if ( bAll || good::starts_with(sBotName, sName) )
-                ((CBot*)pPlayer)->GetBotController()->SetActiveWeapon(argv[1]);
+                ((CBot*)pPlayer)->AddWeapon(argv[1]);
         }
     }
 

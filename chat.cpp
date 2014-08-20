@@ -20,8 +20,7 @@ good::string sComma(",");
 //----------------------------------------------------------------------------------------------------------------
 const good::string& PhraseToString( const CPhrase& cPhrase )
 {
-    static good::string_buffer sbBuffer;
-    sbBuffer.rdbuf()->pubsetbuf(szMainBuffer, iMainBufferSize);
+    static good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
     sbBuffer.erase();
 
     bool bPrevOptional = false;
@@ -128,8 +127,7 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
         return false;
     }
 
-    good::string_buffer sbCommands;
-    sbBuffer.rdbuf()->pubsetbuf(szMainBuffer, iMainBufferSize);
+    good::string_buffer sbCommands(szMainBuffer, iMainBufferSize, false);
 
     sbCommands = sValue;
     sbCommands.escape();
@@ -424,8 +422,7 @@ bool CChat::AddChat( const good::string& sKey, const good::string& sValue )
 //----------------------------------------------------------------------------------------------------------------
 float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 {
-    good::string_buffer sbBuffer;
-    sbBuffer.rdbuf()->pubsetbuf(szMainBuffer, iMainBufferSize);
+    good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
 
     sbBuffer = sText;
     sbBuffer.trim();
@@ -633,9 +630,7 @@ float CChat::ChatFromText( const good::string& sText, CBotChat& cCommand )
 //----------------------------------------------------------------------------------------------------------------
 const good::string& CChat::ChatToText( const CBotChat& cCommand )
 {
-    static good::string_buffer sbBuffer;
-    sbBuffer.rdbuf()->pubsetbuf(szMainBuffer, iMainBufferSize);
-
+    static good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
     sbBuffer.erase();
 
     BASSERT( (EBotChatUnknown < cCommand.iBotChat) && (cCommand.iBotChat < EBotChatTotal), return sbBuffer );

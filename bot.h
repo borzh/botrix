@@ -72,6 +72,9 @@ public: // Methods.
     /// Bot is created for testing path between two waypoints. Will be kicked if fails, killed, or reaches destination.
     virtual void TestWaypoints( TWaypointId iFrom, TWaypointId iTo );
 
+    /// Add weapon to bot.
+    virtual void AddWeapon( const char* szWeaponName );
+
     //------------------------------------------------------------------------------------------------------------
     // Next functions are mod dependent. You need to implement those in order to make bot moving around.
     //------------------------------------------------------------------------------------------------------------

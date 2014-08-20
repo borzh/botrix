@@ -184,34 +184,34 @@ TWeaponId CWeapons::GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aW
 {
     // Choose best weapon. Skip grenades.
     bool bCanKill = false, bOneBullet = false;
-    int iIdx = EWeaponIdInvalid, iDamage = 0;
-    float fDamagePerSec = 0.0f;
+    int iIdx = EWeaponIdInvalid;
+    float fDamagePerSec = 0.0f, fDamage = 0.0f;
     for ( int i=0; i < aWeapons.size(); ++i )
     {
         const CWeaponWithAmmo& cWeapon = aWeapons[i];
 
-        if ( cWeapon.GetBaseWeapon()->bForbidden || !cWeapon.IsPresent() || 
+        if ( cWeapon.GetBaseWeapon()->bForbidden || !cWeapon.IsPresent() ||
             !cWeapon.IsRanged() || !cWeapon.HasAmmo() ) // Skip all manuals, grenades and physics or without ammo.
             continue;
 
-        int iDamage0 = cWeapon.Damage(0);
-        int iDamage1 = cWeapon.Damage(1);
-        bool bOneBullet0 = (iDamage0 >= CMod::iPlayerMaxHealth);
-        bool bOneBullet1 = (iDamage1 >= CMod::iPlayerMaxHealth);
+        float fDamage0 = cWeapon.Damage(0);
+        float fDamage1 = cWeapon.Damage(1);
+        bool bOneBullet0 = (fDamage0 >= CMod::iPlayerMaxHealth);
+        bool bOneBullet1 = (fDamage1 >= CMod::iPlayerMaxHealth);
 
         // Check if can kill with one bullet first.
-        if ( bOneBullet0 && cWeapon.HasAmmoInClip(0) && (!bOneBullet || (iDamage < iDamage0)) )
+        if ( bOneBullet0 && cWeapon.HasAmmoInClip(0) && (!bOneBullet || (fDamage < fDamage0)) )
         {
             iIdx = i;
             bOneBullet = bCanKill = true;
-            iDamage = iDamage0;
+            fDamage = fDamage0;
             continue;
         }
-        if ( bOneBullet1 && cWeapon.HasAmmoInClip(1) && (!bOneBullet || (iDamage < iDamage1))  )
+        if ( bOneBullet1 && cWeapon.HasAmmoInClip(1) && (!bOneBullet || (fDamage < fDamage1))  )
         {
             iIdx = i;
             bOneBullet = bCanKill = true;
-            iDamage = iDamage1;
+            fDamage = fDamage1;
             continue;
         }
 
@@ -219,8 +219,8 @@ TWeaponId CWeapons::GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aW
             continue;
 
         // Check if weapon has sufficient bullets to kill.
-        iDamage0 = cWeapon.TotalDamage();
-        bool bCanKill0 = iDamage0 >= CMod::iPlayerMaxHealth;          // Has enough bullets to kill?
+        fDamage0 = cWeapon.TotalDamage();
+        bool bCanKill0 = (fDamage0 >= CMod::iPlayerMaxHealth); // Has enough bullets to kill?
         float fDamagePerSec0 = cWeapon.DamagePerSecond(); // How fast this weapon kills.
 
         if ( bCanKill0 && (!bCanKill || (fDamagePerSec < fDamagePerSec0)) )
@@ -235,10 +235,10 @@ TWeaponId CWeapons::GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aW
             continue;
 
         // Check total damage.
-        if ( iDamage < iDamage0 ) // Previous weapon does less damage.
+        if ( fDamage < fDamage0 ) // Previous weapon does less damage.
         {
             iIdx = i;
-            iDamage = iDamage0;
+            fDamage = fDamage0;
         }
     }
     return iIdx;
@@ -248,13 +248,14 @@ TWeaponId CWeapons::GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aW
 //----------------------------------------------------------------------------------------------------------------
 TWeaponId CWeapons::GetRandomWeapon( TBotIntelligence iIntelligence, const good::bitset& cSkipWeapons )
 {
-    TWeaponId iIdx = rand() % Size();
+    int iSize = MIN2( cSkipWeapons.size(), Size() );
 
-    for ( TWeaponId i = iIdx+1; i < Size(); ++i )
+    TWeaponId iIdx = rand() % iSize;
+    for ( TWeaponId i = iIdx+1; i < iSize; ++i )
     {
         CWeaponWithAmmo& cWeapon = m_aWeapons[i];
         const CWeapon* pWeapon = cWeapon.GetBaseWeapon();
-        if ( !pWeapon->bForbidden && cWeapon.IsRanged() && (iIntelligence <= pWeapon->iBotPreference) && 
+        if ( !pWeapon->bForbidden && cWeapon.IsRanged() && (iIntelligence <= pWeapon->iBotPreference) &&
              CItems::ExistsOnMap(pWeapon->pWeaponClass) && !cSkipWeapons.test(i) )
             return i;
     }
@@ -262,7 +263,7 @@ TWeaponId CWeapons::GetRandomWeapon( TBotIntelligence iIntelligence, const good:
     {
         CWeaponWithAmmo& cWeapon = m_aWeapons[i];
         const CWeapon* pWeapon = cWeapon.GetBaseWeapon();
-        if ( !pWeapon->bForbidden && cWeapon.IsRanged() && (iIntelligence <= pWeapon->iBotPreference) && 
+        if ( !pWeapon->bForbidden && cWeapon.IsRanged() && (iIntelligence <= pWeapon->iBotPreference) &&
              CItems::ExistsOnMap(pWeapon->pWeaponClass) && !cSkipWeapons.test(i) )
             return i;
     }

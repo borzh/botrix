@@ -563,7 +563,7 @@ class CBotDefaultClassCommand: public CConsoleCommand
 public:
     CBotDefaultClassCommand()
     {
-        m_sCommand = "team";
+        m_sCommand = "class";
         m_sHelp = "set default bot class";
         m_sDescription = good::string("Can be one of: random ") + CTypeToString::ClassFlagsToString(-1);
         m_iAccessLevel = FCommandAccessBot;

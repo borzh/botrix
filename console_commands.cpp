@@ -74,29 +74,29 @@ int CConsoleCommand::AutoComplete( const char* partial, int partialLength, char 
             good::string part(partial, false, false, partialLength);
 
             int start = m_sCommand.size();
-            if (part[start] == ' ')
+            if ( part[start] == ' ' )
             {
                 int lastSpace = part.rfind(' ');
-                if (lastSpace != good::string::npos)
+                if ( lastSpace != good::string::npos )
                 {
-                    if (!m_bAutoCompleteOnlyOneArgument || lastSpace == start)
+                    if ( !m_bAutoCompleteOnlyOneArgument || (lastSpace == start) )
                     {
                         lastSpace++;
                         good::string partArg(&partial[lastSpace], false, false, partialLength - lastSpace);
 
                         maxLength = COMMAND_COMPLETION_ITEM_LENGTH - (charIndex + lastSpace) - 1; // Save one space for trailing 0.
-                        if (maxLength > 0) // There is still space in autocomplete field.
+                        if ( maxLength > 0 ) // There is still space in autocomplete field.
                         {
-                            for (int i = 0; i < m_cAutoCompleteArguments.size(); ++i)
+                            for ( int i = 0; i < m_cAutoCompleteArguments.size(); ++i )
                             {
                                 const good::string& arg = m_cAutoCompleteArguments[i];
-                                if (good::starts_with(arg, partArg))
+                                if ( good::starts_with(arg, partArg) )
                                 {
                                     strncpy( &commands[strIndex+result][charIndex], partial, lastSpace );
                                     strncpy( &commands[strIndex+result][charIndex+lastSpace], arg.c_str(), MIN2(maxLength, arg.size()+1) );
                                     commands[strIndex+result][COMMAND_COMPLETION_ITEM_LENGTH-1] = 0;
                                     result++;
-                                    if (strIndex+result >= COMMAND_COMPLETION_ITEM_LENGTH-1)
+                                    if ( strIndex+result >= COMMAND_COMPLETION_ITEM_LENGTH-1 )
                                         return result; // Bound check.
                                 }
                             }
@@ -1151,6 +1151,21 @@ TCommandResult CPathSwapCommand::Execute( CClient* pClient, int argc, const char
     return ECommandPerformed;
 }
 */
+
+CPathDrawCommand::CPathDrawCommand()
+{
+    m_sCommand = "drawtype";
+    m_sHelp = "defines how to draw path";
+    m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::PathDrawFlagsToString(FPathDrawAll);
+    m_iAccessLevel = FCommandAccessWaypoint;
+
+    m_cAutoCompleteArguments.push_back(sNone);
+    for (int i=0; i < FPathDrawTotal; ++i)
+        m_cAutoCompleteArguments.push_back( CTypeToString::PathDrawFlagsToString(1<<i).duplicate() );
+    m_cAutoCompleteArguments.push_back(sAll);
+    m_cAutoCompleteArguments.push_back(sNext);
+}
+
 TCommandResult CPathDrawCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     if ( pClient == NULL )

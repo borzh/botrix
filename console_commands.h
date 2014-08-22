@@ -140,6 +140,8 @@ public:
         m_sHelp = "automatically create new waypoints ('off' - disable, 'on' - enable)";
         m_sDescription = "Waypoint will be added when player goes too far from current one.";
         m_iAccessLevel = FCommandAccessWaypoint;
+        m_cAutoCompleteArguments.push_back("on");
+        m_cAutoCompleteArguments.push_back("off");
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -217,6 +219,9 @@ public:
         m_sHelp = "add type to waypoint";
         m_sDescription = good::string("Can be mix of: ") + CTypeToString::WaypointFlagsToString(FWaypointAll);
         m_iAccessLevel = FCommandAccessWaypoint;
+
+        for (int i=0; i < FWaypointAll; ++i)
+            m_cAutoCompleteArguments.push_back( CTypeToString::WaypointFlagsToString(1<<i).duplicate() );
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -242,7 +247,7 @@ public:
     {
         m_sCommand = "argument";
         m_sHelp = "set waypoint arguments (angles, ammo count, weapon index/subindex, armor count, health count)";
-        m_iAccessLevel = FCommandAccessWaypoint;
+        m_iAccessLevel = FCommandAccessWaypoint; // TODO: autocomplete
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -309,14 +314,7 @@ public:
 class CPathDrawCommand: public CConsoleCommand
 {
 public:
-    CPathDrawCommand()
-    {
-        m_sCommand = "drawtype";
-        m_sHelp = "defines how to draw path";
-        m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::PathDrawFlagsToString(FPathDrawAll);
-        m_iAccessLevel = FCommandAccessWaypoint;
-    }
-
+    CPathDrawCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
@@ -385,6 +383,9 @@ public:
         m_sHelp = "add path type (from current waypoint to 'destination').";
         m_sDescription = good::string("Can be mix of: ") + CTypeToString::PathFlagsToString(FPathAll);
         m_iAccessLevel = FCommandAccessWaypoint;
+
+        for (int i=0; i < FPathTotal; ++i)
+            m_cAutoCompleteArguments.push_back( CTypeToString::PathFlagsToString(1<<i).duplicate() );
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -539,6 +540,10 @@ public:
         m_sHelp = "set default bot intelligence";
         m_sDescription = "Can be one of: random fool stupied normal smart pro";// TODO: intelligence flags to string.
         m_iAccessLevel = FCommandAccessBot;
+
+        m_cAutoCompleteArguments.push_back("random");
+        for (int i=0; i < EBotIntelligenceTotal; ++i)
+            m_cAutoCompleteArguments.push_back( CTypeToString::IntelligenceToString(i).duplicate() );
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -553,6 +558,10 @@ public:
         m_sHelp = "set default bot team";
         m_sDescription = good::string("Can be one of: ") + CTypeToString::TeamFlagsToString(-1);
         m_iAccessLevel = FCommandAccessBot;
+
+        m_cAutoCompleteArguments.push_back("random");
+        for (int i=0; i < CMod::aTeamsNames.size(); ++i)
+            m_cAutoCompleteArguments.push_back( CTypeToString::TeamToString(i).duplicate() );
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -567,6 +576,10 @@ public:
         m_sHelp = "set default bot class";
         m_sDescription = good::string("Can be one of: random ") + CTypeToString::ClassFlagsToString(-1);
         m_iAccessLevel = FCommandAccessBot;
+
+        m_cAutoCompleteArguments.push_back("random");
+        for (int i=0; i < CMod::aClassNames.size(); ++i)
+            m_cAutoCompleteArguments.push_back( CTypeToString::ClassToString(i).duplicate() );
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );

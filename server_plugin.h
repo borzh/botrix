@@ -10,12 +10,20 @@
 *
 * 0.0.3
 * @li Plugin is working with Team Fortress 2.
+* @li Escaping new steam ids in config.ini, for example \\[U:1:12345678].
 * @li Fix bug: bots sometimes shooting at spectator :)
 * @li Fix bug: when bot was trying to use weapon he actually was creating it.
 * @li Bots can use manual weapons now.
+* @li Bots can use unknown weapons now:
+*     -# Added command to do this: botrix bot weapon unknown <manual/ranged>.
 * @li Added logic for bot to pursue enemy.
 * @li Added logic for bot to run randomly near engaged enemy.
 * @li Stupied bots will sit down and shoot if enemy is near.
+* @li Added new commands:
+*     -# botrix bot weapon add <bot-name> <weapon-name>
+*     -# botrix bot default intelligence <bot-intelligence>
+*     -# botrix bot default team <bot-team>
+*     -# botrix bot default class <bot-class>
 *
 * 0.0.2
 * @li Default base folder location is <MOD DIRECTORY>/addons/botrix.

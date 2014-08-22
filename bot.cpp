@@ -1794,6 +1794,11 @@ bool CBot::NavigatorMove()
         // Destination changed, make sure to start new path search.
         m_bDestinationChanged = false;
         m_cNavigator.Stop();
+        if ( iCurrentWaypoint == m_iDestinationWaypoint )
+        {
+            m_bNeedMove = false;
+            return true;
+        }
 
         BASSERT( CWaypoint::IsValid(iCurrentWaypoint) && CWaypoint::IsValid(m_iDestinationWaypoint), return true );
         m_bMoveFailure = !m_cNavigator.SearchSetup( iCurrentWaypoint, m_iDestinationWaypoint, m_aAvoidAreas );

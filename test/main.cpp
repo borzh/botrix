@@ -44,6 +44,7 @@ int main(int, char **)
     if ( pPlugin && pPlugin->Load(pFn, pFn) )
     {
         pPlugin->LevelInit("dm_underpass");
+        pPlugin->NetworkIDValidated("Botrix", "[U:1:87645516]");
     }
 
 #ifdef _WIN32

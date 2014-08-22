@@ -136,8 +136,9 @@ set( RUNTIME_PATH "${CMAKE_CURRENT_SOURCE_DIR}/runtime" )
 set( INSTALL_PATHS
     "${SOURCE_SDK_2013_PATH}/mp/game/mod_hl2mp"
     "$ENV{HOME}/steamcmd/hl2dm/hl2mp"
+    "$ENV{HOME}/steamcmd/tf2/tf"
     "$ENV{HOME}/.steam/steam/SteamApps/common/Half-Life 2 Deathmatch/hl2mp"
-    "$ENV{HOME}/.steam/steam/SteamApps/common/Team Fortress 2/tf"
+    #"$ENV{HOME}/.steam/steam/SteamApps/common/Team Fortress 2/tf"
 )
 
 # Post-build: copy runtime files and botrix plugin to INSTALL_PATHS.

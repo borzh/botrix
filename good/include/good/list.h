@@ -92,6 +92,8 @@ namespace good
 
             // Constructor by value.
             iterator ( node_t* n = NULL ): base_class(n) {}
+            // Constructor with const_iterator.
+            iterator ( const_iterator const& itOther ): base_class(itOther) {}
             // Copy constructor.
             iterator ( iterator const& itOther ): base_class(itOther) {}
 

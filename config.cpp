@@ -715,7 +715,7 @@ void CConfiguration::SetGeneralSectionValue( const good::string& sKey, const goo
 TCommandAccessFlags CConfiguration::ClientAccessLevel( const good::string& sSteamId )
 {
     good::ini_section& sect = m_iniFile["User access"];
-    good::ini_section::iterator kv = sect.find(sSteamId);
+    good::ini_section::iterator kv = sect.find_escaped(sSteamId);
 
     TCommandAccessFlags iResult = 0;
     if ( kv != sect.end() )
@@ -723,8 +723,8 @@ TCommandAccessFlags CConfiguration::ClientAccessLevel( const good::string& sStea
          iResult = CTypeToString::AccessFlagsFromString(kv->value);
          if ( iResult == -1 )
          {
-             BLOG_E( "File \"%s\", section [%s], invalid access for %s: %s.",
-                          m_iniFile.name.c_str(), sect.name.c_str(), kv->key.c_str(), kv->value.c_str());
+             BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), sect.name.c_str() );
+             BLOG_E( "  Invalid access for user %s: %s.", kv->key.c_str(), kv->value.c_str() );
              iResult = 0;
          }
     }
@@ -734,8 +734,13 @@ TCommandAccessFlags CConfiguration::ClientAccessLevel( const good::string& sStea
 
 void CConfiguration::SetClientAccessLevel( const good::string& sSteamId, TCommandAccessFlags iAccess )
 {
+    good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
+    sbBuffer.assign(sSteamId);
+    if ( good::starts_with(sbBuffer, '[') )
+        sbBuffer.insert("\\", 0);
+
     good::ini_section& sect = m_iniFile["User access"];
-    sect[sSteamId.duplicate()] = CTypeToString::AccessFlagsToString(iAccess).duplicate();
+    sect[ sbBuffer.duplicate() ] = CTypeToString::AccessFlagsToString(iAccess).duplicate();
     m_bModified = true;
     Save();
 }

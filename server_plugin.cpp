@@ -7,7 +7,7 @@
     #include <direct.h>
     #define getcwd _getcwd
 #else
-    #include <unistd.h>
+    #include <unistd.h> // readlink()
 #endif
 
 // Good headers.
@@ -238,31 +238,14 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 #ifdef _WIN32
     iPos = GetModuleFileName(NULL, szLogBuffer, iLogBufferSize);
 #else
-    iPos = good::file::file_to_memory("/proc/self/cmdline", szLogBuffer, iLogBufferSize);
+    iPos = readlink("/proc/self/exe", szLogBuffer, iLogBufferSize);
     if ( iPos < 0 )
         iPos = 0;
-    else
-        iPos = strnlen(szLogBuffer, iLogBufferSize);
 #endif
 
-    // Remove last '/' and add trailing 0.
-    if ( (iPos > 0) && (szLogBuffer[iPos-1] == PATH_SEPARATOR) )
-        --iPos;
     szLogBuffer[iPos] = 0;
-
-    // Add current directory if path is not absolute.
-    if ( good::file::absolute(szLogBuffer) )
-    {
-        sbBuffer.assign(szLogBuffer, iPos);
-    }
-    else
-    {
-        good::string aux(szLogBuffer, true, true, iPos);
-        if ( getcwd(szLogBuffer, iLogBufferSize) == NULL )
-            szLogBuffer[0] = 0;
-        sbBuffer = szLogBuffer;
-        good::file::append_path(sbBuffer, aux);
-    }
+    GoodAssert( good::file::absolute(szLogBuffer) );
+    sbBuffer = szLogBuffer;
 
     // Remove exe name.
     good::file::dir(sbBuffer);
@@ -300,7 +283,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 
     if ( iModId == EModId_Invalid )
     {
-        BLOG_W("Configuration file not founded.");
+        BLOG_E("Configuration file not founded.");
         BLOG_W("Using default mod HalfLife2Deathmatch without items/weapons.");
         CMod::sModName = "HalfLife2Deathmatch";
         iModId = EModId_HL2DM;
@@ -319,12 +302,14 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
         CConfiguration::SetFileName(sbBuffer);
         CConfiguration::SetClientAccessLevel("STEAM_ID_LAN", FCommandAccessAll);
 
-        /*BLOG_W( "Using default teams (unassigned, spectator, unknown1, unknown2)." );
+        BLOG_W( "Using default teams (unassigned, spectator, unknown1, unknown2)." );
         CMod::aTeamsNames.push_back("unassigned");
         CMod::aTeamsNames.push_back("spectator");
         CMod::aTeamsNames.push_back("unknown1");
-        CMod::aTeamsNames.push_back("unknown2");*/
+        CMod::aTeamsNames.push_back("unknown2");
 
+        BLOG_W( "Using default bot name (Botrix)." );
+        CMod::aBotNames.push_back("Botrix");
     }
 
     // Create console command instance.

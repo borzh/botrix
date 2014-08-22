@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "good/file.h"
+#include "good/string_buffer.h"
 #include "good/ini_file.h"
 
 
@@ -11,6 +12,22 @@ WIN_PRAGMA( warning(disable: 4996) )
 
 namespace good
 {
+
+    //------------------------------------------------------------------------------------------------------------
+    ini_section::const_iterator ini_section::find_escaped( const ini_string& sKey ) const
+    {
+        char szBuffer[1024];
+        good::string_buffer sbBuffer(szBuffer, 1024, false);
+
+        for ( const_iterator it = m_lKeyValues.begin(); it != m_lKeyValues.end(); ++it )
+        {
+            sbBuffer.assign( it->key.c_str(), it->key.size() );
+            good::escape( sbBuffer );
+            if ( sbBuffer == sKey )
+                return it;
+        }
+        return m_lKeyValues.end();
+    }
 
 
     //------------------------------------------------------------------------------------------------------------
@@ -192,13 +209,6 @@ namespace good
                 {
                     if (section)
                         section_end++; // There is need to be 1 more symbol for end of section now.
-
-                    DebugPrint("Invalid ini file %s at line %d, column %d: ", name.c_str(), lineNumber, &buf[pos] - line + 1);
-                    DebugPrint("'[' character in section name or value.\n");
-                    result = IniFileBadSyntax;
-#ifdef INI_FILE_STOP_ON_ERROR
-                    goto ini_file_end_loop;
-#endif
                 }
                 break;
 
@@ -257,15 +267,6 @@ namespace good
                     section = NULL;
                     junk_after_section_name = &buf[pos+1];
                     comment = true; // Force to be junk until end of line.
-                }
-                else
-                {
-                    DebugPrint("Invalid ini file %s at line %d, column %d: ", name.c_str(), lineNumber, &buf[pos] - line + 1);
-                    DebugPrint("'[' character in section name or value.\n");
-                    result = IniFileBadSyntax;
-#ifdef INI_FILE_STOP_ON_ERROR
-                    goto ini_file_end_loop;
-#endif
                 }
                 break;
 

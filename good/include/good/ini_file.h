@@ -165,20 +165,33 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         const_iterator find( const ini_string& sKey ) const
         {
-            for (const_iterator it = m_lKeyValues.begin(); it != m_lKeyValues.end(); ++it)
-                if (it->key == sKey)
+            for ( const_iterator it = m_lKeyValues.begin(); it != m_lKeyValues.end(); ++it )
+                if ( it->key == sKey )
                     return it;
             return m_lKeyValues.end();
         }
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Get value for a escaped key.
+        //--------------------------------------------------------------------------------------------------------
+        inline iterator find( const ini_string& sKey )
+        {
+            const_iterator it( const_cast<const ini_section*>(this)->find(sKey) );
+            return iterator(it);
+        }
+
         //--------------------------------------------------------------------------------------------------------
         /// Get value for a key.
         //--------------------------------------------------------------------------------------------------------
-        iterator find( const ini_string& sKey )
+        const_iterator find_escaped( const ini_string& sKey ) const;
+
+        //--------------------------------------------------------------------------------------------------------
+        /// Get value for a key.
+        //--------------------------------------------------------------------------------------------------------
+        iterator find_escaped( const ini_string& sKey )
         {
-            for (iterator it = m_lKeyValues.begin(); it != m_lKeyValues.end(); ++it)
-                if (it->key == sKey)
-                    return it;
-            return m_lKeyValues.end();
+            const_iterator it( const_cast<const ini_section*>(this)->find_escaped(sKey) );
+            return iterator(it);
         }
 
         //--------------------------------------------------------------------------------------------------------
@@ -187,8 +200,9 @@ namespace good
         ini_string& operator[]( const ini_string& sKey )
         {
             iterator it = find(sKey);
-            if (it == end())
-                it = m_lKeyValues.insert(m_lKeyValues.end(), config(sKey, ini_string(""), ini_string(""), false, false));
+            if ( it == end() )
+                it = m_lKeyValues.insert( m_lKeyValues.end(),
+                                          config(sKey, ini_string(""), ini_string(""), false, false) );
             return it->value;
         }
 
@@ -207,16 +221,14 @@ namespace good
         void remove_junk()
         {
             junkAfterName = "";
-            for (iterator it = m_lKeyValues.begin(); it != m_lKeyValues.end(); ++it)
-            {
+            for ( iterator it = m_lKeyValues.begin(); it != m_lKeyValues.end(); ++it )
                 it->junk = "";
-            }
         }
 
         //--------------------------------------------------------------------------------------------------------
         // Erase key-value-junk configuration.
         //--------------------------------------------------------------------------------------------------------
-        iterator erase(iterator elem)
+        iterator erase( iterator elem )
         {
             return m_lKeyValues.erase(elem);
         }
@@ -258,7 +270,7 @@ namespace good
 
     public: // Types.
 
-        typedef good::list<ini_section> container_t;          ///< Type of container of sections.
+        typedef good::list<ini_section> container_t;         ///< Type of container of sections.
         typedef container_t::const_iterator const_iterator;  ///< Const iterator of sections.
         typedef container_t::iterator iterator;              ///< Iterator of sections.
 
@@ -323,8 +335,8 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         const_iterator find( const ini_string& sSection ) const
         {
-            for (const_iterator it = m_lSections.begin(); it != m_lSections.end(); ++it)
-                if (it->name == sSection)
+            for ( const_iterator it = m_lSections.begin(); it != m_lSections.end(); ++it )
+                if ( it->name == sSection )
                     return it;
             return m_lSections.end();
         }
@@ -334,8 +346,8 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         iterator find( const ini_string& sSection )
         {
-            for (iterator it = m_lSections.begin(); it != m_lSections.end(); ++it)
-                if (it->name == sSection)
+            for ( iterator it = m_lSections.begin(); it != m_lSections.end(); ++it )
+                if ( it->name == sSection )
                     return it;
             return m_lSections.end();
         }
@@ -343,7 +355,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         // Erase section.
         //--------------------------------------------------------------------------------------------------------
-        iterator erase(iterator elem)
+        iterator erase( iterator elem )
         {
             return m_lSections.erase(elem);
         }

@@ -75,6 +75,9 @@ public: // Methods.
     /// Add weapon to bot.
     virtual void AddWeapon( const char* szWeaponName );
 
+    /// Remove all weapons from bot.
+    virtual void RemoveWeapons() { m_pController->RemoveAllItems(false); }
+
     //------------------------------------------------------------------------------------------------------------
     // Next functions are mod dependent. You need to implement those in order to make bot moving around.
     //------------------------------------------------------------------------------------------------------------

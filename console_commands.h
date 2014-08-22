@@ -474,6 +474,19 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
+class CBotWeaponRemoveCommand: public CConsoleCommand
+{
+public:
+    CBotWeaponRemoveCommand()
+    {
+        m_sCommand = "remove";
+        m_sHelp = "remove all weapons from bot";
+        m_iAccessLevel = FCommandAccessBot;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
 class CBotWeaponUnknownCommand: public CConsoleCommand
 {
 public:

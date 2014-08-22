@@ -1640,6 +1640,33 @@ TCommandResult CBotWeaponForbidCommand::Execute( CClient* pClient, int argc, con
     return AllowOrForbid(true, pClient, argc, argv);
 }
 
+TCommandResult CBotWeaponRemoveCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( argc != 1 )
+    {
+        BULOG_W( pEdict, "Invalid parameters count." );
+        return ECommandError;
+    }
+
+    good::string sName( argv[0] );
+    bool bAll = ( sName == "all" );
+
+    for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
+    {
+        CPlayer* pPlayer = CPlayers::Get(i);
+        if ( pPlayer && pPlayer->IsBot() )
+        {
+            good::string sBotName = pPlayer->GetName();
+            if ( bAll || good::starts_with(sBotName, sName) )
+                ((CBot*)pPlayer)->RemoveWeapons();
+        }
+    }
+
+    return ECommandPerformed;
+}
+
 TCommandResult CBotWeaponUnknownCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;

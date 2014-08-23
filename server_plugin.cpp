@@ -139,18 +139,18 @@ IVDebugOverlay* pVDebugOverlay = NULL;
 //----------------------------------------------------------------------------------------------------------------
 #define LOAD_INTERFACE(var,type,version) \
     if ((var =(type*)pInterfaceFactory(version, NULL)) == NULL ) {\
-        BLOG_W("Cannot open interface " version " " #type " " #var);\
+        BLOG_W("Cannot open interface " version);\
         return false;\
     }
 
 #define LOAD_INTERFACE_IGNORE_ERROR(var,type,version) \
     if ((var =(type*)pInterfaceFactory(version, NULL)) == NULL ) {\
-        BLOG_W("Cannot open interface " version " " #type " " #var);\
+        BLOG_W("Cannot open interface " version);\
     }
 
 #define LOAD_GAME_SERVER_INTERFACE(var, type, version) \
     if ((var =(type*)pGameServerFactory(version, NULL)) == NULL ) {\
-        BLOG_W("Cannot open game server interface " version " " #type " " #var);\
+        BLOG_W("Cannot open game server interface " version);\
         return false;\
     }
 
@@ -385,9 +385,10 @@ const char* CBotrixPlugin::GetPluginDescription( void )
 //----------------------------------------------------------------------------------------------------------------
 // Called on level start
 //----------------------------------------------------------------------------------------------------------------
-void CBotrixPlugin::LevelInit( const char* pMapName )
+void CBotrixPlugin::LevelInit( const char* szMapName )
 {
-    sMapName = pMapName;
+    sMapName.assign(szMapName, good::string::npos, true);
+    good::lower_case(sMapName);
 
 #ifndef DONT_USE_VALVE_FUNCTIONS
     ConVar *pTeamplay = pCvar->FindVar("mp_teamplay");
@@ -429,9 +430,11 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
     fEngineTime = pEngineServer->Time();
 
     float fDiff = fEngineTime - fPrevEngineTime;
+#if defined(_DEBUG) || defined(DEBUG)
     if ( fDiff > 1.0f ) // Too low fps, possibly debugging.
         fTime += 0.1f;
     else
+#endif
         fTime += fDiff;
 
     // FPS counting. Used in draw waypoints. TODO: define.
@@ -490,6 +493,7 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
 void CBotrixPlugin::LevelShutdown( void ) // !!!!this can get called multiple times per map change
 {
     bMapRunning = false;
+    sMapName = "";
 
     CPlayers::Clear();
     CWaypoints::Clear();

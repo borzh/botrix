@@ -49,8 +49,10 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
         {
             int iLevel = CTypeToString::LogLevelFromString(kv->value);
             if ( iLevel == -1 )
-                BLOG_E( "File \"%s\", section [%s]: invalid log level %s.", m_iniFile.name.c_str(),
-                        it->name.c_str(), kv->value.c_str() );
+            {
+                BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                BLOG_E( "  Invalid log level %s.", kv->value.c_str() );
+            }
             else
             {
                 CUtil::iLogLevel = iLevel;
@@ -72,8 +74,10 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
             if ( good::log::start_log_to_file( sbBuffer.c_str(), false ) )
                 BLOG_I("Log to file: %s.", kv->value.c_str());
             else
-                BLOG_E( "File \"%s\", section [%s]: can't open log file %s.", m_iniFile.name.c_str(),
-                        it->name.c_str(), kv->value.c_str() );
+            {
+                BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                BLOG_E( "  Can't open log file %s.", kv->value.c_str() );
+            }
         }
 
         // Check log file level.
@@ -82,8 +86,10 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
         {
             int iLevel = CTypeToString::LogLevelFromString(kv->value);
             if ( iLevel == -1 )
-                BLOG_E( "File \"%s\", section [%s]: invalid log level %s.", m_iniFile.name.c_str(),
-                        it->name.c_str(), kv->value.c_str() );
+            {
+                BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                BLOG_E( "  Invalid log level %s.", kv->value.c_str() );
+            }
             else
             {
                 good::log::iFileLogLevel = iLevel;
@@ -97,9 +103,10 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
         {
             int iValue = CTypeToString::BoolFromString(kv->value);
             if ( iValue == -1 )
-                BLOG_E( "File \"%s\", section [%s]: invalid parameter %s for %s.",
-                        m_iniFile.name.c_str(),
-                        it->name.c_str(), kv->value.c_str(), kv->key.c_str() );
+            {
+                BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                BLOG_E( "  Invalid parameter %s for %s.", kv->value.c_str(), kv->key.c_str() );
+            }
             else
             {
                 CMod::bIntelligenceInBotName = (iValue != 0);
@@ -110,17 +117,20 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
         // Get bot names.
         kv = it->find("names");
         if ( kv == it->end() )
-            BLOG_E("File \"%s\", section [%s]: missing bot_names.", m_iniFile.name.c_str(), it->name.c_str());
+        {
+            BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+            BLOG_E( "  Missing bot_names." );
+        }
         else
         {
             sbBuffer = kv->value;
             good::escape(sbBuffer);
             good::split((good::string)sbBuffer, CMod::aBotNames, ',', true);
-        }
 
-        BLOG_D("Bot names:");
-        for ( int i = 0; i < CMod::aBotNames.size(); ++i )
-            BLOG_D( "  %s", CMod::aBotNames[i].c_str() );
+            BLOG_D("Bot names:");
+            for ( int i = 0; i < CMod::aBotNames.size(); ++i )
+                BLOG_D( "  %s", CMod::aBotNames[i].c_str() );
+        }
     }
     else
         BLOG_E("File %s, missing [General] section.", m_iniFile.name.c_str());
@@ -157,14 +167,16 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                                     iModId = CTypeToString::ModFromString(bot->value);
                                     if ( iModId == EModId_Invalid )
                                     {
-                                        BLOG_E("File \"%s\", section [%s], invalid bot -> %s.", m_iniFile.name.c_str(), it->name.c_str(), bot->value.c_str());
+                                        BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                                        BLOG_E( "  Invalid bot -> %s.", bot->value.c_str() );
                                         BLOG_E("Using default bot: hl2dm.");
                                         iModId = EModId_HL2DM;
                                     }
                                 }
                                 else
                                 {
-                                    BLOG_E("Not 'bot' key in section [%s]. Using default bot: hl2dm.", it->name.c_str());
+                                    BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                                    BLOG_E( "  No 'bot' key. Using default bot: hl2dm." );
                                     iModId = EModId_HL2DM;
                                 }
 
@@ -179,7 +191,10 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                 }
             }
             else
-                BLOG_E("File \"%s\", section [%s], invalid mod section (missing games/mods keys).", m_iniFile.name.c_str(), it->name.c_str());
+            {
+                BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                BLOG_E( "  Invalid mod section (missing games/mods keys)." );
+            }
         }
     }
     mod_found:
@@ -188,7 +203,7 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
     {
         BLOG_E( "File %s:", m_iniFile.name.c_str() );
         BLOG_E( "  There is no mod that matches current game (%s) & mod (%s) folders.", sGameDir.c_str(), sModDir.c_str() );
-        BLOG_E( "Using default mod 'HalfLife2Deathmatch'." );
+        BLOG_E( "  Using default mod 'HalfLife2Deathmatch'." );
         CMod::sModName = "HalfLife2Deathmatch";
         sbBuffer = CMod::sModName;
         iModId = EModId_HL2DM;
@@ -225,9 +240,9 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
         }
         else
         {
-            BLOG_E( "File \"%s\", section [%s], missing team information.",
-                    m_iniFile.name.c_str(), it->name.c_str() );
-            BLOG_E( "Using default teams (unassigned, spectator, unknown1, unknown2)." );
+            BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+            BLOG_E( "  Missing team information." );
+            BLOG_E( "  Using default teams (unassigned, spectator, unknown1, unknown2)." );
             CMod::aTeamsNames.push_back("unassigned");
             CMod::aTeamsNames.push_back("spectator");
             CMod::aTeamsNames.push_back("unknown1");
@@ -279,7 +294,10 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                     int iFlag = CTypeToString::EntityClassFlagsFromString(aCurrent[0]);
 
                     if ( iFlag == -1 )
-                        BLOG_E("File \"%s\", section [%s], invalid entity flag %s for %s.",  m_iniFile.name.c_str(), it->name.c_str(), aArguments[i].c_str(), itemIt->key.c_str());
+                    {
+                        BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                        BLOG_E( "  Invalid entity flag %s for %s.",  aArguments[i].c_str(), itemIt->key.c_str());
+                    }
                     else
                     {
                         FLAG_SET(iFlag, cEntityClass.iFlags);
@@ -319,8 +337,9 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                 CItems::SetObjectFlagForModel(iValue, itemIt->key);
             else
             {
-                BLOG_E("File \"%s\", section [%s], invalid object model flag: %s.",  m_iniFile.name.c_str(), it->name.c_str(), itemIt->value.c_str());
-                BLOG_E("Can be one of: %s", CTypeToString::EntityClassFlagsToString(FEntityAll).c_str());
+                BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                BLOG_E( "  Invalid object model flag: %s.", itemIt->value.c_str() );
+                BLOG_E( "  Can be one of: %s", CTypeToString::EntityClassFlagsToString(FEntityAll).c_str() );
             }
         }
     }
@@ -357,8 +376,8 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                     TWeaponId iWeaponId = CWeapons::GetIdFromWeaponName( aCurrent[0] );
                     if ( iWeaponId == -1 )
                     {
-                        BLOG_E("File \"%s\", section [%s], 'default' weapons: unknown weapon '%s', skipping.",
-                                       m_iniFile.name.c_str(), it->name.c_str(), aCurrent[0].c_str());
+                        BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                        BLOG_E( "  'default' weapons, unknown weapon '%s', skipping.", aCurrent[0].c_str());
                         continue;
                     }
                     const CWeapon* pWeapon = CWeapons::Get(iWeaponId).GetBaseWeapon();
@@ -371,8 +390,10 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                         iNeedArgument++;
 
                     if ( aCurrent.size() != iNeedArgument )
-                        BLOG_E("File \"%s\", section [%s], 'default' weapons, weapon '%s': invalid parameters count.",
-                                       m_iniFile.name.c_str(), it->name.c_str(), aCurrent[0].c_str());
+                    {
+                        BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                        BLOG_E( "  'default' weapons, weapon '%s': invalid parameters count.", aCurrent[0].c_str() );
+                    }
 
                     // Get primary extra ammo for this weapon.
                     int iExtra[2] = { -1, -1 };
@@ -380,8 +401,10 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                     {
                         sscanf( aCurrent[1].c_str(), "%d", &iExtra[0]);
                         if ( iExtra[0] < 0 )
-                            BLOG_E("File \"%s\", section [%s], 'default' weapons, weapon '%s': invalid parameter %s.",
-                                           m_iniFile.name.c_str(), it->name.c_str(), aCurrent[0].c_str(), aCurrent[1].c_str());
+                        {
+                            BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                            BLOG_E( "  'default' weapons, weapon '%s': invalid parameter %s.", aCurrent[0].c_str(), aCurrent[1].c_str() );
+                        }
                     }
 
                     // Get secondary extra ammo.
@@ -389,21 +412,23 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                     {
                         sscanf( aCurrent[2].c_str(), "%d", &iExtra[1]);
                         if ( iExtra[1] < 0 )
-                            BLOG_E("File \"%s\", section [%s], 'default' weapons, weapon '%s': invalid parameter %s.",
-                                           m_iniFile.name.c_str(), it->name.c_str(), aCurrent[0].c_str(), aCurrent[3].c_str());
+                        {
+                            BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                            BLOG_E( "  'default' weapons, weapon '%s': invalid parameter %s.", aCurrent[0].c_str(), aCurrent[3].c_str() );
+                        }
                     }
 
                     if ( pWeapon->iClipSize[0] && (iExtra[0] < 0) )
                     {
                         iExtra[0] = pWeapon->iDefaultAmmo[0];
-                        BLOG_E("File \"%s\", section [%s], 'default' weapons, weapon '%s': using default primary %u.",
-                                       m_iniFile.name.c_str(), it->name.c_str(), aCurrent[0].c_str(), iExtra[0]);
+                        BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                        BLOG_E( "  'default' weapons, weapon '%s': using default primary %u.", aCurrent[0].c_str(), iExtra[0] );
                     }
                     if ( pWeapon->iClipSize[1] && (iExtra[1] < 0) )
                     {
                         iExtra[1] = pWeapon->iDefaultAmmo[1];
-                        BLOG_E("File \"%s\", section [%s], 'default' weapons, weapon '%s': using default secondary %u.",
-                                       m_iniFile.name.c_str(), it->name.c_str(), aCurrent[0].c_str(), iExtra[1]);
+                        BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                        BLOG_E( "  'default' weapons, weapon '%s': using default secondary %u.", aCurrent[0].c_str(), iExtra[1] );
                     }
 
                     CWeapons::SetDefault( iWeaponId, iExtra[0] >= 0 ? iExtra[0] : 0, iExtra[1] >= 0 ? iExtra[1] : 0);
@@ -434,8 +459,8 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                                 TClass iClass = CTypeToString::ClassFromString(aCurrent[i]);
                                 if ( iClass == -1 )
                                 {
-                                    BLOG_E("File \"%s\", section [%s], weapon %s, invalid class: %s.",
-                                                   m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[1].c_str());
+                                    BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                                    BLOG_E( "  Weapon %s, invalid class: %s.", itemIt->key.c_str(), aCurrent[1].c_str() );
                                     bError = true;
                                     break;
                                 }
@@ -446,8 +471,8 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                         }
                         else
                         {
-                            BLOG_E("File \"%s\", section [%s], weapon %s, class not specified.",
-                                           m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str());
+                            BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                            BLOG_E( "  Weapon %s, class not specified.", itemIt->key.c_str() );
                             bError = true;
                             break;
                         }
@@ -466,8 +491,8 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                             pWeapon->bAddClip = true;
                         else
                         {
-                            BLOG_E("File \"%s\", section [%s], weapon %s, unknown keyword: %s or invalid parameters count.",
-                                m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[0].c_str());
+                            BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                            BLOG_E( "  Weapon %s, unknown keyword: %s or invalid parameters count.", itemIt->key.c_str(), aCurrent[0].c_str() );
                             bError = true;
                             break;
                         }
@@ -479,8 +504,8 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                             int iType = CTypeToString::WeaponTypeFromString(aCurrent[1]);
                             if ( iType == -1 )
                             {
-                                BLOG_E("File \"%s\", section [%s], weapon %s, invalid weapon type: %s.",
-                                               m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[1].c_str());
+                                BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                                BLOG_E( "  Weapon %s, invalid type: %s.", itemIt->key.c_str(), aCurrent[1].c_str() );
                                 bError = true;
                                 break;
                             }
@@ -506,8 +531,10 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                         {
                             iValue = CTypeToString::PreferenceFromString(aCurrent[1]);
                             if ( iValue == -1 )
-                                BLOG_E("File \"%s\", section [%s], weapon %s, invalid preference: %s, using 'lowest'.",
-                                               m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[1].c_str());
+                            {
+                                BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                                BLOG_E( "  Weapon %s, invalid preference: %s, using 'lowest'.", itemIt->key.c_str(), aCurrent[1].c_str() );
+                            }
                             else
                                 pWeapon->iBotPreference = iValue;
                         }
@@ -516,9 +543,8 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                             iValue = CMod::GetTeamIndex(aCurrent[1]);
                             if ( iValue == -1 )
                             {
-                                BLOG_E("File \"%s\", section [%s], weapon %s, invalid team: %s.",
-                                            m_iniFile.name.c_str(), it->name.c_str(),
-                                            itemIt->key.c_str(), aCurrent[1].c_str());
+                                BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                                BLOG_E( "  Weapon %s, invalid team: %s.", itemIt->key.c_str(), aCurrent[1].c_str() );
                                 bError = true;
                                 break;
                             }
@@ -534,9 +560,8 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                             sscanf(aCurrent[1].c_str(), "%d", &iValue);
                             if ( iValue < 0 )
                             {
-                                BLOG_E("File \"%s\", section [%s], weapon %s, invalid number: %s for parameter %s.",
-                                               m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(),
-                                               aCurrent[1].c_str(), aCurrent[0].c_str());
+                                BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                                BLOG_E( "   Weapon %s, invalid number: %s for parameter %s.", itemIt->key.c_str(), aCurrent[1].c_str(), aCurrent[0].c_str() );
                                 bError = true;
                                 break;
                             }
@@ -579,8 +604,8 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
 
                             else
                             {
-                                BLOG_E("File \"%s\", section [%s], weapon %s, unknown keyword: %s or invalid parameters count.",
-                                               m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[0].c_str());
+                                BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                                BLOG_E( "  Weapon %s, unknown keyword: %s or invalid parameters count.", itemIt->key.c_str(), aCurrent[0].c_str() );
                                 bError = true;
                                 break;
                             }
@@ -590,8 +615,8 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                     {
                         if ( (aCurrent.size() & 1) == 0 ) // Number must be odd.
                         {
-                            BLOG_E("File \"%s\", section [%s], weapon %s: invalid parameters count for %s.",
-                                           m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[0].c_str());
+                            BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                            BLOG_E( "  Weapon %s, invalid parameters count for %s.", itemIt->key.c_str(), aCurrent[0].c_str() );
                             bError = true;
                             break;
                         }
@@ -602,8 +627,9 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                             sscanf(aCurrent[i+1].c_str(), "%d", &iValue);
                             if ( iValue <= 0 ) // Ammo count can't be 0.
                             {
-                                BLOG_E("File \"%s\", section [%s], weapon %s, invalid parameter for '%s' ammo's count: %s.",
-                                               m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[i].c_str(), aCurrent[i+1].c_str());
+                                BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                                BLOG_E( "  Weapon %s, invalid parameter for '%s' ammo's count: %s.",
+                                        itemIt->key.c_str(), aCurrent[i].c_str(), aCurrent[i+1].c_str());
                                 bError = true;
                                 break;
                             }
@@ -617,8 +643,8 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
                     }
                     else
                     {
-                        BLOG_E("File \"%s\", section [%s], weapon %s: unknown parameter %s.",
-                                       m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), aCurrent[0].c_str());
+                        BLOG_E( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                        BLOG_E( "  Weapon %s: unknown parameter %s.", itemIt->key.c_str(), aCurrent[0].c_str() );
                         bError = true;
                         break;
                     }

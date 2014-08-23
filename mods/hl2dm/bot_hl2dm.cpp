@@ -14,10 +14,11 @@
 extern char* szMainBuffer;
 extern int iMainBufferSize;
 
+
 //----------------------------------------------------------------------------------------------------------------
 CBot_HL2DM::CBot_HL2DM( edict_t* pEdict, TBotIntelligence iIntelligence ):
-    CBot(pEdict, iIntelligence, 0), m_aWaypoints(CWaypoints::Size()),
-    m_cItemToSearch(-1, -1), m_cSkipWeapons( CWeapons::Size() )
+    CBot(pEdict, iIntelligence, -1), m_aWaypoints(CWaypoints::Size()), m_cItemToSearch(-1, -1),
+    m_cSkipWeapons( CWeapons::Size() ), m_pChasedEnemy(NULL)
 {
     m_bShootAtHead = false;
 }
@@ -42,13 +43,6 @@ void CBot_HL2DM::Activated()
         //CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, "cl_playermodel" + pModel->c_str() );
         CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(m_pEdict, "cl_playermodel", pModel->c_str());
     }
-
-    m_aWaypoints.reset();
-    m_iFailWaypoint = EWaypointIdInvalid;
-
-    m_iCurrentTask = EBotTaskInvalid;
-    m_bNeedTaskCheck = true;
-    m_bChasing = false;
 }
 
 
@@ -93,6 +87,9 @@ void CBot_HL2DM::Think()
         return;
     }
 
+    if ( iCurrentWaypoint == EWaypointIdInvalid )
+        return;
+
     bool bForceNewTask = false;
 
     // Check for move failure.
@@ -108,7 +105,7 @@ void CBot_HL2DM::Think()
 
         if ( m_iFailsCount >= 3 )
         {
-            BotMessage("Failed to follow path on same waypoint %d 3 times, marking task as finished.", iCurrentWaypoint);
+            BLOG_W("Failed to follow path on same waypoint %d 3 times, marking task as finished.", iCurrentWaypoint);
             TaskFinished();
             m_bNeedTaskCheck = bForceNewTask = true;
             m_iFailsCount = 0;
@@ -177,7 +174,6 @@ void CBot_HL2DM::Think()
 //----------------------------------------------------------------------------------------------------------------
 void CBot_HL2DM::ReceiveChat( int /*iPlayerIndex*/, CPlayer* /*pPlayer*/, bool /*bTeamOnly*/, const char* /*szText*/ )
 {
-
 }
 
 
@@ -199,7 +195,9 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
     TBotTaskHL2DM iNewTask = EBotTaskInvalid;
     bool bForce = bForceTaskChange || (m_iCurrentTask == EBotTaskInvalid);
 
-    const CWeapon* pWeapon = ( m_bFeatureWeaponCheck && CWeapon::IsValid(m_iBestWeapon) ) ? m_aWeapons[m_iBestWeapon].GetBaseWeapon() : NULL;
+    const CWeapon* pWeapon = ( m_bFeatureWeaponCheck && CWeapon::IsValid(m_iBestWeapon) )
+        ? m_aWeapons[m_iBestWeapon].GetBaseWeapon()
+        : NULL;
     TBotIntelligence iWeaponPreference = m_iIntelligence;
 
     bool bNeedHealth = CMod::HasMapItems(EEntityTypeHealth) && ( m_pPlayerInfo->GetHealth() < CMod::iPlayerMaxHealth );
@@ -251,7 +249,6 @@ restart_find_task: // TODO: remove gotos.
             iNewTask = EBotTaskFindAmmo;
             // Prefer search for secondary ammo only if has extra bullets for primary.
             bSecondary = bNeedAmmo1 && (m_aWeapons[m_iBestWeapon].ExtraBullets(0) > 0);
-            pEntityClass = pWeapon->aAmmos[bSecondary][ rand() % pWeapon->aAmmos[bSecondary].size() ];
         }
         else if ( bNeedHealth ) // Need health (but has more than 50%).
             iNewTask = EBotTaskFindHealth;
@@ -325,11 +322,11 @@ restart_find_task: // TODO: remove gotos.
         }
         else
         {
-            int iIdx = rand() % pWeapon->aAmmos[bSecondary].size();
-            pEntityClass = pWeapon->aAmmos[bSecondary][ iIdx ]; // Randomly search for ammo.
+            int iAmmoEntitiesSize = pWeapon->aAmmos[bSecondary].size();
+            pEntityClass = (iAmmoEntitiesSize > 0) ? pWeapon->aAmmos[bSecondary][ rand() % iAmmoEntitiesSize ] : NULL;
         }
 
-        if ( !CItems::ExistsOnMap(pEntityClass) ) // There are no such weapon/ammo on the map.
+        if ( !pEntityClass || !CItems::ExistsOnMap(pEntityClass) ) // There are no such weapon/ammo on the map.
         {
             iNewTask = EBotTaskFindEnemy; // Just find enemy.
             pEntityClass = NULL;
@@ -372,19 +369,17 @@ find_enemy:
         {
             // Just go to some random waypoint.
             m_iTaskDestination = -1;
-            if ( CWaypoints::Size() >= 2 )
-            {
-                do {
-                    m_iTaskDestination = rand() % CWaypoints::Size();
-                } while ( m_iTaskDestination == iCurrentWaypoint );
-            }
+            GoodAssert( CWaypoints::Size() >= 2 );
+            do {
+                m_iTaskDestination = rand() % CWaypoints::Size();
+            } while ( m_iTaskDestination == iCurrentWaypoint );
         }
 
         // Check if waypoint to go to is valid.
-        if ( (m_iTaskDestination == -1) || (m_iTaskDestination == iCurrentWaypoint) )
+        if ( (m_iTaskDestination == EWaypointIdInvalid) || (m_iTaskDestination == iCurrentWaypoint) )
         {
-            BotMessage( "%s -> task %s, invalid waypoint %d (current %d), recalculate task.", GetName(),
-                        CTypeToString::BotTaskToString(m_iCurrentTask).c_str(), m_iTaskDestination, iCurrentWaypoint );
+            BLOG_W( "%s -> task %s, invalid destination waypoint %d (current %d), recalculate task.", GetName(),
+                    CTypeToString::BotTaskToString(m_iCurrentTask).c_str(), m_iTaskDestination, iCurrentWaypoint );
             m_iCurrentTask = -1;
             m_bNeedTaskCheck = true; // Check new task in next frame.
             m_bNeedMove = m_bUseNavigatorToMove = m_bDestinationChanged = false;
@@ -394,7 +389,7 @@ find_enemy:
         }
         else
         {
-            BotMessage( "%s -> new task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
+            BotMessage( "%s -> new task: %s (%s), waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
                         pEntityClass ? pEntityClass->sClassName.c_str() : "", m_iTaskDestination, iCurrentWaypoint );
 
             m_iDestinationWaypoint = m_iTaskDestination;

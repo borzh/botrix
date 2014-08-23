@@ -361,7 +361,7 @@ void CItems::CheckNewEntity( edict_t* pEdict )
                 BLOG_W("Warning: entity %s %d doesn't have waypoint close.", pEdict->GetClassName(), iIndex+1);
                 TWaypointId iWaypoint = CWaypoints::GetNearestWaypoint( cItem.vOrigin );
                 if ( CWaypoint::IsValid(iWaypoint) )
-                    BLOG_W("\tNearest waypoint %d.", iWaypoint);
+                    BLOG_W("  Nearest waypoint %d.", iWaypoint);
             }
             else if ( iEntityType == EEntityTypeDoor && !CWaypoint::IsValid((TWaypointId)cItem.pArguments) )
                 BLOG_W("Door %d doesn't have 2 waypoints near.", iIndex);

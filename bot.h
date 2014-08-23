@@ -4,17 +4,15 @@
 
 #include <good/bitset.h>
 
-#include "types.h"
-
 #include "chat.h"
 #include "item.h"
 #include "mod.h"
 #include "players.h"
 #include "server_plugin.h"
 #include "source_engine.h"
+#include "types.h"
 #include "waypoint_navigator.h"
 #include "weapon.h"
-
 
 #include "public/mathlib/vector.h"
 #include "public/eiface.h"
@@ -22,7 +20,7 @@
 
 
 #define BotMessage(...)             GOOD_SCOPE_START if ( m_bDebugging ) BLOG_I(__VA_ARGS__); GOOD_SCOPE_END
-#define BotError(...)               BLOG_E(__VA_ARGS__)
+
 
 class CBotChat; // Forward declaration.
 
@@ -76,7 +74,11 @@ public: // Methods.
     virtual void AddWeapon( const char* szWeaponName );
 
     /// Remove all weapons from bot.
-    virtual void RemoveWeapons() { m_pController->RemoveAllItems(false); }
+    virtual void RemoveWeapons() {
+        m_pController->RemoveAllItems(false);
+        m_aWeapons.clear();
+        m_iWeapon = m_iBestWeapon = m_iManualWeapon = m_iPhyscannon = EWeaponIdInvalid;
+    }
 
     //------------------------------------------------------------------------------------------------------------
     // Next functions are mod dependent. You need to implement those in order to make bot moving around.
@@ -228,7 +230,7 @@ protected: // Methods.
         for ( TWeaponId i = 0; i < m_aWeapons.size(); ++i )
             if ( m_aWeapons[i].GetName() == szWeapon )
                 return i;
-        return EWaypointIdInvalid;
+        return EWeaponIdInvalid;
     }
 
     // Choose best attack weapon from available weapons.
@@ -344,8 +346,6 @@ protected: // Members.
 
     good::pair<int, int> m_cAttackDuckRangeSqr;                    // Will duck if attacking & m_bFeatureAttackDuckEnabled & in range.
 
-    float m_fNextWeaponScanTime;
-
 #ifdef BOTRIX_CHAT
     TBotChat m_iObjective, m_iPrevRequest;                         // Current and last chat request.
     TBotChat m_iPrevTalk;                                          // Last chat talk.
@@ -406,8 +406,6 @@ protected: // Bot flags.
     bool m_bNeedAttack2:1;                                         // Will press attack button 2 at m_fStartActionTime until m_fEndActionTime.
     bool m_bNeedJump:1;                                            // Will jump once at m_fStartActionTime.
     bool m_bNeedJumpDuck:1;                                        // Will start ducking at m_fStartActionTime and hold duck until m_fEndActionTime.
-
-    bool m_bScanWeapons;                                           // Need to rescan weapons at m_fNextWeaponScanTime.
 
     bool m_bDontBreakObjects:1;                                    // Set to true to not to break nearby objects.
     bool m_bDontThrowObjects:1;                                    // Set to true to not to throw nearby objects.

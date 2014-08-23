@@ -534,7 +534,8 @@ TWaypointId CWaypoints::GetNearestWaypoint(Vector const& vOrigin, const good::bi
                 for (Bucket::iterator it=bucket.begin(); it != bucket.end(); ++it)
                 {
                     TWaypointId iWaypoint = *it;
-                    if (aOmit && aOmit->test(iWaypoint)) continue;
+                    if ( aOmit && aOmit->test(iWaypoint) )
+                        continue;
 
                     WaypointNode& node = m_cGraph[iWaypoint];
                     if ( FLAG_SOME_SET(iFlags, node.vertex.iFlags) )

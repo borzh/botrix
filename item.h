@@ -110,7 +110,8 @@ public:
     static const CEntityClass* GetRandomItemClass( TEntityType iEntityType )
     {
         BASSERT( !m_aItemClasses[iEntityType].empty(), return NULL );
-        return &m_aItemClasses[iEntityType][ rand() % m_aItemClasses[iEntityType].size() ];
+        int iSize = m_aItemClasses[iEntityType].size();
+        return iSize ? &m_aItemClasses[iEntityType][ rand() % iSize ] : NULL;
     }
 
     /// Get array of items of needed type.

@@ -212,7 +212,6 @@ void CConsoleCommandContainer::PrintCommand( edict_t* pPrintTo, int indent )
     szMainBuffer[i]=0;
 
     BULOG_I( pPrintTo, "%s[%s]", szMainBuffer, m_sCommand.c_str() );
-
     for ( int i = 0; i < m_commands.size(); i ++ )
         m_commands[i]->PrintCommand( pPrintTo, indent+1 );
 }

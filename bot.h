@@ -34,10 +34,15 @@ class CBot: public CPlayer
 {
 
 public: // Members.
-    static bool bAssumeUnknownWeaponManual;       ///< Assume that unknown weapon are manuals.
-    static TBotIntelligence iDefaultIntelligence; ///< Default team when adding bots without specify team.
-    static TTeam iDefaultTeam;                    ///< Default team when adding bots without specify team.
-    static TClass iDefaultClass;                  ///< Default class when adding bots without specify class.
+    static bool bAssumeUnknownWeaponManual;             ///< Assume that unknown weapon are melees.
+    static TBotIntelligence iDefaultIntelligence;       ///< Default team when adding bots without specify team.
+    static TTeam iDefaultTeam;                          ///< Default team when adding bots without specify team.
+    static TClass iDefaultClass;                        ///< Default class when adding bots without specify class.
+    static TFightStrategyFlags iDefaultFightStrategy;   ///< Flags of default fighting strategy.
+
+    static const float fNearDistanceSqr;                ///< Distance to consider to be near enemy.
+    static const float fFarDistanceSqr;                 ///< Distance to consider to be far away from enemy.
+
 
 public: // Methods.
     /// Constructor.
@@ -77,7 +82,7 @@ public: // Methods.
     virtual void RemoveWeapons() {
         m_pController->RemoveAllItems(false);
         m_aWeapons.clear();
-        m_iWeapon = m_iBestWeapon = m_iManualWeapon = m_iPhyscannon = EWeaponIdInvalid;
+        m_iWeapon = m_iBestWeapon = m_iMeleeWeapon = m_iPhyscannon = EWeaponIdInvalid;
     }
 
     //------------------------------------------------------------------------------------------------------------
@@ -99,7 +104,14 @@ public: // Methods.
     virtual void PlayerDisconnect( int iPlayerIndex, CPlayer* pPlayer );
 
     /// Called when this bot just killed an enemy.
-    virtual void KilledEnemy( int iPlayerIndex, CPlayer* pPlayer ) = 0;
+    virtual void KilledEnemy( int /*iPlayerIndex*/, CPlayer* pPlayer )
+    {
+        if ( pPlayer == m_pCurrentEnemy )
+        {
+            m_pCurrentEnemy = NULL;
+            m_bUnderAttack = false;
+        }
+    }
 
     /// Called when enemy just shot this bot.
     virtual void HurtBy( int iPlayerIndex, CPlayer* pPlayer , int iHealthNow ) = 0;
@@ -340,7 +352,7 @@ protected: // Members.
 
     good::vector<CWeaponWithAmmo> m_aWeapons;                       // Weapons that bot actually has.
     TWeaponId m_iWeapon, m_iBestWeapon;                            // Current / previous / best weapon.
-    TWeaponId m_iPhyscannon, m_iManualWeapon;                      // Index of gravity gun / manual gun, -1 if bot doesn't have it.
+    TWeaponId m_iPhyscannon, m_iMeleeWeapon;                      // Index of gravity gun / melee gun, -1 if bot doesn't have it.
 
     float m_fNextDrawNearObjectsTime;                              // Next time to draw near objects.
 

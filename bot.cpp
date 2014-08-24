@@ -25,14 +25,19 @@ extern int iMainBufferSize;
 
 
 //----------------------------------------------------------------------------------------------------------------
+
 bool CBot::bAssumeUnknownWeaponManual = false;
 TBotIntelligence CBot::iDefaultIntelligence = -1;
 TTeam CBot::iDefaultTeam = 0;
 TClass CBot::iDefaultClass = -1;
+TFightStrategyFlags CBot::iDefaultFightStrategy = FFightStrategyRunAwayIfNear;// TODO: use 0.
 
+const float CBot::fNearDistanceSqr = SQR(350);
+const float CBot::fFarDistanceSqr = SQR(700);
 
 float CBot::m_fTimeIntervalCheckUsingMachines = 0.5f;
 int CBot::m_iCheckEntitiesPerFrame = 4;
+
 
 //----------------------------------------------------------------------------------------------------------------
 CBot::CBot( edict_t* pEdict, TBotIntelligence iIntelligence, TClass iClass ):
@@ -271,7 +276,7 @@ void CBot::Respawned()
             WeaponCheckCurrent(true);
     }
     else
-        m_iManualWeapon = m_iPhyscannon = m_iBestWeapon = m_iWeapon = EWeaponIdInvalid;
+        m_iMeleeWeapon = m_iPhyscannon = m_iBestWeapon = m_iWeapon = EWeaponIdInvalid;
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -460,7 +465,7 @@ void CBot::PreThink()
 
     if ( CWaypoints::Size() <= 3 )
     {
-        BLOG_W( "Please create more waypoints, so I could move." );
+        BLOG_W( "Please create more waypoints, so I could move. I am paused." );
         m_bPaused = true;
         return;
     }
@@ -569,11 +574,17 @@ void CBot::CurrentWaypointJustChanged()
                     }
                 }
             }
-            else // Something went wrong (bot falls or pushed?).
+            else if ( CWaypoint::IsValid(iNextWaypoint) ) // Something went wrong (bot falls or pushed?).
             {
                 BLOG_W("%s -> invalid current waypoint %d (should be %d).", GetName(), iCurrentWaypoint, iNextWaypoint);
                 m_bMoveFailure = true;
                 iCurrentWaypoint = EWaypointIdInvalid;
+                m_cNavigator.Stop();
+            }
+            else
+            {
+                // Can't touch last waypoint, just stop.
+                m_bNeedMove = false;
                 m_cNavigator.Stop();
             }
         }
@@ -915,7 +926,7 @@ void CBot::WeaponCheckCurrent( bool bAddToBotWeapons )
 
             // Add new weapon to default weapons.
             BLOG_W( "%s -> adding new weapon %s, %s.", GetName(), szCurrentWeapon,
-                    bAssumeUnknownWeaponManual ? "manual" : "ranged" );
+                    bAssumeUnknownWeaponManual ? "melee" : "ranged" );
             CWeapon* pNewWeapon = new CWeapon();
             pNewWeapon->pWeaponClass = pClass;
 
@@ -952,8 +963,8 @@ void CBot::WeaponCheckCurrent( bool bAddToBotWeapons )
             iId = m_aWeapons.size()-1;
             WeaponChange(iId); // As if just switching to this weapon.
 
-            if ( !CWeapon::IsValid(m_iManualWeapon) && cNewWeapon.IsManual() )
-                m_iManualWeapon = iId;
+            if ( !CWeapon::IsValid(m_iMeleeWeapon) && cNewWeapon.IsMelee() )
+                m_iMeleeWeapon = iId;
             else if ( !CWeapon::IsValid(m_iPhyscannon) && cNewWeapon.IsPhysics() )
                 m_iPhyscannon = iId;
             else if ( !CWeapon::IsValid(m_iBestWeapon) && cNewWeapon.IsRanged() )
@@ -969,8 +980,8 @@ void CBot::WeaponsScan()
     GoodAssert( m_bFeatureWeaponCheck );
     BotMessage( "%s -> scan weapons.", GetName() );
 
-    // Check if bot has physcannon / manual weapon.
-    m_iPhyscannon = m_iManualWeapon = -1;
+    // Check if bot has physcannon / melee weapon.
+    m_iPhyscannon = m_iMeleeWeapon = -1;
     for ( int i=0; i < m_aWeapons.size(); ++i)
     {
         bool bPresent = WeaponSet( m_aWeapons[i].GetName() );
@@ -979,15 +990,15 @@ void CBot::WeaponsScan()
         {
             if ( m_aWeapons[i].IsPhysics() )
                 m_iPhyscannon = i;
-            else if ( m_aWeapons[i].IsManual() )
-                m_iManualWeapon = i;
+            else if ( m_aWeapons[i].IsMelee() )
+                m_iMeleeWeapon = i;
         }
     }
 
     // Set bot's best weapon.
     m_iWeapon = CWeapons::GetBestRangedWeapon(m_aWeapons);
     if ( !CWeapon::IsValid(m_iWeapon) )
-        m_iWeapon = m_iManualWeapon; // Get manual weapon.
+        m_iWeapon = m_iMeleeWeapon; // Get melee weapon.
 
     m_iBestWeapon = m_iWeapon;
     if ( CWeapon::IsValid(m_iWeapon) )
@@ -1250,7 +1261,7 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
             m_fDistanceSqrToEnemy = fDistanceSqr;
         }
 
-        if (  CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsManual() && m_aWeapons[m_iWeapon].CanUse() &&
+        if (  CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsMelee() && m_aWeapons[m_iWeapon].CanUse() &&
               ( fDistanceSqr <= (SQR(CMod::iPlayerRadius) << 2) ) )
         {
             if ( m_aWeapons[m_iWeapon].GetBaseWeapon()->bHasSecondary )
@@ -1287,8 +1298,8 @@ void CBot::CheckAttackDuck( CPlayer* pPlayer )
 {
     GoodAssert( m_bFeatureAttackDuckEnabled && !m_bDontAttack );
 
-    // Don't duck if using manual weapon.
-    if ( !CWeapon::IsValid(m_iWeapon) || m_aWeapons[m_iWeapon].IsManual() )
+    // Don't duck if using melee weapon.
+    if ( !CWeapon::IsValid(m_iWeapon) || m_aWeapons[m_iWeapon].IsMelee() )
     {
         m_bAttackDuck = false;
         return;
@@ -1315,7 +1326,7 @@ void CBot::CheckAttackDuck( CPlayer* pPlayer )
 //----------------------------------------------------------------------------------------------------------------
 void CBot::EnemyAim()
 {
-    BASSERT( m_pCurrentEnemy, return );
+    GoodAssert( m_pCurrentEnemy );
     //Vector vOldLook(m_vLook);
 
     Vector vEnemyCenter;
@@ -1327,11 +1338,17 @@ void CBot::EnemyAim()
         m_vLook = m_pCurrentEnemy->GetHead();
 
     //float fRand = fDistanceToEnemy / CUtil::iMaxMapSize;
+    // TODO: depend on intelligence.
     m_vLook.x += 10 - (rand()%20); // -10 .. + 10
     m_vLook.y += 10 - (rand()%20); // -10 .. + 10
     m_vLook.z += 10 - (rand()%20); // -10 .. + 10
 
     m_fEndAimTime = GetEndLookTime();
+
+    // Make sure to look far away.
+    m_vLook -= m_vHead;
+    m_vLook *= 1000.0f;
+    m_vLook += m_vHead;
 
     // Take player's speed into account.
     if ( m_iIntelligence >= EBotNormal )
@@ -1389,17 +1406,19 @@ void CBot::WeaponChoose()
     // Choose best ranged weapon.
     m_iBestWeapon = CWeapons::GetBestRangedWeapon(m_aWeapons);
 
-    // Choose manual weapon.
+    // Choose melee weapon.
     if ( m_iBestWeapon == -1 )
-        m_iBestWeapon = m_iManualWeapon;
+        m_iBestWeapon = m_iMeleeWeapon;
 
     if ( m_iBestWeapon == m_iWeapon )
     {
         if ( !m_aWeapons[m_iWeapon].HasAmmoInClip(0) )
             m_bStayReloading = true;
     }
-    else
+    else if ( CWeapon::IsValid(m_iBestWeapon) && m_aWeapons[m_iBestWeapon].IsPresent() )
         WeaponChange(m_iBestWeapon);
+    else
+        m_iBestWeapon = m_iWeapon;
 
     m_bNeedSetWeapon = false;
 }
@@ -1444,7 +1463,7 @@ void CBot::WeaponChange( int iIndex )
     }
     else if ( m_pPlayerInfo->GetWeaponName() )
     {
-        if ( cNew.IsManual() )
+        if ( cNew.IsMelee() )
         {
             BLOG_W( "%s -> could not set weapon %s, not present?", GetName(), sWeaponName.c_str() );
             cNew.SetPresent(false);
@@ -1620,7 +1639,7 @@ bool CBot::ResolveStuckMove()
 
     if ( pObject )
     {
-        if ( !m_bDontBreakObjects && CWeapon::IsValid(m_iManualWeapon) && m_aWeapons[m_iManualWeapon].IsPresent() &&
+        if ( !m_bDontBreakObjects && CWeapon::IsValid(m_iMeleeWeapon) && m_aWeapons[m_iMeleeWeapon].IsPresent() &&
              pObject->IsBreakable() && !pObject->IsExplosive() )
         {
             // Look at origin of the object.
@@ -1852,9 +1871,9 @@ bool CBot::NormalMove()
 {
     GoodAssert( m_bNeedMove );
     bool bArrived = false;
-    if ( m_bDestinationChanged )
+    if ( m_bDestinationChanged && CWaypoint::IsValid(iNextWaypoint) )
     {
-        BASSERT( !CWaypoint::IsValid(iNextWaypoint) || (iNextWaypoint != iCurrentWaypoint) );
+        GoodAssert( iNextWaypoint != iCurrentWaypoint );
         m_vDestination = CWaypoints::Get(iNextWaypoint).vOrigin;
         DoPathAction();
         m_bDestinationChanged = false;
@@ -2121,12 +2140,15 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
                             }
 
                             // Prefer secondary attack.
-                            if ( pWeapon->HasAmmoInClip(1) && pWeapon->IsDistanceSafe(m_fDistanceSqrToEnemy, 1) )
-                                WeaponShoot(CWeapon::SECONDARY);
-                            else if ( pWeapon->HasAmmoInClip(0) && pWeapon->IsDistanceSafe(m_fDistanceSqrToEnemy, 0) )
-                                WeaponShoot(CWeapon::PRIMARY);
-                            else
-                                WeaponChoose(); // No more bullets, select another weapon.
+                            if ( pWeapon->IsRanged() )
+                            {
+                                if ( pWeapon->HasAmmoInClip(1) && pWeapon->IsDistanceSafe(m_fDistanceSqrToEnemy, 1) )
+                                    WeaponShoot(CWeapon::SECONDARY);
+                                else if ( pWeapon->HasAmmoInClip(0) && pWeapon->IsDistanceSafe(m_fDistanceSqrToEnemy, 0) )
+                                    WeaponShoot(CWeapon::PRIMARY);
+                                else
+                                    WeaponChoose(); // No more bullets, select another weapon.
+                            }
                         }
                     }
                     else if ( rand() % 20 ) // 19 out of 20 times shoot primary.
@@ -2198,11 +2220,11 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
     // Start holding attack after m_fStartActionTime.
     if ( m_bNeedAttack )
     {
-        // Set manual weapon.
-        if ( (m_iWeapon != m_iManualWeapon) && CWeapon::IsValid(m_iManualWeapon) )
+        // Set melee weapon.
+        if ( (m_iWeapon != m_iMeleeWeapon) && CWeapon::IsValid(m_iMeleeWeapon) )
         {
             if ( m_aWeapons[m_iWeapon].CanChange() )
-                WeaponChange(m_iManualWeapon);
+                WeaponChange(m_iMeleeWeapon);
         }
         else
         {
@@ -2295,8 +2317,8 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
     {
         BASSERT( m_bTest || !m_bUnderAttack, return );
 
-        if ( CWeapon::IsValid(m_iManualWeapon) && (m_iWeapon != m_iManualWeapon) && m_aWeapons[m_iWeapon].CanChange() )
-            WeaponChange(m_iManualWeapon);
+        if ( CWeapon::IsValid(m_iMeleeWeapon) && (m_iWeapon != m_iMeleeWeapon) && m_aWeapons[m_iWeapon].CanChange() )
+            WeaponChange(m_iMeleeWeapon);
 
         if ( CBotrixPlugin::fTime >= m_fStartActionTime )
         {

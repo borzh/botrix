@@ -493,8 +493,8 @@ public:
     CBotWeaponUnknownCommand()
     {
         m_sCommand = "unknown";
-        m_sHelp = "bot assumption about unknown weapons ('manual' or 'ranged')";
-        m_sDescription = "If bot respawns with or grabs unknown weapon, choose it to be marked as manual or ranged";
+        m_sHelp = "bot assumption about unknown weapons ('melee' or 'ranged')";
+        m_sDescription = "If bot grabs or respawns with unknown weapon, choose it to be marked as melee or ranged";
         m_iAccessLevel = FCommandAccessBot;
     }
 
@@ -660,6 +660,7 @@ public:
         Add(new CBotWeaponAddCommand());
         Add(new CBotWeaponAllowCommand());
         Add(new CBotWeaponForbidCommand());
+        //Add(new CBotWeaponRemoveCommand());
         Add(new CBotWeaponUnknownCommand());
     }
 };

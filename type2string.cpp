@@ -361,7 +361,7 @@ const good::string& CTypeToString::ItemDrawFlagsToString( TItemDrawFlags iFlags 
 good::string aWeaponTypes[EWeaponTotal] =
 {
     "physics",
-    "manual",
+    "melee",
     "grenade",
     "flash",
     "smoke",
@@ -473,7 +473,7 @@ good::string aBotTasks[EBotTasksTotal] =
     "find enemy",
 };
 
-const good::string& CTypeToString::BotTaskToString( TBotTaskHL2DM iBotTask )
+const good::string& CTypeToString::BotTaskToString( TBotTask iBotTask )
 {
     return EnumToString( iBotTask, EBotTasksTotal, aBotTasks, sUnknown );
 }

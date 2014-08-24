@@ -145,6 +145,19 @@ public:
     /// Get players count.
     static int GetPlayersCount() { return m_iClientsCount + m_iBotsCount; }
 
+    /// Get players count in given team.
+    static int GetTeamCount( TTeam iTeam )
+    {
+        int iCount = 0;
+        for ( int i = 0; i < Size(); ++i )
+        {
+            CPlayer* pPlayer = m_aPlayers[i].get();
+            if ( pPlayer && (pPlayer->GetTeam() == iTeam) )
+                iCount++;
+        }
+        return iCount;
+    }
+
     /// Get player from index.
     static CPlayer* Get( TPlayerIndex iIndex ) { return m_aPlayers[iIndex].get(); }
 

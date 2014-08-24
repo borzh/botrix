@@ -62,8 +62,16 @@ void CBot_HL2DM::Respawned()
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot_HL2DM::KilledEnemy( int /*iPlayerIndex*/, CPlayer* /*pVictim*/ )
+void CBot_HL2DM::KilledEnemy( int iPlayerIndex, CPlayer* pVictim )
 {
+    CBot::KilledEnemy( iPlayerIndex, pVictim );
+    if ( pVictim == m_pChasedEnemy )
+    {
+        m_pChasedEnemy = NULL;
+        m_bChasing = false;
+        m_iCurrentTask = EBotTaskInvalid;
+        m_bNeedTaskCheck = true;
+    }
 }
 
 
@@ -125,11 +133,6 @@ void CBot_HL2DM::Think()
     if ( m_bNeedTaskCheck )
     {
         m_bNeedTaskCheck = false;
-        /*if ( bForceNewTask || m_bFlee
-#ifdef BOTRIX_CHAT
-            || ( !m_bObjectiveChanged && (m_iObjective == EBotChatUnknown) )
-#endif
-            )*/
         CheckNewTasks(bForceNewTask);
     }
 
@@ -141,33 +144,7 @@ void CBot_HL2DM::Think()
     }
 
     if ( m_iCurrentTask == EBotTaskEngageEnemy )
-    {
-        if ( !m_bNeedMove ||
-            (!m_bUseNavigatorToMove && !CWaypoint::IsValid(iNextWaypoint) ) )
-        {
-            // TODO: come close if very far. Vector vDiff =
-            if ( m_bChasing && (m_pCurrentEnemy != m_pChasedEnemy) &&    // Bot not seeing enemy, arrived where enemy was.
-                (m_pChasedEnemy->iCurrentWaypoint != iCurrentWaypoint) ) // Should not be at the same waypoint.
-                ChaseEnemy();
-            else // Bot arrived at adyacent waypoint or is seeing enemy.
-            {
-                m_bNeedMove = m_bDestinationChanged = true;
-                m_bUseNavigatorToMove = m_bChasing = false;
-                iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint);
-                BotMessage( "%s -> Moving to waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
-            }
-        }
-        if ( m_pCurrentEnemy != m_pChasedEnemy ) // Start/stop seeing enemy or enemy change.
-        {
-            if ( m_pCurrentEnemy ) // Seeing new enemy.
-                m_pChasedEnemy = m_pCurrentEnemy;
-            else if ( !m_bChasing ) // Lost sight of enemy, chase.
-                ChaseEnemy();
-        }
-    }
-
-    if ( m_bFlee )
-        m_bNeedSprint = true; // Force bot to move rapidly. TODO: check if stops.
+        CheckEngagedEnemy();
 }
 
 
@@ -190,9 +167,105 @@ bool CBot_HL2DM::DoWaypointAction()
 
 
 //----------------------------------------------------------------------------------------------------------------
+void CBot_HL2DM::CheckEngagedEnemy()
+{
+    GoodAssert( m_iCurrentTask == EBotTaskEngageEnemy );
+
+    if ( m_pCurrentEnemy != m_pChasedEnemy ) // Start/stop seeing enemy or enemy change.
+    {
+        if ( m_pCurrentEnemy ) // Seeing new enemy.
+        {
+            m_pChasedEnemy = m_pCurrentEnemy;
+            m_bChasing = CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsMelee();
+            m_bNeedMove = false; // Start moving on next tick.
+        }
+        else
+        {
+            // No current enemy is visible.
+            if ( m_pChasedEnemy->IsAlive() )
+            {
+                if ( !m_bChasing || !m_bNeedMove ) // Lost sight of enemy, chase.
+                {
+                    if ( iCurrentWaypoint == m_pChasedEnemy->iCurrentWaypoint )
+                    {
+                        m_pCurrentEnemy = m_pChasedEnemy;
+                        m_bUnderAttack = true;
+                    }
+                    else
+                        ChaseEnemy();
+                }
+            }
+            else // Enemy dead, stop task.
+            {
+                m_bChasing = false;
+                m_pChasedEnemy = NULL;
+                m_iCurrentTask = EBotTaskInvalid;
+                m_bNeedTaskCheck = true;
+            }
+        }
+    }
+    else if ( !m_bNeedMove || ( !m_bUseNavigatorToMove && !CWaypoint::IsValid(iNextWaypoint) ) )
+    {
+        // Bot arrived where enemy is or to next random waypoint.
+        // Tip: current enemy == chased enemy.
+        GoodAssert( m_pChasedEnemy );
+        bool bNearEnemy = (m_pChasedEnemy->iCurrentWaypoint == iCurrentWaypoint);
+
+        // Bot arrived at adyacent waypoint or is seeing enemy.
+        m_bNeedMove = m_bDestinationChanged = true;
+        m_bUseNavigatorToMove = m_bChasing = false;
+
+        if ( CWeapon::IsValid(m_iWeapon) )
+        {
+            if ( m_aWeapons[m_iWeapon].IsMelee() )
+            {
+                if ( bNearEnemy )
+                {
+                    // We are at enemy waypoint using melee weapon, rush to enemy head.
+                    iNextWaypoint = EWaypointIdInvalid;
+                    m_vDestination = m_pCurrentEnemy->GetHead();
+                    m_bNeedMove = true;
+                }
+                else
+                    ChaseEnemy();
+            }
+            else if ( (m_iIntelligence >= EBotNormal) &&
+                      FLAG_SOME_SET(FFightStrategyRunAwayIfNear, CBot::iDefaultFightStrategy) &&
+                      (m_fDistanceSqrToEnemy <= CBot::fNearDistanceSqr) ) // Try to run away a little.
+            {
+                iNextWaypoint = CWaypoints::GetFarestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->GetHead() );
+                BotMessage( "%s -> Moving to far waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+            }
+            else if ( (m_iIntelligence >= EBotNormal) && (m_fDistanceSqrToEnemy >= CBot::fFarDistanceSqr) ) // Try to come closer a little.
+            {
+                iNextWaypoint = CWaypoints::GetNearestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->GetHead() );
+                BotMessage( "%s -> Moving to near waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+            }
+            else
+            {
+                iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint);
+                BotMessage( "%s -> Moving to random waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+            }
+        }
+        else
+        {
+            iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint);
+            BotMessage( "%s -> Moving to random waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+        }
+    }
+    else if ( m_pCurrentEnemy && m_bUseNavigatorToMove &&
+              CWeapon::IsValid(m_iWeapon) && !m_aWeapons[m_iWeapon].IsMelee() )
+        m_bNeedMove = m_bUseNavigatorToMove = false;
+    else if ( m_bChasing && (iCurrentWaypoint != m_pChasedEnemy->iCurrentWaypoint ) &&
+              (CBotrixPlugin::fTime >= m_fChaseEnemyTime) )
+        ChaseEnemy(); // Recalculate route to enemy every 3 seconds.
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
 void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
 {
-    TBotTaskHL2DM iNewTask = EBotTaskInvalid;
+    TBotTask iNewTask = EBotTaskInvalid;
     bool bForce = bForceTaskChange || (m_iCurrentTask == EBotTaskInvalid);
 
     const CWeapon* pWeapon = ( m_bFeatureWeaponCheck && CWeapon::IsValid(m_iBestWeapon) )

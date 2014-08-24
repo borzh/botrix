@@ -217,6 +217,46 @@ public: // Methods.
         return cNode.neighbours[ rand() % cNode.neighbours.size() ].target;
     }
 
+    /// Get nearest neighbour to given vector.
+    static TWaypointId GetNearestNeighbour( TWaypointId iWaypoint, const Vector& vTo )
+    {
+        const CWaypoints::WaypointNode& cNode = CWaypoints::GetNode(iWaypoint);
+        float fMinDist = SQR(CUtil::iMaxMapSize);
+        TWaypointId iResult = EWaypointIdInvalid;
+        for ( int i = 0; i < cNode.neighbours.size(); ++i )
+        {
+            TWaypointId iNeighbour = cNode.neighbours[i].target;
+            Vector& vOrigin = CWaypoints::Get( iNeighbour ).vOrigin;
+            float fDist = vOrigin.DistToSqr(vTo);
+            if ( fDist < fMinDist )
+            {
+                fMinDist = fDist;
+                iResult = iNeighbour;
+            }
+        }
+        return iResult;
+    }
+
+    /// Get farest neighbour to given vector.
+    static TWaypointId GetFarestNeighbour( TWaypointId iWaypoint, const Vector& vTo )
+    {
+        const CWaypoints::WaypointNode& cNode = CWaypoints::GetNode(iWaypoint);
+        float fMaxDist = 0.0f;
+        TWaypointId iResult = EWaypointIdInvalid;
+        for ( int i = 0; i < cNode.neighbours.size(); ++i )
+        {
+            TWaypointId iNeighbour = cNode.neighbours[i].target;
+            Vector& vOrigin = CWaypoints::Get( iNeighbour ).vOrigin;
+            float fDist = vOrigin.DistToSqr(vTo);
+            if ( fDist > fMaxDist )
+            {
+                fMaxDist = fDist;
+                iResult = iNeighbour;
+            }
+        }
+        return iResult;
+    }
+
     /// Return true if there is a path from waypoint source to waypoint dest.
     static bool HasPath(TWaypointId source, TWaypointId dest)
     {

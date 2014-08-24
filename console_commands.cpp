@@ -1675,13 +1675,13 @@ TCommandResult CBotWeaponUnknownCommand::Execute( CClient* pClient, int argc, co
     if ( argc == 1 )
     {
         good::string sArg( argv[0] );
-        if ( sArg == "manual" )
+        if ( sArg == "melee" )
             bAssume = true;
         else if ( sArg == "ranged" )
             bAssume = false;
         else
         {
-            BULOG_W( pEdict, "Invalid parameter: %s. Should be 'manual' or 'ranged'", argv[0] );
+            BULOG_W( pEdict, "Invalid parameter: %s. Should be 'melee' or 'ranged'", argv[0] );
             return ECommandError;
         }
     }
@@ -1966,12 +1966,6 @@ TCommandResult CBotDefaultClassCommand::Execute( CClient* pClient, int argc, con
 
 TCommandResult CBotDrawPathCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
-    {
-        BLOG_W( "Please login to server to execute this command." );
-        return ECommandError;
-    }
-
     if ( argc == 0 )
     {
         const good::string& sTypes = CTypeToString::PathDrawFlagsToString(CWaypointNavigator::iPathDrawFlags);

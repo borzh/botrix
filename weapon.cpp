@@ -102,7 +102,7 @@ void CWeaponWithAmmo::GameFrame()
 //----------------------------------------------------------------------------------------------------------------
 void CWeaponWithAmmo::Shoot( int iSecondary )
 {
-    GoodAssert( CanUse() && (HasAmmoInClip(iSecondary) || ( IsManual() || IsPhysics() ) ) );
+    GoodAssert( CanUse() && (HasAmmoInClip(iSecondary) || ( IsMelee() || IsPhysics() ) ) );
     if ( iSecondary && m_pWeapon->bSecondaryUseSameBullets )
         m_iBulletsInClip[0] -= m_pWeapon->iAttackBullets[iSecondary]; // Shotgun type: uses same bullets for primary and secondary attack.
     else
@@ -191,7 +191,7 @@ TWeaponId CWeapons::GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aW
         const CWeaponWithAmmo& cWeapon = aWeapons[i];
 
         if ( cWeapon.GetBaseWeapon()->bForbidden || !cWeapon.IsPresent() ||
-            !cWeapon.IsRanged() || !cWeapon.HasAmmo() ) // Skip all manuals, grenades and physics or without ammo.
+            !cWeapon.IsRanged() || !cWeapon.HasAmmo() ) // Skip all melees, grenades and physics or without ammo.
             continue;
 
         float fDamage0 = cWeapon.Damage(0);

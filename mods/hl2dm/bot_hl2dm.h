@@ -4,9 +4,10 @@
 #define __BOTRIX_BOT_HL2DM_H__
 
 
-#include "mods/hl2dm/types_hl2dm.h"
 #include "bot.h"
 #include "server_plugin.h"
+
+#include "mods/hl2dm/types_hl2dm.h"
 
 
 //****************************************************************************************************************
@@ -30,7 +31,7 @@ public:
     virtual void Respawned();
 
     /// Called when player's team changed.
-    virtual void ChangeTeam( TTeam /*iTeam*/ ) { Dead(); }
+    virtual void ChangeTeam( TTeam /*iTeam*/ ) { }
 
     /// Called when player got disconnected / kicked.
     virtual void PlayerDisconnect( int iPlayerIndex, CPlayer* pPlayer )
@@ -40,9 +41,11 @@ public:
         {
             m_bChasing = false;
             m_pChasedEnemy = NULL;
+            m_iCurrentTask = EBotTaskInvalid;
+            m_bNeedTaskCheck = true;
         }
     }
-    
+
     /// Called when this bot just killed an enemy.
     virtual void KilledEnemy( int iPlayerIndex, CPlayer* pVictim );
 
@@ -58,10 +61,10 @@ public:
 
 protected:
 
-    // Inherited from CBot. Will check if arrived at m_iTaskDestination and invalidates current task.
+    /// Inherited from CBot. Will check if arrived at m_iTaskDestination and invalidates current task.
     virtual bool DoWaypointAction();
 
-    // Bot just picked up given item.
+    /// Bot just picked up given item.
     virtual void PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex iIndex )
     {
         CBot::PickItem( cItem, iEntityType, iIndex );
@@ -76,13 +79,18 @@ protected:
     void ChaseEnemy()
     {
         m_bChasing = FollowEnemy(m_pChasedEnemy);
-        if ( !m_bChasing ) // Dead or flying?
+        if ( m_bChasing )
+            m_fChaseEnemyTime = CBotrixPlugin::fTime + m_iIntelligence * 2.0f;
+        else // Dead or flying?
         {
             m_pChasedEnemy = NULL;
             m_iCurrentTask = EBotTaskInvalid;
             m_bNeedTaskCheck = true;
         }
     }
+
+    // Check new from enemy.
+    void CheckEngagedEnemy();
 
     /// Check if new tasks are needed.
     void CheckNewTasks( bool bForceTaskChange );
@@ -92,7 +100,7 @@ protected:
 
     good::bitset m_aWaypoints;                           ///< Waypoints, that bot can't use.
 
-    TBotTaskHL2DM m_iCurrentTask;                        ///< Current task.
+    TBotTask m_iCurrentTask;                             ///< Current task.
     TWaypointId m_iTaskDestination;                      ///< Waypoint for task destination.
     CPickedItem m_cItemToSearch;                         ///< Item, we are searching right now. If iType is -1 then iIndex
                                                          ///< is waypoint (found no items, so heading to waypoint of that type).
@@ -103,10 +111,11 @@ protected:
     good::bitset m_cSkipWeapons;                         ///< Weapons to skip searching.
 
     CPlayer* m_pChasedEnemy;                             ///< Enemy we are following.
+    float m_fChaseEnemyTime;                             ///< To recalculate path to enemy every 3 seconds.
 
 protected: // Flags.
 
-    bool m_bNeedTaskCheck:1;                             // True if there is need to check for new tasks.
+    bool m_bNeedTaskCheck:1;                             ///< True if there is need to check for new tasks.
     bool m_bChasing:1;                                   ///< Currently chasing enemy out of sight.
 
 };

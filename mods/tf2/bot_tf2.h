@@ -41,6 +41,8 @@ public:
         {
             m_bChasing = false;
             m_pChasedEnemy = NULL;
+            m_iCurrentTask = EBotTaskInvalid;
+            m_bNeedTaskCheck = true;
         }
     }
 
@@ -62,9 +64,6 @@ protected:
     /// Inherited from CBot. Will check if arrived at m_iTaskDestination and invalidates current task.
     virtual bool DoWaypointAction();
 
-    /// Inherited from CBot.
-    //virtual void DoPathAction();
-
     /// Bot just picked up given item.
     virtual void PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex iIndex )
     {
@@ -80,13 +79,18 @@ protected:
     void ChaseEnemy()
     {
         m_bChasing = FollowEnemy(m_pChasedEnemy);
-        if ( !m_bChasing ) // Dead or flying?
+        if ( m_bChasing )
+            m_fChaseEnemyTime = CBotrixPlugin::fTime + m_iIntelligence * 2.0f;
+        else // Dead or flying?
         {
             m_pChasedEnemy = NULL;
-            m_iCurrentTask = EBotTaskTf2Invalid;
+            m_iCurrentTask = EBotTaskInvalid;
             m_bNeedTaskCheck = true;
         }
     }
+
+    // Check new from enemy.
+    void CheckEngagedEnemy();
 
     /// Check if new tasks are needed.
     void CheckNewTasks( bool bForceTaskChange );
@@ -96,7 +100,7 @@ protected:
 
     good::bitset m_aWaypoints;                           ///< Waypoints, that bot can't use.
 
-    TBotTaskTf2 m_iCurrentTask;                          ///< Current task.
+    TBotTask m_iCurrentTask;                             ///< Current task.
     TWaypointId m_iTaskDestination;                      ///< Waypoint for task destination.
     CPickedItem m_cItemToSearch;                         ///< Item, we are searching right now. If iType is -1 then iIndex
                                                          ///< is waypoint (found no items, so heading to waypoint of that type).
@@ -109,6 +113,7 @@ protected:
     TTeam m_iDesiredTeam;                                ///< Desired team to join when activated. TODO: use var in bot.h.
 
     CPlayer* m_pChasedEnemy;                             ///< Enemy we are following.
+    float m_fChaseEnemyTime;                             ///< To recalculate path to enemy every 3 seconds.
 
 protected: // Flags.
 

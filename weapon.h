@@ -141,10 +141,10 @@ public:
     bool IsPresent() const { return m_bWeaponPresent && !m_pWeapon->bForbidden; }
 
     /// Return true if this weapon is ranged.
-    bool IsRanged() const { return !IsManual() && !IsPhysics() && !IsGrenade(); }
+    bool IsRanged() const { return !IsMelee() && !IsPhysics() && !IsGrenade(); }
 
-    /// Return true if this weapon is manual.
-    bool IsManual() const { return m_pWeapon->iType == EWeaponManual; }
+    /// Return true if this weapon is melee.
+    bool IsMelee() const { return m_pWeapon->iType == EWeaponManual; }
 
     /// Return true if need to throw.
     bool IsGrenade() const { return (EWeaponGrenade <= m_pWeapon->iType) && (m_pWeapon->iType <= EWeaponRemoteDetonation); }

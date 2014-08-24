@@ -32,12 +32,12 @@ void CBot_TF2::Respawned()
     m_aWaypoints.reset();
     m_iFailWaypoint = EWaypointIdInvalid;
 
-    m_iCurrentTask = EBotTaskTf2Invalid;
+    m_iCurrentTask = EBotTaskInvalid;
     m_bNeedTaskCheck = true;
     m_bChasing = false;
 
-    if ( (m_iDesiredTeam == 0) /*&& CBotrixPlugin::instance->bTeamPlay*/ ) // Automatic team: join random team.
-        m_iDesiredTeam = 2 + ( rand() & 1 ); // 2 or 3.
+    if ( m_iDesiredTeam == CMod::iUnassignedTeam )
+        m_iDesiredTeam = ( CPlayers::GetTeamCount(2) > CPlayers::GetTeamCount(3) ) ? 3 : 2;
     if ( m_iDesiredTeam != GetTeam() )
         m_pPlayerInfo->ChangeTeam(m_iDesiredTeam);
 }
@@ -57,8 +57,16 @@ void CBot_TF2::ChangeTeam( TTeam iTeam )
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot_TF2::KilledEnemy( int /*iPlayerIndex*/, CPlayer* /*pVictim*/ )
+void CBot_TF2::KilledEnemy( int iPlayerIndex, CPlayer* pVictim )
 {
+    CBot::KilledEnemy( iPlayerIndex, pVictim );
+    if ( pVictim == m_pChasedEnemy )
+    {
+        m_pChasedEnemy = NULL;
+        m_bChasing = false;
+        m_iCurrentTask = EBotTaskInvalid;
+        m_bNeedTaskCheck = true;
+    }
 }
 
 
@@ -120,46 +128,18 @@ void CBot_TF2::Think()
     if ( m_bNeedTaskCheck )
     {
         m_bNeedTaskCheck = false;
-        /*if ( bForceNewTask || m_bFlee
-#ifdef BOTRIX_CHAT
-            || ( !m_bObjectiveChanged && (m_iObjective == EBotChatUnknown) )
-#endif
-            )*/
         CheckNewTasks(bForceNewTask);
     }
 
-    if ( m_pCurrentEnemy && !m_bFlee && (m_iCurrentTask != EBotTaskTf2EngageEnemy) )
+    if ( m_pCurrentEnemy && !m_bFlee && (m_iCurrentTask != EBotTaskEngageEnemy) )
     {
-        m_iCurrentTask = EBotTaskTf2EngageEnemy;
+        m_iCurrentTask = EBotTaskEngageEnemy;
         m_pChasedEnemy = m_pCurrentEnemy;
         m_bNeedMove = false;
     }
 
-    if ( m_iCurrentTask == EBotTaskTf2EngageEnemy )
-    {
-        if ( !m_bNeedMove ||
-            (!m_bUseNavigatorToMove && !CWaypoint::IsValid(iNextWaypoint) ) )
-        {
-            // TODO: come close if very far. Vector vDiff =
-            if ( m_bChasing && (m_pCurrentEnemy != m_pChasedEnemy) &&    // Bot not seeing enemy, arrived where enemy was.
-                (m_pChasedEnemy->iCurrentWaypoint != iCurrentWaypoint) ) // Should not be at the same waypoint.
-                ChaseEnemy();
-            else // Bot arrived at adyacent waypoint or is seeing enemy.
-            {
-                m_bNeedMove = m_bDestinationChanged = true;
-                m_bUseNavigatorToMove = m_bChasing = false;
-                iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint);
-                BotMessage( "%s -> Moving to waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
-            }
-        }
-        if ( m_pCurrentEnemy != m_pChasedEnemy ) // Start/stop seeing enemy or enemy change.
-        {
-            if ( m_pCurrentEnemy ) // Seeing new enemy.
-                m_pChasedEnemy = m_pCurrentEnemy;
-            else if ( !m_bChasing ) // Lost sight of enemy, chase.
-                ChaseEnemy();
-        }
-    }
+    if ( m_iCurrentTask == EBotTaskEngageEnemy )
+        CheckEngagedEnemy();
 }
 
 
@@ -174,7 +154,7 @@ bool CBot_TF2::DoWaypointAction()
 {
     if ( m_bUseNavigatorToMove && (iCurrentWaypoint == m_iTaskDestination) )
     {
-        m_iCurrentTask = EBotTaskTf2Invalid;
+        m_iCurrentTask = EBotTaskInvalid;
         m_bNeedTaskCheck = true;
     }
     return CBot::DoWaypointAction();
@@ -182,10 +162,106 @@ bool CBot_TF2::DoWaypointAction()
 
 
 //----------------------------------------------------------------------------------------------------------------
+void CBot_TF2::CheckEngagedEnemy()
+{
+    GoodAssert( m_iCurrentTask == EBotTaskEngageEnemy );
+
+    if ( m_pCurrentEnemy != m_pChasedEnemy ) // Start/stop seeing enemy or enemy change.
+    {
+        if ( m_pCurrentEnemy ) // Seeing new enemy.
+        {
+            m_pChasedEnemy = m_pCurrentEnemy;
+            m_bChasing = CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsMelee();
+            m_bNeedMove = false; // Start moving on next tick.
+        }
+        else
+        {
+            // No current enemy is visible.
+            if ( m_pChasedEnemy->IsAlive() )
+            {
+                if ( !m_bChasing || !m_bNeedMove ) // Lost sight of enemy, chase.
+                {
+                    if ( iCurrentWaypoint == m_pChasedEnemy->iCurrentWaypoint )
+                    {
+                        m_pCurrentEnemy = m_pChasedEnemy;
+                        m_bUnderAttack = true;
+                    }
+                    else
+                        ChaseEnemy();
+                }
+            }
+            else // Enemy dead, stop task.
+            {
+                m_bChasing = false;
+                m_pChasedEnemy = NULL;
+                m_iCurrentTask = EBotTaskInvalid;
+                m_bNeedTaskCheck = true;
+            }
+        }
+    }
+    else if ( !m_bNeedMove || ( !m_bUseNavigatorToMove && !CWaypoint::IsValid(iNextWaypoint) ) )
+    {
+        // Bot arrived where enemy is or to next random waypoint.
+        // Tip: current enemy == chased enemy.
+        GoodAssert( m_pChasedEnemy );
+        bool bNearEnemy = (m_pChasedEnemy->iCurrentWaypoint == iCurrentWaypoint);
+
+        // Bot arrived at adyacent waypoint or is seeing enemy.
+        m_bNeedMove = m_bDestinationChanged = true;
+        m_bUseNavigatorToMove = m_bChasing = false;
+
+        if ( CWeapon::IsValid(m_iWeapon) )
+        {
+            if ( m_aWeapons[m_iWeapon].IsMelee() )
+            {
+                if ( bNearEnemy )
+                {
+                    // We are at enemy waypoint using melee weapon, rush to enemy head.
+                    iNextWaypoint = EWaypointIdInvalid;
+                    m_vDestination = m_pCurrentEnemy->GetHead();
+                    m_bNeedMove = true;
+                }
+                else
+                    ChaseEnemy();
+            }
+            else if ( (m_iIntelligence >= EBotNormal) &&
+                      FLAG_SOME_SET(FFightStrategyRunAwayIfNear, CBot::iDefaultFightStrategy) &&
+                      (m_fDistanceSqrToEnemy <= CBot::fNearDistanceSqr) ) // Try to run away a little.
+            {
+                iNextWaypoint = CWaypoints::GetFarestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->GetHead() );
+                BotMessage( "%s -> Moving to far waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+            }
+            else if ( (m_iIntelligence >= EBotNormal) && (m_fDistanceSqrToEnemy >= CBot::fFarDistanceSqr) ) // Try to come closer a little.
+            {
+                iNextWaypoint = CWaypoints::GetNearestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->GetHead() );
+                BotMessage( "%s -> Moving to near waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+            }
+            else
+            {
+                iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint);
+                BotMessage( "%s -> Moving to random waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+            }
+        }
+        else
+        {
+            iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint);
+            BotMessage( "%s -> Moving to random waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+        }
+    }
+    else if ( m_pCurrentEnemy && m_bUseNavigatorToMove &&
+              CWeapon::IsValid(m_iWeapon) && !m_aWeapons[m_iWeapon].IsMelee() )
+        m_bNeedMove = m_bUseNavigatorToMove = false;
+    else if ( m_bChasing && (iCurrentWaypoint != m_pChasedEnemy->iCurrentWaypoint ) &&
+              (CBotrixPlugin::fTime >= m_fChaseEnemyTime) )
+        ChaseEnemy(); // Recalculate route to enemy every 3 seconds.
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::CheckNewTasks( bool bForceTaskChange )
 {
-    TBotTaskTf2 iNewTask = EBotTaskTf2Invalid;
-    bool bForce = bForceTaskChange || (m_iCurrentTask == EBotTaskTf2Invalid);
+    TBotTask iNewTask = EBotTaskInvalid;
+    bool bForce = bForceTaskChange || (m_iCurrentTask == EBotTaskInvalid);
 
     const CWeapon* pWeapon = ( m_bFeatureWeaponCheck && CWeapon::IsValid(m_iBestWeapon) )
         ? m_aWeapons[m_iBestWeapon].GetBaseWeapon()
@@ -215,19 +291,19 @@ restart_find_task: // TODO: remove gotos.
     retries++;
     if ( retries == 5 )
     {
-        iNewTask = EBotTaskTf2FindEnemy;
+        iNewTask = EBotTaskFindEnemy;
         pEntityClass = NULL;
         goto find_enemy;
     }
 
     if ( bNeedHealthBad ) // Need health pretty much.
     {
-        iNewTask = EBotTaskTf2FindHealth;
+        iNewTask = EBotTaskFindHealth;
         bForce = true;
     }
     else if ( bNeedWeapon && (pWeapon->iBotPreference < iWeaponPreference) ) // Need some weapon with higher preference.
     {
-        iNewTask = EBotTaskTf2FindWeapon;
+        iNewTask = EBotTaskFindWeapon;
     }
     else if ( bNeedAmmo )
     {
@@ -238,38 +314,38 @@ restart_find_task: // TODO: remove gotos.
 
         if ( bNeedAmmo0 || bNeedAmmo1 )
         {
-            iNewTask = EBotTaskTf2FindAmmo;
+            iNewTask = EBotTaskFindAmmo;
             // Prefer search for secondary ammo only if has extra bullets for primary.
             bSecondary = bNeedAmmo1 && (m_aWeapons[m_iBestWeapon].ExtraBullets(0) > 0);
         }
         else if ( bNeedHealth ) // Need health (but has more than 50%).
-            iNewTask = EBotTaskTf2FindHealth;
+            iNewTask = EBotTaskFindHealth;
         else if ( CMod::HasMapItems(EEntityTypeArmor) && (m_pPlayerInfo->GetArmorValue() < CMod::iPlayerMaxArmor) ) // Need armor.
-            iNewTask = EBotTaskTf2FindArmor;
+            iNewTask = EBotTaskFindArmor;
         else if ( bNeedWeapon && (pWeapon->iBotPreference < EBotPro) ) // Check if can find a better weapon.
         {
-            iNewTask = EBotTaskTf2FindWeapon;
+            iNewTask = EBotTaskFindWeapon;
             iWeaponPreference = pWeapon->iBotPreference+1;
         }
         else if ( !m_aWeapons[m_iBestWeapon].FullAmmo(1) ) // Check if weapon needs secondary ammo.
         {
-            iNewTask = EBotTaskTf2FindAmmo;
+            iNewTask = EBotTaskFindAmmo;
             bSecondary = true;
         }
         else if ( !m_aWeapons[m_iBestWeapon].FullAmmo(0) ) // Check if weapon needs primary ammo.
         {
-            iNewTask = EBotTaskTf2FindAmmo;
+            iNewTask = EBotTaskFindAmmo;
             bSecondary = false;
         }
         else
-            iNewTask = EBotTaskTf2FindEnemy;
+            iNewTask = EBotTaskFindEnemy;
     }
     else
-        iNewTask = EBotTaskTf2FindEnemy;
+        iNewTask = EBotTaskFindEnemy;
 
     switch(iNewTask)
     {
-    case EBotTaskTf2FindWeapon:
+    case EBotTaskFindWeapon:
         pEntityClass = NULL;
 
         // Get weapon entity class to search for. Search for better weapons that actually have.
@@ -302,14 +378,14 @@ restart_find_task: // TODO: remove gotos.
         }
         break;
 
-    case EBotTaskTf2FindAmmo:
+    case EBotTaskFindAmmo:
         // Get ammo entity class to search for.
         iWeapon = m_iBestWeapon;
 
         // Randomly search for weapon instead, as it gives same primary bullets.
         if ( !bSecondary && bNeedWeapon && CItems::ExistsOnMap(pWeapon->pWeaponClass) && (rand() & 1) )
         {
-            iNewTask = EBotTaskTf2FindWeapon;
+            iNewTask = EBotTaskFindWeapon;
             pEntityClass = pWeapon->pWeaponClass;
         }
         else
@@ -320,18 +396,18 @@ restart_find_task: // TODO: remove gotos.
 
         if ( !pEntityClass || !CItems::ExistsOnMap(pEntityClass) ) // There are no such weapon/ammo on the map.
         {
-            iNewTask = EBotTaskTf2FindEnemy; // Just find enemy.
+            iNewTask = EBotTaskFindEnemy; // Just find enemy.
             pEntityClass = NULL;
         }
         break;
 
-    case EBotTaskTf2FindHealth:
-    case EBotTaskTf2FindArmor:
-        pEntityClass = CItems::GetRandomItemClass(EEntityTypeHealth + (iNewTask - EBotTaskTf2FindHealth));
+    case EBotTaskFindHealth:
+    case EBotTaskFindArmor:
+        pEntityClass = CItems::GetRandomItemClass(EEntityTypeHealth + (iNewTask - EBotTaskFindHealth));
         break;
     }
 
-    BASSERT( iNewTask != EBotTaskTf2Invalid, return );
+    BASSERT( iNewTask != EBotTaskInvalid, return );
 
 find_enemy:
     // Check if need task switch.
@@ -340,14 +416,14 @@ find_enemy:
         m_iCurrentTask = iNewTask;
         if ( pEntityClass ) // Health, armor, weapon, ammo.
         {
-            TEntityType iType = EEntityTypeHealth + (iNewTask - EBotTaskTf2FindHealth);
+            TEntityType iType = EEntityTypeHealth + (iNewTask - EBotTaskFindHealth);
             TEntityIndex iItemToSearch = CItems::GetNearestItem( iType, GetHead(), m_aPickedItems, pEntityClass );
 
             if ( iItemToSearch == -1 )
             {
-                if ( (m_iCurrentTask == EBotTaskTf2FindWeapon) && (iWeapon != EWeaponIdInvalid) )
+                if ( (m_iCurrentTask == EBotTaskFindWeapon) && (iWeapon != EWeaponIdInvalid) )
                     m_cSkipWeapons.set(iWeapon);
-                m_iCurrentTask = EBotTaskTf2Invalid;
+                m_iCurrentTask = EBotTaskInvalid;
                 goto restart_find_task;
             }
             else
@@ -357,7 +433,7 @@ find_enemy:
                 m_cItemToSearch.iIndex = iItemToSearch;
             }
         }
-        else if (m_iCurrentTask == EBotTaskTf2FindEnemy)
+        else if (m_iCurrentTask == EBotTaskFindEnemy)
         {
             // Just go to some random waypoint.
             m_iTaskDestination = -1;
@@ -395,7 +471,7 @@ find_enemy:
 //----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::TaskFinished()
 {
-    if ( (EBotTaskTf2FindHealth <= m_cItemToSearch.iType) && (m_cItemToSearch.iType <= EBotTaskTf2FindAmmo) )
+    if ( (EBotTaskFindHealth <= m_cItemToSearch.iType) && (m_cItemToSearch.iType <= EBotTaskFindAmmo) )
     {
         const CEntity& cItem = CItems::GetItems(m_cItemToSearch.iType)[m_cItemToSearch.iIndex];
 

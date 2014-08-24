@@ -432,6 +432,35 @@ typedef int TClass;                              ///< Class of bot.
 
 typedef int TDeathmatchFlags;                    ///< Useful flags for deathmatch mode.
 */
+
+
+//****************************************************************************************************************
+/// Fight strategy flags.
+//****************************************************************************************************************
+enum TFightStrategyFlagIds
+{
+    FFightStrategyRunAwayIfNear = 1<<0,          ///< Bot with weapon will run away from enemy if near.
+};
+typedef int TFightStrategyFlags;
+
+
+//****************************************************************************************************************
+/// Bot tasks.
+//****************************************************************************************************************
+enum TBotTaskIds
+{
+    EBotTaskInvalid = -1,                        ///< Bot has no tasks.
+    EBotTaskFindHealth = 0,                      ///< Find health.
+    EBotTaskFindArmor,                           ///< Find armor.
+    EBotTaskFindWeapon,                          ///< Find weapon.
+    EBotTaskFindAmmo,                            ///< Find ammo for weapon.
+    EBotTaskEngageEnemy,                         ///< Fight enemy.
+    EBotTaskFindEnemy,                           ///< Run randomly around and check if can see an enemy.
+    EBotTasksTotal,                              ///< This should be first task number of enums of mod tasks.
+};
+typedef int TBotTask;                            ///< Bot task.
+
+
 typedef good::vector<good::string> StringVector; ///< Useful typedef for vector of strings.
 
 

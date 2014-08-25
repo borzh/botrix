@@ -445,7 +445,7 @@ typedef int TFightStrategyFlags;
 
 
 //****************************************************************************************************************
-/// Bot tasks.
+/// Enum for bot tasks.
 //****************************************************************************************************************
 enum TBotTaskIds
 {
@@ -459,6 +459,19 @@ enum TBotTaskIds
     EBotTasksTotal,                              ///< This should be first task number of enums of mod tasks.
 };
 typedef int TBotTask;                            ///< Bot task.
+
+
+//****************************************************************************************************************
+/// Enum for waypoint visibility from another one.
+//****************************************************************************************************************
+enum TWaypointVisibilityIds
+{
+    EWaypointVisibilityUnknown = -1,             ///< Unknown visibility (no visibility table).
+    EWaypointVisibilityInvisible = 0,            ///< Waypoint is invisible from another.
+    EWaypointVisibilityVisible,                  ///< Waypoint is visible from another.
+    EWaypointVisibilityTotal,                    ///< .
+};
+typedef int TWaypointVisibility;                 ///< Waypoint visibility from another one.
 
 
 typedef good::vector<good::string> StringVector; ///< Useful typedef for vector of strings.

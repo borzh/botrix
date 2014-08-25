@@ -32,7 +32,7 @@ TTeam CBot::iDefaultTeam = 0;
 TClass CBot::iDefaultClass = -1;
 TFightStrategyFlags CBot::iDefaultFightStrategy = FFightStrategyRunAwayIfNear;// TODO: use 0.
 
-const float CBot::fNearDistanceSqr = SQR(350);
+const float CBot::fNearDistanceSqr = SQR(300);
 const float CBot::fFarDistanceSqr = SQR(700);
 
 float CBot::m_fTimeIntervalCheckUsingMachines = 0.5f;
@@ -1346,9 +1346,9 @@ void CBot::EnemyAim()
     m_fEndAimTime = GetEndLookTime();
 
     // Make sure to look far away.
-    m_vLook -= m_vHead;
-    m_vLook *= 1000.0f;
-    m_vLook += m_vHead;
+    //m_vLook -= m_vHead;
+    //m_vLook *= 1000.0f;
+    //m_vLook += m_vHead;
 
     // Take player's speed into account.
     if ( m_iIntelligence >= EBotNormal )
@@ -1495,8 +1495,8 @@ void CBot::WeaponShoot( int iSecondary )
         if ( !cWeapon.CanUse() )
             return;
 
-        BotMessage( "%s -> shoot %s %s, ammo %d/%d.", GetName(), (iSecondary) ? "secondary" : "primary",
-                    cWeapon.GetName().c_str(), cWeapon.Bullets(iSecondary), cWeapon.ExtraBullets(iSecondary) );
+        BotDebug( "%s -> shoot %s %s, ammo %d/%d.", GetName(), (iSecondary) ? "secondary" : "primary",
+                  cWeapon.GetName().c_str(), cWeapon.Bullets(iSecondary), cWeapon.ExtraBullets(iSecondary) );
 
         cWeapon.Shoot(iSecondary);
         m_bNeedReload = cWeapon.IsRanged();
@@ -1979,6 +1979,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
     if ( bMove && !m_bAttackDuck )
     {
         float fDeltaTime = CBotrixPlugin::fTime - m_fPrevThinkTime;
+        BASSERT( CBotrixPlugin::fTime != m_fPrevThinkTime, fDeltaTime = 0.000001f ); // Should not happend, sometimes happends.
 
         // Calculate distance from last frame.
         Vector vSpeed(m_vHead);
@@ -2251,64 +2252,67 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
     // Aim at object (at m_fStartActionTime), press ATTACK2 (physcannon) for a second, aim back, press ATTACK1 once.
     if ( m_bStuckUsePhyscannon )
     {
-        BASSERT( m_bTest || !m_bUnderAttack, return );
-
-        const CEntity* pObject = NULL;
-        if ( m_aNearestItems[EEntityTypeObject].size() )
-            pObject = &CItems::GetItems(EEntityTypeObject)[ m_aNearestItems[EEntityTypeObject][0] ];
-
-        // Still not finished throwing object.
-        if ( CBotrixPlugin::fTime < m_fEndActionTime )
+        if ( !m_bTest && m_bUnderAttack )
+            m_bStuckUsePhyscannon = false;
+        else
         {
-            if ( (m_iWeapon != m_iPhyscannon) ) // Still need to switch weapon to physcannon.
+            const CEntity* pObject = NULL;
+            if ( m_aNearestItems[EEntityTypeObject].size() )
+                pObject = &CItems::GetItems(EEntityTypeObject)[ m_aNearestItems[EEntityTypeObject][0] ];
+
+            // Still not finished throwing object.
+            if ( CBotrixPlugin::fTime < m_fEndActionTime )
             {
-                if ( m_aWeapons[m_iWeapon].CanChange() )
+                if ( (m_iWeapon != m_iPhyscannon) ) // Still need to switch weapon to physcannon.
                 {
-                    WeaponChange(m_iPhyscannon);
-                    float fPhyscannonUseTime = m_aWeapons[m_iPhyscannon].GetEndTime();
-                    if ( fPhyscannonUseTime > m_fEndAimTime )
+                    if ( m_aWeapons[m_iWeapon].CanChange() )
                     {
-                        // Time we can use physcannon is after aim time, so re calculate action times.
-                        m_fStartActionTime = m_fEndAimTime = fPhyscannonUseTime;
-                        m_fEndActionTime = m_fStartActionTime + 2.0f;
+                        WeaponChange(m_iPhyscannon);
+                        float fPhyscannonUseTime = m_aWeapons[m_iPhyscannon].GetEndTime();
+                        if ( fPhyscannonUseTime > m_fEndAimTime )
+                        {
+                            // Time we can use physcannon is after aim time, so re calculate action times.
+                            m_fStartActionTime = m_fEndAimTime = fPhyscannonUseTime;
+                            m_fEndActionTime = m_fStartActionTime + 2.0f;
+                        }
                     }
                 }
-            }
-            else // Current weapon is physcannon.
-            {
-                if ( (CBotrixPlugin::fTime >= m_fEndAimTime) ) // Aimed either at object, can use physcannon now.
+                else // Current weapon is physcannon.
                 {
-                    if ( CBotrixPlugin::fTime < m_fStartActionTime + 0.5f )
-                        WeaponShoot(CWeapon::SECONDARY); // Attract object for half second.
-                    else
+                    if ( (CBotrixPlugin::fTime >= m_fEndAimTime) ) // Aimed either at object, can use physcannon now.
                     {
-                        if ( pObject && (pObject->CurrentPosition() == m_vDisturbingObjectPosition) )
-                        {
-                            // Object position didn't change, so bot can't pick it up.
-                            FLAG_SET(FObjectHeavy, ((CEntity*)pObject)->iFlags);
-                            m_bStuckUsePhyscannon = m_bLockAim = false;
-                            m_bNeedSetWeapon = true;
-                        }
+                        if ( CBotrixPlugin::fTime < m_fStartActionTime + 0.5f )
+                            WeaponShoot(CWeapon::SECONDARY); // Attract object for half second.
                         else
                         {
-                            // Look back while holding object.
-                            //m_bStuckPhyscannonHoldingObject = true;
-                            m_bNeedAim = true;
-                            m_vLook = m_vHead;
-                            m_vLook -= CWaypoints::Get(iNextWaypoint).vOrigin;
-                            m_vLook += m_vHead; // back = (head - waypoint) + head.
-                            m_fEndActionTime = m_fEndAimTime = CBotrixPlugin::fTime + GetEndLookTime();
+                            if ( pObject && (pObject->CurrentPosition() == m_vDisturbingObjectPosition) )
+                            {
+                                // Object position didn't change, so bot can't pick it up.
+                                FLAG_SET(FObjectHeavy, ((CEntity*)pObject)->iFlags);
+                                m_bStuckUsePhyscannon = m_bLockAim = false;
+                                m_bNeedSetWeapon = true;
+                            }
+                            else
+                            {
+                                // Look back while holding object.
+                                //m_bStuckPhyscannonHoldingObject = true;
+                                m_bNeedAim = true;
+                                m_vLook = m_vHead;
+                                m_vLook -= CWaypoints::Get(iNextWaypoint).vOrigin;
+                                m_vLook += m_vHead; // back = (head - waypoint) + head.
+                                m_fEndActionTime = m_fEndAimTime = CBotrixPlugin::fTime + GetEndLookTime();
+                            }
                         }
                     }
                 }
             }
-        }
-        else // Throw object and restore previous weapon.
-        {
-            // Bot should be holding object, throw it away.
-            WeaponShoot();
-            m_bStuckUsePhyscannon = m_bLockAim = false;
-            m_bNeedSetWeapon = true;
+            else // Throw object and restore previous weapon.
+            {
+                // Bot should be holding object, throw it away.
+                WeaponShoot();
+                m_bStuckUsePhyscannon = m_bLockAim = false;
+                m_bNeedSetWeapon = true;
+            }
         }
     }
 

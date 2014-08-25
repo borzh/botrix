@@ -20,7 +20,7 @@ class CWaypoint
 
 public: // Methods.
     /// Return true if waypoint id can be valid. Use CWaypoints::IsValid() to actualy verify waypoint range.
-    static inline bool IsValid(TWaypointId id) { return id != EWaypointIdInvalid; }
+    static inline bool IsValid(TWaypointId id) { return (id != EWaypointIdInvalid); }
 
 public: // Methods.
     /// Default constructor.
@@ -184,6 +184,7 @@ public: // Types and constants.
     typedef WaypointGraph::arc_it WaypointArcIt;    ///< Arc iterator.
     //typedef WaypointGraph::node_id TWaypointId;     ///< Type for node identifier.
 
+    static bool bValidVisibilityTable;              ///< When waypoints are modified vis-table needs to be recalculated.
 
 public: // Methods.
     /// Return true if waypoint id is valid. Verifies that waypoint is actually exists.
@@ -198,6 +199,8 @@ public: // Methods.
         ClearLocations();
         m_cGraph.clear();
         m_cAreas.clear();
+        m_aVisTable.clear();
+        bValidVisibilityTable = false;
     }
 
     /// Save waypoints to a file.
@@ -210,6 +213,14 @@ public: // Methods.
     /// Get waypoint.
     static CWaypoint& Get( TWaypointId id ) { return m_cGraph[id].vertex; }
 
+    /// Check if waypoint @p iTo is visible from @p iFrom.
+    static TWaypointVisibility IsVisible( TWaypointId iFrom, TWaypointId iTo )
+    {
+        return bValidVisibilityTable
+            ? ( m_aVisTable[iFrom].test(iTo) ? EWaypointVisibilityVisible : EWaypointVisibilityInvisible )
+            : EWaypointVisibilityUnknown;
+    }
+
     /// Get random neighbour.
     static TWaypointId GetRandomNeighbour( TWaypointId iWaypoint )
     {
@@ -217,45 +228,11 @@ public: // Methods.
         return cNode.neighbours[ rand() % cNode.neighbours.size() ].target;
     }
 
-    /// Get nearest neighbour to given vector.
-    static TWaypointId GetNearestNeighbour( TWaypointId iWaypoint, const Vector& vTo )
-    {
-        const CWaypoints::WaypointNode& cNode = CWaypoints::GetNode(iWaypoint);
-        float fMinDist = SQR(CUtil::iMaxMapSize);
-        TWaypointId iResult = EWaypointIdInvalid;
-        for ( int i = 0; i < cNode.neighbours.size(); ++i )
-        {
-            TWaypointId iNeighbour = cNode.neighbours[i].target;
-            Vector& vOrigin = CWaypoints::Get( iNeighbour ).vOrigin;
-            float fDist = vOrigin.DistToSqr(vTo);
-            if ( fDist < fMinDist )
-            {
-                fMinDist = fDist;
-                iResult = iNeighbour;
-            }
-        }
-        return iResult;
-    }
+    /// Get nearest neighbour to given waypoint.
+    static TWaypointId GetNearestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, TWaypointVisibility bVisible );
 
-    /// Get farest neighbour to given vector.
-    static TWaypointId GetFarestNeighbour( TWaypointId iWaypoint, const Vector& vTo )
-    {
-        const CWaypoints::WaypointNode& cNode = CWaypoints::GetNode(iWaypoint);
-        float fMaxDist = 0.0f;
-        TWaypointId iResult = EWaypointIdInvalid;
-        for ( int i = 0; i < cNode.neighbours.size(); ++i )
-        {
-            TWaypointId iNeighbour = cNode.neighbours[i].target;
-            Vector& vOrigin = CWaypoints::Get( iNeighbour ).vOrigin;
-            float fDist = vOrigin.DistToSqr(vTo);
-            if ( fDist > fMaxDist )
-            {
-                fMaxDist = fDist;
-                iResult = iNeighbour;
-            }
-        }
-        return iResult;
-    }
+    /// Get farest neighbour to given waypoint.
+    static TWaypointId GetFarestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, TWaypointVisibility bVisible );
 
     /// Return true if there is a path from waypoint source to waypoint dest.
     static bool HasPath(TWaypointId source, TWaypointId dest)
@@ -375,6 +352,8 @@ protected:
 
     static WaypointGraph m_cGraph;         // Waypoints graph.
     static float m_fNextDrawWaypointsTime; // Next draw time of waypoints (draw once per second).
+
+    static good::vector< good::bitset > m_aVisTable;
 };
 
 

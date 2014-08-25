@@ -118,7 +118,7 @@ void CWeaponWithAmmo::Holster( CWeaponWithAmmo* pSwitchFrom, CWeaponWithAmmo& cS
 {
     if ( pSwitchFrom )
     {
-        GoodAssert( !pSwitchFrom->m_bShooting );
+        //GoodAssert( !pSwitchFrom->m_bShooting );
 
         pSwitchFrom->m_bChanging = pSwitchFrom->m_bReloading = pSwitchFrom->m_bChangingZoom = pSwitchFrom->m_bUsingZoom = false;
         pSwitchFrom->m_fEndTime = CBotrixPlugin::fTime; // Save time when switched weapon.

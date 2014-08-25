@@ -19,6 +19,7 @@
 #include "game/shared/in_buttons.h"
 
 
+#define BotDebug(...)               GOOD_SCOPE_START if ( m_bDebugging ) BLOG_D(__VA_ARGS__); GOOD_SCOPE_END
 #define BotMessage(...)             GOOD_SCOPE_START if ( m_bDebugging ) BLOG_I(__VA_ARGS__); GOOD_SCOPE_END
 
 

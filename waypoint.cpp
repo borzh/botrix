@@ -34,7 +34,7 @@ static const char* WAYPOINT_FILE_HEADER_ID = "BtxW";   // Botrix's Waypoints.
 
 static const int WAYPOINT_VERSION = 1;                 // Waypoints file version.
 static const int WAYPOINT_FILE_FLAG_VISIBILITY = 1<<0; // Flag for waypoint visibility table.
-static const int WAYPOINT_FILE_FLAG_AREAS = 2<<0;      // Flag for area names.
+static const int WAYPOINT_FILE_FLAG_AREAS      = 2<<0; // Flag for area names.
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -50,12 +50,13 @@ const TWaypointFlags CWaypoint::m_aFlagsForEntityType[EEntityTypeTotal-1] =
 };
 
 
-// CWaypoints static members.
 StringVector CWaypoints::m_cAreas;
 CWaypoints::WaypointGraph CWaypoints::m_cGraph;
 float CWaypoints::m_fNextDrawWaypointsTime = 0.0f;
 CWaypoints::Bucket CWaypoints::m_cBuckets[CWaypoints::BUCKETS_SIZE_X][CWaypoints::BUCKETS_SIZE_Y][CWaypoints::BUCKETS_SIZE_Z];
 
+good::vector< good::bitset > CWaypoints::m_aVisTable;
+bool CWaypoints::bValidVisibilityTable = false;
 
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoint::GetColor(unsigned char& r, unsigned char& g, unsigned char& b) const
@@ -144,6 +145,12 @@ void CWaypoint::Draw( TWaypointId iWaypointId, TWaypointDrawFlags iDrawType, flo
 //********************************************************************************************************************
 bool CWaypoints::Save()
 {
+    if ( Size() == 0 )
+    {
+        BLOG_E( "No waypoints to save." );
+        return false;
+    }
+
     const good::string& sFileName = CUtil::BuildFileName("waypoints", CBotrixPlugin::instance->sMapName, "way");
 
     FILE *f = CUtil::OpenFile(sFileName.c_str(), "wb");
@@ -187,6 +194,7 @@ bool CWaypoints::Save()
         }
     }
 
+    // Save area names.
     int iAreaNamesSize = m_cAreas.size() - 1;
     BASSERT( iAreaNamesSize >= 0, iAreaNamesSize=0 );
 
@@ -199,8 +207,26 @@ bool CWaypoints::Save()
         fwrite(m_cAreas[i].c_str(), sizeof(char), iSize+1, f); // Write string & trailing 0.
     }
 
+    // Save waypoint visibility table.
+    BLOG_W( "Saving waypoint visibility table..." );
+    FLAG_SET(WAYPOINT_FILE_FLAG_VISIBILITY, header.iFlags);
+    m_aVisTable.resize( Size() );
+    for ( TWaypointId i = 0; i < Size(); ++i )
+    {
+        m_aVisTable[i].resize( Size() );
+        Vector vFrom = Get(i).vOrigin;
+        for ( TWaypointId j = 0; j < Size(); ++j )
+        {
+            if ( i < j )
+                m_aVisTable[i].set( j, CUtil::IsVisible(vFrom, Get(j).vOrigin) );
+            else
+                m_aVisTable[i].set( j, (i == j) || m_aVisTable[j].test(i) );
+        }
+    }
+
     fclose(f);
 
+    bValidVisibilityTable = true;
     return true;
 }
 
@@ -215,8 +241,8 @@ bool CWaypoints::Load()
     FILE *f = CUtil::OpenFile(sFileName, "rb");
     if ( f == NULL )
     {
-        BLOG_W("No waypoints for map %s:", CBotrixPlugin::instance->sMapName.c_str());
-        BLOG_W("    file '%s' doesn't exists.", sFileName.c_str());
+        BLOG_W( "No waypoints for map %s:", CBotrixPlugin::instance->sMapName.c_str() );
+        BLOG_W( "  File '%s' doesn't exists.", sFileName.c_str() );
         return false;
     }
 
@@ -226,23 +252,24 @@ bool CWaypoints::Load()
 
     if (*((int*)&WAYPOINT_FILE_HEADER_ID[0]) != header.szFileType)
     {
-        BLOG_E("Error loading waypoints: invalid file.");
+        BLOG_E("Error loading waypoints: invalid file header.");
         fclose(f);
         return false;
     }
     if ( (header.iVersion <= 0) || (header.iVersion > WAYPOINT_VERSION) )
     {
-        BLOG_E("Error loading waypoints: version mismatch.");
+        BLOG_E( "Error loading waypoints, version mismatch:" );
+        BLOG_E( "  File version %d, current waypoint version %d.", header.iVersion, WAYPOINT_VERSION );
         fclose(f);
         return false;
     }
-    if (CBotrixPlugin::instance->sMapName != header.szMapName)
+    if ( CBotrixPlugin::instance->sMapName != header.szMapName )
     {
-        BLOG_E("Error loading waypoints: map name mismatch.s");
+        BLOG_E( "Error loading waypoints, map name mismatch:" );
+        BLOG_E( "  File map %s, current map %s.", header.szMapName, CBotrixPlugin::instance->sMapName.c_str() );
         fclose(f);
         return false;
     }
-
 
     Vector vOrigin;
     TWaypointFlags iFlags;
@@ -341,20 +368,101 @@ bool CWaypoints::Load()
             m_cGraph[i].vertex.iAreaId = 0;
         }
     }
-/*
-    bool bHasVisibility = header.iFlags & WAYPOINT_FILE_FLAG_VISIBILITY;
-    if (bHasVisibility)
+
+    bValidVisibilityTable = header.iFlags & WAYPOINT_FILE_FLAG_VISIBILITY;
+    if ( bValidVisibilityTable )
     {
-        bHasVisibility = m_pVisibilityTable->ReadFromFile();
+        m_aVisTable.resize( header.iNumWaypoints );
+
+        for ( TWaypointId i = 0; i < Size(); ++i )
+        {
+            m_aVisTable[i].resize( header.iNumWaypoints );
+            int iByteSize = m_aVisTable[i].byte_size();
+            iRead = fread( m_aVisTable[i].data(), 1, iByteSize, f );
+            if ( iRead != iByteSize )
+            {
+                BLOG_E( "Invalid visibility table." );
+                Clear();
+                fclose(f);
+                return false;
+            }
+        }
     }
     else
-        BULOG_I("No waypoint visibility in file");
-*/
+        BLOG_I("No waypoint visibility in file.");
+
     fclose(f);
 
     BLOG_I("%d waypoints loaded for map %s.", CWaypoints::Size(), CBotrixPlugin::instance->sMapName.c_str());
 
     return true;
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+TWaypointId CWaypoints::GetNearestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, TWaypointVisibility bVisible )
+{
+    GoodAssert(bValidVisibilityTable);
+    const WaypointNode::arcs_t& aNeighbours = GetNode(iWaypoint).neighbours;
+    if ( !aNeighbours.size() )
+        return EWaypointIdInvalid;
+
+    Vector vTo = Get(iTo).vOrigin;
+
+    TWaypointId iResult = aNeighbours[0].target;
+    float fMinDist = Get(iResult).vOrigin.DistToSqr(vTo);
+    bool bResultVisibleOk = (m_aVisTable[iResult].test(iTo) == bVisible);
+
+    for ( int i = 1; i < aNeighbours.size(); ++i )
+    {
+        TWaypointId iNeighbour = aNeighbours[i].target;
+        bool bVisibleNeighbourOk = (m_aVisTable[iNeighbour].test(iTo) == bVisible);
+        if ( bResultVisibleOk && !bVisibleNeighbourOk )
+            continue;
+
+        Vector& vOrigin = Get(iNeighbour).vOrigin;
+        float fDist = vOrigin.DistToSqr(vTo);
+        if ( fDist < fMinDist )
+        {
+            bVisible = bVisibleNeighbourOk;
+            fMinDist = fDist;
+            iResult = iNeighbour;
+        }
+    }
+    return iResult;
+}
+
+//----------------------------------------------------------------------------------------------------------------
+TWaypointId CWaypoints::GetFarestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, TWaypointVisibility bVisible )
+{
+    GoodAssert(bValidVisibilityTable);
+    const WaypointNode::arcs_t& aNeighbours = GetNode(iWaypoint).neighbours;
+    if ( !aNeighbours.size() )
+        return EWaypointIdInvalid;
+
+    Vector vTo = Get(iTo).vOrigin;
+
+    TWaypointId iResult = aNeighbours[0].target;
+    float fMaxDist = Get(iResult).vOrigin.DistToSqr(vTo);
+    bool bResultVisibleOk = (m_aVisTable[iResult].test(iTo) == bVisible);
+
+    for ( int i = 1; i < aNeighbours.size(); ++i )
+    {
+        TWaypointId iNeighbour = aNeighbours[i].target;
+        bool bVisibleNeighbourOk = (m_aVisTable[iNeighbour].test(iTo) == bVisible);
+        if ( bResultVisibleOk && !bVisibleNeighbourOk )
+            continue;
+
+        Vector& vOrigin = Get(iNeighbour).vOrigin;
+        float fDist = vOrigin.DistToSqr(vTo);
+        if ( fDist > fMaxDist )
+        {
+            bVisible = bVisibleNeighbourOk;
+            fMaxDist = fDist;
+            iResult = iNeighbour;
+        }
+    }
+    return iResult;
 }
 
 

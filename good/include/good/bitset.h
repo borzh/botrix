@@ -15,11 +15,11 @@ namespace good
     //************************************************************************************************************
     /// Small class for handling set of bits.
     //************************************************************************************************************
-    template < typename Alloc >
+    template < typename Container >
     class base_bitset
     {
     public:
-        typedef good::vector< unsigned char, Alloc > container_t;
+        typedef Container container_t;
 
         /// Constructor with optional size of set.
         base_bitset( int iSize = 0 ): m_iSize(iSize) { m_cContainer.resize(BIT_ARRAY_SIZE(iSize)); }
@@ -50,8 +50,11 @@ namespace good
             return *this;
         }
 
-        /// Get size of bitset.
-        int size() const { return m_iSize; }
+        /// Get size of bitset in bits.
+        typename container_t::size_type size() const { return m_iSize; }
+
+        /// Get size of bitset in bytes.
+        typename container_t::size_type byte_size() const { return m_cContainer.size(); }
 
         /// Returns true if any bits are set.
         bool any() const
@@ -68,6 +71,12 @@ namespace good
 
         /// Resize set to given size. Note that new bits will be undefined.
         void resize( int iNewSize ) { m_cContainer.resize( BIT_ARRAY_SIZE(iNewSize) ); m_iSize = iNewSize; }
+
+        /// Get data of the container.
+        typename container_t::value_type* data()
+        {
+            return const_cast<typename container_t::value_type*>( m_cContainer.data() );
+        }
 
         /// Clear all bits.
         void reset() { memset( (void*)m_cContainer.data(), 0, m_cContainer.size() ); }
@@ -122,7 +131,7 @@ namespace good
     };
 
 
-    typedef base_bitset< allocator<unsigned char> > bitset; ///< Typedef for default bitset.
+    typedef base_bitset< good::vector< unsigned char, allocator<unsigned char> > > bitset; ///< Typedef for default bitset.
 
 
 } // namespace good

@@ -223,40 +223,32 @@ void CBot_TF2::CheckEngagedEnemy()
                 }
                 else
                     ChaseEnemy();
+                return;
             }
-            else if ( CWaypoint::IsValid(m_pCurrentEnemy->iCurrentWaypoint) )
+            else if ( CWaypoints::bValidVisibilityTable &&
+                      CWaypoint::IsValid(m_pCurrentEnemy->iCurrentWaypoint) &&
+                      (m_iIntelligence >= EBotNormal) )
             {
-                if ( (m_iIntelligence >= EBotNormal) &&
-                      FLAG_SOME_SET(FFightStrategyRunAwayIfNear, CBot::iDefaultFightStrategy) &&
-                      (m_fDistanceSqrToEnemy <= CBot::fNearDistanceSqr) )
+                if ( FLAG_SOME_SET(FFightStrategyRunAwayIfNear, CBot::iDefaultFightStrategy) &&
+                     (m_fDistanceSqrToEnemy <= CBot::fNearDistanceSqr) )
                 {
                     // Try to run away a little.
                     iNextWaypoint = CWaypoints::GetFarestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true );
                     BotDebug( "%s -> Moving to far waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+                    return;
                 }
-                else if ( (m_iIntelligence >= EBotNormal) && (m_fDistanceSqrToEnemy >= CBot::fFarDistanceSqr) )
+                else if ( m_fDistanceSqrToEnemy >= CBot::fFarDistanceSqr )
                 {
                     // Try to come closer a little.
                     iNextWaypoint = CWaypoints::GetNearestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true );
                     BotDebug( "%s -> Moving to near waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
-                }
-                else
-                {
-                    iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint);
-                    BotDebug( "%s -> Moving to random waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+                    return;
                 }
             }
-            else
-            {
-                iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint);
-                BotDebug( "%s -> Moving to random waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
-            }
         }
-        else
-        {
-            iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint);
-            BotMessage( "%s -> Moving to random waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
-        }
+
+        iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint);
+        BotMessage( "%s -> Moving to random waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
     }
     else if ( m_pCurrentEnemy && m_bUseNavigatorToMove &&
               CWeapon::IsValid(m_iWeapon) && !m_aWeapons[m_iWeapon].IsMelee() )

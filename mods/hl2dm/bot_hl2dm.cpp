@@ -230,25 +230,24 @@ void CBot_HL2DM::CheckEngagedEnemy()
                     ChaseEnemy();
                 return;
             }
-            else if ( CWaypoint::IsValid(m_pCurrentEnemy->iCurrentWaypoint) )
+            else if ( CWaypoints::bValidVisibilityTable &&
+                      CWaypoint::IsValid(m_pCurrentEnemy->iCurrentWaypoint) &&
+                      (m_iIntelligence >= EBotNormal) )
             {
-                if ( m_iIntelligence >= EBotNormal )
+                if ( FLAG_SOME_SET(FFightStrategyRunAwayIfNear, CBot::iDefaultFightStrategy) &&
+                     (m_fDistanceSqrToEnemy <= CBot::fNearDistanceSqr) )
                 {
-                    if ( FLAG_SOME_SET(FFightStrategyRunAwayIfNear, CBot::iDefaultFightStrategy) &&
-                         (m_fDistanceSqrToEnemy <= CBot::fNearDistanceSqr) )
-                    {
-                        // Try to run away a little.
-                        iNextWaypoint = CWaypoints::GetFarestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true );
-                        BotDebug( "%s -> Moving to far waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
-                        return;
-                    }
-                    else if ( m_fDistanceSqrToEnemy >= CBot::fFarDistanceSqr )
-                    {
-                        // Try to come closer a little.
-                        iNextWaypoint = CWaypoints::GetNearestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true );
-                        BotDebug( "%s -> Moving to near waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
-                        return;
-                    }
+                    // Try to run away a little.
+                    iNextWaypoint = CWaypoints::GetFarestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true );
+                    BotDebug( "%s -> Moving to far waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+                    return;
+                }
+                else if ( m_fDistanceSqrToEnemy >= CBot::fFarDistanceSqr )
+                {
+                    // Try to come closer a little.
+                    iNextWaypoint = CWaypoints::GetNearestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true );
+                    BotDebug( "%s -> Moving to near waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+                    return;
                 }
             }
         }

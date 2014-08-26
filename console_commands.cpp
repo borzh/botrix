@@ -1966,10 +1966,12 @@ TCommandResult CBotDefaultClassCommand::Execute( CClient* pClient, int argc, con
 
 TCommandResult CBotDrawPathCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
     if ( argc == 0 )
     {
         const good::string& sTypes = CTypeToString::PathDrawFlagsToString(CWaypointNavigator::iPathDrawFlags);
-        BULOG_I( pClient->GetEdict(), "Bot's path draw flags: %s.", (sTypes.size() > 0) ? sTypes.c_str() : sNone.c_str() );
+        BULOG_I( pEdict, "Bot's path draw flags: %s.", (sTypes.size() > 0) ? sTypes.c_str() : sNone.c_str() );
         return ECommandPerformed;
     }
 
@@ -2006,7 +2008,7 @@ TCommandResult CBotDrawPathCommand::Execute( CClient* pClient, int argc, const c
             int iAddFlag = CTypeToString::PathDrawFlagsFromString(argv[i]);
             if ( iAddFlag == -1 )
             {
-                BULOG_W( pClient->GetEdict(), "Error, invalid draw type(s). Can be 'none' / 'all' / 'next' or mix of: %s", CTypeToString::PathDrawFlagsToString(FPathDrawAll).c_str() );
+                BULOG_W( pEdict, "Error, invalid draw type(s). Can be 'none' / 'all' / 'next' or mix of: %s", CTypeToString::PathDrawFlagsToString(FPathDrawAll).c_str() );
                 return ECommandError;
             }
             FLAG_SET(iAddFlag, iFlags);
@@ -2014,7 +2016,7 @@ TCommandResult CBotDrawPathCommand::Execute( CClient* pClient, int argc, const c
     }
 
     CWaypointNavigator::iPathDrawFlags = iFlags;
-    BULOG_I(pClient->GetEdict(), "Bot's path drawing is %s.", iFlags ? "on" : "off");
+    BULOG_I(pEdict, "Bot's path drawing is %s.", iFlags ? "on" : "off");
     return ECommandPerformed;
 }
 

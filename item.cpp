@@ -323,7 +323,7 @@ TEntityType CItems::GetEntityType( const char* szClassName, CEntityClass* & pEnt
         }
     }
 
-    return EOtherEntityType;
+    return EEntityTypeOther;
 }
 
 
@@ -338,7 +338,7 @@ void CItems::CheckNewEntity( edict_t* pEdict )
     const char* szClassName = pEdict->GetClassName();
     CEntityClass* pItemClass;
     TEntityType iEntityType = GetEntityType(szClassName, pItemClass, 0, EEntityTypeTotal);
-    if ( iEntityType == EOtherEntityType )
+    if ( iEntityType == EEntityTypeOther )
         m_aOthers.push_back(pEdict);
     else if ( iEntityType == EEntityTypeObject )
         AddObject( pEdict, pItemClass, pServerEntity );
@@ -569,10 +569,10 @@ void CItems::Draw( CClient* pClient )
         if ( !FLAG_SOME_SET(1<<iEntityType, pClient->iItemTypeFlags) ) // Don't draw items of disabled item type.
             continue;
 
-        int iSize = (iEntityType == EOtherEntityType) ? m_aOthers.size() : m_aItems[iEntityType].size();
+        int iSize = (iEntityType == EEntityTypeOther) ? m_aOthers.size() : m_aItems[iEntityType].size();
         for ( int i = 0; i < iSize; ++i )
         {
-            edict_t* pEdict = (iEntityType == EOtherEntityType) ? m_aOthers[i] : m_aItems[iEntityType][i].pEdict;
+            edict_t* pEdict = (iEntityType == EEntityTypeOther) ? m_aOthers[i] : m_aItems[iEntityType][i].pEdict;
 
             if ( (pEdict == NULL) || pEdict->IsFree() )
                 continue;
@@ -589,7 +589,7 @@ void CItems::Draw( CClient* pClient )
             if ( CBotrixPlugin::pEngineServer->CheckOriginInPVS( vOrigin, pvs, sizeof(pvs) ) &&
                  CUtil::IsVisible(pClient->GetHead(), vOrigin) )
             {
-                const CEntity* pEntity = (iEntityType == EOtherEntityType) ? NULL : &m_aItems[iEntityType][i];
+                const CEntity* pEntity = (iEntityType == EEntityTypeOther) ? NULL : &m_aItems[iEntityType][i];
 
                 if ( FLAG_SOME_SET(EItemDrawStats, pClient->iItemDrawFlags) )
                 {

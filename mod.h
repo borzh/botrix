@@ -192,8 +192,8 @@ protected: // Members.
 
     static TModId m_iModId;                                  // Mod id.
     static good::vector<CEventPtr> m_aEvents;                // Events this mod handles.
-    static bool m_bMapHas[EEntityTypeTotal-1];               // To check if map has items or waypoints of types: health, armor, weapon, ammo.
-    
+    static bool m_bMapHas[EEntityTypeNotObject];             // To check if map has items or waypoints of types: health, armor, weapon, ammo.
+
     // Events that happend on this frame.
     static good::vector< good::pair<TFrameEvent, TPlayerIndex> > m_aFrameEvents;
 };

@@ -21,7 +21,7 @@ StringVector CMod::aBotNames;
 good::vector<CEventPtr> CMod::m_aEvents;
 good::vector< good::pair<TFrameEvent, TPlayerIndex> > CMod::m_aFrameEvents;
 
-bool CMod::m_bMapHas[EEntityTypeTotal-1]; // Health, armor, weapon, ammo.
+bool CMod::m_bMapHas[EEntityTypeNotObject]; // Health, armor, weapon, ammo.
 
 StringVector CMod::aTeamsNames;
 int CMod::iUnassignedTeam = 0;
@@ -185,7 +185,7 @@ bool CMod::AddEvent( CEvent* pEvent )
 void CMod::MapLoaded()
 {
     // TODO: move this to items.
-    for ( TEntityType iType=0; iType < EEntityTypeTotal-1; ++iType )
+    for ( TEntityType iType=0; iType < EEntityTypeNotObject; ++iType )
     {
         m_bMapHas[iType] = false;
 

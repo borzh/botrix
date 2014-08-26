@@ -142,7 +142,7 @@ public: // Members and constants.
     //unsigned char iPlayersCount;             ///< Count of players that reached this waypoint.
 
 protected:
-    static const TWaypointFlags m_aFlagsForEntityType[EEntityTypeTotal-1];
+    static const TWaypointFlags m_aFlagsForEntityType[EEntityTypeNotObject];
 };
 
 

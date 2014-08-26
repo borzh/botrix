@@ -331,7 +331,8 @@ enum TEntityTypes
     EEntityTypeObject,                           ///< Object that can stuck player (or optionally be moved).
     EEntityTypeTotal,                            ///< Amount of item types. Object and other doens't count as bot can't pick them up.
 
-    EOtherEntityType = EEntityTypeTotal,         ///< All other type of entities.
+    EEntityTypeNotObject = EEntityTypeTotal-1,   ///< All that is not object nor other.
+    EEntityTypeOther = EEntityTypeTotal,         ///< All other type of entities.
 };
 typedef int TEntityType;                         ///<  Items types / object / other entities.
 
@@ -349,7 +350,7 @@ typedef int TEntityIndex;                        ///< Index of entity in CItems:
 
 enum TEntityTypeFlag
 {
-    EItemTypeAll = (1<<(EOtherEntityType+1))-1   ///< Flag to draw all items.
+    EItemTypeAll = (1<<(EEntityTypeOther+1))-1   ///< Flag to draw all items.
 };
 typedef int TEntityTypeFlags;                    ///< Item type flags (used to define which items to draw).
 

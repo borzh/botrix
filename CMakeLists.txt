@@ -30,7 +30,8 @@ set( SHARED_FLAGS "${SHARED_COMPILE_FLAGS} ${SHARED_LINKER_FLAGS}")
 set( CMAKE_CXX_FLAGS                "${SHARED_FLAGS} ${CMAKE_CXX_FLAGS}" )
 set( CMAKE_CXX_FLAGS_DEBUG          "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -O0 -g -rdynamic" )
 set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -g -O2 -rdynamic" )
-set( CMAKE_CXX_FLAGS_RELEASE        "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -O3" )
+set( CMAKE_CXX_FLAGS_RELEASE        "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -O3 -Wl,--strip-all " )
+#-ffunction-sections -Wl,--gc-sections
 #-O2 -falign-functions=16 -falign-loops=16" )
 #TODO: set( CMAKE_CXX_FLAGS_GCOV           "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -O0 -g -rdynamic --coverage -fprofile-arcs -ftest-coverage -lgcov" )
 

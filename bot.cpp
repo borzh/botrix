@@ -32,8 +32,8 @@ TTeam CBot::iDefaultTeam = 0;
 TClass CBot::iDefaultClass = -1;
 TFightStrategyFlags CBot::iDefaultFightStrategy = FFightStrategyRunAwayIfNear;// TODO: use 0.
 
-const float CBot::fNearDistanceSqr = SQR(300);
-const float CBot::fFarDistanceSqr = SQR(700);
+const float CBot::fNearDistanceSqr = SQR(200);
+const float CBot::fFarDistanceSqr = SQR(500);
 
 float CBot::m_fTimeIntervalCheckUsingMachines = 0.5f;
 int CBot::m_iCheckEntitiesPerFrame = 4;
@@ -1190,7 +1190,7 @@ void CBot::UpdateWorld()
                 m_aNearPlayers.set(m_iNextCheckPlayer);
 
                 // Check if players are not stucked with each other.
-                if ( !m_bStuckTryingSide && ( fDistSqr <= (SQR(CMod::iPlayerRadius) << 2) ) )
+                if ( m_bStuck && !m_bStuckTryingSide && ( fDistSqr <= (SQR(CMod::iPlayerRadius) << 2) ) )
                 {
                     Vector vNeeded(m_vDestination), vOther( pCheckPlayer->GetHead() );
                     vNeeded -= m_vHead;
@@ -1240,6 +1240,13 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
         return;
     }
 
+    if ( m_bEnemyOffSight && (CBotrixPlugin::fTime >= m_fTimeToEraseEnemy) )
+    {
+        m_bEnemyOffSight = false;
+        m_pCurrentEnemy = NULL;
+        m_bUnderAttack = m_bAttackDuck = false;
+    }
+
     // Assume that current enemy is in view cone.
     bool bIsDifferentEnemy = ( m_pCurrentEnemy != pPlayer );
 
@@ -1252,11 +1259,12 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
 
         float fDistanceSqr = m_vHead.DistToSqr( pPlayer->GetHead() );
 
-        // Add 16 units to not to change enemy too often.
+        // Add 64 units to not to change enemy too often.
         bEnemyChanged = ( m_pCurrentEnemy == NULL ) ||
-                        ( bIsDifferentEnemy && (fDistanceSqr < m_fDistanceSqrToEnemy + 256) );
+                        ( bIsDifferentEnemy && (fDistanceSqr < m_fDistanceSqrToEnemy + 4096) );
         if ( bEnemyChanged || (m_pCurrentEnemy == pPlayer) ) // Update distance.
         {
+            m_bEnemyOffSight = false;
             m_pCurrentEnemy = pPlayer;
             m_fDistanceSqrToEnemy = fDistanceSqr;
         }
@@ -1275,8 +1283,20 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
         m_aSeenEnemies.reset(iPlayerIndex);
         if ( m_pCurrentEnemy == pPlayer )
         {
-            m_pCurrentEnemy = NULL;
-            m_bUnderAttack = m_bAttackDuck = false;
+            if ( pPlayer->IsAlive() )
+            {
+                if ( !m_bEnemyOffSight )
+                {
+                    m_bEnemyOffSight = true;
+                    m_fTimeToEraseEnemy = CBotrixPlugin::fTime + 1.5f; // Give some time to erase enemy.
+                    m_bAttackDuck = false;
+                }
+            }
+            else
+            {
+                m_pCurrentEnemy = NULL;
+                m_bUnderAttack = m_bAttackDuck = false;
+            }
         }
     }
 
@@ -2126,7 +2146,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
 
                 }
 
-                if ( m_bEnemyAimed )
+                if ( m_bEnemyAimed && !m_bEnemyOffSight )
                 {
                     if ( pWeapon )
                     {
@@ -2319,36 +2339,39 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
     // Start holding attack after m_fStartActionTime until break object or object moves far away.
     else if ( m_bStuckBreakObject )
     {
-        BASSERT( m_bTest || !m_bUnderAttack, return );
-
-        if ( CWeapon::IsValid(m_iMeleeWeapon) && (m_iWeapon != m_iMeleeWeapon) && m_aWeapons[m_iWeapon].CanChange() )
-            WeaponChange(m_iMeleeWeapon);
-
-        if ( CBotrixPlugin::fTime >= m_fStartActionTime )
+        if ( !m_bTest && m_bUnderAttack ) 
+            m_bStuckBreakObject = false;
+        else
         {
-            const CEntity* pObject = NULL;
-            if ( m_aNearestItems[EEntityTypeObject].size() )
-                pObject = &CItems::GetItems(EEntityTypeObject)[ m_aNearestItems[EEntityTypeObject][0] ];
+            if ( CWeapon::IsValid(m_iMeleeWeapon) && (m_iWeapon != m_iMeleeWeapon) && m_aWeapons[m_iWeapon].CanChange() )
+                WeaponChange(m_iMeleeWeapon);
 
-            if ( pObject && pObject->IsBreakable() && !pObject->IsExplosive() ) // Object still there.
+            if ( CBotrixPlugin::fTime >= m_fStartActionTime )
             {
-                WeaponShoot();
+                const CEntity* pObject = NULL;
+                if ( m_aNearestItems[EEntityTypeObject].size() )
+                    pObject = &CItems::GetItems(EEntityTypeObject)[ m_aNearestItems[EEntityTypeObject][0] ];
 
-                if ( (CBotrixPlugin::fTime >= m_fEndAimTime + 1.0f) ) // Maybe object moved.
+                if ( pObject && pObject->IsBreakable() && !pObject->IsExplosive() ) // Object still there.
                 {
-                    m_bNeedAim = true;
-                    m_vLook = pObject->CurrentPosition();
-                    int r = 4 - (rand() & 0x7); // Maybe object has holes: add random from -3 to 4.
-                    m_vLook.x += r;
-                    m_vLook.y += -r;
-                    m_vLook.z += r;
-                    m_fEndAimTime = CBotrixPlugin::fTime + GetEndLookTime();
+                    WeaponShoot();
+
+                    if ( (CBotrixPlugin::fTime >= m_fEndAimTime + 1.0f) ) // Maybe object moved.
+                    {
+                        m_bNeedAim = true;
+                        m_vLook = pObject->CurrentPosition();
+                        int r = 4 - (rand() & 0x7); // Maybe object has holes: add random from -3 to 4.
+                        m_vLook.x += r;
+                        m_vLook.y += -r;
+                        m_vLook.z += r;
+                        m_fEndAimTime = CBotrixPlugin::fTime + GetEndLookTime();
+                    }
                 }
-            }
-            else // Object broken, restore previous weapon.
-            {
-                m_bStuckBreakObject = m_bLockAim = false;
-                m_bNeedSetWeapon = true;
+                else // Object broken, restore previous weapon.
+                {
+                    m_bStuckBreakObject = m_bLockAim = false;
+                    m_bNeedSetWeapon = true;
+                }
             }
         }
     }

@@ -347,6 +347,7 @@ protected: // Members.
 
     CPlayer* m_pCurrentEnemy;                                      // Current enemy.
     float m_fDistanceSqrToEnemy;                                   // If m_pCurrentEnemy is not NULL, squared distance to it.
+    float m_fTimeToEraseEnemy;                                     // Time to mark enemy no visible after not seeing it.
 
     good::vector<CPickedItem>::size_type m_iCurrentPickedItem;      // Index in m_aPickedItems to check next frame.
     good::vector<CPickedItem> m_aPickedItems;                       // Picked items (like health or weapon), for bot to know which items are available to pick on map.
@@ -430,6 +431,7 @@ protected: // Bot flags.
     bool m_bNeedSetWeapon:1;                                       // Need to set best weapon.
     bool m_bLockAll:1;                                             // Mod can lock aim/move/attack, to do instead whatever bot is doing (like defusing bomb in CSS).
     bool m_bEnemyAimed:1;                                          // If true, then enemy is already aimed.
+    bool m_bEnemyOffSight:1;                                       // Enemy is not visible.
     bool m_bStayReloading:1;                                       // If true, then don't change weapon at reload time, but reload current weapon instead.
     bool m_bShootAtHead:1;                                         // If true, then will shoot at head instead of body.
 

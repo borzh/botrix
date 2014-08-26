@@ -37,7 +37,7 @@ public:
     virtual void PlayerDisconnect( int iPlayerIndex, CPlayer* pPlayer )
     {
         CBot::PlayerDisconnect(iPlayerIndex, pPlayer);
-        if ( m_bChasing && (m_pChasedEnemy == pPlayer) )
+        if ( m_pChasedEnemy == pPlayer )
         {
             m_bChasing = false;
             m_pChasedEnemy = NULL;

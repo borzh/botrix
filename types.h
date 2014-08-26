@@ -277,8 +277,8 @@ typedef unsigned char TAreaId;                   ///< Waypoints are grouped in a
 enum TWaypointDrawFlag
 {
     FWaypointDrawNone          = 0,              ///< Don't draw waypoints.
-    FWaypointDrawLine          = 1<<0,           ///< Draw line.
-    FWaypointDrawBeam          = 1<<1,           ///< Draw beam.
+    FWaypointDrawBeam          = 1<<0,           ///< Draw beam.
+    FWaypointDrawLine          = 1<<1,           ///< Draw line.
     FWaypointDrawBox           = 1<<2,           ///< Draw box.
     FWaypointDrawText          = 1<<3,           ///< Draw text (id, area, etc.).
 
@@ -294,8 +294,8 @@ typedef int TWaypointDrawFlags;                  ///< Set of waypoint draw types
 enum TPathDrawFlag
 {
     FPathDrawNone              = 0,              ///< Don't draw paths.
-    FPathDrawLine              = 1<<0,           ///< Draw line.
-    FPathDrawBeam              = 1<<1,           ///< Draw beam.
+    FPathDrawBeam              = 1<<0,           ///< Draw beam.
+    FPathDrawLine              = 1<<1,           ///< Draw line.
 
     FPathDrawTotal             = 2,              ///< Amount of draw type flags.
 

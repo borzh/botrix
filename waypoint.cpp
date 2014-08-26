@@ -34,7 +34,7 @@ static const char* WAYPOINT_FILE_HEADER_ID = "BtxW";   // Botrix's Waypoints.
 
 static const int WAYPOINT_VERSION = 1;                 // Waypoints file version.
 static const int WAYPOINT_FILE_FLAG_VISIBILITY = 1<<0; // Flag for waypoint visibility table.
-static const int WAYPOINT_FILE_FLAG_AREAS      = 2<<0; // Flag for area names.
+static const int WAYPOINT_FILE_FLAG_AREAS      = 1<<1; // Flag for area names.
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -161,8 +161,7 @@ bool CWaypoints::Save()
     header.iFlags = 0;
     if ( m_cAreas.size() > 1 )
         FLAG_SET(WAYPOINT_FILE_FLAG_AREAS, header.iFlags);
-    //if ( bVisiblityMade )
-    //	FLAG_SET(WAYPOINT_FILE_FLAG_VISIBILITY, header.iFlags);
+    FLAG_SET(WAYPOINT_FILE_FLAG_VISIBILITY, header.iFlags);
     header.iNumWaypoints = m_cGraph.size();
     header.iVersion = WAYPOINT_VERSION;
     header.szFileType = *((int*)&WAYPOINT_FILE_HEADER_ID[0]);
@@ -203,25 +202,28 @@ bool CWaypoints::Save()
     for ( int i=1; i < iAreaNamesSize+1; i++ ) // First area name is always empty, for new waypoints.
     {
         int iSize = m_cAreas[i].size();
-        fwrite(&iSize, sizeof(int), 1, f); // Save string size.
-        fwrite(m_cAreas[i].c_str(), sizeof(char), iSize+1, f); // Write string & trailing 0.
+        fwrite(&iSize, 1, sizeof(int), f); // Save string size.
+        fwrite(m_cAreas[i].c_str(), 1, iSize+1, f); // Write string & trailing 0.
     }
 
     // Save waypoint visibility table.
-    BLOG_W( "Saving waypoint visibility table..." );
-    FLAG_SET(WAYPOINT_FILE_FLAG_VISIBILITY, header.iFlags);
+    BLOG_W( "Saving waypoint visibility table... this may take a while." );
     m_aVisTable.resize( Size() );
     for ( TWaypointId i = 0; i < Size(); ++i )
     {
-        m_aVisTable[i].resize( Size() );
-        Vector vFrom = Get(i).vOrigin;
-        for ( TWaypointId j = 0; j < Size(); ++j )
+        if ( !bValidVisibilityTable )
         {
-            if ( i < j )
-                m_aVisTable[i].set( j, CUtil::IsVisible(vFrom, Get(j).vOrigin) );
-            else
-                m_aVisTable[i].set( j, (i == j) || m_aVisTable[j].test(i) );
+            m_aVisTable[i].resize( Size() );
+            Vector vFrom = Get(i).vOrigin;
+            for ( TWaypointId j = 0; j < Size(); ++j )
+            {
+                if ( i < j )
+                    m_aVisTable[i].set( j, CUtil::IsVisible(vFrom, Get(j).vOrigin) );
+                else
+                    m_aVisTable[i].set( j, (i == j) || m_aVisTable[j].test(i) );
+            }
         }
+        fwrite(m_aVisTable[i].data(), 1, m_aVisTable[i].byte_size(), f);
     }
 
     fclose(f);
@@ -387,20 +389,19 @@ bool CWaypoints::Load()
                 return false;
             }
         }
+        BLOG_I( "Waypoints visibility table loaded." );
     }
     else
         BLOG_I("No waypoint visibility in file.");
 
     fclose(f);
 
-    BLOG_I("%d waypoints loaded for map %s.", CWaypoints::Size(), CBotrixPlugin::instance->sMapName.c_str());
-
     return true;
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
-TWaypointId CWaypoints::GetNearestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, TWaypointVisibility bVisible )
+TWaypointId CWaypoints::GetNearestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, bool bVisible )
 {
     GoodAssert(bValidVisibilityTable);
     const WaypointNode::arcs_t& aNeighbours = GetNode(iWaypoint).neighbours;
@@ -433,7 +434,7 @@ TWaypointId CWaypoints::GetNearestNeighbour( TWaypointId iWaypoint, TWaypointId 
 }
 
 //----------------------------------------------------------------------------------------------------------------
-TWaypointId CWaypoints::GetFarestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, TWaypointVisibility bVisible )
+TWaypointId CWaypoints::GetFarestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, bool bVisible )
 {
     GoodAssert(bValidVisibilityTable);
     const WaypointNode::arcs_t& aNeighbours = GetNode(iWaypoint).neighbours;

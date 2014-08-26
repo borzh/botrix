@@ -241,8 +241,8 @@ const good::string& CTypeToString::PathFlagsToString( TPathFlags iFlags )
 //----------------------------------------------------------------------------------------------------------------
 good::string aDrawTypeFlags[FWaypointDrawTotal] =
 {
-    "line",
     "beam",
+    "line",
     "box",
     "text",
 };

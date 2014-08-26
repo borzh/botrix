@@ -58,6 +58,13 @@ void CWeaponWithAmmo::GetLook( const Vector& vAim, float fDistance, bool bDuck,
 //----------------------------------------------------------------------------------------------------------------
 void CWeaponWithAmmo::GameFrame()
 {
+    if ( m_bChanging )
+    {
+        if ( CBotrixPlugin::fTime >= m_fEndTime )
+            m_bChanging = false;
+        else
+            return;
+    }
     if ( m_bShooting )
     {
         if ( CBotrixPlugin::fTime >= m_fEndTime )
@@ -69,13 +76,6 @@ void CWeaponWithAmmo::GameFrame()
     {
         if ( CBotrixPlugin::fTime >= m_fEndTime )
             EndReload();
-        else
-            return;
-    }
-    else if ( m_bChanging )
-    {
-        if ( CBotrixPlugin::fTime >= m_fEndTime )
-            m_bChanging = false;
         else
             return;
     }
@@ -118,9 +118,9 @@ void CWeaponWithAmmo::Holster( CWeaponWithAmmo* pSwitchFrom, CWeaponWithAmmo& cS
 {
     if ( pSwitchFrom )
     {
-        //GoodAssert( !pSwitchFrom->m_bShooting );
+        //GoodAssert( !pSwitchFrom->m_bShooting ); // Happends when weapon is out of bullets and switched automatically.
 
-        pSwitchFrom->m_bChanging = pSwitchFrom->m_bReloading = pSwitchFrom->m_bChangingZoom = pSwitchFrom->m_bUsingZoom = false;
+        pSwitchFrom->m_bChanging = pSwitchFrom->m_bShooting = pSwitchFrom->m_bReloading = pSwitchFrom->m_bChangingZoom = pSwitchFrom->m_bUsingZoom = false;
         pSwitchFrom->m_fEndTime = CBotrixPlugin::fTime; // Save time when switched weapon.
     }
 

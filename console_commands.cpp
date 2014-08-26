@@ -935,7 +935,7 @@ TCommandResult CWaypointLoadCommand::Execute( CClient* pClient, int /*argc*/, co
 
     if ( CWaypoints::Load() )
     {
-        BULOG_I(pClient->GetEdict(), "%d waypoints loaded.", CWaypoints::Size());
+        BULOG_I(pClient->GetEdict(), "%d waypoints loaded for map %s.", CWaypoints::Size(), CBotrixPlugin::instance->sMapName.c_str() );
         return ECommandPerformed;
     }
     else

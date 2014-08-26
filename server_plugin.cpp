@@ -401,7 +401,8 @@ void CBotrixPlugin::LevelInit( const char* szMapName )
     CWaypoint::iWaypointTexture = CBotrixPlugin::pEngineServer->PrecacheModel( "sprites/lgtning.vmt" );
 #endif
 
-    CWaypoints::Load();
+    if ( CWaypoints::Load() )
+        BLOG_I("%d waypoints loaded for map %s.", CWaypoints::Size(), CBotrixPlugin::instance->sMapName.c_str());
 }
 
 //----------------------------------------------------------------------------------------------------------------

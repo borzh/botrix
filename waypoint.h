@@ -229,10 +229,10 @@ public: // Methods.
     }
 
     /// Get nearest neighbour to given waypoint.
-    static TWaypointId GetNearestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, TWaypointVisibility bVisible );
+    static TWaypointId GetNearestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, bool bVisible );
 
     /// Get farest neighbour to given waypoint.
-    static TWaypointId GetFarestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, TWaypointVisibility bVisible );
+    static TWaypointId GetFarestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, bool bVisible );
 
     /// Return true if there is a path from waypoint source to waypoint dest.
     static bool HasPath(TWaypointId source, TWaypointId dest)

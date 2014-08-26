@@ -11,6 +11,7 @@
 //----------------------------------------------------------------------------------------------------------------
 // Class for events of type KeyValues.
 //----------------------------------------------------------------------------------------------------------------
+#ifdef USE_OLD_GAME_EVENT_MANAGER
 class CGameEventInterface1 : public IEventInterface
 {
 public:
@@ -45,6 +46,9 @@ protected:
     KeyValues *m_pEvent;
 
 };
+
+
+#else // USE_OLD_GAME_EVENT_MANAGER
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -82,17 +86,19 @@ protected:
 };
 
 
+#endif // USE_OLD_GAME_EVENT_MANAGER
+
+
 //----------------------------------------------------------------------------------------------------------------
 IEventInterface* CEvent::GetEventInterface( void* pEvent, TEventType iType )
 {
-    IEventInterface *result = NULL;
-
-    if (iType == EEventTypeKeyValues)
-        result = new CGameEventInterface1( (KeyValues*)pEvent );
-    else if (iType == EEventTypeIGameEvent)
-        result = new CGameEventInterface2( (IGameEvent*)pEvent );
-
-    return result;
+#ifdef USE_OLD_GAME_EVENT_MANAGER
+    GoodAssert( iType == EEventTypeKeyValues );
+    return new CGameEventInterface1( (KeyValues*)pEvent );
+#else
+    GoodAssert( iType == EEventTypeIGameEvent );
+    return new CGameEventInterface2( (IGameEvent*)pEvent );
+#endif
 }
 
 

@@ -157,7 +157,7 @@ namespace good
         if ( end == String::npos )
             return sStr;
 
-        while ( end < sStr.size() )
+        while ( end < sStr.size()-1 )
         {
             end++;
             count++;

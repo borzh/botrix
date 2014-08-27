@@ -767,6 +767,20 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
+class gitCConfigLogCommand: public CConsoleCommand
+{
+public:
+    CConfigLogCommand()
+    {
+        m_sCommand = "log";
+        m_sHelp = "set console log level (none, trace, debug, info, warning, error).";
+        m_iAccessLevel = FCommandAccessConfig;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+
 //****************************************************************************************************************
 // Admins: show admins and set admin flags.
 //****************************************************************************************************************
@@ -897,6 +911,7 @@ public:
         m_sCommand = "config";
         Add(new CConfigAdminsCommand());
         Add(new CConfigEventsCommand);
+        Add(new CConfigLogCommand);
     }
 };
 

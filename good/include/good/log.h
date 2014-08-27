@@ -56,7 +56,7 @@ namespace good
         ELogLevelTotal                 ///< Amount of log levels.
     };
 
-    typedef unsigned int TLogLevel;    ///< Typedef for log level.
+    typedef int TLogLevel;    ///< Typedef for log level.
 
 
     //************************************************************************************************************

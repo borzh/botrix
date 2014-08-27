@@ -187,6 +187,8 @@ public:
     //------------------------------------------------------------------------------------------------------------
     static int LogLevelFromString( const good::string& sAction );
 
+    /// Get string from log level.
+    static const good::string& LogLevelToString( int iLevel );
 
 #ifdef BOTRIX_BORZH
     //------------------------------------------------------------------------------------------------------------

@@ -25,6 +25,7 @@
 *     -# botrix bot default intelligence <bot-intelligence>
 *     -# botrix bot default team <bot-team>
 *     -# botrix bot default class <bot-class>
+*     -# botrix config log <log-level>
 *
 * 0.0.2
 * @li Default base folder location is <MOD DIRECTORY>/addons/botrix.

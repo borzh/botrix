@@ -2287,6 +2287,30 @@ TCommandResult CConfigEventsCommand::Execute( CClient* pClient, int argc, const 
     return ECommandPerformed;
 }
 
+TCommandResult CConfigLogCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+    if ( argc == 0 )
+    {
+        BULOG_I( pEdict, "Console log level: %s.", CTypeToString::LogLevelToString(CUtil::iLogLevel).c_str() );
+        return ECommandPerformed;
+    }
+
+    good::TLogLevel iLogLevel = -1;
+    if ( argc == 1 )
+        iLogLevel = CTypeToString::LogLevelFromString(argv[0]);
+
+    if ( iLogLevel == -1 )
+    {
+        BULOG_W( pEdict, "Error, invalid argument (must be none, trace, debug, info, warning, error)." );
+        return ECommandError;
+    }
+
+    CUtil::iLogLevel = iLogLevel;
+    BULOG_I( pEdict, "Console log level: %s.", argv[0] );
+    return ECommandPerformed;
+}
+
 TCommandResult CConfigAdminsSetAccessCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;

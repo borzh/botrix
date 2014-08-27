@@ -596,6 +596,11 @@ int CTypeToString::LogLevelFromString( const good::string& sLevel )
     return EnumFromString( sLevel, good::ELogLevelTotal, aLogLevels );
 }
 
+const good::string& CTypeToString::LogLevelToString( int iLevel )
+{
+    return EnumToString( iLevel, good::ELogLevelTotal, aLogLevels, sUnknown );
+}
+
 #ifdef BOTRIX_BORZH
 
 //----------------------------------------------------------------------------------------------------------------

@@ -30,7 +30,7 @@ public:
     bool HasAccess( CClient* pClient )
     {
         TCommandAccessFlags access = pClient ? pClient->iCommandAccessFlags : FCommandAccessAll;
-        return FLAG_SOME_SET(m_iAccessLevel, access);
+        return FLAG_SOME_SET_OR_0(m_iAccessLevel, access);
     }
 
     virtual TCommandResult Execute( CClient* pClient, int argc, const char** argv ) = 0;

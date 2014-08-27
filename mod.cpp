@@ -30,6 +30,7 @@ int CMod::iSpectatorTeam = 1;
 StringVector CMod::aClassNames;
 
 bool CMod::bIntelligenceInBotName = true;
+bool CMod::bHeadShotDoesMoreDamage = true;
 
 //TDeathmatchFlags CMod::iDeathmatchFlags = -1;
 
@@ -81,6 +82,7 @@ bool CMod::Load( TModId iModId )
     {
 #ifdef BOTRIX_TF2
     case EModId_TF2:
+        bHeadShotDoesMoreDamage = false;
         bResult &= AddEvent(new CPlayerActivateEvent());
         bResult &= AddEvent(new CPlayerTeamEvent());
         bResult &= AddEvent(new CPlayerSpawnEvent());
@@ -197,7 +199,7 @@ void CMod::MapLoaded()
 
             // Check if map has waypoints of given type.
             for ( TWaypointId id=0; id < CWaypoints::Size(); ++id )
-                if ( FLAG_SOME_SET(CWaypoints::Get(id).iFlags, iFlags) )
+                if ( FLAG_SOME_SET_OR_0(CWaypoints::Get(id).iFlags, iFlags) )
                 {
                     m_bMapHas[iType] = true;
                     break;

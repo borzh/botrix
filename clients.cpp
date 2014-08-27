@@ -30,7 +30,7 @@ void CClient::Activated()
     iWaypointDrawFlags = FWaypointDrawNone;
     iPathDrawFlags = FPathDrawNone;
 
-    bAutoCreatePaths = FLAG_ALL_SET(FCommandAccessWaypoint, iCommandAccessFlags);
+    bAutoCreatePaths = FLAG_ALL_SET_OR_0(FCommandAccessWaypoint, iCommandAccessFlags);
     bAutoCreateWaypoints = false;
 
     iItemDrawFlags = EItemDrawAll;
@@ -39,7 +39,7 @@ void CClient::Activated()
     iDestinationWaypoint = EWaypointIdInvalid;
 
 #if defined(DEBUG) || defined(_DEBUG)
-    bDebuggingEvents = FLAG_ALL_SET(FCommandAccessConfig, iCommandAccessFlags);
+    bDebuggingEvents = FLAG_ALL_SET_OR_0(FCommandAccessConfig, iCommandAccessFlags);
 #else
     bDebuggingEvents = false;
 #endif

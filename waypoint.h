@@ -155,7 +155,7 @@ public:
     CWaypointPath( float fLength, TPathFlags iFlags = FPathNone, unsigned short iArgument = 0 ):
         fLength(fLength), iFlags(iFlags), iArgument(iArgument) {}
 
-    bool HasDemo() { return FLAG_SOME_SET(FPathDemo, iFlags); }
+    bool HasDemo() { return FLAG_SOME_SET_OR_0(FPathDemo, iFlags); }
     int DemoNumber() { return iFlags & (FPathDemo-1); }
 
     float fLength;                           ///< Path length.
@@ -214,11 +214,9 @@ public: // Methods.
     static CWaypoint& Get( TWaypointId id ) { return m_cGraph[id].vertex; }
 
     /// Check if waypoint @p iTo is visible from @p iFrom.
-    static TWaypointVisibility IsVisible( TWaypointId iFrom, TWaypointId iTo )
+    static bool IsVisible( TWaypointId iFrom, TWaypointId iTo )
     {
-        return bValidVisibilityTable
-            ? ( m_aVisTable[iFrom].test(iTo) ? EWaypointVisibilityVisible : EWaypointVisibilityInvisible )
-            : EWaypointVisibilityUnknown;
+        return bValidVisibilityTable ? m_aVisTable[iFrom].test(iTo) : false;
     }
 
     /// Get random neighbour.

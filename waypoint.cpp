@@ -61,43 +61,43 @@ bool CWaypoints::bValidVisibilityTable = false;
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoint::GetColor(unsigned char& r, unsigned char& g, unsigned char& b) const
 {
-    if ( FLAG_SOME_SET(FWaypointStop, iFlags) )
+    if ( FLAG_SOME_SET_OR_0(FWaypointStop, iFlags) )
     {
         r = 0x00; g = 0x00; b = 0xFF;  // Blue effect, stop.
     }
-    else if ( FLAG_SOME_SET(FWaypointCamper, iFlags) )
+    else if ( FLAG_SOME_SET_OR_0(FWaypointCamper, iFlags) )
     {
         r = 0x33; g = 0x00; b = 0x00;  // Red effect, camper.
     }
-    else if ( FLAG_SOME_SET(FWaypointSniper, iFlags) )
+    else if ( FLAG_SOME_SET_OR_0(FWaypointSniper, iFlags) )
     {
         r = 0xFF; g = 0x00; b = 0x00;  // Red effect, sniper.
     }
-    else if ( FLAG_SOME_SET(FWaypointWeapon, iFlags) )
+    else if ( FLAG_SOME_SET_OR_0(FWaypointWeapon, iFlags) )
     {
         r = 0xFF; g = 0xFF; b = 0x00;  // Light yellow effect, weapon.
     }
-    else if ( FLAG_SOME_SET(FWaypointAmmo, iFlags) )
+    else if ( FLAG_SOME_SET_OR_0(FWaypointAmmo, iFlags) )
     {
         r = 0x33; g = 0x33; b = 0x00;  // Dark yellow effect, ammo.
     }
-    else if ( FLAG_SOME_SET(FWaypointHealth, iFlags) )
+    else if ( FLAG_SOME_SET_OR_0(FWaypointHealth, iFlags) )
     {
         r = 0xFF; g = 0xFF; b = 0xFF;  // Light white effect, health.
     }
-    else if ( FLAG_SOME_SET(FWaypointHealthMachine, iFlags) )
+    else if ( FLAG_SOME_SET_OR_0(FWaypointHealthMachine, iFlags) )
     {
         r = 0x66; g = 0x66; b = 0x66;  // Gray effect, health machine.
     }
-    else if ( FLAG_SOME_SET(FWaypointArmor, iFlags) )
+    else if ( FLAG_SOME_SET_OR_0(FWaypointArmor, iFlags) )
     {
         r = 0x00; g = 0xFF; b = 0x00;  // Light green effect, armor.
     }
-    else if ( FLAG_SOME_SET(FWaypointArmorMachine, iFlags) )
+    else if ( FLAG_SOME_SET_OR_0(FWaypointArmorMachine, iFlags) )
     {
         r = 0x00; g = 0x33; b = 0x00;  // Dark green effect, armor machine.
     }
-    else if ( FLAG_SOME_SET(FWaypointButton | FWaypointSeeButton, iFlags) )
+    else if ( FLAG_SOME_SET_OR_0(FWaypointButton | FWaypointSeeButton, iFlags) )
     {
         r = 0x8A; g = 0x2B; b = 0xE2;  // Violet effect, button.
     }
@@ -116,19 +116,19 @@ void CWaypoint::Draw( TWaypointId iWaypointId, TWaypointDrawFlags iDrawType, flo
 
     Vector vEnd = Vector(vOrigin.x, vOrigin.y, vOrigin.z - CMod::iPlayerEyeLevel);
 
-    if ( FLAG_ALL_SET(FWaypointDrawBeam, iDrawType) )
+    if ( FLAG_ALL_SET_OR_0(FWaypointDrawBeam, iDrawType) )
         CUtil::DrawBeam(vOrigin, vEnd, WIDTH, fDrawTime, r, g, b);
 
-    if ( FLAG_ALL_SET(FWaypointDrawLine, iDrawType) )
+    if ( FLAG_ALL_SET_OR_0(FWaypointDrawLine, iDrawType) )
         CUtil::DrawLine(vOrigin, vEnd, fDrawTime, r, g, b);
 
-    if ( FLAG_ALL_SET(FWaypointDrawBox, iDrawType) )
+    if ( FLAG_ALL_SET_OR_0(FWaypointDrawBox, iDrawType) )
     {
         Vector vBoxOrigin(vOrigin.x - CMod::iPlayerWidth/2, vOrigin.y - CMod::iPlayerWidth/2, vOrigin.z - CMod::iPlayerEyeLevel);
         CUtil::DrawBox(vBoxOrigin, CUtil::vZero, CMod::vPlayerCollisionHull, fDrawTime, r, g, b);
     }
 
-    if ( FLAG_ALL_SET(FWaypointDrawText, iDrawType) )
+    if ( FLAG_ALL_SET_OR_0(FWaypointDrawText, iDrawType) )
     {
         static char szId[16];
         sprintf(szId, "%d", iWaypointId);
@@ -329,7 +329,7 @@ bool CWaypoints::Load()
     }
 
     int iAreaNamesSize = 0;
-    if ( FLAG_SOME_SET(WAYPOINT_FILE_FLAG_AREAS, header.iFlags) )
+    if ( FLAG_SOME_SET_OR_0(WAYPOINT_FILE_FLAG_AREAS, header.iFlags) )
     {
         // Read area names.
         iRead = fread(&iAreaNamesSize, 1, sizeof(int), f);
@@ -647,7 +647,7 @@ TWaypointId CWaypoints::GetNearestWaypoint(Vector const& vOrigin, const good::bi
                         continue;
 
                     WaypointNode& node = m_cGraph[iWaypoint];
-                    if ( FLAG_SOME_SET(iFlags, node.vertex.iFlags) )
+                    if ( FLAG_SOME_SET_OR_0(iFlags, node.vertex.iFlags) )
                     {
                         float distTo = vOrigin.DistToSqr(node.vertex.vOrigin);
                         if ( (distTo <= sqDist) && (distTo < sqMinDistance) )
@@ -674,10 +674,10 @@ TWaypointId CWaypoints::GetAnyWaypoint(TWaypointFlags iFlags)
 
     TWaypointId id = rand() % CWaypoints::Size();
     for ( TWaypointId i = id; i >= 0; --i )
-        if ( FLAG_SOME_SET(iFlags, CWaypoints::Get(i).iFlags) )
+        if ( FLAG_SOME_SET_OR_0(iFlags, CWaypoints::Get(i).iFlags) )
             return i;
     for ( TWaypointId i = id+1; i < CWaypoints::Size(); ++i )
-        if ( FLAG_SOME_SET(iFlags, CWaypoints::Get(i).iFlags) )
+        if ( FLAG_SOME_SET_OR_0(iFlags, CWaypoints::Get(i).iFlags) )
             return i;
     return EWaypointIdInvalid;
 }
@@ -756,43 +756,43 @@ void CWaypoints::Draw( CClient* pClient )
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoints::GetPathColor( TPathFlags iFlags, unsigned char& r, unsigned char& g, unsigned char& b )
 {
-    if ( FLAG_ALL_SET(FPathDemo, iFlags) )
+    if ( FLAG_ALL_SET_OR_0(FPathDemo, iFlags) )
     {
         r = 0xFF; g = 0x00; b = 0xFF; // Magenta effect, demo.
     }
-    else if ( FLAG_ALL_SET(FPathBreak, iFlags) )
+    else if ( FLAG_ALL_SET_OR_0(FPathBreak, iFlags) )
     {
         r = 0xFF; g = 0x00; b = 0x00; // Red effect, break.
     }
-    else if ( FLAG_ALL_SET(FPathSprint, iFlags) )
+    else if ( FLAG_ALL_SET_OR_0(FPathSprint, iFlags) )
     {
         r = 0xFF; g = 0xFF; b = 0x00; // Yellow effect, sprint.
     }
-    else if ( FLAG_ALL_SET(FPathStop, iFlags) )
+    else if ( FLAG_ALL_SET_OR_0(FPathStop, iFlags) )
     {
         r = 0x66; g = 0x66; b = 0x00; // Dark yellow effect, stop.
     }
-    else if ( FLAG_ALL_SET(FPathLadder, iFlags) )
+    else if ( FLAG_ALL_SET_OR_0(FPathLadder, iFlags) )
     {
         r = 0xFF; g = 0x33; b = 0x00; // Orange effect, ladder.
     }
-    else if ( FLAG_ALL_SET(FPathJump | FPathCrouch, iFlags) )
+    else if ( FLAG_ALL_SET_OR_0(FPathJump | FPathCrouch, iFlags) )
     {
         r = 0x00; g = 0x00; b = 0x66; // Dark blue effect, jump + crouch.
     }
-    else if ( FLAG_ALL_SET(FPathJump, iFlags) )
+    else if ( FLAG_ALL_SET_OR_0(FPathJump, iFlags) )
     {
         r = 0x00; g = 0x00; b = 0xFF; // Light blue effect, jump.
     }
-    else if ( FLAG_ALL_SET(FPathCrouch, iFlags) )
+    else if ( FLAG_ALL_SET_OR_0(FPathCrouch, iFlags) )
     {
         r = 0x00; g = 0xFF; b = 0x00; // Green effect, crouch.
     }
-    else if ( FLAG_ALL_SET(FPathDoor, iFlags) )
+    else if ( FLAG_ALL_SET_OR_0(FPathDoor, iFlags) )
     {
         r = 0x8A; g = 0x2B; b = 0xE2;  // Violet effect, door.
     }
-    else if ( FLAG_ALL_SET(FPathTotem, iFlags) )
+    else if ( FLAG_ALL_SET_OR_0(FPathTotem, iFlags) )
     {
         r = 0x96; g = 0x48; b = 0x00;  // Brown effect, totem.
     }
@@ -819,9 +819,9 @@ void CWaypoints::DrawWaypointPaths( TWaypointId id, TPathDrawFlags iPathDrawFlag
         WaypointNode& n = m_cGraph[it->target];
         GetPathColor(it->edge.iFlags, r, g, b);
 
-        if ( FLAG_ALL_SET(FPathDrawBeam, iPathDrawFlags) )
+        if ( FLAG_ALL_SET_OR_0(FPathDrawBeam, iPathDrawFlags) )
             CUtil::DrawBeam(w.vertex.vOrigin + diff, n.vertex.vOrigin + diff, CWaypoint::PATH_WIDTH, fDrawTime, r, g, b);
-        if ( FLAG_SOME_SET(FPathDrawLine, iPathDrawFlags) )
+        if ( FLAG_SOME_SET_OR_0(FPathDrawLine, iPathDrawFlags) )
             CUtil::DrawLine(w.vertex.vOrigin + diff, n.vertex.vOrigin + diff, fDrawTime, r, g, b);
     }
 }

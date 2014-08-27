@@ -55,7 +55,7 @@ const good::string& FlagsToString( int iFlags, int iFlagsCount, const good::stri
     sbBuffer.erase();
 
     for ( int i=0; i < iFlagsCount; ++i )
-        if ( FLAG_ALL_SET(1<<i, iFlags) )
+        if ( FLAG_ALL_SET_OR_0(1<<i, iFlags) )
             sbBuffer <<  aStrings[i] << ' ';
 
     if ( sbBuffer.size() )
@@ -360,16 +360,13 @@ const good::string& CTypeToString::ItemDrawFlagsToString( TItemDrawFlags iFlags 
 //----------------------------------------------------------------------------------------------------------------
 good::string aWeaponTypes[EWeaponTotal] =
 {
-    "physics",
     "melee",
+    "physics",
     "grenade",
-    "flash",
-    "smoke",
     "remote",
     "pistol",
-    "shotgun",
     "rifle",
-    "sniper",
+    "shotgun",
     "rocket",
 };
 
@@ -383,6 +380,59 @@ const good::string& CTypeToString::WeaponTypeToString( TWeaponType iType )
     return EnumToString( iType, EWeaponTotal, aWeaponTypes, sUnknown );
 }
 
+
+//----------------------------------------------------------------------------------------------------------------
+// Ordered by TWeaponFlags.
+//----------------------------------------------------------------------------------------------------------------
+good::string aWeaponFlags[EWeaponFlagsTotal] =
+{
+    "secondary",
+    "zoom",
+    "trigger",
+    "force_range",
+    "force_aim",
+    "cure",
+    "same_ammo",
+    "add_clip",
+    "bg_reload",
+    "press",
+    "default_empty",
+    "push_away",
+    "deflect",
+    "extinguish",
+    "prepare",
+    "slowing"
+};
+
+TWeaponFlags CTypeToString::WeaponFlagsFromString( const good::string& sType )
+{
+    return FlagsFromString( sType, EWeaponFlagsTotal, aWeaponFlags );
+}
+
+const good::string& CTypeToString::WeaponFlagsToString( TWeaponFlags iType )
+{
+    return FlagsToString( iType, EWeaponFlagsTotal, aWeaponFlags );
+}
+
+//----------------------------------------------------------------------------------------------------------------
+// Ordered by TWeaponAim.
+//----------------------------------------------------------------------------------------------------------------
+good::string aWeaponAim[EWeaponAimTotal] =
+{
+    "body",
+    "head",
+    "foot"
+};
+
+TWeaponAim CTypeToString::WeaponAimFromString( const good::string& sWeaponAim )
+{
+    return EnumFromString( sWeaponAim, EWeaponAimTotal, aWeaponAim );
+}
+
+const good::string& CTypeToString::WeaponAimToString( TWeaponAim iWeaponAim )
+{
+    return EnumToString( iWeaponAim, EWeaponAimTotal, aWeaponAim, sUnknown );
+}
 
 //----------------------------------------------------------------------------------------------------------------
 // Ordered by TPreference.

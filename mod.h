@@ -140,6 +140,7 @@ public: // Static members.
     static StringVector aClassNames;         ///< Name of player's classes.
 
     static bool bIntelligenceInBotName;      ///< Use bot's intelligence as part of his name.
+    static bool bHeadShotDoesMoreDamage;     ///< HL2DM, CSS have that (true by default).
 
 //    static TDeathmatchFlags iDeathmatchFlags;///< Flags for deathmatch mode.
 

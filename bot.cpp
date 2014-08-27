@@ -323,7 +323,7 @@ void CBot::ReceiveChatRequest( const CBotChat& cRequest )
                 if ( !pSpeaker->IsBot() )
                 {
                     CClient* pClient = (CClient*)pSpeaker;
-                    if ( FLAG_ALL_SET(FCommandAccessBot, pClient->iCommandAccessFlags) )
+                    if ( FLAG_ALL_SET_OR_0(FCommandAccessBot, pClient->iCommandAccessFlags) )
                         m_bHelpingMate = true;
                 }
             }
@@ -605,19 +605,19 @@ bool CBot::DoWaypointAction()
     if ( m_bAlreadyUsed )
     {
         // When coming back to current waypoint (if stucked) don't use it again, but make this variable false at next waypoint.
-        m_bAlreadyUsed = FLAG_SOME_SET(FWaypointHealthMachine | FWaypointArmorMachine, w.iFlags);
+        m_bAlreadyUsed = FLAG_SOME_SET_OR_0(FWaypointHealthMachine | FWaypointArmorMachine, w.iFlags);
     }
     else
     {
         // Check if need health/armor.
-        if ( FLAG_SOME_SET(FWaypointHealthMachine, w.iFlags) )
+        if ( FLAG_SOME_SET_OR_0(FWaypointHealthMachine, w.iFlags) )
         {
             m_iLastHealthArmor = m_pPlayerInfo->GetHealth();
             m_bNeedUse = m_iLastHealthArmor < m_pPlayerInfo->GetMaxHealth();
             m_bUsingHealthMachine = true;
         }
 
-        else if ( FLAG_SOME_SET(FWaypointArmorMachine, w.iFlags) )
+        else if ( FLAG_SOME_SET_OR_0(FWaypointArmorMachine, w.iFlags) )
         {
             m_iLastHealthArmor = m_pPlayerInfo->GetArmorValue();
             m_bNeedUse = m_iLastHealthArmor < CMod::iPlayerMaxArmor;
@@ -645,10 +645,10 @@ bool CBot::DoWaypointAction()
 
     // To stop, bot must not start from current waypoint.
     //if ( CWaypoint::IsValid(iPrevWaypoint) && (iCurrentWaypoint != iPrevWaypoint) &&
-    //     FLAG_SOME_SET(FWaypointStop, CWaypoints::Get(iCurrentWaypoint).iFlags) )
+    //     FLAG_SOME_SET_OR_0(FWaypointStop, CWaypoints::Get(iCurrentWaypoint).iFlags) )
     //    m_bNeedStop = true;
 
-    m_bNeedStop = FLAG_SOME_SET(FWaypointStop, CWaypoints::Get(iCurrentWaypoint).iFlags);
+    m_bNeedStop = FLAG_SOME_SET_OR_0(FWaypointStop, CWaypoints::Get(iCurrentWaypoint).iFlags);
 
     return m_bNeedUse;
 }
@@ -685,22 +685,22 @@ void CBot::ApplyPathFlags()
             CWaypointPath* pCurrentPath = CWaypoints::GetPath(iCurrentWaypoint, iNextWaypoint);
             BASSERT( pCurrentPath, return );
 
-            m_bLadderMove = FLAG_ALL_SET(FPathLadder, pCurrentPath->iFlags);
+            m_bLadderMove = FLAG_ALL_SET_OR_0(FPathLadder, pCurrentPath->iFlags);
 
-            if ( FLAG_ALL_SET(FPathStop, pCurrentPath->iFlags) )
+            if ( FLAG_ALL_SET_OR_0(FPathStop, pCurrentPath->iFlags) )
                 m_bNeedStop = true;
 
-            if ( FLAG_ALL_SET(FPathSprint, pCurrentPath->iFlags) )
+            if ( FLAG_ALL_SET_OR_0(FPathSprint, pCurrentPath->iFlags) )
                 m_bNeedSprint = true;
 
-            if ( FLAG_ALL_SET(FPathFlashlight, pCurrentPath->iFlags) )
+            if ( FLAG_ALL_SET_OR_0(FPathFlashlight, pCurrentPath->iFlags) )
                 m_bNeedFlashlight = true;
 
-            if ( FLAG_ALL_SET(FPathCrouch, pCurrentPath->iFlags) &&
-                !FLAG_ALL_SET(FPathJump, pCurrentPath->iFlags) )
+            if ( FLAG_ALL_SET_OR_0(FPathCrouch, pCurrentPath->iFlags) &&
+                !FLAG_ALL_SET_OR_0(FPathJump, pCurrentPath->iFlags) )
                 m_bNeedDuck = true; // Crouch only when not jumping.
 
-            //m_bLockAim = FLAG_SOME_SET( FPathJump | FPathBreak | FPathSprint | FPathLadder | FPathStop, pCurrentPath->iFlags);
+            //m_bLockAim = FLAG_SOME_SET_OR_0( FPathJump | FPathBreak | FPathSprint | FPathLadder | FPathStop, pCurrentPath->iFlags);
         }
     }
 
@@ -722,13 +722,13 @@ void CBot::DoPathAction()
         CWaypointPath* pCurrentPath = CWaypoints::GetPath(iCurrentWaypoint, iNextWaypoint);
         BASSERT( pCurrentPath, return );
 
-        if ( FLAG_ALL_SET(FPathBreak, pCurrentPath->iFlags) )
+        if ( FLAG_ALL_SET_OR_0(FPathBreak, pCurrentPath->iFlags) )
             m_bNeedAttack = true;
 
-        if ( FLAG_SOME_SET(FPathJump | FPathTotem, pCurrentPath->iFlags) )
+        if ( FLAG_SOME_SET_OR_0(FPathJump | FPathTotem, pCurrentPath->iFlags) )
             m_bNeedJump = true;
 
-        if ( FLAG_ALL_SET(FPathCrouch | FPathJump, pCurrentPath->iFlags) || FLAG_SOME_SET(FPathTotem, pCurrentPath->iFlags) )
+        if ( FLAG_ALL_SET_OR_0(FPathCrouch | FPathJump, pCurrentPath->iFlags) || FLAG_SOME_SET_OR_0(FPathTotem, pCurrentPath->iFlags) )
             m_bNeedJumpDuck = true;
 
         if ( m_bNeedAttack || m_bNeedJump || m_bNeedJumpDuck )
@@ -797,7 +797,7 @@ void CBot::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex
 
         // If item is not respawnable (or just bad configuration), force to not to search for it again right away, but in 1 minute at least.
         // TODO: check if item is respawnable.
-        cPickedItem.fRemoveTime += /*FLAG_ALL_SET(FEntityRespawnable, cItem.iFlags) ? cItem.pItemClass->GetArgument() : */60.0f;
+        cPickedItem.fRemoveTime += /*FLAG_ALL_SET_OR_0(FEntityRespawnable, cItem.iFlags) ? cItem.pItemClass->GetArgument() : */60.0f;
         m_aPickedItems.push_back( cPickedItem );
     }
 }
@@ -940,7 +940,7 @@ void CBot::WeaponCheckCurrent( bool bAddToBotWeapons )
 
             if ( bAssumeUnknownWeaponManual )
             {
-                pNewWeapon->iType = EWeaponManual;
+                pNewWeapon->iType = EWeaponMelee;
                 pNewWeapon->fShotTime[0] = 0.2f; // Manual weapon: 5 times in a second.
             }
             else
@@ -1270,13 +1270,8 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
         }
 
         if (  CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsMelee() && m_aWeapons[m_iWeapon].CanUse() &&
-              ( fDistanceSqr <= (SQR(CMod::iPlayerRadius) << 2) ) )
-        {
-            if ( m_aWeapons[m_iWeapon].GetBaseWeapon()->bHasSecondary )
-                WeaponShoot(CWeapon::SECONDARY); // TODO: really prefer secondary?
-            else
-                WeaponShoot(CWeapon::PRIMARY);
-        }
+              ( fDistanceSqr <= (SQR(CMod::iPlayerRadius) << 2) ) ) // (2*radius)^2 = 4*radius^2.
+            WeaponShoot( m_aWeapons[m_iWeapon].Damage(0) >= m_aWeapons[m_iWeapon].Damage(1) ? 0 : 1 );
     }
     else // Can't see this player anymore or player is dead.
     {
@@ -1393,8 +1388,8 @@ void CBot::WeaponChoose()
     GoodAssert( CWeapon::IsValid(m_iWeapon) );
     CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
 
-    if ( !cWeapon.CanChange() || (m_pCurrentEnemy && cWeapon.CanUse(m_fDistanceSqrToEnemy)) )
-        return; // Don't change weapon if enemy is close... TODO: check it.
+    if ( !cWeapon.CanUse() || ( m_pCurrentEnemy && ( cWeapon.CanShoot(0, m_fDistanceSqrToEnemy) || cWeapon.CanShoot(1, m_fDistanceSqrToEnemy) ) ) )
+        return; // Don't change weapon if enemy is close...
 
     // If not engaging enemy, reload some weapons.
     if ( (m_pCurrentEnemy == NULL) && m_bNeedReload )
@@ -1491,7 +1486,7 @@ void CBot::WeaponChange( int iIndex )
         else
         {
             BLOG_W( "%s -> could not set weapon %s, no bullets?", GetName(), sWeaponName.c_str() );
-            cNew.SetNoBullets();
+            cNew.SetEmpty();
         }
     }
     else

@@ -517,13 +517,13 @@ TCommandResult CWaypointAddTypeCommand::Execute( CClient* pClient, int argc, con
     {
         CWaypoint& w = CWaypoints::Get(pClient->iCurrentWaypoint);
 
-        bool bAngle1 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper | FWaypointArmorMachine | FWaypointHealthMachine | FWaypointButton, w.iFlags);
-        bool bAngle2 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper, w.iFlags);
+        bool bAngle1 = FLAG_SOME_SET_OR_0(FWaypointCamper | FWaypointSniper | FWaypointArmorMachine | FWaypointHealthMachine | FWaypointButton, w.iFlags);
+        bool bAngle2 = FLAG_SOME_SET_OR_0(FWaypointCamper | FWaypointSniper, w.iFlags);
 
-        bool bWeapon = FLAG_SOME_SET(FWaypointAmmo | FWaypointWeapon, w.iFlags);
+        bool bWeapon = FLAG_SOME_SET_OR_0(FWaypointAmmo | FWaypointWeapon, w.iFlags);
 
-        bool bArmor = FLAG_SOME_SET(FWaypointArmor, w.iFlags);
-        bool bHealth = FLAG_SOME_SET(FWaypointHealth, w.iFlags);
+        bool bArmor = FLAG_SOME_SET_OR_0(FWaypointArmor, w.iFlags);
+        bool bHealth = FLAG_SOME_SET_OR_0(FWaypointHealth, w.iFlags);
 
         if ( (bAngle1 && bWeapon) || ( bAngle2 && (bWeapon || bArmor || bHealth) ) )
         {
@@ -582,21 +582,21 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
 
     CWaypoint& w = CWaypoints::Get(pClient->iCurrentWaypoint);
 
-    bool bAngle1 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper | FWaypointArmorMachine | FWaypointHealthMachine | FWaypointButton | FWaypointSeeButton, w.iFlags);
-    bool bAngle2 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper, w.iFlags);
+    bool bAngle1 = FLAG_SOME_SET_OR_0(FWaypointCamper | FWaypointSniper | FWaypointArmorMachine | FWaypointHealthMachine | FWaypointButton | FWaypointSeeButton, w.iFlags);
+    bool bAngle2 = FLAG_SOME_SET_OR_0(FWaypointCamper | FWaypointSniper, w.iFlags);
 
-    bool bWeapon = FLAG_SOME_SET(FWaypointAmmo | FWaypointWeapon, w.iFlags);
+    bool bWeapon = FLAG_SOME_SET_OR_0(FWaypointAmmo | FWaypointWeapon, w.iFlags);
 
-    bool bArmor = FLAG_SOME_SET(FWaypointArmor, w.iFlags);
-    bool bHealth = FLAG_SOME_SET(FWaypointHealth, w.iFlags);
+    bool bArmor = FLAG_SOME_SET_OR_0(FWaypointArmor, w.iFlags);
+    bool bHealth = FLAG_SOME_SET_OR_0(FWaypointHealth, w.iFlags);
 
-    bool bButton = FLAG_SOME_SET(FWaypointButton | FWaypointSeeButton, w.iFlags);
+    bool bButton = FLAG_SOME_SET_OR_0(FWaypointButton | FWaypointSeeButton, w.iFlags);
 
     if ( argc == 0 )
     {
         if ( bWeapon )
             BULOG_I(pClient->GetEdict(), "Weapon index %d, subindex %d.", CWaypoint::GetWeaponIndex(w.iArgument), CWaypoint::GetWeaponSubIndex(w.iArgument));
-        if ( FLAG_ALL_SET(FWaypointAmmo, w.iFlags) )
+        if ( FLAG_ALL_SET_OR_0(FWaypointAmmo, w.iFlags) )
         {
             bool bIsSecondary; int iAmmo = CWaypoint::GetAmmo(bIsSecondary, w.iArgument);
             BULOG_I(pClient->GetEdict(), "Weapon ammo %d, secondary %s.", iAmmo, bIsSecondary ? "yes" : "no");
@@ -682,7 +682,7 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
                 BULOG_W(pClient->GetEdict(), "Error, you can't mix weapon/ammo with angles.");
                 return ECommandError;
             }
-            if ( !FLAG_SOME_SET(FWaypointAmmo, w.iFlags) )
+            if ( !FLAG_SOME_SET_OR_0(FWaypointAmmo, w.iFlags) )
             {
                 BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (ammo).");
                 return ECommandError;
@@ -1539,14 +1539,14 @@ TCommandResult CPathInfoCommand::Execute( CClient* pClient, int argc, const char
             const good::string& sFlags = CTypeToString::PathFlagsToString(pPath->iFlags);
             BULOG_I( pClient->GetEdict(), "Path (from %d to %d) has flags: %s.", iPathFrom, iPathTo,
                             (sFlags.size() > 0) ? sFlags.c_str() : sNone.c_str() );
-            if ( FLAG_SOME_SET(FPathDoor, pPath->iFlags) )
+            if ( FLAG_SOME_SET_OR_0(FPathDoor, pPath->iFlags) )
             {
                 if ( pPath->iArgument )
                     BULOG_I( pClient->GetEdict(), "Door %d.", pPath->iArgument );
                 else
                     BULOG_I( pClient->GetEdict(), "Door not set." );
             }
-            else if ( FLAG_SOME_SET(FPathJump | FPathCrouch | FPathBreak, pPath->iFlags) )
+            else if ( FLAG_SOME_SET_OR_0(FPathJump | FPathCrouch | FPathBreak, pPath->iFlags) )
                 BULOG_I( pClient->GetEdict(), "Path action time %d, action duration %d. Time in deciseconds.", GET_1ST_BYTE(pPath->iArgument), GET_2ND_BYTE(pPath->iArgument) );
         }
         return ECommandPerformed;

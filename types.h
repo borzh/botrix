@@ -11,6 +11,9 @@ enum TPlayerIndexInvalid
     EPlayerIndexInvalid = -1                     ///< Invalid player index.
 };
 typedef int TPlayerIndex;                        ///< Index of player in array of players.
+typedef int TWeaponId;                           ///< Weapon id.
+typedef int TTeam;                               ///< Team of bot.
+typedef int TClass;                              ///< Class of bot.
 
 
 //****************************************************************************************************************
@@ -397,42 +400,62 @@ typedef int TEntityFlags;                        ///< Entity flags.
 enum TWeaponTypes
 {
     EWeaponIdInvalid = -1,                       ///< Invalid weapon id.
-    EWeaponPhysics = 0,                          ///< Physcannon.
-    EWeaponManual,                               ///< Knife, stunstick, crowbar.
-
-    // Grenades.
-    EWeaponGrenade,                              ///< Explosive grenade.
-    EWeaponFlash,                                ///< Flash grenade.
-    EWeaponSmoke,                                ///< Smoke grenade.
-    EWeaponRemoteDetonation,                     ///< Remote detonation.
+    EWeaponMelee = 0,                            ///< Knife, stunstick, crowbar.
 
     // Ranged.
+    EWeaponPhysics,                              ///< Physcannon.
+    EWeaponGrenade,                              ///< Grenade.
+    EWeaponRemoteDetonation,                     ///< Remote detonation.
     EWeaponPistol,                               ///< Desert eagle, usp, etc.
-    EWeaponShotgun,                              ///< Shotgun, reload one by one.
     EWeaponRifle,                                ///< Automatic, just press once.
-    EWeaponSniper,                               ///< Has zoom. Can also be rifle, automatic.
-    EWeaponRpg,                                  ///< Rpg, need to aim while rocket is being propulsed.
+    EWeaponShotgun,                              ///< Shotgun, reload one by one.
+    EWeaponRocket,                               ///< Rpg-like, reload one by one.
 
     EWeaponTotal                                 ///< Amount of weapon flags.
 
 };
-
 typedef int TWeaponType;                         ///< Weapon type.
-typedef int TWeaponId;                           ///< Weapon id.
-
-typedef int TTeam;                               ///< Team of bot.
-typedef int TClass;                              ///< Class of bot.
 
 
-///< Enum of useful flags for deathmatch mode.
-/*enum TDeathmatchFlagId
+//****************************************************************************************************************
+/// Enum for weapon flags.
+//****************************************************************************************************************
+enum TWeaponFlagIds
 {
-    FDeathmatchTeamAllWeapons  = 1<<0,           ///< In deathmatch mode users can grab weapons of "other" teams.
-    FDeathmatchClassAllWeapons = 1<<1,           ///< In deathmatch mode users can grab weapons of "other" classes.
-};
+    FWeaponFunctionPresent   = 1<<0,             ///< True if weapon has this primary/secondary function.
+    FWeaponZoom              = 1<<1,             ///< This weapon function will zoom.
+    FWeaponTrigger           = 1<<2,             ///< This weapon function is trigger for remote detonation.
+    FWeaponForceRange        = 1<<3,             ///< Don't use weapon if target is not in range.
+    FWeaponForceAim          = 1<<4,             ///< Force to mantain aim while shooting (to rpg like weapons).
+    FWeaponCure              = 1<<5,             ///< This weapon function will cure teammates.
+    FWeaponSameBullets       = 1<<6,             ///< Secondary attack uses same bullets as primary (shotgun for example).
+    FWeaponAddClip           = 1<<7,             ///< Bug for some mods: some weapons add clip size to extra ammo when weapon is picked (crossbow for hl2dm).
+    FWeaponBackgroundReload  = 1<<8,             ///< Bug for some mods: some weapons reload while you hold another weapon (pistol for hl2dm).
+    FWeaponPress             = 1<<9,             ///< Bot will maintain attack button pushed.
+    FWeaponDefaultClipEmpty  = 1<<10,            ///< Clip is empty when respawned / grab this weapon.
+    FWeaponPushAway          = 1<<11,            ///< Will push away enemy.
+    FWeaponDeflect           = 1<<12,            ///< Deflect proyectiles.
+    FWeaponExtinguish        = 1<<13,            ///< Will extinguish fire.
+    FWeaponPrepare           = 1<<14,            ///< Will prepare weapon (spin for minigun). Will use shot time as preparing time.
+    FWeaponSlowing           = 1<<15,            ///< Will slow enemy.
 
-typedef int TDeathmatchFlags;                    ///< Useful flags for deathmatch mode.
-*/
+    EWeaponFlagsTotal        = 16,               ///< Amount of flags.
+    FWeaponAll               = (1<<16)-1         ///< All weapon flags.
+};
+typedef int TWeaponFlags;                        ///< Weapon flags.
+
+
+//****************************************************************************************************************
+/// Weapon aim.
+//****************************************************************************************************************
+enum TWeaponAimIds
+{
+    EWeaponAimBody = 0,                          ///< Aim at body.
+    EWeaponAimHead,                              ///< Aim at head.
+    EWeaponAimFoot,                              ///< Aim at foot.
+    EWeaponAimTotal,                             ///< Total amounts of aim for weapon.
+};
+typedef int TWeaponAim;                          ///< Weapon aim.
 
 
 //****************************************************************************************************************
@@ -462,17 +485,15 @@ enum TBotTaskIds
 typedef int TBotTask;                            ///< Bot task.
 
 
-//****************************************************************************************************************
-/// Enum for waypoint visibility from another one.
-//****************************************************************************************************************
-enum TWaypointVisibilityIds
+///< Enum of useful flags for deathmatch mode.
+/*enum TDeathmatchFlagId
 {
-    EWaypointVisibilityUnknown = -1,             ///< Unknown visibility (no visibility table).
-    EWaypointVisibilityInvisible = 0,            ///< Waypoint is invisible from another.
-    EWaypointVisibilityVisible,                  ///< Waypoint is visible from another.
-    EWaypointVisibilityTotal,                    ///< .
+    FDeathmatchTeamAllWeapons  = 1<<0,           ///< In deathmatch mode users can grab weapons of "other" teams.
+    FDeathmatchClassAllWeapons = 1<<1,           ///< In deathmatch mode users can grab weapons of "other" classes.
 };
-typedef int TWaypointVisibility;                 ///< Waypoint visibility from another one.
+
+typedef int TDeathmatchFlags;                    ///< Useful flags for deathmatch mode.
+*/
 
 
 typedef good::vector<good::string> StringVector; ///< Useful typedef for vector of strings.

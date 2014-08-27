@@ -53,13 +53,14 @@ add_subdirectory ( good )
 # Defines. Don't put comments between them :).
 # Not used: -DDONT_USE_VALVE_FUNCTIONS -DBOTRIX_SHOW_PERFORMANCE
 add_definitions(
+    -DBOTRIX_SOURCE_2013
     -DBOTRIX_TF2
     -DBOTRIX_HL2DM
+    -DBOTRIX_BOT_AIM_ERROR
     -DGOOD_INI_ONE_KV_SEPARATOR
     -DGOOD_INI_ONE_COMMENT_CHAR
     -DGOOD_LOG_FLUSH
     -DGOOD_LOG_USE_ENDL
-    -DBOTRIX_SOURCE_2013
     -DVECTOR
     -DGAME_DLL
     -DHL2_DLL

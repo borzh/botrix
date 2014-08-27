@@ -2,7 +2,7 @@ project( test-botrix )
 cmake_minimum_required( VERSION 2.8 )
 
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -m32" ) # -Wno-unknown-pragmas
-set( CMAKE_BUILD_TYPE Debug )
+#set( CMAKE_BUILD_TYPE Debug )
 
 
 set ( BOTRIX_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.." )
@@ -12,19 +12,14 @@ set( SOURCE_SDK_2013_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../source-sdk-2013" )
 # Not used: -DDONT_USE_VALVE_FUNCTIONS -DBOTRIX_SHOW_PERFORMANCE
 add_definitions(
     -DDONT_USE_VALVE_FUNCTIONS=${SOURCE_SDK_2013_PATH}/mp/game/mod_hl2mp
+    -DBOTRIX_SOURCE_2013
+    -DBOTRIX_TF2
+    -DBOTRIX_HL2DM
+    -DBOTRIX_BOT_AIM_ERROR
+    -DGOOD_INI_ONE_KV_SEPARATOR
+    -DGOOD_INI_ONE_COMMENT_CHAR
     -DGOOD_LOG_FLUSH
     -DGOOD_LOG_USE_ENDL
-    -DBOTRIX_SOURCE_2013
-    -DBOTRIX_HL2DM_MOD
-    -DBETA_VERSION
-    -DGOOD_LOG_USE_ENDL
-    -DINI_FILE_ONE_KV_SEPARATOR
-    -DINI_FILE_ONE_COMMENT_CHAR
-    -DLINUX=1
-    -D_LINUX=1
-    -DPOSIX=1
-    -DGNUC=1
-    -DCOMPILER_GCC
     -DVECTOR
     -DGAME_DLL
     -DHL2_DLL
@@ -32,6 +27,11 @@ add_definitions(
     -DHL2_EPISODIC
     -DMP_SDK
     -DVPC
+    -DLINUX=1
+    -D_LINUX=1
+    -DPOSIX=1
+    -DGNUC=1
+    -DCOMPILER_GCC
 )
 
 add_subdirectory( .. "${CMAKE_CURRENT_BINARY_DIR}/botrix")

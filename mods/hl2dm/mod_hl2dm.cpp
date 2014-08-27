@@ -78,9 +78,6 @@ CPlayer* CModHL2DM::AddBot( const char* szName, TBotIntelligence iIntelligence, 
         return NULL;
     }
 
-    TPlayerIndex iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
-    GoodAssert( iIdx >= 0 ); // Valve should not allow this assert.
-
     return new CBot_HL2DM(pEdict, iIntelligence);
 }
 

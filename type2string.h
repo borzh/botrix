@@ -118,13 +118,29 @@ public:
 
 
     //------------------------------------------------------------------------------------------------------------
-    /// Get weapon flag from string.
+    /// Get weapon type from string.
     //------------------------------------------------------------------------------------------------------------
     static int WeaponTypeFromString( const good::string& sType );
 
-    /// Get string from weapon flags.
+    /// Get string from weapon type.
     static const good::string& WeaponTypeToString( TWeaponType iType );
 
+
+    //------------------------------------------------------------------------------------------------------------
+    /// Get weapon flag from string.
+    //------------------------------------------------------------------------------------------------------------
+    static TWeaponFlags WeaponFlagsFromString( const good::string& sWeaponFlag );
+
+    /// Get string from weapon flags.
+    static const good::string& WeaponFlagsToString( TWeaponFlags iWeaponFlags );
+
+    //------------------------------------------------------------------------------------------------------------
+    /// Get weapon aim from string.
+    //------------------------------------------------------------------------------------------------------------
+    static TWeaponAim WeaponAimFromString( const good::string& sWeaponAim );
+
+    /// Get string from weapon aim.
+    static const good::string& WeaponAimToString( TWeaponAim iWeaponAim );
 
     //------------------------------------------------------------------------------------------------------------
     /// Get bot preference from string.

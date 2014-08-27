@@ -263,10 +263,7 @@ protected: // Methods.
     {
         CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
         BASSERT( cWeapon.IsSniper() && cWeapon.CanUse(), return );
-        if ( cWeapon.IsUsingZoom() )
-            cWeapon.ZoomOut();
-        else
-            cWeapon.ZoomIn();
+        cWeapon.ToggleZoom();
         BotMessage( "%s -> Zoom %s: %s.", GetName(), m_aWeapons[m_iWeapon].GetName().c_str(), cWeapon.IsUsingZoom() ? "true" : "false" );
         FLAG_SET(IN_ATTACK2, m_cCmd.buttons);
     }

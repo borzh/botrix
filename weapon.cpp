@@ -2,29 +2,155 @@
 #include "weapon.h"
 
 
-#define BOT_AIM_ERROR 0
-
-
 //----------------------------------------------------------------------------------------------------------------
 good::vector<CWeaponWithAmmo> CWeapons::m_aWeapons;
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CWeaponWithAmmo::GetLook( const Vector& vAim, float fDistance, bool bDuck,
-                               TBotIntelligence iBotIntelligence, bool m_bSecondary, QAngle& angResult )
+void CWeaponWithAmmo::GameFrame()
 {
-    BASSERT( m_pWeapon->bHasSecondary || !m_bSecondary, return );
+    if ( CBotrixPlugin::fTime >= m_fEndTime )
+    {
+        m_bShooting = false;
+        m_bChanging = false;
+        if ( m_bReloading )
+            EndReload();
+    }
 
-    Vector v(vAim);
-    if ( iBotIntelligence < EBotSmart ) // Aim at body instead of head.
+    // Check to reload secondary ammo. It is automatic, no need to press reload button.
+    if ( !HasAmmoInClip(1) && HasAmmoExtra(1) )
+        Reload(1);
+
+#ifdef BOTRIX_AUTO_RELOAD_WEAPONS
+    // Check to reload primary ammo.
+    if ( !HasAmmoInClip(0) && HasAmmoExtra(0) )
+        Reload(0);
+#endif
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+void CWeaponWithAmmo::Shoot( int iSecondary )
+{
+    GoodAssert( CanUse() && ( HasAmmoInClip(iSecondary) || IsMelee() || IsPhysics() ) );
+    if ( iSecondary && ( FLAG_SOME_SET(FWeaponSameBullets, m_pWeapon->iFlags[iSecondary]) ) )
+    {
+        // Shotgun type: uses same bullets for primary and secondary attack.
+        m_iBulletsInClip[1-iSecondary] -= m_pWeapon->iAttackBullets[iSecondary];
+    }
+    else
+        m_iBulletsInClip[iSecondary] -= m_pWeapon->iAttackBullets[iSecondary];
+    m_bReloading = false; // Stop reloading if weapon time is shotgun-like.
+    m_bSecondary = (iSecondary != 0);
+    if ( m_pWeapon->fShotTime[iSecondary] )
+    {
+        m_bShooting = true;
+        m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fShotTime[iSecondary];
+    }
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+void CWeaponWithAmmo::Reload( int iSecondary )
+{
+    GoodAssert( CanUse() && NeedReload(iSecondary) );
+    m_bReloading = true;
+    m_bSecondary = (iSecondary != 0);
+    if ( m_pWeapon->fReloadTime[0] )
+        m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadTime[iSecondary];
+    else
+        EndReload();
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+void CWeaponWithAmmo::AddWeapon( int iExtraAmmo0 /*= -1*/, int iExtraAmmo1 /*= -1*/ )
+{
+    if ( iExtraAmmo0 < 0 )
+        iExtraAmmo0 = m_pWeapon->iDefaultAmmo[0];
+    if ( iExtraAmmo1 < 0 )
+        iExtraAmmo1 = m_pWeapon->iDefaultAmmo[1];
+
+    AddBullets(iExtraAmmo0, 0);
+    AddBullets(iExtraAmmo1, 1);
+
+    if ( m_bWeaponPresent ) // Just add bullets.
+    {
+        if ( FLAG_SOME_SET(FWeaponAddClip, m_pWeapon->iFlags[0]) )
+            AddBullets(m_pWeapon->iClipSize[0], 0);
+    }
+    else
+        m_iBulletsInClip[0] = m_pWeapon->iClipSize[0]; // Picked weapon has full clip.
+
+    m_bWeaponPresent = true;
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+void CWeaponWithAmmo::Holster( CWeaponWithAmmo* pSwitchFrom, CWeaponWithAmmo& cSwitchTo )
+{
+    if ( pSwitchFrom )
+    {
+        //GoodAssert( !pSwitchFrom->m_bShooting ); // Happends when weapon is out of bullets and switched automatically.
+
+        pSwitchFrom->m_bChanging = pSwitchFrom->m_bShooting = pSwitchFrom->m_bReloading = pSwitchFrom->m_bUsingZoom = false;
+        pSwitchFrom->m_fEndTime = CBotrixPlugin::fTime + cSwitchTo.m_pWeapon->fReloadTime[0]; // Save time for flag FWeaponBackgroundReload.
+    }
+
+    if ( FLAG_SOME_SET(FWeaponBackgroundReload, cSwitchTo.m_pWeapon->iFlags[0]) && !cSwitchTo.HasAmmoInClip(0) && cSwitchTo.HasAmmoExtra(0) &&
+         (CBotrixPlugin::fTime >= cSwitchTo.m_fEndTime) )
+    {
+        cSwitchTo.m_bReloading = true;
+        cSwitchTo.EndReload();
+    }
+
+    cSwitchTo.m_bChanging = true;
+    cSwitchTo.m_fEndTime = CBotrixPlugin::fTime + cSwitchTo.m_pWeapon->fHolsterTime;
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+void CWeaponWithAmmo::EndReload()
+{
+    GoodAssert( m_bReloading && (m_iBulletsInClip[m_bSecondary] < m_pWeapon->iClipSize[m_bSecondary]) );
+
+    if ( m_pWeapon->iType >= EWeaponShotgun ) // Rocket/shotgun, reload by one bullet.
+    {
+        ++m_iBulletsInClip[m_bSecondary];
+        --m_iBulletsExtra[m_bSecondary];
+        if ( m_iBulletsInClip[m_bSecondary] < m_pWeapon->iClipSize[m_bSecondary] )
+            m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadTime[m_bSecondary];
+        else
+            m_bReloading = false;
+    }
+    else
+    {
+        int iBulletsAdd = m_pWeapon->iClipSize[m_bSecondary] - m_iBulletsInClip[m_bSecondary];
+        if ( m_iBulletsExtra[m_bSecondary] < iBulletsAdd )
+            iBulletsAdd = m_iBulletsExtra[m_bSecondary];
+        m_iBulletsInClip[m_bSecondary] += iBulletsAdd;
+        m_iBulletsExtra[m_bSecondary] -= iBulletsAdd;
+        m_bReloading = false;
+    }
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+bool CWeaponWithAmmo::GetLook( const CPlayer* pFrom, const CPlayer* pTo, float fDistance, bool bDuck,
+                               TBotIntelligence iBotIntelligence, bool bSecondary, QAngle& angResult )
+{
+    GoodAssert( FLAG_SOME_SET(FWeaponFunctionPresent, m_pWeapon->iFlags[bSecondary]) );
+
+    Vector v;
+    if ( CMod::bHeadShotDoesMoreDamage && (iBotIntelligence >= EBotSmart) ) // Aim at head instead of body.
         v.z -= bDuck ? (CMod::iPlayerEyeLevelCrouched/3) : (CMod::iPlayerEyeLevel/3);
 
     VectorAngles(v, angResult);
 
-    if ( m_pWeapon->iParabolic[m_bSecondary] != 0.0f )
-        angResult.x += fDistance / m_pWeapon->iParabolic[m_bSecondary];
+    if ( m_pWeapon->iParabolicDistance[m_bSecondary] != 0.0f )
+        angResult.x += fDistance / m_pWeapon->iParabolicAngle[m_bSecondary];
 
-#if BOT_AIM_ERROR
+#if BOTRIX_BOT_AIM_ERROR
     static const float fMaxErrorDistance = 1000.0f;
 
     // Aim errors (pitch/yaw): max error for a distance = 1000, and max error for a distance = 0.
@@ -51,114 +177,8 @@ void CWeaponWithAmmo::GetLook( const Vector& vAim, float fDistance, bool bDuck,
 
     angResult.x += iRandPitch;
     angResult.y += iRandYaw;
-#endif // BOT_AIM_ERROR
-}
-
-
-//----------------------------------------------------------------------------------------------------------------
-void CWeaponWithAmmo::GameFrame()
-{
-    if ( m_bChanging )
-    {
-        if ( CBotrixPlugin::fTime >= m_fEndTime )
-            m_bChanging = false;
-        else
-            return;
-    }
-    if ( m_bShooting )
-    {
-        if ( CBotrixPlugin::fTime >= m_fEndTime )
-            m_bShooting = false;
-        else
-            return;
-    }
-    else if ( m_bReloading )
-    {
-        if ( CBotrixPlugin::fTime >= m_fEndTime )
-            EndReload();
-        else
-            return;
-    }
-    else if ( m_bChangingZoom )
-    {
-        if ( CBotrixPlugin::fTime >= m_fEndTime )
-            m_bChangingZoom = false;
-        else
-            return;
-    }
-
-    // Check to reload secondary ammo. It is automatic, no need to press reload button.
-    if ( m_pWeapon->bHasSecondary && !m_pWeapon->bSecondaryUseSameBullets && !HasAmmoInClip(1) && HasAmmoExtra(1) )
-        Reload(1);
-
-#ifdef BOTRIX_AUTO_RELOAD_WEAPONS
-    // Check to reload primary ammo.
-    if ( !HasAmmoInClip(0) && HasAmmoExtra(0) )
-        Reload(0);
-#endif
-}
-
-
-//----------------------------------------------------------------------------------------------------------------
-void CWeaponWithAmmo::Shoot( int iSecondary )
-{
-    GoodAssert( CanUse() && (HasAmmoInClip(iSecondary) || ( IsMelee() || IsPhysics() ) ) );
-    if ( iSecondary && m_pWeapon->bSecondaryUseSameBullets )
-        m_iBulletsInClip[0] -= m_pWeapon->iAttackBullets[iSecondary]; // Shotgun type: uses same bullets for primary and secondary attack.
-    else
-        m_iBulletsInClip[iSecondary] -= m_pWeapon->iAttackBullets[iSecondary];
-    m_bShooting = true;
-    m_bSecondary = (iSecondary != 0);
-    m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fShotTime[iSecondary];
-}
-
-
-//----------------------------------------------------------------------------------------------------------------
-void CWeaponWithAmmo::Holster( CWeaponWithAmmo* pSwitchFrom, CWeaponWithAmmo& cSwitchTo )
-{
-    if ( pSwitchFrom )
-    {
-        //GoodAssert( !pSwitchFrom->m_bShooting ); // Happends when weapon is out of bullets and switched automatically.
-
-        pSwitchFrom->m_bChanging = pSwitchFrom->m_bShooting = pSwitchFrom->m_bReloading = pSwitchFrom->m_bChangingZoom = pSwitchFrom->m_bUsingZoom = false;
-        pSwitchFrom->m_fEndTime = CBotrixPlugin::fTime; // Save time when switched weapon.
-    }
-
-    if ( cSwitchTo.m_pWeapon->bBackgroundReload && !cSwitchTo.HasAmmoInClip(0) && cSwitchTo.HasAmmoExtra(0) &&
-         CBotrixPlugin::fTime >= cSwitchTo.m_fEndTime + cSwitchTo.m_pWeapon->fReloadTime[0] )
-    {
-        cSwitchTo.m_bReloading = true;
-        cSwitchTo.EndReload();
-    }
-
-    cSwitchTo.m_bChanging = true;
-    cSwitchTo.m_fEndTime = CBotrixPlugin::fTime + cSwitchTo.m_pWeapon->fHolsterTime;
-}
-
-
-//----------------------------------------------------------------------------------------------------------------
-void CWeaponWithAmmo::EndReload()
-{
-    GoodAssert( m_bReloading && (m_iBulletsInClip[m_bSecondary] < m_pWeapon->iClipSize[m_bSecondary]) );
-
-    if ( m_pWeapon->iType == EWeaponShotgun ) // Reload one bullet.
-    {
-        ++m_iBulletsInClip[m_bSecondary];
-        --m_iBulletsExtra[m_bSecondary];
-        if ( m_iBulletsInClip[m_bSecondary] < m_pWeapon->iClipSize[m_bSecondary] )
-            m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadTime[m_bSecondary];
-        else
-            m_bReloading = false;
-    }
-    else
-    {
-        int iBulletsAdd = m_pWeapon->iClipSize[m_bSecondary] - m_iBulletsInClip[m_bSecondary];
-        if ( m_iBulletsExtra[m_bSecondary] < iBulletsAdd )
-            iBulletsAdd = m_iBulletsExtra[m_bSecondary];
-        m_iBulletsInClip[m_bSecondary] += iBulletsAdd;
-        m_iBulletsExtra[m_bSecondary] -= iBulletsAdd;
-        m_bReloading = false;
-    }
+#endif // BOTRIX_BOT_AIM_ERROR
+    return true;
 }
 
 
@@ -172,8 +192,8 @@ void CWeapons::GetRespawnWeapons( good::vector<CWeaponWithAmmo>& aWeapons, TTeam
     int iClassFlag = 1 << iClass;
     for ( int i=0; i < m_aWeapons.size(); ++i )
     {
-        if ( FLAG_SOME_SET(iTeamFlag, m_aWeapons[i].GetBaseWeapon()->iTeam) &&
-             FLAG_SOME_SET(iClassFlag, m_aWeapons[i].GetBaseWeapon()->iClass) )
+        if ( FLAG_SOME_SET_OR_0(iTeamFlag, m_aWeapons[i].GetBaseWeapon()->iTeam) &&
+             FLAG_SOME_SET_OR_0(iClassFlag, m_aWeapons[i].GetBaseWeapon()->iClass) )
             aWeapons.push_back( m_aWeapons[i] );
     }
 }

@@ -57,13 +57,13 @@ inline bool IsEntityOnMap( IServerEntity* pServerEntity )
 {
      // EF_BONEMERGE is set for weapon, when picked up.
     return FLAG_CLEARED( EF_NODRAW | EF_BONEMERGE, GetEntityFlags(pServerEntity) );
-    //return !FLAG_SOME_SET( EF_NODRAW | EF_BONEMERGE, GetEntityFlags(pServerEntity) );
+    //return !FLAG_SOME_SET_OR_0( EF_NODRAW | EF_BONEMERGE, GetEntityFlags(pServerEntity) );
 }
 
 inline bool IsEntityTaken( IServerEntity* pServerEntity )
 {
      // EF_BONEMERGE is set for weapon, when picked up.
-    return FLAG_SOME_SET( EF_BONEMERGE, GetEntityFlags(pServerEntity) );
+    return FLAG_SOME_SET_OR_0( EF_BONEMERGE, GetEntityFlags(pServerEntity) );
 }
 
 inline bool IsEntityBreakable( IServerEntity* pServerEntity )
@@ -249,7 +249,7 @@ void CItems::Update()
         }
         else if ( IsEntityTaken(pServerEntity) ) // Weapon still belongs to some player.
             FLAG_SET(FTaken, cEntity.iFlags);
-        else if ( FLAG_ALL_SET(FTaken, cEntity.iFlags) && IsEntityOnMap(pServerEntity) )
+        else if ( FLAG_ALL_SET_OR_0(FTaken, cEntity.iFlags) && IsEntityOnMap(pServerEntity) )
         {
             FLAG_CLEAR(FTaken, cEntity.iFlags);
             cEntity.vOrigin = cEntity.CurrentPosition();
@@ -566,7 +566,7 @@ void CItems::Draw( CClient* pClient )
 
     for ( TEntityType iEntityType = 0; iEntityType < EEntityTypeTotal+1; ++iEntityType )
     {
-        if ( !FLAG_SOME_SET(1<<iEntityType, pClient->iItemTypeFlags) ) // Don't draw items of disabled item type.
+        if ( !FLAG_SOME_SET_OR_0(1<<iEntityType, pClient->iItemTypeFlags) ) // Don't draw items of disabled item type.
             continue;
 
         int iSize = (iEntityType == EEntityTypeOther) ? m_aOthers.size() : m_aItems[iEntityType].size();
@@ -591,7 +591,7 @@ void CItems::Draw( CClient* pClient )
             {
                 const CEntity* pEntity = (iEntityType == EEntityTypeOther) ? NULL : &m_aItems[iEntityType][i];
 
-                if ( FLAG_SOME_SET(EItemDrawStats, pClient->iItemDrawFlags) )
+                if ( FLAG_SOME_SET_OR_0(EItemDrawStats, pClient->iItemDrawFlags) )
                 {
                     int pos = 0;
 
@@ -618,10 +618,10 @@ void CItems::Draw( CClient* pClient )
                 }
 
                 // Draw box around item.
-                if ( FLAG_SOME_SET(EItemDrawBoundBox, pClient->iItemDrawFlags) )
+                if ( FLAG_SOME_SET_OR_0(EItemDrawBoundBox, pClient->iItemDrawFlags) )
                     CUtil::DrawBox(vOrigin, pCollide->OBBMins(), pCollide->OBBMaxs(), 1.0f, 0xFF, 0xFF, 0xFF, pCollide->GetCollisionAngles());
 
-                if ( FLAG_SOME_SET(EItemDrawWaypoint, pClient->iItemDrawFlags) && (iEntityType < EEntityTypeObject) )
+                if ( FLAG_SOME_SET_OR_0(EItemDrawWaypoint, pClient->iItemDrawFlags) && (iEntityType < EEntityTypeObject) )
                 {
                     // Draw nearest waypoint from item.
                     if (CWaypoint::IsValid(pEntity->iWaypoint) )

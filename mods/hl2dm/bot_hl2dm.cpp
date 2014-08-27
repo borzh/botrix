@@ -234,7 +234,7 @@ void CBot_HL2DM::CheckEngagedEnemy()
                       CWaypoint::IsValid(m_pCurrentEnemy->iCurrentWaypoint) &&
                       (m_iIntelligence >= EBotNormal) )
             {
-                if ( FLAG_SOME_SET(FFightStrategyRunAwayIfNear, CBot::iDefaultFightStrategy) &&
+                if ( FLAG_SOME_SET_OR_0(FFightStrategyRunAwayIfNear, CBot::iDefaultFightStrategy) &&
                      (m_fDistanceSqrToEnemy <= CBot::fNearDistanceSqr) )
                 {
                     // Try to run away a little.
@@ -316,7 +316,7 @@ restart_find_task: // TODO: remove gotos.
     {
         // Need ammunition.
         bool bNeedAmmo0 = (m_aWeapons[m_iBestWeapon].ExtraBullets(0) < pWeapon->iClipSize[0]); // Has less than 1 extra clip.
-        bool bNeedAmmo1 = pWeapon->bHasSecondary && !pWeapon->bSecondaryUseSameBullets &&      // Has secondary function, but no secondary bullets.
+        bool bNeedAmmo1 = m_aWeapons[m_iBestWeapon].HasSecondary() && // Has secondary function, but no secondary bullets.
                           !m_aWeapons[m_iBestWeapon].HasAmmoInClip(1) && !m_aWeapons[m_iBestWeapon].HasAmmoExtra(1);
 
         if ( bNeedAmmo0 || bNeedAmmo1 )
@@ -334,12 +334,12 @@ restart_find_task: // TODO: remove gotos.
             iNewTask = EBotTaskFindWeapon;
             iWeaponPreference = pWeapon->iBotPreference+1;
         }
-        else if ( !m_aWeapons[m_iBestWeapon].FullAmmo(1) ) // Check if weapon needs secondary ammo.
+        else if ( !m_aWeapons[m_iBestWeapon].HasFullAmmo(1) ) // Check if weapon needs secondary ammo.
         {
             iNewTask = EBotTaskFindAmmo;
             bSecondary = true;
         }
-        else if ( !m_aWeapons[m_iBestWeapon].FullAmmo(0) ) // Check if weapon needs primary ammo.
+        else if ( !m_aWeapons[m_iBestWeapon].HasFullAmmo(0) ) // Check if weapon needs primary ammo.
         {
             iNewTask = EBotTaskFindAmmo;
             bSecondary = false;
@@ -484,7 +484,7 @@ void CBot_HL2DM::TaskFinished()
 
         // If item is not respawnable (or just bad configuration), force to not to search for it again right away, but in 1 minute.
         m_cItemToSearch.fRemoveTime = CBotrixPlugin::fTime;
-        m_cItemToSearch.fRemoveTime += FLAG_ALL_SET(FEntityRespawnable, cItem.iFlags) ? cItem.pItemClass->GetArgument() : 60.0f;
+        m_cItemToSearch.fRemoveTime += FLAG_ALL_SET_OR_0(FEntityRespawnable, cItem.iFlags) ? cItem.pItemClass->GetArgument() : 60.0f;
 
         m_aPickedItems.push_back(m_cItemToSearch);
     }

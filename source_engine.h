@@ -171,8 +171,9 @@ public: // Draw functions.
 
 
 public: // Members.
-    static const int iMaxMapSize = 32768;   ///< This is max map size for HL2 (-16384..16383).
-    static const int iHalfMaxMapSize = iMaxMapSize/2;
+    static const int iMaxMapSize = 32768;               ///< This is max map size for HL2 (-16384..16383).
+    static const int iMaxMapSizeSqr = SQR(iMaxMapSize); ///< This is square of max map size.
+    static const int iHalfMaxMapSize = iMaxMapSize/2;   ///< Half map size.
 
     static const Vector vZero;               ///< Zero vector.
     static const QAngle angZero;             ///< Zero angle.

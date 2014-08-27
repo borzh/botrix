@@ -155,10 +155,16 @@ typedef char TChar;
 #define FLAG_CLEARED(flag, flags)            ( ((flags) & (flag)) == 0 )
 
 /// Return true if some flag is set.
-#define FLAG_SOME_SET(flag, flags)           ( ((flag) & (flags)) || ((flag) == 0) )
+#define FLAG_SOME_SET(flag, flags)           ( (flag) & (flags) )
 
 /// Return true if all flags are set.
-#define FLAG_ALL_SET(flag, flags)            ( ( ((flag) & (flags)) == (flag) ) || ((flag) == 0) )
+#define FLAG_ALL_SET(flag, flags)            ( ((flag) & (flags)) == (flag) )
+
+/// Return true if some flag is set.
+#define FLAG_SOME_SET_OR_0(flag, flags)      ( ((flag) & (flags)) || ((flag) == 0) )
+
+/// Return true if all flags are set.
+#define FLAG_ALL_SET_OR_0(flag, flags)       ( ( ((flag) & (flags)) == (flag) ) || ((flag) == 0) )
 
 
 /// Get needed size of bit array in bytes.
@@ -258,15 +264,19 @@ typedef char TChar;
 
 
 // Check condition, executing instructions if condition fails.
-#define GoodCheck_(exp, start, ...) \
-    GOOD_SCOPE_START \
-        if ( !(exp) )\
-        {\
-            DebugPrint(start " failed: (%s); in %s(), file %s, line %d\n", #exp, __FUNCTION__, __FILE__, __LINE__);\
-            BreakDebugger();\
-            __VA_ARGS__;\
-        }\
-    GOOD_SCOPE_END
+#if defined(DEBUG) || defined(_DEBUG) || defined (BETA_VERSION)
+    #define GoodCheck_(exp, start, ...) \
+        GOOD_SCOPE_START \
+            if ( !(exp) )\
+            {\
+                DebugPrint(start " failed: (%s); in %s(), file %s, line %d\n", #exp, __FUNCTION__, __FILE__, __LINE__);\
+                BreakDebugger();\
+                __VA_ARGS__;\
+            }\
+        GOOD_SCOPE_END
+#else
+    #define GoodCheck_(...)
+#endif
 
 /// Check condition, executing instructions if @p exp fails.
 #define GoodCheck(exp, ...)                  GoodCheck_(exp, "Check", __VA_ARGS__)

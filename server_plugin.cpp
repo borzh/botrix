@@ -564,7 +564,7 @@ PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity )
 PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &args )
 #endif
 {
-    BASSERT( pEntity && !pEntity->IsFree(), return PLUGIN_CONTINUE ); // Valve check.
+    GoodAssert( pEntity && !pEntity->IsFree() ); // Valve check.
 
 #ifdef SOURCE_ENGINE_2006
     int argc = MIN2(CBotrixPlugin::pEngineServer->Cmd_Argc(), 16);
@@ -584,7 +584,7 @@ PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &ar
 #endif
 
     CPlayer* pPlayer = CPlayers::Get(pEntity);
-    BASSERT(pPlayer && !pPlayer->IsBot(), return PLUGIN_CONTINUE); // Valve check.
+    GoodAssert( pPlayer && !pPlayer->IsBot() ); // Valve check.
 
     CClient* pClient = (CClient*)pPlayer;
 

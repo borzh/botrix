@@ -51,9 +51,25 @@ public: // Methods.
 
 
 protected: // Members.
-    friend class CBotrixPlugin; // Access to ini file.
-    static good::ini_file m_iniFile; // Ini file.
-    static bool m_bModified;         // True if something was modified (to save later).
+    /// Process section [General].
+    static void ProcessGeneralSection( good::ini_file::const_iterator it );
+
+    /// Search for mod in configuration file that matches current game/mod folders.
+    static TModId SearchMod( const good::string& sGameDir, const good::string& sModDir );
+
+    /// Process section [<mod-name>.mod] to get available teams/classes.
+    static void ProcessModSection( good::ini_file::const_iterator it );
+
+    /// Load classes names for items.
+    static void LoadItemClasses();
+
+    /// Process section [<mod-name>.weapons].
+    static void LoadWeapons( good::ini_file::const_iterator itSection );
+
+    friend class CBotrixPlugin;      ///< Access to m_iniFile. TODO: something better.
+
+    static good::ini_file m_iniFile; ///< Ini file.
+    static bool m_bModified;         ///< True if something was modified (to save later).
 
 };
 

@@ -528,15 +528,12 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
             else if ( aCurrent.size() == 1 )
             {
                 TWeaponFlags iFlag = CTypeToString::WeaponFlagsFromString(aCurrent[0]);
-                if ( iFlag == FWeaponFunctionPresent )
-                    iSecondary = CWeapon::SECONDARY;
                 if ( iFlag == -1 )
                     bProcessed = false;
-                else
-                {
-                    FLAG_SET(iFlag, pWeapon->iFlags[iSecondary]);
+                else if ( iFlag == FWeaponFunctionPresent )
                     iSecondary = CWeapon::SECONDARY;
-                }
+                else
+                    FLAG_SET(iFlag, pWeapon->iFlags[iSecondary]);
             }
             else if ( aCurrent.size() == 2 )
             {
@@ -613,6 +610,9 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
 
                     else if ( aCurrent[0] == "delay" )
                         pWeapon->fShotTime[iSecondary] = iValue / 1000.0f;
+
+                    else if ( aCurrent[0] == "reload_by" )
+                        pWeapon->iReloadBy[iSecondary] = iValue;
 
                     else if ( aCurrent[0] == "reload" )
                         pWeapon->fReloadTime[iSecondary] = iValue / 1000.0f;
@@ -726,6 +726,11 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
                 BLOG_D( "    class %s", CTypeToString::ClassFlagsToString(pWeapon->iClass).c_str() );
             else
                 pWeapon->iClass = -1; // Mark to use by any flag.
+
+            // If reload_by is not specified, assume reload refill the clip.
+            for ( int i=0; i < 2; ++i )
+                if ( pWeapon->iReloadBy[i] == 0 )
+                    pWeapon->iReloadBy[i] = pWeapon->iClipSize[i];
 
             // Add weapon class.
             CEntityClass cEntityClass;

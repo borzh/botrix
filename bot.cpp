@@ -166,8 +166,8 @@ void CBot::AddWeapon( const char* szWeaponName )
 {
     m_pController->SetActiveWeapon(szWeaponName);
     TWeaponId iId = WeaponSearch(szWeaponName);
-    if ( CWeapon::IsValid(iId) )
-        m_aWeapons[iId].AddWeapon(); // As if grabbed a weapon: add default bullets and weapon.
+    if ( CWeapon::IsValid(iId) ) // As if grabbed a weapon: add default bullets and weapon.
+        m_aWeapons[iId].AddWeapon();
     else
         WeaponCheckCurrent(true);
 }
@@ -909,67 +909,68 @@ void CBot::WeaponCheckCurrent( bool bAddToBotWeapons )
 {
     // Check weapon bot has in hands.
     const char* szCurrentWeapon = m_pPlayerInfo->GetWeaponName();
-    if ( szCurrentWeapon )
+    if ( !szCurrentWeapon )
+        return;
+
+    GoodAssert( WeaponSearch(szCurrentWeapon) == EWeaponIdInvalid );
+
+    good::string sCurrentWeapon( szCurrentWeapon );
+    TWeaponId iId = CWeapons::GetIdFromWeaponName( sCurrentWeapon );
+    if ( iId == EWeaponIdInvalid )
     {
-        good::string sCurrentWeapon( szCurrentWeapon );
-        TWeaponId iId = CWeapons::GetIdFromWeaponName( sCurrentWeapon );
-        if ( iId == EWeaponIdInvalid )
+        // Add weapon class first.
+        BLOG_W( "%s -> adding new weapon class %s.", GetName(), szCurrentWeapon );
+        CEntityClass cWeaponClass;
+        cWeaponClass.fRadiusSqr = SQR(CMod::iPlayerRadius);
+        // Don't set engine name so mod will think that there is no such weapon in this map.
+        //cWeaponClass.szEngineName = szCurrentWeapon;
+        cWeaponClass.sClassName = szCurrentWeapon;
+        const CEntityClass* pClass = CItems::AddItemClassFor( EEntityTypeWeapon, cWeaponClass );
+
+        // Add new weapon to default weapons.
+        BLOG_W( "%s -> adding new weapon %s, %s.", GetName(), szCurrentWeapon,
+                bAssumeUnknownWeaponManual ? "melee" : "ranged" );
+        CWeapon* pNewWeapon = new CWeapon();
+        pNewWeapon->pWeaponClass = pClass;
+
+        // Make it usable by all classes and teams.
+        pNewWeapon->iClass = -1;
+        pNewWeapon->iTeam = -1;
+        pNewWeapon->fDamage[0] = 0.01; // DamagePerSecond() will be low to not select unknown weapons by default.
+
+        // Make it has infinite ammo.
+        pNewWeapon->iAttackBullets[CWeapon::PRIMARY] = 0;
+
+        if ( bAssumeUnknownWeaponManual )
         {
-            // Add weapon class first.
-            BLOG_W( "%s -> adding new weapon class %s.", GetName(), szCurrentWeapon );
-            CEntityClass cWeaponClass;
-            cWeaponClass.fRadiusSqr = SQR(CMod::iPlayerRadius);
-            // Don't set engine name so mod will think that there is no such weapon in this map.
-            //cWeaponClass.szEngineName = szCurrentWeapon;
-            cWeaponClass.sClassName = szCurrentWeapon;
-            const CEntityClass* pClass = CItems::AddItemClassFor( EEntityTypeWeapon, cWeaponClass );
-
-            // Add new weapon to default weapons.
-            BLOG_W( "%s -> adding new weapon %s, %s.", GetName(), szCurrentWeapon,
-                    bAssumeUnknownWeaponManual ? "melee" : "ranged" );
-            CWeapon* pNewWeapon = new CWeapon();
-            pNewWeapon->pWeaponClass = pClass;
-
-            // Make it usable by all classes and teams.
-            pNewWeapon->iClass = -1;
-            pNewWeapon->iTeam = -1;
-            pNewWeapon->fDamage[0] = 0.01; // DamagePerSecond() will be low to not select unknown weapons by default.
-
-            // Make it has infinite ammo.
-            pNewWeapon->iAttackBullets[CWeapon::PRIMARY] = 0;
-
-            if ( bAssumeUnknownWeaponManual )
-            {
-                pNewWeapon->iType = EWeaponMelee;
-                pNewWeapon->fShotTime[0] = 0.2f; // Manual weapon: 5 times in a second.
-            }
-            else
-            {
-                pNewWeapon->iType = EWeaponRifle;
-                pNewWeapon->iClipSize[CWeapon::PRIMARY] = 1;
-                pNewWeapon->iDefaultAmmo[CWeapon::PRIMARY] = 1;
-                pNewWeapon->fShotTime[0] = 0.01f; // This will make bot always press attack button.
-            }
-            CWeaponWithAmmo cNewWeapon(pNewWeapon);
-            iId = CWeapons::Add(cNewWeapon);
-
-            CWeapons::SetDefault(iId); // Set default ammo.
+            pNewWeapon->iType = EWeaponMelee;
+            pNewWeapon->fShotTime[0] = 0.2f; // Manual weapon: 5 times in a second.
         }
-
-        if ( bAddToBotWeapons )
+        else
         {
-            const CWeaponWithAmmo& cNewWeapon = CWeapons::Get(iId);
-            m_aWeapons.push_back( cNewWeapon );
-            iId = m_aWeapons.size()-1;
-            WeaponChange(iId); // As if just switching to this weapon.
-
-            if ( !CWeapon::IsValid(m_iMeleeWeapon) && cNewWeapon.IsMelee() )
-                m_iMeleeWeapon = iId;
-            else if ( !CWeapon::IsValid(m_iPhyscannon) && cNewWeapon.IsPhysics() )
-                m_iPhyscannon = iId;
-            else if ( !CWeapon::IsValid(m_iBestWeapon) && cNewWeapon.IsRanged() )
-                m_iBestWeapon = iId;
+            pNewWeapon->iType = EWeaponRifle;
+            pNewWeapon->iClipSize[CWeapon::PRIMARY] = 1;
+            pNewWeapon->iDefaultAmmo[CWeapon::PRIMARY] = 1;
+            pNewWeapon->fShotTime[0] = 0.01f; // This will make bot always press attack button.
         }
+        CWeaponWithAmmo cNewWeapon(pNewWeapon);
+        iId = CWeapons::Add(cNewWeapon);
+    }
+
+    if ( bAddToBotWeapons )
+    {
+        const CWeaponWithAmmo& cNewWeapon = CWeapons::Get(iId);
+        m_aWeapons.push_back( cNewWeapon );
+        iId = m_aWeapons.size()-1;
+        m_aWeapons[iId].AddWeapon();
+        WeaponChange(iId); // As if just switching to this weapon.
+
+        if ( !CWeapon::IsValid(m_iMeleeWeapon) && cNewWeapon.IsMelee() )
+            m_iMeleeWeapon = iId;
+        else if ( !CWeapon::IsValid(m_iPhyscannon) && cNewWeapon.IsPhysics() )
+            m_iPhyscannon = iId;
+        else if ( !CWeapon::IsValid(m_iBestWeapon) && cNewWeapon.IsRanged() )
+            m_iBestWeapon = iId;
     }
 }
 
@@ -985,9 +986,9 @@ void CBot::WeaponsScan()
     for ( int i=0; i < m_aWeapons.size(); ++i)
     {
         bool bPresent = WeaponSet( m_aWeapons[i].GetName() );
-        m_aWeapons[i].SetPresent( bPresent );
         if ( bPresent )
         {
+            m_aWeapons[i].AddWeapon();
             if ( m_aWeapons[i].IsPhysics() )
                 m_iPhyscannon = i;
             else if ( m_aWeapons[i].IsMelee() )
@@ -1042,15 +1043,12 @@ void CBot::UpdateWeapon()
     else
     {
         CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
-        cWeapon.GameFrame();
+        cWeapon.GameFrame(m_cCmd.buttons);
 
         if ( cWeapon.CanUse() )
         {
             if ( cWeapon.GetBaseWeapon()->bForbidden ) // Select other weapon.
                 WeaponChoose();
-            // Automatic reload for just in case.
-            else if ( cWeapon.ShouldReload(CWeapon::PRIMARY) )
-                WeaponReload();
         }
     }
 }

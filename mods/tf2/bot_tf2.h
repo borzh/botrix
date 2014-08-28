@@ -80,7 +80,7 @@ protected:
     {
         m_bChasing = FollowEnemy(m_pChasedEnemy);
         if ( m_bChasing )
-            m_fChaseEnemyTime = CBotrixPlugin::fTime + m_iIntelligence * 2.0f;
+            m_fChaseEnemyTime = CBotrixPlugin::fTime + (EBotPro - m_iIntelligence) + 2.0f;
         else // Dead or flying?
         {
             m_pChasedEnemy = NULL;

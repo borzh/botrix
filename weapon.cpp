@@ -1,31 +1,50 @@
 #include "source_engine.h"
 #include "weapon.h"
 
+#include "game/shared/in_buttons.h"
+
 
 //----------------------------------------------------------------------------------------------------------------
 good::vector<CWeaponWithAmmo> CWeapons::m_aWeapons;
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CWeaponWithAmmo::GameFrame()
+void CWeaponWithAmmo::GameFrame( int& iButtons )
 {
     if ( CBotrixPlugin::fTime >= m_fEndTime )
     {
         m_bShooting = false;
         m_bChanging = false;
-        if ( m_bReloading )
+
+        if ( m_bReloadingStart )
+        {
+            m_bReloadingStart = false;
+            m_bReloading = true;
+            m_fEndTime = m_pWeapon->fReloadTime[m_iSecondary];
+        }
+
+        else if ( m_bReloading )
             EndReload();
+
+        // Check to reload secondary ammo. It is automatic, no need to press reload button.
+        else if ( !HasAmmoInClip(1) && HasAmmoExtra(1) )
+            Reload(1);
+
+        // Check to reload primary ammo.
+        else if ( !HasAmmoInClip(0) && HasAmmoExtra(0) )
+        {
+            Reload(0);
+            FLAG_SET(IN_RELOAD, iButtons);
+        }
     }
-
-    // Check to reload secondary ammo. It is automatic, no need to press reload button.
-    if ( !HasAmmoInClip(1) && HasAmmoExtra(1) )
-        Reload(1);
-
-#ifdef BOTRIX_AUTO_RELOAD_WEAPONS
-    // Check to reload primary ammo.
-    if ( !HasAmmoInClip(0) && HasAmmoExtra(0) )
-        Reload(0);
-#endif
+    else
+    {
+        if ( m_bShooting )
+        {
+            if ( !m_iSecondary && (m_pWeapon->iType == EWeaponRifle) )
+                FLAG_SET(IN_ATTACK, iButtons);
+        }
+    }
 }
 
 
@@ -40,8 +59,8 @@ void CWeaponWithAmmo::Shoot( int iSecondary )
     }
     else
         m_iBulletsInClip[iSecondary] -= m_pWeapon->iAttackBullets[iSecondary];
-    m_bReloading = false; // Stop reloading if weapon time is shotgun-like.
-    m_bSecondary = (iSecondary != 0);
+    m_bReloading = m_bReloadingStart = false; // Stop reloading if weapon time is shotgun-like.
+    m_iSecondary = iSecondary;
     if ( m_pWeapon->fShotTime[iSecondary] )
     {
         m_bShooting = true;
@@ -54,29 +73,32 @@ void CWeaponWithAmmo::Shoot( int iSecondary )
 void CWeaponWithAmmo::Reload( int iSecondary )
 {
     GoodAssert( CanUse() && NeedReload(iSecondary) );
-    m_bReloading = true;
-    m_bSecondary = (iSecondary != 0);
-    if ( m_pWeapon->fReloadTime[0] )
-        m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadTime[iSecondary];
+    m_iSecondary = iSecondary;
+    if ( m_pWeapon->fReloadStartTime[iSecondary] )
+    {
+        m_bReloadingStart = true;
+        m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadStartTime[iSecondary];
+    }
     else
-        EndReload();
+    {
+        m_bReloading = true;
+        if ( m_pWeapon->fReloadTime[iSecondary] )
+            m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadTime[iSecondary];
+        else
+            EndReload();
+    }
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CWeaponWithAmmo::AddWeapon( int iExtraAmmo0 /*= -1*/, int iExtraAmmo1 /*= -1*/ )
+void CWeaponWithAmmo::AddWeapon()
 {
-    if ( iExtraAmmo0 < 0 )
-        iExtraAmmo0 = m_pWeapon->iDefaultAmmo[0];
-    if ( iExtraAmmo1 < 0 )
-        iExtraAmmo1 = m_pWeapon->iDefaultAmmo[1];
-
-    AddBullets(iExtraAmmo0, 0);
-    AddBullets(iExtraAmmo1, 1);
+    AddBullets(m_pWeapon->iDefaultAmmo[0], 0);
+    AddBullets(m_pWeapon->iDefaultAmmo[1], 1);
 
     if ( m_bWeaponPresent ) // Just add bullets.
     {
-        if ( FLAG_SOME_SET(FWeaponAddClip, m_pWeapon->iFlags[0]) )
+        if ( FLAG_SOME_SET(FWeaponAddClip, m_pWeapon->iFlags[0]) ) // TODO: check
             AddBullets(m_pWeapon->iClipSize[0], 0);
     }
     else
@@ -112,26 +134,20 @@ void CWeaponWithAmmo::Holster( CWeaponWithAmmo* pSwitchFrom, CWeaponWithAmmo& cS
 //----------------------------------------------------------------------------------------------------------------
 void CWeaponWithAmmo::EndReload()
 {
-    GoodAssert( m_bReloading && (m_iBulletsInClip[m_bSecondary] < m_pWeapon->iClipSize[m_bSecondary]) );
+    GoodAssert( m_bReloading && (m_iBulletsInClip[m_iSecondary] < m_pWeapon->iClipSize[m_iSecondary]) );
 
-    if ( m_pWeapon->iType >= EWeaponShotgun ) // Rocket/shotgun, reload by one bullet.
-    {
-        ++m_iBulletsInClip[m_bSecondary];
-        --m_iBulletsExtra[m_bSecondary];
-        if ( m_iBulletsInClip[m_bSecondary] < m_pWeapon->iClipSize[m_bSecondary] )
-            m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadTime[m_bSecondary];
-        else
-            m_bReloading = false;
-    }
+    int iClipSize = m_pWeapon->iClipSize[m_iSecondary];
+    int iReloadBy = MIN2( m_pWeapon->iReloadBy[m_iSecondary], m_iBulletsExtra[m_iSecondary]);
+    int iLeft = iClipSize - m_iBulletsInClip[m_iSecondary];
+    if ( iReloadBy > iLeft )
+        iReloadBy = iLeft;
+
+    m_iBulletsInClip[m_iSecondary] += iReloadBy;
+    m_iBulletsExtra[m_iSecondary]  -= iReloadBy;
+    if ( (m_iBulletsInClip[m_iSecondary] < iClipSize) && m_iBulletsExtra[m_iSecondary] )
+        m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadTime[m_iSecondary]; // Do next reload.
     else
-    {
-        int iBulletsAdd = m_pWeapon->iClipSize[m_bSecondary] - m_iBulletsInClip[m_bSecondary];
-        if ( m_iBulletsExtra[m_bSecondary] < iBulletsAdd )
-            iBulletsAdd = m_iBulletsExtra[m_bSecondary];
-        m_iBulletsInClip[m_bSecondary] += iBulletsAdd;
-        m_iBulletsExtra[m_bSecondary] -= iBulletsAdd;
         m_bReloading = false;
-    }
 }
 
 
@@ -147,8 +163,8 @@ bool CWeaponWithAmmo::GetLook( const CPlayer* pFrom, const CPlayer* pTo, float f
 
     VectorAngles(v, angResult);
 
-    if ( m_pWeapon->iParabolicDistance[m_bSecondary] != 0.0f )
-        angResult.x += fDistance / m_pWeapon->iParabolicAngle[m_bSecondary];
+    if ( m_pWeapon->iParabolicDistance[m_iSecondary] != 0.0f )
+        angResult.x += fDistance / m_pWeapon->iParabolicAngle[m_iSecondary];
 
 #if BOTRIX_BOT_AIM_ERROR
     static const float fMaxErrorDistance = 1000.0f;

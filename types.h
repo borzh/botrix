@@ -401,10 +401,10 @@ enum TWeaponTypes
 {
     EWeaponIdInvalid = -1,                       ///< Invalid weapon id.
     EWeaponMelee = 0,                            ///< Knife, stunstick, crowbar.
+    EWeaponGrenade,                              ///< Grenade.
 
     // Ranged.
     EWeaponPhysics,                              ///< Physcannon.
-    EWeaponGrenade,                              ///< Grenade.
     EWeaponRemoteDetonation,                     ///< Remote detonation.
     EWeaponPistol,                               ///< Desert eagle, usp, etc.
     EWeaponRifle,                                ///< Automatic, just press once.

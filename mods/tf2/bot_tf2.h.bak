@@ -1,43 +1,43 @@
-#ifdef BOTRIX_HL2DM
+#ifdef BOTRIX_TF2
 
-#ifndef __BOTRIX_BOT_HL2DM_H__
-#define __BOTRIX_BOT_HL2DM_H__
+#ifndef __BOTRIX_BOT_TF2_H__
+#define __BOTRIX_BOT_TF2_H__
 
 
 #include "bot.h"
 #include "server_plugin.h"
 
-#include "mods/hl2dm/types_hl2dm.h"
+#include "mods/tf2/types_tf2.h"
 
 
 //****************************************************************************************************************
 /// Class representing a bot for Half Life 2 Deathmatch.
 // sv_hl2mp_weapon_respawn_time sv_hl2mp_item_respawn_time
 //****************************************************************************************************************
-class CBot_HL2DM: public CBot
+class CBot_TF2: public CBot
 {
 
 public:
     /// Constructor.
-    CBot_HL2DM( edict_t* pEdict, TBotIntelligence iIntelligence );
+    CBot_TF2( edict_t* pEdict, TBotIntelligence iIntelligence, int iTeam, int iClass );
 
     //------------------------------------------------------------------------------------------------------------
-    // Next functions are mod dependent.
+    // Next functions are mod dependent. You need to implement those in order to make bot moving around.
     //------------------------------------------------------------------------------------------------------------
     /// Called when player becomes active, before first respawn. Sets players model and team.
-    void Activated();
+    //virtual void Activated();
 
     /// Called each time bot is respawned.
     virtual void Respawned();
 
     /// Called when player's team changed.
-    virtual void ChangeTeam( TTeam /*iTeam*/ ) { }
+    virtual void ChangeTeam( TTeam iTeam );
 
     /// Called when player got disconnected / kicked.
     virtual void PlayerDisconnect( int iPlayerIndex, CPlayer* pPlayer )
     {
         CBot::PlayerDisconnect(iPlayerIndex, pPlayer);
-        if ( m_pChasedEnemy == pPlayer )
+        if ( m_bChasing && (m_pChasedEnemy == pPlayer) )
         {
             m_bChasing = false;
             m_pChasedEnemy = NULL;
@@ -80,7 +80,7 @@ protected:
     {
         m_bChasing = FollowEnemy(m_pChasedEnemy);
         if ( m_bChasing )
-            m_fChaseEnemyTime = CBotrixPlugin::fTime + (EBotPro - m_iIntelligence) + 2.0f;
+            m_fChaseEnemyTime = CBotrixPlugin::fTime + m_iIntelligence * 2.0f;
         else // Dead or flying?
         {
             m_pChasedEnemy = NULL;
@@ -110,6 +110,8 @@ protected:
 
     good::bitset m_cSkipWeapons;                         ///< Weapons to skip searching.
 
+    TTeam m_iDesiredTeam;                                ///< Desired team to join when activated. TODO: use var in bot.h.
+
     CPlayer* m_pChasedEnemy;                             ///< Enemy we are following.
     float m_fChaseEnemyTime;                             ///< To recalculate path to enemy every 3 seconds.
 
@@ -120,6 +122,6 @@ protected: // Flags.
 
 };
 
-#endif // __BOTRIX_BOT_HL2DM_H__
+#endif // __BOTRIX_BOT_TF2_H__
 
-#endif // BOTRIX_HL2DM
+#endif // BOTRIX_TF2

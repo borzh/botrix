@@ -66,7 +66,8 @@ public:
     unsigned char iClipSize[2];                  ///< How much bullets fit in one clip.
     unsigned char iDefaultAmmo[2];               ///< Count of bullets this weapon gives by default.
     unsigned char iMaxAmmo[2];                   ///< Count of max bullets this weapon can have (besides the clip in the weapon).
-    unsigned char iAttackBullets[2];             ///< How many bullets are used in primary attack.
+    unsigned char iAttackBullets[2];             ///< How many bullets are used in attack.
+    unsigned char iReloadBy[2];                  ///< Bullets are used in one reload time.
     int iParabolicDistance[2];                   ///< Distance that bullet makes in straight line until falls.
     int iParabolicAngle[2];                      ///< Straight line if 0, else look 1 angle upper for each given distance.
 
@@ -91,7 +92,7 @@ public:
     }
 
     /// Game frame.
-    void GameFrame();
+    void GameFrame( int& iButtons );
 
     /// Return base weapon.
     inline const CWeapon* GetBaseWeapon() const { return m_pWeapon; }
@@ -105,8 +106,8 @@ public:
     /// Return true if this weapon is melee.
     inline bool IsMelee() const { return (m_pWeapon->iType == EWeaponMelee); }
 
-    /// Return true if this weapon is ranged.
-    inline bool IsRanged() const { return !IsMelee(); }
+    /// Return true if this weapon is ranged (not grenade).
+    inline bool IsRanged() const { return (m_pWeapon->iType > EWeaponGrenade); }
 
     /// Return true if need to throw.
     inline bool IsGrenade() const { return (m_pWeapon->iType == EWeaponGrenade); }
@@ -118,7 +119,7 @@ public:
     inline bool IsPhysics() const { return (m_pWeapon->iType == EWeaponPhysics); }
 
     /// Return true if currently reloading.
-    inline bool IsReloading() const { return m_bReloading; }
+    inline bool IsReloading() const { return m_bReloading || m_bReloadingStart; }
 
     /// Return true if currently shooting.
     inline bool IsShooting() const { return m_bShooting; }
@@ -224,7 +225,7 @@ public:
     void RemoveWeapon() { m_bWeaponPresent = false; }
 
     /// Called when bot picks up this weapon.
-    void AddWeapon( int iExtraAmmo0 = -1, int iExtraAmmo1 = -1 );
+    void AddWeapon();
 
     /// Add bullets to this weapon.
     void AddBullets( int iCount, int iSecondary )
@@ -264,12 +265,13 @@ protected:
     const CWeapon* m_pWeapon; ///< Weapon itself.
     int m_iBulletsInClip[2];  ///< Bullets in current clip (inside weapon).
     int m_iBulletsExtra[2];   ///< Amount of bullets extra.
+    int m_iSecondary;         ///< Reloading / shooting secondary ammo or using zoom.
 
     float m_fEndTime;         ///< Time to end reloading/shooting.
 
-    bool m_bSecondary:1;      ///< Reloading / shooting secondary ammo or using zoom.
     bool m_bWeaponPresent:1;  ///< True, if weapon is present, false if only ammo is present.
-    bool m_bReloading:1;      ///< True, if started to reload weapon.
+    bool m_bReloadingStart:1; ///< True, if started to reload weapon.
+    bool m_bReloading:1;      ///< True, if continuing to reload weapon.
     bool m_bShooting:1;       ///< True, if currently shooting.
     bool m_bChanging:1;       ///< True, if started to change weapon.
     bool m_bUsingZoom:1;      ///< True, if started to zoom in / zoom out.
@@ -295,12 +297,6 @@ public:
 
     /// Add weapon.
     static TWeaponId Add( CWeaponWithAmmo& cWeapon ) { m_aWeapons.push_back(cWeapon); return m_aWeapons.size()-1; }
-
-    /// Add default weapon.
-    static void SetDefault( TWeaponId iWeaponId, int iExtraAmmo0 = -1, int iExtraAmmo1 = -1 )
-    {
-        m_aWeapons[iWeaponId].AddWeapon(iExtraAmmo0, iExtraAmmo1);
-    }
 
     /// Clear all weapons.
     static void Clear()

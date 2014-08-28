@@ -361,8 +361,8 @@ const good::string& CTypeToString::ItemDrawFlagsToString( TItemDrawFlags iFlags 
 good::string aWeaponTypes[EWeaponTotal] =
 {
     "melee",
-    "physics",
     "grenade",
+    "physics",
     "remote",
     "pistol",
     "rifle",

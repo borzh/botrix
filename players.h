@@ -57,10 +57,10 @@ public:
     const good::string& GetLowerName() const { return m_sName; }
 
     /// Get head position of player.
-    Vector const& GetHead() const { return m_vHead; }
+    const Vector& GetHead() const { return m_vHead; }
 
     /// Get previous head position of player.
-    Vector const& GetPreviousHead() const { return m_vPrevHead; }
+    const Vector& GetPreviousHead() const { return m_vPrevHead; }
 
     /// Get center position of player.
     void GetCenter( Vector& v ) const { CUtil::EntityCenter(m_pEdict, v); }

@@ -479,7 +479,7 @@ CWaypointPath* CWaypoints::GetPath(TWaypointId iFrom, TWaypointId iTo)
 
 
 //----------------------------------------------------------------------------------------------------------------
-TWaypointId CWaypoints::Add( Vector const& vOrigin, TWaypointFlags iFlags, int iArgument, int iAreaId )
+TWaypointId CWaypoints::Add( const Vector& vOrigin, TWaypointFlags iFlags, int iArgument, int iAreaId )
 {
     CWaypoint w(vOrigin, iFlags, iArgument, iAreaId);
 
@@ -621,7 +621,7 @@ void CWaypoints::RemoveLocation( TWaypointId id )
 
 
 //----------------------------------------------------------------------------------------------------------------
-TWaypointId CWaypoints::GetNearestWaypoint(Vector const& vOrigin, const good::bitset* aOmit,
+TWaypointId CWaypoints::GetNearestWaypoint(const Vector& vOrigin, const good::bitset* aOmit,
                                            bool bNeedVisible, float fMaxDistance, TWaypointFlags iFlags)
 {
     TWaypointId result = -1;

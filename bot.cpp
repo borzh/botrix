@@ -1340,23 +1340,23 @@ void CBot::CheckAttackDuck( CPlayer* pPlayer )
 void CBot::EnemyAim()
 {
     GoodAssert( m_pCurrentEnemy );
-    //Vector vOldLook(m_vLook);
 
-    Vector vEnemyCenter;
-    m_pCurrentEnemy->GetCenter( vEnemyCenter );
-
-    if ( !m_bShootAtHead && CUtil::IsVisible(m_vHead, vEnemyCenter) )
-        m_vLook = vEnemyCenter;
+    if ( CWeapon::IsValid(m_iWeapon) )
+        m_aWeapons[m_iWeapon].GetLook( GetHead(), m_pCurrentEnemy, m_fDistanceSqrToEnemy,
+                                       m_iIntelligence, 0, m_vLook);
     else
-        m_vLook = m_pCurrentEnemy->GetHead();
+        m_pCurrentEnemy->GetCenter(m_vLook);
 
+    /*
+     * TODO:
     //float fRand = fDistanceToEnemy / CUtil::iMaxMapSize;
     // TODO: depend on intelligence.
     m_vLook.x += 10 - (rand()%20); // -10 .. + 10
     m_vLook.y += 10 - (rand()%20); // -10 .. + 10
     m_vLook.z += 10 - (rand()%20); // -10 .. + 10
+    */
 
-    m_fEndAimTime = GetEndLookTime();
+    m_fEndAimTime = (m_iIntelligence == EBotPro) ? 0.0f : GetEndLookTime();
 
     // Make sure to look far away.
     //m_vLook -= m_vHead;
@@ -1903,7 +1903,7 @@ bool CBot::NormalMove()
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOrigin )
+void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOrigin )
 {
     //m_cCmd.viewangles = m_pController->GetLocalAngles(); // WTF?
     //m_cCmd.viewangles = m_pPlayerInfo->GetAbsAngles(); // WTF?
@@ -2085,8 +2085,8 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
 
         //CUtil::DeNormalizeAngle(angNeeded.y);
         //float fYaw = (angNeeded.y * 3.14159265f) / 180.0f; // Degree to radians.
-        //m_cCmd.forwardmove = fSpeed * cosf(fYaw);
-        //m_cCmd.sidemove = -fSpeed * sinf(fYaw);
+        //m_cCmd.forwardmove = fSpeed * FastCos(fYaw);
+        //m_cCmd.sidemove = -fSpeed * FastSin(fYaw);
 
         //Vector vMove(m_cCmd.forwardmove, m_cCmd.sidemove, 0);
         //vMove += m_vHead;
@@ -2332,7 +2332,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOri
     // Start holding attack after m_fStartActionTime until break object or object moves far away.
     else if ( m_bStuckBreakObject )
     {
-        if ( !m_bTest && m_bUnderAttack ) 
+        if ( !m_bTest && m_bUnderAttack )
             m_bStuckBreakObject = false;
         else
         {

@@ -81,17 +81,17 @@ public:
     static bool IsVisiblePVS( const Vector& v );
 
     /// Return true given ray hits given entity.
-    static bool IsRayHitsEntity( edict_t* pDoor, Vector const& vSrc, Vector const& vDest );
+    static bool IsRayHitsEntity( edict_t* pDoor, const Vector& vSrc, const Vector& vDest );
 
     /// Return true if vDest is visible from vSrc.
-    static bool IsVisible( Vector const& vSrc, Vector const& vDest, TVisibilityFlags iFlags = FVisibilityWorld );
+    static bool IsVisible( const Vector& vSrc, const Vector& vDest, TVisibilityFlags iFlags = FVisibilityWorld );
     /// Return true if entity is visible from vSrc.
-    static bool IsVisible( Vector const& vSrc, edict_t* pDest );
+    static bool IsVisible( const Vector& vSrc, edict_t* pDest );
     /// Return true if can get from vSrc to vDest walking or jumping.
-    static TReach GetReachableInfoFromTo( Vector const& vSrc, Vector const& vDest, float fDistance = 0.0f );
+    static TReach GetReachableInfoFromTo( const Vector& vSrc, const Vector& vDest, float fDistance = 0.0f );
 
     /// Trace line to know if hit any world object.
-    static void TraceLine( Vector const& vSrc, Vector const& vDest, int mask, ITraceFilter *pFilter );
+    static void TraceLine( const Vector& vSrc, const Vector& vDest, int mask, ITraceFilter *pFilter );
     /// Return result of TraceLine().
     static trace_t const& TraceResult() { return m_TraceResult; }
     /// Return true if TraceLine() hit something.
@@ -127,9 +127,9 @@ public:
     static bool IsTouchBoundingBox2d( const Vector2D &a1, const Vector2D &a2, const Vector2D &bmins, const Vector2D &bmaxs );
     static bool IsOnOppositeSides2d( const Vector2D &amins, const Vector2D &amaxs, const Vector2D &bmins, const Vector2D &bmaxs );
     static bool IsLineTouch2d( const Vector2D &amins, const Vector2D &amaxs, const Vector2D &bmins, const Vector2D &bmaxs );
-    static bool IsTouchBoundingBox3d( Vector const& a1, Vector const& a2, Vector const& bmins, Vector const& bmaxs );
-    static bool IsOnOppositeSides3d( Vector const& amins, Vector const& amaxs, Vector const& bmins, Vector const& bmaxs );
-    static bool IsLineTouch3d( Vector const& amins, Vector const& amaxs, Vector const& bmins, Vector const& bmaxs );
+    static bool IsTouchBoundingBox3d( const Vector& a1, const Vector& a2, const Vector& bmins, const Vector& bmaxs );
+    static bool IsOnOppositeSides3d( const Vector& amins, const Vector& amaxs, const Vector& bmins, const Vector& bmaxs );
+    static bool IsLineTouch3d( const Vector& amins, const Vector& amaxs, const Vector& bmins, const Vector& bmaxs );
 
     /// Useful math round function.
     static int Round( float fNum )
@@ -139,7 +139,7 @@ public:
     }
 
     /// Util function that defines when one point 'touches' another one.
-    static bool IsPointTouch3d( Vector const& v1, Vector const& v2, int iSqrDiffZ, int iSqrDiffXY )
+    static bool IsPointTouch3d( const Vector& v1, const Vector& v2, int iSqrDiffZ, int iSqrDiffXY )
     {
         //return v2.DistToSqr(v1) < 40*40;
         float zDiff = v1.z - v2.z;

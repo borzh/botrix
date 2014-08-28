@@ -1,3 +1,4 @@
+#include "players.h"
 #include "source_engine.h"
 #include "weapon.h"
 
@@ -152,32 +153,71 @@ void CWeaponWithAmmo::EndReload()
 
 
 //----------------------------------------------------------------------------------------------------------------
-bool CWeaponWithAmmo::GetLook( const CPlayer* pFrom, const CPlayer* pTo, float fDistance, bool bDuck,
-                               TBotIntelligence iBotIntelligence, bool bSecondary, QAngle& angResult )
+bool CWeaponWithAmmo::GetLook( const Vector& vFrom, const CPlayer* pTo, float fDistanceSqr,
+                               TBotIntelligence iBotIntelligence, int iSecondary, Vector& vResult )
 {
-    GoodAssert( FLAG_SOME_SET(FWeaponFunctionPresent, m_pWeapon->iFlags[bSecondary]) );
+    GoodAssert( CanShoot(iSecondary, fDistanceSqr) );
 
-    Vector v;
-    if ( CMod::bHeadShotDoesMoreDamage && (iBotIntelligence >= EBotSmart) ) // Aim at head instead of body.
-        v.z -= bDuck ? (CMod::iPlayerEyeLevelCrouched/3) : (CMod::iPlayerEyeLevel/3);
+    float fParabolicDistance45 = m_pWeapon->iParabolicDistance45[iSecondary];
+    if ( fParabolicDistance45 && (fDistanceSqr > SQR(fParabolicDistance45)) ) // Can't reach enemy.
+        return false;
 
-    VectorAngles(v, angResult);
+    Vector vTo;
+    switch ( m_pWeapon->iAim )
+    {
+    case EWeaponAimFoot:
+        pTo->GetFoot(vTo);
+        break;
+    case EWeaponAimBody:
+        if ( CMod::bHeadShotDoesMoreDamage && (iBotIntelligence >= EBotSmart) ) // Aim at head instead of body.
+            vTo = pTo->GetHead();
+        else
+            pTo->GetCenter(vTo);
+        break;
+    case EWeaponAimHead:
+        vTo = pTo->GetHead();
+        break;
+    default:
+        GoodAssert(false);
+    }
 
-    if ( m_pWeapon->iParabolicDistance[m_iSecondary] != 0.0f )
-        angResult.x += fDistance / m_pWeapon->iParabolicAngle[m_iSecondary];
+    vTo -= vFrom; // Make vectors relative to player's eyes.
 
-#ifdef BOTRIX_BOT_AIM_ERROR
-    static const float fMaxErrorDistance = 1000.0f;
+    float fParabolicDistance0 = m_pWeapon->iParabolicDistance0[iSecondary];
+    if ( fParabolicDistance0 || fParabolicDistance45 )
+    {
+        float fGradeDist;
+        float fDist = FastSqrt(fDistanceSqr);
+        float fGradesInc;
+
+        if ( fParabolicDistance0 <= fDist )
+        {
+            // Distance increment that 1 grade does looking up.
+            fGradeDist = (fParabolicDistance45 - fParabolicDistance0) / 45.0f;
+            fGradesInc = (fDist - fParabolicDistance0) / fGradeDist; // Grade we need to aim up.
+        }
+        else // Distance increment that 1 grade does looking down.
+        {
+            fGradeDist = fParabolicDistance0 / -45.0f;
+            fGradesInc = fDist / fGradeDist; // Grade we need to aim down.
+        }
+
+        fGradesInc = fDist * FastCos(fGradesInc); // z = fDist*cos(angle)
+        vTo.z += fGradesInc; // Aim more up/down.
+    }
+
+#ifndef BOTRIX_BOT_AIM_ERROR
+    static const float fMaxErrorDistance = CUtil::iHalfMaxMapSize; // Don't error after that.
 
     // Aim errors (pitch/yaw): max error for a distance = 1000, and max error for a distance = 0.
     static const float aAimErrors[EBotIntelligenceTotal][2] =
     {
         // Pitch(when distance is 0) Yaw(when distance is 0). When distance is 1000 both pitch and yaw is 1.
-        { 45, 30, }, // I.e. fool bot at distance 0 will have error in 45 degrees for pitch and 30 for yaw.
-        { 35, 22, }, // At distance 1000 error should not be greater than 1 degree.
-        { 25, 15, },
-        { 15, 7,  },
-        { 5,  5,  },
+        { 40, 40, }, // I.e. fool bot at distance 0 will have error in 45 degrees for pitch and 30 for yaw.
+        { 30, 30, }, // At distance 1000 error should not be greater than 1 degree.
+        { 20, 20, },
+        { 10, 10, },
+        { 0,  0,  },
     };
 
     int iRangePitch = 1, iRangeYaw = 1;
@@ -194,6 +234,8 @@ bool CWeaponWithAmmo::GetLook( const CPlayer* pFrom, const CPlayer* pTo, float f
     angResult.x += iRandPitch;
     angResult.y += iRandYaw;
 #endif // BOTRIX_BOT_AIM_ERROR
+
+    vResult = vTo;
     return true;
 }
 

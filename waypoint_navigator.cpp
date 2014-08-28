@@ -28,7 +28,7 @@ bool CWaypointNavigator::SearchSetup( TWaypointId iFrom, TWaypointId iTo,
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CWaypointNavigator::DrawPath( unsigned char r, unsigned char g, unsigned char b, Vector const& vOrigin )
+void CWaypointNavigator::DrawPath( unsigned char r, unsigned char g, unsigned char b, const Vector& vOrigin )
 {
     if ( (iPathDrawFlags == FPathDrawNone) || (CBotrixPlugin::fTime < m_fNextDrawTime) ||
          !m_cAstar.has_path() || (m_iPathIndex == 0) || ( m_iPathIndex > (int)m_cAstar.path().size() ) )

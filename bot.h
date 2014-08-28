@@ -290,7 +290,7 @@ protected: // Methods.
     bool NormalMove();
 
     // If m_bNeedMove then moves toward m_vDestination. If m_bNeedAim then smoothly aims to m_vLook until m_fEndAimTime.
-    void PerformMove( TWaypointId iPrevCurrentWaypoint, Vector const& vPrevOrigin );
+    void PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOrigin );
 
 
 

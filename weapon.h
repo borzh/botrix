@@ -68,8 +68,8 @@ public:
     unsigned char iMaxAmmo[2];                   ///< Count of max bullets this weapon can have (besides the clip in the weapon).
     unsigned char iAttackBullets[2];             ///< How many bullets are used in attack.
     unsigned char iReloadBy[2];                  ///< Bullets are used in one reload time.
-    int iParabolicDistance[2];                   ///< Distance that bullet makes in straight line until falls.
-    int iParabolicAngle[2];                      ///< Straight line if 0, else look 1 angle upper for each given distance.
+    int iParabolicDistance0[2];                  ///< Distance that bullet does in straight line until falls.
+    int iParabolicDistance45[2];                 ///< Distance that bullet does looking up 45grades until falls.
 
     TBotIntelligence iBotPreference;             ///< Smart bots will prefer weapons with higher preference.
     bool bForbidden;                             ///< True if weapon is forbidden.
@@ -248,12 +248,13 @@ public:
     }
 
     /**
-     * Get vector to aim to. iBotIntelligence is used to get some errors in aim.
-     * Returns false if can't use (invalid distance). Will return angles, based on random and
-     * bot intelligence.
+     * @brief Get vector to aim to.
+     *
+     * iBotIntelligence is used to get some errors in aim. Returns false if can't use
+     * (invalid distance). Will return vector, with random based error and bot intelligence.
      */
-    bool GetLook( const CPlayer* pFrom, const CPlayer* pTo, float fDistance, bool bDuck,
-                  TBotIntelligence iBotIntelligence, bool bSecondary, QAngle& angResult );
+    bool GetLook( const Vector& vFrom, const CPlayer* pTo, float fDistanceSqr,
+                  TBotIntelligence iBotIntelligence, int iSecondary, Vector& vResult );
 
 protected:
     // End reloading weapon.

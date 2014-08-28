@@ -27,7 +27,7 @@ public: // Methods.
     CWaypoint(): vOrigin(), iFlags(0), iArgument(0), iAreaId(0) {}
 
     /// Constructor with parameters.
-    CWaypoint( Vector const& vOrigin, int iFlags = FWaypointNone, int iArgument = 0, TAreaId iAreaId = 0 ):
+    CWaypoint( const Vector& vOrigin, int iFlags = FWaypointNone, int iArgument = 0, TAreaId iAreaId = 0 ):
         vOrigin(vOrigin), iFlags(iFlags), iArgument(iArgument), iAreaId(iAreaId) {}
 
     /// Get waypoint flags for needed entity type (health, armor, weapon, ammo).
@@ -108,7 +108,7 @@ public: // Methods.
 
 
     /// Return true if point v 'touches' this waypoint.
-    inline bool IsTouching( Vector const& v, bool bOnLadder ) const
+    inline bool IsTouching( const Vector& v, bool bOnLadder ) const
     {
         return CUtil::IsPointTouch3d(vOrigin, v, bOnLadder ? CMod::iPointTouchLadderSquaredZ : CMod::iPointTouchSquaredZ, CMod::iPointTouchSquaredXY);
     }
@@ -246,7 +246,7 @@ public: // Methods.
     static WaypointNode& GetNode( TWaypointId id ) { return m_cGraph[id]; }
 
     /// Add waypoint.
-    static TWaypointId Add( Vector const& vOrigin, TWaypointFlags iFlags = FWaypointNone, int iArgument = 0, int iAreaId = 0 );
+    static TWaypointId Add( const Vector& vOrigin, TWaypointFlags iFlags = FWaypointNone, int iArgument = 0, int iAreaId = 0 );
 
     /// Remove waypoint.
     static void Remove( TWaypointId id );
@@ -265,7 +265,7 @@ public: // Methods.
 
 
     /// Get nearest waypoint to given position.
-    static TWaypointId GetNearestWaypoint( Vector const& vOrigin, const good::bitset* aOmit = NULL, bool bNeedVisible = true,
+    static TWaypointId GetNearestWaypoint( const Vector& vOrigin, const good::bitset* aOmit = NULL, bool bNeedVisible = true,
                                            float fMaxDistance = CWaypoint::MAX_RANGE, TWaypointFlags iFlags = FWaypointNone );
 
     /// Get any waypoint with some of the given flags set.
@@ -323,7 +323,7 @@ protected:
     }
 
     // Add location for waypoint.
-    static void AddLocation(TWaypointId id, Vector const& vOrigin)
+    static void AddLocation(TWaypointId id, const Vector& vOrigin)
     {
         m_cBuckets[GetBucketX(vOrigin.x)][GetBucketY(vOrigin.y)][GetBucketZ(vOrigin.z)].push_back(id);
     }

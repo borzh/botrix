@@ -32,7 +32,7 @@ const int iTextTime = 10; // Time in seconds to show text in CUtil::GetReachable
 // If vSrc is lower in Z, and slope is more than 45 degrees then player can't reach destination (returns
 // EReachNotReachable).
 //----------------------------------------------------------------------------------------------------------------
-TReach CanClimbSlope( Vector const& vSrc, Vector const& vDest )
+TReach CanClimbSlope( const Vector& vSrc, const Vector& vDest )
 {
     Vector vDiff = vDest - vSrc;
     QAngle ang;
@@ -160,7 +160,7 @@ protected:
 };
 
 //----------------------------------------------------------------------------------------------------------------
-bool CUtil::IsRayHitsEntity( edict_t* pEntity, Vector const& vSrc, Vector const& vDest )
+bool CUtil::IsRayHitsEntity( edict_t* pEntity, const Vector& vSrc, const Vector& vDest )
 {
     COnlyOneEntityTraceFilter filter(pEntity);
     TraceLine(vSrc, vDest, MASK_OPAQUE, &filter);
@@ -168,7 +168,7 @@ bool CUtil::IsRayHitsEntity( edict_t* pEntity, Vector const& vSrc, Vector const&
 }
 
 //----------------------------------------------------------------------------------------------------------------
-bool CUtil::IsVisible( Vector const& vSrc, Vector const& vDest, TVisibilityFlags iFlags )
+bool CUtil::IsVisible( const Vector& vSrc, const Vector& vDest, TVisibilityFlags iFlags )
 {
     CVisibilityTraceFilter filter(iFlags);
     TraceLine(vSrc, vDest, filter.iTraceFlags, &filter);
@@ -176,7 +176,7 @@ bool CUtil::IsVisible( Vector const& vSrc, Vector const& vDest, TVisibilityFlags
 }
 
 //----------------------------------------------------------------------------------------------------------------
-bool CUtil::IsVisible( Vector const& vSrc, edict_t* pDest )
+bool CUtil::IsVisible( const Vector& vSrc, edict_t* pDest )
 {
     //CTraceFilterHitAll filter;
     CTraceFilterWorldAndPropsOnly filter;
@@ -187,7 +187,7 @@ bool CUtil::IsVisible( Vector const& vSrc, edict_t* pDest )
 }
 
 //----------------------------------------------------------------------------------------------------------------
-TReach CUtil::GetReachableInfoFromTo( Vector const& vSrc, Vector const& vDest, float fDistance )
+TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, const Vector& vDest, float fDistance )
 {
     static int iRandom = 0;      // This function may be called 2 times with (v1, v2) and (v2,v1)
     iRandom = (iRandom + 1) & 1; // so iRandom is to draw text higher that previous time.
@@ -327,7 +327,7 @@ TReach CUtil::GetReachableInfoFromTo( Vector const& vSrc, Vector const& vDest, f
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CUtil::TraceLine(Vector const& vSrc, Vector const& vDest, int mask, ITraceFilter *pFilter)
+void CUtil::TraceLine(const Vector& vSrc, const Vector& vDest, int mask, ITraceFilter *pFilter)
 {
     Ray_t ray;
     memset(&m_TraceResult, 0, sizeof(trace_t));
@@ -392,7 +392,7 @@ bool CUtil::IsTouchBoundingBox2d( const Vector2D &a1, const Vector2D &a2, const 
 }
 
 //----------------------------------------------------------------------------------------------------------------
-bool CUtil::IsTouchBoundingBox3d( Vector const& a1, Vector const& a2, Vector const& bmins, Vector const& bmaxs )
+bool CUtil::IsTouchBoundingBox3d( const Vector& a1, const Vector& a2, const Vector& bmins, const Vector& bmaxs )
 {
     Vector amins = Vector(MIN2(a1.x,a2.x),MIN2(a1.y,a2.y),MIN2(a1.z,a2.z));
     Vector amaxs = Vector(MAX2(a1.x,a2.x),MAX2(a1.y,a2.y),MAX2(a1.z,a2.z));
@@ -414,7 +414,7 @@ bool CUtil::IsOnOppositeSides2d( const Vector2D &amins, const Vector2D &amaxs, c
 }
 
 //----------------------------------------------------------------------------------------------------------------
-bool CUtil::IsOnOppositeSides3d( Vector const& amins, Vector const& amaxs, Vector const& bmins, Vector const& bmaxs )
+bool CUtil::IsOnOppositeSides3d( const Vector& amins, const Vector& amaxs, const Vector& bmins, const Vector& bmaxs )
 {
     amins.Cross(bmins);
     amaxs.Cross(bmaxs);
@@ -435,7 +435,7 @@ bool CUtil::IsLineTouch2d( const Vector2D &amins, const Vector2D &amaxs, const V
 }
 
 //----------------------------------------------------------------------------------------------------------------
-bool CUtil::IsLineTouch3d(Vector const& amins, Vector const& amaxs, Vector const& bmins, Vector const& bmaxs )
+bool CUtil::IsLineTouch3d(const Vector& amins, const Vector& amaxs, const Vector& bmins, const Vector& bmaxs )
 {
     return IsOnOppositeSides3d(amins,amaxs,bmins,bmaxs) && IsTouchBoundingBox3d(amins,amaxs,bmins,bmaxs);
 }

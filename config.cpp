@@ -677,8 +677,8 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
                     {
                         if ( aCurrent[0] == "parabolic" )
                         {
-                            pWeapon->iParabolicDistance[iSecondary] = iValue1;
-                            pWeapon->iParabolicAngle[iSecondary] = iValue2;
+                            pWeapon->iParabolicDistance0[iSecondary] = iValue1;
+                            pWeapon->iParabolicDistance45[iSecondary] = iValue2;
                         }
                         else if ( aCurrent[0] == "range" )
                         {

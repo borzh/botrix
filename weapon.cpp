@@ -166,7 +166,7 @@ bool CWeaponWithAmmo::GetLook( const CPlayer* pFrom, const CPlayer* pTo, float f
     if ( m_pWeapon->iParabolicDistance[m_iSecondary] != 0.0f )
         angResult.x += fDistance / m_pWeapon->iParabolicAngle[m_iSecondary];
 
-#if BOTRIX_BOT_AIM_ERROR
+#ifdef BOTRIX_BOT_AIM_ERROR
     static const float fMaxErrorDistance = 1000.0f;
 
     // Aim errors (pitch/yaw): max error for a distance = 1000, and max error for a distance = 0.
@@ -219,13 +219,26 @@ void CWeapons::GetRespawnWeapons( good::vector<CWeaponWithAmmo>& aWeapons, TTeam
 TWeaponId CWeapons::GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aWeapons )
 {
     // Choose best weapon. Skip grenades.
+    /*
     bool bCanKill = false, bOneBullet = false;
-    int iIdx = EWeaponIdInvalid;
     float fDamagePerSec = 0.0f, fDamage = 0.0f;
-    for ( int i=0; i < aWeapons.size(); ++i )
+    */
+    TWeaponId iIdx = EWeaponIdInvalid;
+    TBotIntelligence iPreference = -1;
+
+    for ( TWeaponId i = 0; i < aWeapons.size(); ++i )
     {
         const CWeaponWithAmmo& cWeapon = aWeapons[i];
+        const CWeapon* pWeapon = cWeapon.GetBaseWeapon();
 
+        if ( !pWeapon->bForbidden && cWeapon.IsPresent() &&
+             cWeapon.HasAmmo() && (iPreference < pWeapon->iBotPreference) )
+        {
+            iIdx = i;
+            iPreference = pWeapon->iBotPreference;
+        }
+
+        /*
         if ( cWeapon.GetBaseWeapon()->bForbidden || !cWeapon.IsPresent() ||
             !cWeapon.IsRanged() || !cWeapon.HasAmmo() ) // Skip all melees, grenades and physics or without ammo.
             continue;
@@ -276,6 +289,7 @@ TWeaponId CWeapons::GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aW
             iIdx = i;
             fDamage = fDamage0;
         }
+        */
     }
     return iIdx;
 }

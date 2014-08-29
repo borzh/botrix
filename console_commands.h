@@ -767,7 +767,7 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class gitCConfigLogCommand: public CConsoleCommand
+class CConfigLogCommand: public CConsoleCommand
 {
 public:
     CConfigLogCommand()

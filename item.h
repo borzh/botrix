@@ -20,15 +20,32 @@ class CPlayer;
 class CEntityClass
 {
 public:
-    CEntityClass(): szEngineName(NULL), iFlags(0), fRadiusSqr(0.0f)  {}
+    /// Constructor.
+    CEntityClass(): szEngineName(NULL), iFlags(0), fPickupDistanceSqr(0.0f)  {}
 
+    /// Set class argument.
     void SetArgument( int iArgument ) { SET_2ND_WORD(iArgument, iFlags); }
+
+    /// Get class argument.
     int GetArgument() const { return GET_2ND_WORD(iFlags); }
+
+    /// == operator.
+    bool operator==( const CEntityClass& cOther ) const
+    {
+        return ( szEngineName && (szEngineName == cOther.szEngineName) ) ||
+               ( sClassName == cOther.sClassName );
+    }
+
+    /// == operator with string.
+    bool operator==( const good::string& sOther ) const
+    {
+        return (sClassName == sOther);
+    }
 
     good::string sClassName;            ///< Entity class name (like "prop_physics_multiplayer" or "item_healthkit").
     const char* szEngineName;           ///< Can compare this string with edict_t::GetClassName() only by pointer. Faster.
     TEntityFlags iFlags;                ///< Entity flags and argument (how much health/armor restore, or bullets gives etc.).
-    float fRadiusSqr;                   ///< Item's radius (to know if bot can pick it up).
+    float fPickupDistanceSqr;           ///< Distance to entity to consider it can be picked up.
 };
 
 
@@ -43,8 +60,10 @@ public:
     CEntity(): pEdict(NULL) {}
 
     /// Constructor with parameters.
-    CEntity( edict_t* pEdict, TEntityFlags iFlags, float fRadiusSqr, const CEntityClass* pItemClass, const Vector& vOrigin, TWaypointId iWaypoint ):
-        pEdict(pEdict), iFlags(iFlags), fRadiusSqr(fRadiusSqr), iWaypoint(iWaypoint), vOrigin(vOrigin), pItemClass(pItemClass), pArguments(NULL) {}
+    CEntity( edict_t* pEdict, TEntityFlags iFlags, float fPickupDistanceSqr, const CEntityClass* pItemClass,
+             const Vector& vOrigin, TWaypointId iWaypoint ):
+        pEdict(pEdict), iFlags(iFlags), fPickupDistanceSqr(fPickupDistanceSqr), iWaypoint(iWaypoint),
+        vOrigin(vOrigin), pItemClass(pItemClass), pArguments(NULL) {}
 
     /// Return true if item was freed, (for example broken, but not respawnable).
     bool IsFree() const { return (pEdict == NULL) || pEdict->IsFree(); }
@@ -72,7 +91,7 @@ public:
 
     edict_t* pEdict;                    ///< Entity's edict.
     TEntityFlags iFlags;                ///< Entity's flags.
-    float fRadiusSqr;                   ///< Entity's radius (to know if bot can be stucked by it or pick it up).
+    float fPickupDistanceSqr;           ///< Distance to entity to consider it can be picked up.
     TWaypointId iWaypoint;              ///< Entity's nearest waypoint.
     Vector vOrigin;                     ///< Entity's respawn position on map (bots will be looking there).
     const CEntityClass* pItemClass;     ///< Entity's class.
@@ -116,6 +135,13 @@ public:
 
     /// Get array of items of needed type.
     static const good::vector<CEntity>& GetItems( TEntityType iEntityType ) { return m_aItems[iEntityType]; }
+
+    /// Get items class for entity class name.
+    static const CEntityClass* GetItemClass( TEntityType iEntityType, const good::string& sClassName )
+    {
+        good::vector<CEntityClass>::const_iterator it = good::find(m_aItemClasses[iEntityType], sClassName);
+        return ( it == m_aItemClasses[iEntityType].end() ) ? NULL : &*it;
+    }
 
     /// Get nearest item for a class (for example some item_battery or item_suitcharger for armor), skipping picked items in aSkip array.
     static TEntityIndex GetNearestItem( TEntityType iEntityType, const Vector& vOrigin, const good::vector<CPickedItem>& aSkip, const CEntityClass* pClass = NULL );

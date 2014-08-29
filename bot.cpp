@@ -61,7 +61,7 @@ CBot::CBot( edict_t* pEdict, TBotIntelligence iIntelligence, TClass iClass ):
         if ( iSize == 0 )
             iSize = 2;
         m_aNearItems[i].reserve( iSize );
-        m_aNearestItems[i].reserve( 4 );
+        m_aNearestItems[i].reserve( 16 );
     }
 }
 
@@ -192,6 +192,8 @@ void CBot::Respawned()
 
     m_cChat.iSpeaker = m_iIndex;
     m_iObjective = EBotChatUnknown;
+
+    m_bPerformingRequest = false;
 #endif
 
     m_cCmd.Reset();
@@ -220,9 +222,6 @@ void CBot::Respawned()
     m_iCurrentPickedItem = 0;
 
     // Set default flags.
-#ifdef BOTRIX_CHAT
-    m_bPerformingRequest = false;
-#endif
     m_bObjectiveChanged = m_bUnderAttack = m_bDontAttack = m_bFlee = m_bNeedSetWeapon = m_bNeedReload = m_bAttackDuck = false;
 
     m_bNeedAim = m_bUseSideLook = false;
@@ -259,8 +258,9 @@ void CBot::Respawned()
             if ( pItem->IsFree() || !pItem->IsOnMap() ) // Item is picked or broken.
                 continue;
 
-            float fDistSqr = vFoot.DistToSqr( pItem->CurrentPosition() );
-            if ( fDistSqr <= pItem->fRadiusSqr*4 )
+            Vector vOrigin = pItem->CurrentPosition();
+            float fDistSqr = vFoot.DistToSqr( vOrigin );
+            if ( fDistSqr <= pItem->fPickupDistanceSqr )
                 aNearest.push_back(i);
             else if ( fDistSqr <= CMod::iNearItemMaxDistanceSqr ) // Item is close.
                 aNear.push_back(i);
@@ -870,11 +870,11 @@ float CBot::GetEndLookTime()
     static const float aEndAimTime[EBotIntelligenceTotal][iEndAimSize] =
     {
         //  40    80     120    160    180
-        { 0.50f, 0.70f, 0.90f, 1.10f, 1.30f },
-        { 0.50f, 0.60f, 0.70f, 0.80f, 0.90f },
-        { 0.50f, 0.55f, 0.60f, 0.65f, 0.70f },
-        { 0.40f, 0.45f, 0.50f, 0.55f, 0.60f },
-        { 0.25f, 0.30f, 0.35f, 0.40f, 0.45f },
+        { 0.40f, 0.50f, 0.60f, 0.70f, 0.80f },
+        { 0.30f, 0.40f, 0.50f, 0.60f, 0.70f },
+        { 0.20f, 0.30f, 0.40f, 0.50f, 0.60f },
+        { 0.15f, 0.20f, 0.25f, 0.30f, 0.35f },
+        { 0.05f, 0.10f, 0.15f, 0.20f, 0.25f },
     };
 
     Vector vDestinationAim( m_vLook );
@@ -921,7 +921,8 @@ void CBot::WeaponCheckCurrent( bool bAddToBotWeapons )
         // Add weapon class first.
         BLOG_W( "%s -> adding new weapon class %s.", GetName(), szCurrentWeapon );
         CEntityClass cWeaponClass;
-        cWeaponClass.fRadiusSqr = SQR(CMod::iPlayerRadius);
+        cWeaponClass.fPickupDistanceSqr = CMod::iPlayerRadius << 4; // 4*player's radius.
+        cWeaponClass.fPickupDistanceSqr *= cWeaponClass.fPickupDistanceSqr;
         // Don't set engine name so mod will think that there is no such weapon in this map.
         //cWeaponClass.szEngineName = szCurrentWeapon;
         cWeaponClass.sClassName = szCurrentWeapon;
@@ -997,7 +998,7 @@ void CBot::WeaponsScan()
     }
 
     // Set bot's best weapon.
-    m_iWeapon = CWeapons::GetBestRangedWeapon(m_aWeapons);
+    m_iWeapon = CWeapons::GetBestWeapon(m_aWeapons);
     if ( !CWeapon::IsValid(m_iWeapon) )
         m_iWeapon = m_iMeleeWeapon; // Get melee weapon.
 
@@ -1100,7 +1101,7 @@ void CBot::UpdateWorld()
                 aNearest.erase(aNearest.begin() + i);
                 --iNearestSize;
             }
-            else if ( vFoot.DistToSqr(cItem.CurrentPosition()) > cItem.fRadiusSqr ) // Item becomes far.
+            else if ( vFoot.DistToSqr(cItem.CurrentPosition()) > cItem.fPickupDistanceSqr ) // Item becomes far.
             {
                 aNear.push_back(aNearest[i]);
                 aNearest.erase(aNearest.begin() + i);
@@ -1123,14 +1124,14 @@ void CBot::UpdateWorld()
             {
                 float fDistSqr = vFoot.DistToSqr( cItem.CurrentPosition() );
 
-                if ( fDistSqr > CMod::iNearItemMaxDistanceSqr ) // Item becomes far.
+                if ( CMod::iNearItemMaxDistanceSqr < fDistSqr ) // Item becomes far.
                 {
                     aNear.erase(aNear.begin() + i);
                     --iNearSize;
                 }
                 else
                 {
-                    if ( fDistSqr <= cItem.fRadiusSqr ) // Can pick up.
+                    if ( fDistSqr <= cItem.fPickupDistanceSqr ) // Can pick up.
                     {
                         aNearest.push_back(aNear[i]);
                         aNear.erase(aNear.begin() + i);
@@ -1157,7 +1158,7 @@ void CBot::UpdateWorld()
                 continue;
 
             float fDistSqr = vFoot.DistToSqr( pItem->CurrentPosition() );
-            if ( fDistSqr <= pItem->fRadiusSqr )
+            if ( fDistSqr <= pItem->fPickupDistanceSqr )
                 aNearest.push_back(i);
             else if ( fDistSqr <= CMod::iNearItemMaxDistanceSqr ) // Item is close.
                 aNear.push_back(i);
@@ -1386,7 +1387,8 @@ void CBot::WeaponChoose()
     GoodAssert( CWeapon::IsValid(m_iWeapon) );
     CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
 
-    if ( !cWeapon.CanUse() || ( m_pCurrentEnemy && ( cWeapon.CanShoot(0, m_fDistanceSqrToEnemy) || cWeapon.CanShoot(1, m_fDistanceSqrToEnemy) ) ) )
+    if ( !cWeapon.CanUse() || ( m_pCurrentEnemy &&
+        ( cWeapon.CanShoot(0, m_fDistanceSqrToEnemy) || cWeapon.CanShoot(1, m_fDistanceSqrToEnemy) ) ) )
         return; // Don't change weapon if enemy is close...
 
     // If not engaging enemy, reload some weapons.
@@ -1417,7 +1419,7 @@ void CBot::WeaponChoose()
     }
 
     // Choose best ranged weapon.
-    m_iBestWeapon = CWeapons::GetBestRangedWeapon(m_aWeapons);
+    m_iBestWeapon = CWeapons::GetBestWeapon(m_aWeapons);
 
     // Choose melee weapon.
     if ( m_iBestWeapon == -1 )

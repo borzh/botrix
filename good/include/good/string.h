@@ -68,6 +68,17 @@ namespace good
             assign(other);
         }
 
+        //--------------------------------------------------------------------------------------------------------
+        /// Copy constructor.
+        //--------------------------------------------------------------------------------------------------------
+        base_string( const base_string& other, bool bCopy ): m_pBuffer((char*)""), m_iSize(0), m_iStatic(1)
+        {
+#ifdef DEBUG_STRING_PRINT
+            DebugPrint( "base_string copy constructor: %s, copy %d.\n", other.c_str(), bCopy );
+#endif
+            assign(other, bCopy);
+        }
+
 #ifdef __GXX_EXPERIMENTAL_CXX0X__
         //--------------------------------------------------------------------------------------------------------
         /// Move constructor.

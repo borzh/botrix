@@ -481,7 +481,8 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
 
         StringVector aParams;
         good::split((good::string)sbBuffer, aParams, ',', true);
-        good::vector<CEntityClass> aAmmos[2];
+        good::vector<good::string> aAmmos[2];
+        good::vector<int> aAmmosCount[2];
 
         CWeapon* pWeapon = new CWeapon();
         StringVector aCurrent;
@@ -661,10 +662,9 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
                         break;
                     }
 
-                    CEntityClass cAmmoClass;
-                    cAmmoClass.sClassName.assign(aCurrent[1], true);
-                    cAmmoClass.SetArgument(iValue);
-                    aAmmos[iSecondary].push_back(cAmmoClass);
+                    good::string sAmmo(aCurrent[1], true);
+                    aAmmos[iSecondary].push_back(sAmmo);
+                    aAmmosCount[iSecondary].push_back(iValue);
                 }
                 else
                 {
@@ -740,12 +740,21 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
             // Add ammo classes.
             pWeapon->aAmmos[0].reserve(aAmmos[0].size());
             pWeapon->aAmmos[1].reserve(aAmmos[1].size());
-            for ( int bSec=0; bSec < 2; ++bSec )
-                for ( int i=0; i < aAmmos[bSec].size(); ++i )
+            for ( int iSec=0; iSec < 2; ++iSec )
+                for ( int i=0; i < aAmmos[iSec].size(); ++i )
                 {
-                    const CEntityClass* pAmmoClass = CItems::AddItemClassFor( EEntityTypeAmmo, aAmmos[bSec][i] );
-                    pWeapon->aAmmos[bSec].push_back( pAmmoClass );
-                    BLOG_D( "    ammo %s (%u bullets)", pWeapon->aAmmos[bSec][i]->sClassName.c_str(), pWeapon->aAmmos[bSec][i]->GetArgument() );
+                    const good::string& sAmmo = aAmmos[iSec][i];
+                    const CEntityClass* pAmmoClass = CItems::GetItemClass( EEntityTypeAmmo, sAmmo );
+                    if ( !pAmmoClass )
+                    {
+                        CEntityClass cAmmoClass;
+                        cAmmoClass.sClassName = sAmmo;
+                        pAmmoClass = CItems::AddItemClassFor( EEntityTypeAmmo, cAmmoClass );
+                    }
+                    pWeapon->aAmmos[iSec].push_back( pAmmoClass );
+                    pWeapon->aAmmosCount[iSec].push_back( aAmmosCount[iSec][i] );
+                    BLOG_D( "    ammo %s (%u bullets)",
+                            pWeapon->aAmmos[iSec][i]->sClassName.c_str(), pWeapon->aAmmosCount[iSec][i] );
                 }
 
             CWeaponWithAmmo cWeapon(pWeapon);

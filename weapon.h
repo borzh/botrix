@@ -14,18 +14,6 @@
 
 
 //****************************************************************************************************************
-/// Class to represent ammunition's item name along with bullets count.
-//****************************************************************************************************************
-class CAmmoClass
-{
-public:
-    CAmmoClass( const CEntityClass* pAmmoClass, int iBullets ): pAmmoClass(pAmmoClass), iBullets(iBullets) {}
-    const CEntityClass* pAmmoClass;   ///< Pointer to entity class.
-    int iBullets;                     ///< How much bullets it gives.
-};
-
-
-//****************************************************************************************************************
 /// Weapon abstract class. Used to get needed angles to aim.
 //****************************************************************************************************************
 class CWeapon
@@ -75,6 +63,7 @@ public:
     bool bForbidden;                             ///< True if weapon is forbidden.
 
     good::vector<const CEntityClass*> aAmmos[2]; ///< Ammo item classes.
+    good::vector<int> aAmmosCount[2];            ///< Ammos count for ammo at same index.
 };
 
 
@@ -344,23 +333,7 @@ public:
     }
 
     /// Add ammo to weapons.
-    static bool AddAmmo( const CEntityClass* pAmmoClass, good::vector<CWeaponWithAmmo>& aWeapons )
-    {
-        bool bResult = false;
-        for ( int i=0; i < aWeapons.size(); ++i )
-        {
-            const good::vector<const CEntityClass*>* aAmmos = aWeapons[i].GetBaseWeapon()->aAmmos;
-            for ( int bSec=CWeapon::PRIMARY; bSec <= CWeapon::SECONDARY; ++bSec )
-                for ( int j=0; j < aAmmos[bSec].size(); ++j )
-                    if ( aAmmos[bSec][j] == pAmmoClass )
-                    {
-                        int iAmmoCount = aAmmos[bSec][j]->GetArgument();
-                        aWeapons[i].AddBullets(iAmmoCount, bSec);
-                        bResult = true;
-                    }
-        }
-        return bResult;
-    }
+    static bool AddAmmo( const CEntityClass* pAmmoClass, good::vector<CWeaponWithAmmo>& aWeapons );
 
     /// Allow given weapon.
     static void Allow( TWeaponId iWeaponId ) { ((CWeapon*)m_aWeapons[iWeaponId].GetBaseWeapon())->bForbidden = false; }
@@ -369,7 +342,7 @@ public:
     static void Forbid( TWeaponId iWeaponId ) { ((CWeapon*)m_aWeapons[iWeaponId].GetBaseWeapon())->bForbidden = true; }
 
     /// Get best ranged weapon.
-    static TWeaponId GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aWeapons );
+    static TWeaponId GetBestWeapon( const good::vector<CWeaponWithAmmo>& aWeapons );
 
     /// Get random weapon, based on bot intelligence.
     static TWeaponId GetRandomWeapon( TBotIntelligence iIntelligence, const good::bitset& cSkipWeapons );

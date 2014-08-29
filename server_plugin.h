@@ -10,8 +10,10 @@
 *
 * 0.0.3
 * @li Plugin is working with Team Fortress 2.
+* @li Added new weapons handling for TF2.
 * @li Escaping new steam ids in config.ini, for example \\[U:1:12345678].
-* @li Bug fix: bots sometimes shooting at spectator :)
+* @li Bug fix: sometimes bots wasn't aware they picked up item.
+* @li Bug fix: sometimes bots were shooting at spectator.
 * @li Bug fix: when bot was trying to use weapon he actually was creating it.
 * @li Bug fix: waypoints wasn't loading for maps in uppercase (linux).
 * @li Now bots can use melee weapons.

@@ -46,9 +46,9 @@ int CMod::iPlayerMaxObstacleHeight = 18;
 int CMod::iPlayerNormalJumpHeight = 20;
 int CMod::iPlayerJumpCrouchHeight = 56;
 
-int CMod::iPlayerRadius = ceilf( powf(2 * SQR(iPlayerWidth/2), 0.5f) );
-int CMod::iNearItemMaxDistanceSqr = SQR(256);
-int CMod::iItemPickUpDistance = 40;
+int CMod::iPlayerRadius;
+int CMod::iNearItemMaxDistanceSqr = SQR(312);
+int CMod::iItemPickUpDistance = 0; // Not used for now.
 
 int CMod::iPlayerMaxSlopeGradient = 45;
 int CMod::iPlayerMaxHeightNoFallDamage = 185;
@@ -88,13 +88,13 @@ bool CMod::Load( TModId iModId )
         bResult &= AddEvent(new CPlayerSpawnEvent());
         bResult &= AddEvent(new CPlayerHurtEvent());
         bResult &= AddEvent(new CPlayerDeathEvent());
+        // bResult &= AddEvent(new CPlayerChatEvent());
+
         // TODO: events https://wiki.alliedmods.net/Team_Fortress_2_Events
         // player_changeclass ctf_flag_captured
         // teamplay_point_startcapture achievement_earned
         // player_calledformedic
         // teamplay_round_active
-
-//        bResult &= AddEvent(new CPlayerChatEvent());
 
         iPlayerHeight = 83;
         iPlayerHeightCrouched = 56;
@@ -109,26 +109,21 @@ bool CMod::Load( TModId iModId )
         iPlayerNormalJumpHeight = 43;
         iPlayerJumpCrouchHeight = 70;
 
-        iPlayerRadius = ceilf( powf(2 * SQR(iPlayerWidth/2), 0.5f) );
-
-        iNearItemMaxDistanceSqr = SQR(256); // TODO: check
-        iItemPickUpDistance = 40;
-
         iPlayerMaxSlopeGradient = 45;
         iPlayerMaxHeightNoFallDamage = 269;
 
         iPlayerMaxArmor = 0; // TODO:
         iPlayerMaxHealth = 100;
 
-        fMaxCrouchVelocity = 63.33f;
-        fMaxWalkVelocity = 400.0f;
-        fMaxRunVelocity = 400.0f;
-        fMaxSprintVelocity = 327.5f;
-        fMinNonStuckSpeed = fMaxCrouchVelocity / 2.0f;
+        fMaxCrouchVelocity = 800.0f;
+        fMaxWalkVelocity = 800.0f;
+        fMaxRunVelocity = 800.0f;
+        fMaxSprintVelocity = 800.0f;
+        fMinNonStuckSpeed = 30.0f;
 
         iPointTouchSquaredXY = SQR(iPlayerWidth/4);
         iPointTouchSquaredZ = SQR(iPlayerJumpCrouchHeight);
-        iPointTouchLadderSquaredZ = SQR(2);
+        iPointTouchLadderSquaredZ = SQR(5);
 
         pCurrentMod = new CModTF2();
         break;
@@ -170,6 +165,8 @@ bool CMod::Load( TModId iModId )
         BLOG_E("Error: unknown mod.");
         BreakDebugger();
     }
+
+    iPlayerRadius = (int)FastSqrt( SQR(iPlayerWidth>>1) + SQR(iPlayerHeight>>1) );
     return bResult;
 }
 

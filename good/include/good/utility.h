@@ -92,8 +92,8 @@ namespace good
     template <typename T, typename Iterator>
     Iterator find( Iterator itBegin, Iterator itEnd, const T& elem )
     {
-        for (; itBegin != itEnd; ++itBegin)
-            if ((const T&)*itBegin == elem)
+        for ( ; itBegin != itEnd; ++itBegin )
+            if ( *itBegin == elem )
                 return itBegin;
         return itEnd;
     }

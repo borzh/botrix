@@ -454,22 +454,23 @@ void CItems::AutoWaypointPathFlagsForEntity( TEntityType iEntityType, TEntityInd
 //----------------------------------------------------------------------------------------------------------------
 TEntityIndex CItems::AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityClass* pItemClass, IServerEntity* pServerEntity )
 {
+    GoodAssert( (0 <= iEntityType) && (iEntityType < EEntityTypeObject) );
+
     ICollideable* pCollidable = pServerEntity->GetCollideable();
     BASSERT( pCollidable, return -1 );
 
     const Vector& vItemOrigin = pCollidable->GetCollisionOrigin();
 
-    float fRadiusSqr = pItemClass->fRadiusSqr;
-
-    if ( fRadiusSqr == 0.0f )
+    float fPickupDistanceSqr = pItemClass->fPickupDistanceSqr;
+    if ( fPickupDistanceSqr < 1.0f )
     {
         // Calculate object radius.
         float fMaxsRadiusSqr = pCollidable->OBBMaxs().LengthSqr();
         float fMinsRadiusSqr = pCollidable->OBBMins().LengthSqr();
-        fRadiusSqr = powf( MAX2(fMaxsRadiusSqr, fMinsRadiusSqr), 0.5f );
-        fRadiusSqr += CMod::iPlayerRadius + CMod::iItemPickUpDistance;
-        fRadiusSqr *= fRadiusSqr;
-        pItemClass->fRadiusSqr = fRadiusSqr;
+        fPickupDistanceSqr = FastSqrt( MAX2(fMinsRadiusSqr, fMaxsRadiusSqr) );
+        fPickupDistanceSqr += CMod::iPlayerRadius + CMod::iItemPickUpDistance;
+        fPickupDistanceSqr *= fPickupDistanceSqr*2;
+        pItemClass->fPickupDistanceSqr = fPickupDistanceSqr;
     }
 
     int iFlags = pItemClass->iFlags;
@@ -480,7 +481,8 @@ TEntityIndex CItems::AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityC
     else
         iWaypoint = CWaypoints::GetNearestWaypoint( vItemOrigin, NULL, true, CEntity::iMaxDistToWaypoint );
 
-    TEntityIndex iIndex = InsertEntity( iEntityType, CEntity(pEdict, iFlags, fRadiusSqr, pItemClass, vItemOrigin, iWaypoint) );
+    CEntity cNewEntity(pEdict, iFlags, fPickupDistanceSqr, pItemClass, vItemOrigin, iWaypoint);
+    TEntityIndex iIndex = InsertEntity( iEntityType, cNewEntity );
 
     CEntity& cEntity = m_aItems[iEntityType][iIndex];
     AutoWaypointPathFlagsForEntity( iEntityType, iIndex, cEntity );
@@ -495,9 +497,10 @@ void CItems::AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServ
     // Calculate object radius.
     ICollideable* pCollidable = pServerEntity->GetCollideable();
 
+    // TODO: why not use object class to get distance?
     float fMaxsRadiusSqr = pCollidable->OBBMaxs().LengthSqr();
     float fMinsRadiusSqr = pCollidable->OBBMins().LengthSqr();
-    fMaxsRadiusSqr = powf( MAX2(fMaxsRadiusSqr, fMinsRadiusSqr), 0.5f );
+    fMaxsRadiusSqr = FastSqrt( MAX2(fMaxsRadiusSqr, fMinsRadiusSqr) );
     fMaxsRadiusSqr += CMod::iPlayerRadius;
     fMaxsRadiusSqr *= fMaxsRadiusSqr;
 

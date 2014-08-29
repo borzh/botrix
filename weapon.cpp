@@ -156,7 +156,7 @@ void CWeaponWithAmmo::EndReload()
 bool CWeaponWithAmmo::GetLook( const Vector& vFrom, const CPlayer* pTo, float fDistanceSqr,
                                TBotIntelligence iBotIntelligence, int iSecondary, Vector& vResult )
 {
-    GoodAssert( CanShoot(iSecondary, fDistanceSqr) );
+    GoodAssert( IsDistanceSafe(fDistanceSqr, iSecondary) );
 
     float fParabolicDistance45 = m_pWeapon->iParabolicDistance45[iSecondary];
     if ( fParabolicDistance45 && (fDistanceSqr > SQR(fParabolicDistance45)) ) // Can't reach enemy.
@@ -181,11 +181,11 @@ bool CWeaponWithAmmo::GetLook( const Vector& vFrom, const CPlayer* pTo, float fD
         GoodAssert(false);
     }
 
-    vTo -= vFrom; // Make vectors relative to player's eyes.
-
     float fParabolicDistance0 = m_pWeapon->iParabolicDistance0[iSecondary];
     if ( fParabolicDistance0 || fParabolicDistance45 )
     {
+        vTo -= vFrom; // Make vectors relative to player's eyes.
+
         float fGradeDist;
         float fDist = FastSqrt(fDistanceSqr);
         float fGradesInc;
@@ -204,6 +204,8 @@ bool CWeaponWithAmmo::GetLook( const Vector& vFrom, const CPlayer* pTo, float fD
 
         fGradesInc = fDist * FastCos(fGradesInc); // z = fDist*cos(angle)
         vTo.z += fGradesInc; // Aim more up/down.
+
+        vTo += vFrom; // Make vectors relative to player's eyes.
     }
 
 #ifndef BOTRIX_BOT_AIM_ERROR
@@ -258,9 +260,30 @@ void CWeapons::GetRespawnWeapons( good::vector<CWeaponWithAmmo>& aWeapons, TTeam
 
 
 //----------------------------------------------------------------------------------------------------------------
-TWeaponId CWeapons::GetBestRangedWeapon( const good::vector<CWeaponWithAmmo>& aWeapons )
+bool CWeapons::AddAmmo( const CEntityClass* pAmmoClass, good::vector<CWeaponWithAmmo>& aWeapons )
 {
-    // Choose best weapon. Skip grenades.
+    bool bResult = false;
+    for ( int i=0; i < aWeapons.size(); ++i )
+    {
+        const good::vector<const CEntityClass*>* aAmmos = aWeapons[i].GetBaseWeapon()->aAmmos;
+        const good::vector<int>* aAmmosCount = aWeapons[i].GetBaseWeapon()->aAmmosCount;
+        for ( int iSec=CWeapon::PRIMARY; iSec <= CWeapon::SECONDARY; ++iSec )
+            for ( int j=0; j < aAmmos[iSec].size(); ++j )
+                if ( aAmmos[iSec][j] == pAmmoClass )
+                {
+                    int iAmmoCount = aAmmosCount[iSec][j];
+                    aWeapons[i].AddBullets(iAmmoCount, iSec);
+                    bResult = true;
+                }
+    }
+    return bResult;
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+TWeaponId CWeapons::GetBestWeapon( const good::vector<CWeaponWithAmmo>& aWeapons )
+{
+    // Choose best weapon.
     /*
     bool bCanKill = false, bOneBullet = false;
     float fDamagePerSec = 0.0f, fDamage = 0.0f;

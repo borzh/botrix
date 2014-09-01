@@ -2039,6 +2039,83 @@ TCommandResult CBotDefaultClassCommand::Execute( CClient* pClient, int argc, con
     return iResult;
 }
 
+TCommandResult CBotDefaultStrategyFlagsCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( argc == 0 )
+        BULOG_I( pEdict, "Bot's strategy flags: %s.",
+                 CTypeToString::StrategyFlagsToString(CBot::iDefaultFightStrategy).c_str() );
+    else
+    {
+        TFightStrategyFlags iFlags = 0;
+        for ( int i = 0; i < argc; ++i )
+        {
+            TFightStrategyFlags iFlag = CTypeToString::StrategyFlagsFromString(argv[i]);
+            if ( iFlag == -1 )
+            {
+                BULOG_W( pEdict, "Error, invalid strategy flag: %s.", argv[i] );
+                BULOG_W( pEdict, "Can be one of: %s.",
+                         CTypeToString::StrategyFlagsToString(FFightStrategyAll).c_str() );
+                return ECommandError;
+            }
+            FLAG_SET(iFlag, iFlags);
+        }
+        CBot::iDefaultFightStrategy = iFlags;
+    }
+    return ECommandPerformed;
+}
+
+TCommandResult CBotDefaultStrategySetCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( argc == 0 )
+    {
+        BULOG_I( pEdict, "Bot's strategy arguments:" );
+        BULOG_I( pEdict, "  %s = %d", CTypeToString::StrategyArgToString(EFightStrategyArgNearDistance).c_str(),
+                 (int)FastSqrt(CBot::fNearDistanceSqr) );
+        BULOG_I( pEdict, "  %s = %d", CTypeToString::StrategyArgToString(EFightStrategyArgFarDistance).c_str(),
+                 (int)FastSqrt(CBot::fFarDistanceSqr) );
+    }
+    else if ( argc == 2 )
+    {
+        TFightStrategyArg iArg = CTypeToString::StrategyArgFromString(argv[0]);
+        if ( iArg == -1 )
+        {
+            BULOG_W( pEdict, "Error, invalid strategy argument: %s.", argv[0] );
+            BULOG_W( pEdict, "Can be one of: %s.", CTypeToString::StrategyArgs().c_str() );
+            return ECommandError;
+        }
+        int iArgValue;
+        int iCount = sscanf(argv[1], "%d", &iArgValue);
+        if ( (iCount != 1) || (iArgValue < 0) )
+        {
+            BULOG_W( pEdict, "Error, invalid number: %s.", argv[1] );
+            return ECommandError;
+        }
+        if ( iArgValue > CUtil::iMaxMapSize )
+            iArgValue = CUtil::iMaxMapSize;
+        switch ( iArg )
+        {
+        case EFightStrategyArgNearDistance:
+            CBot::fNearDistanceSqr = SQR(iArgValue);
+            break;
+        case EFightStrategyArgFarDistance:
+            CBot::fFarDistanceSqr = SQR(iArgValue);
+            break;
+        default:
+            GoodAssert(false);
+        }
+    }
+    else
+    {
+        BULOG_W( pEdict, "Error, invalid arguments count." );
+        return ECommandError;
+   }
+    return ECommandPerformed;
+}
+
 TCommandResult CBotDrawPathCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;

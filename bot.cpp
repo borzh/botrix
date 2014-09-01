@@ -30,10 +30,10 @@ bool CBot::bAssumeUnknownWeaponManual = false;
 TBotIntelligence CBot::iDefaultIntelligence = -1;
 TTeam CBot::iDefaultTeam = 0;
 TClass CBot::iDefaultClass = -1;
-TFightStrategyFlags CBot::iDefaultFightStrategy = FFightStrategyRunAwayIfNear;// TODO: use 0.
 
-const float CBot::fNearDistanceSqr = SQR(200);
-const float CBot::fFarDistanceSqr = SQR(500);
+TFightStrategyFlags CBot::iDefaultFightStrategy = FFightStrategyRunAwayIfNear | FFightStrategyComeCloserIfFar;
+float CBot::fNearDistanceSqr = SQR(200);
+float CBot::fFarDistanceSqr = SQR(500);
 
 float CBot::m_fTimeIntervalCheckUsingMachines = 0.5f;
 int CBot::m_iCheckEntitiesPerFrame = 4;

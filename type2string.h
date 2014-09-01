@@ -13,9 +13,9 @@ class CTypeToString
 public:
 
     //------------------------------------------------------------------------------------------------------------
-    /// Get string from vector of strings.
+    /// Get string from array of strings.
     //------------------------------------------------------------------------------------------------------------
-    static const good::string& StringVectorToString( const StringVector& aStrings );
+    static const good::string& StringArrayToString( const good::string aStrings[], int iSize );
 
 
     //------------------------------------------------------------------------------------------------------------
@@ -201,10 +201,31 @@ public:
     //------------------------------------------------------------------------------------------------------------
     /// Get log level from string.
     //------------------------------------------------------------------------------------------------------------
-    static int LogLevelFromString( const good::string& sAction );
+    static int LogLevelFromString( const good::string& sLevel );
 
     /// Get string from log level.
     static const good::string& LogLevelToString( int iLevel );
+
+
+    //------------------------------------------------------------------------------------------------------------
+    /// Get strategy flags from string.
+    //------------------------------------------------------------------------------------------------------------
+    static int StrategyFlagsFromString( const good::string& sFlags );
+
+    /// Get string from strategy flags.
+    static const good::string& StrategyFlagsToString( int iFlags );
+
+    //------------------------------------------------------------------------------------------------------------
+    /// Get strategy argument from string.
+    //------------------------------------------------------------------------------------------------------------
+    static int StrategyArgFromString( const good::string& sArg );
+
+    /// Get string from strategy argument.
+    static const good::string& StrategyArgToString( int iArg );
+
+    /// Get all strategy args.
+    static const good::string& StrategyArgs();
+
 
 #ifdef BOTRIX_BORZH
     //------------------------------------------------------------------------------------------------------------

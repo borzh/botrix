@@ -460,13 +460,33 @@ typedef int TWeaponAim;                          ///< Weapon aim.
 
 
 //****************************************************************************************************************
-/// Fight strategy flags.
+/// Enum for fight strategy flags.
 //****************************************************************************************************************
 enum TFightStrategyFlagIds
 {
-    FFightStrategyRunAwayIfNear = 1<<0,          ///< Bot with weapon will run away from enemy if near.
+    FFightStrategyRunAwayIfNear   = 1<<0,        ///< Bot with weapon will run away from enemy if near.
+    FFightStrategyComeCloserIfFar = 1<<1,        ///< Bot will come close if he is too far away.
+    // TODO:
+    //FFightStrategyForceStayFar    = 1<<2,        ///< Bot will always stay far away from enemy even if enemy is not visible.
+    //FFightStrategyMeleeIfClose    = 1<<3,        ///< Bot will switch to melee weapon if enemy is close.
+
+    EFightStrategyFlagTotal = 2,                 ///< Amount of bot strategy flags.
+    FFightStrategyAll = (1<<2)-1,                ///< Mask for all strategies.
 };
-typedef int TFightStrategyFlags;
+typedef int TFightStrategyFlags;                 ///< Fight strategy flags.
+
+
+//****************************************************************************************************************
+/// Enum for fight strategy arguments.
+//****************************************************************************************************************
+enum TFightStrategyArgIds
+{
+    EFightStrategyArgNearDistance = 0,           ///< Near distance if 'run-away-if-near' is set.
+    EFightStrategyArgFarDistance,                ///< Bot will come close if he is too far away.
+
+    EFightStrategyArgTotal,                      ///< Amount of bot strategy arguments.
+};
+typedef int TFightStrategyArg;                   ///< Fight strategy argument.
 
 
 //****************************************************************************************************************

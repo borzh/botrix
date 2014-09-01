@@ -220,7 +220,7 @@ public:
         m_sDescription = good::string("Can be mix of: ") + CTypeToString::WaypointFlagsToString(FWaypointAll);
         m_iAccessLevel = FCommandAccessWaypoint;
 
-        for (int i=0; i < FWaypointAll; ++i)
+        for ( int i=0; i < FWaypointAll; ++i )
             m_cAutoCompleteArguments.push_back( CTypeToString::WaypointFlagsToString(1<<i).duplicate() );
     }
 
@@ -392,7 +392,7 @@ public:
         m_sDescription = good::string("Can be mix of: ") + CTypeToString::PathFlagsToString(FPathAll);
         m_iAccessLevel = FCommandAccessWaypoint;
 
-        for (int i=0; i < FPathTotal; ++i)
+        for ( int i=0; i < FPathTotal; ++i )
             m_cAutoCompleteArguments.push_back( CTypeToString::PathFlagsToString(1<<i).duplicate() );
     }
 
@@ -563,7 +563,7 @@ public:
         m_iAccessLevel = FCommandAccessBot;
 
         m_cAutoCompleteArguments.push_back("random");
-        for (int i=0; i < EBotIntelligenceTotal; ++i)
+        for ( int i=0; i < EBotIntelligenceTotal; ++i )
             m_cAutoCompleteArguments.push_back( CTypeToString::IntelligenceToString(i).duplicate() );
     }
 
@@ -581,7 +581,7 @@ public:
         m_iAccessLevel = FCommandAccessBot;
 
         m_cAutoCompleteArguments.push_back("random");
-        for (int i=0; i < CMod::aTeamsNames.size(); ++i)
+        for ( int i=0; i < CMod::aTeamsNames.size(); ++i )
             m_cAutoCompleteArguments.push_back( CTypeToString::TeamToString(i).duplicate() );
     }
 
@@ -599,11 +599,56 @@ public:
         m_iAccessLevel = FCommandAccessBot;
 
         m_cAutoCompleteArguments.push_back("random");
-        for (int i=0; i < CMod::aClassNames.size(); ++i)
+        for ( int i=0; i < CMod::aClassNames.size(); ++i )
             m_cAutoCompleteArguments.push_back( CTypeToString::ClassToString(i).duplicate() );
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CBotDefaultStrategyFlagsCommand: public CConsoleCommand
+{
+public:
+    CBotDefaultStrategyFlagsCommand()
+    {
+        m_sCommand = "flags";
+        m_sHelp = "set bot fight strategy flags";
+        m_sDescription = good::string("Can be one of: ") + CTypeToString::StrategyFlagsToString(FFightStrategyAll);
+        m_iAccessLevel = FCommandAccessBot;
+
+        for ( int i=0; i < EFightStrategyFlagTotal; ++i )
+            m_cAutoCompleteArguments.push_back( CTypeToString::StrategyFlagsToString(1<<i).duplicate() );
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CBotDefaultStrategySetCommand: public CConsoleCommand
+{
+public:
+    CBotDefaultStrategySetCommand()
+    {
+        m_sCommand = "set";
+        m_sHelp = "set bot fight strategy argument";
+        m_sDescription = good::string("Can be one of: ") + CTypeToString::StrategyArgs();
+        m_iAccessLevel = FCommandAccessBot;
+
+        for ( int i=0; i < EFightStrategyArgTotal; ++i )
+            m_cAutoCompleteArguments.push_back( CTypeToString::StrategyArgToString(i).duplicate() );
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CBotDefaultStrategyCommand: public CConsoleCommandContainer
+{
+public:
+    CBotDefaultStrategyCommand()
+    {
+        m_sCommand = "strategy";
+        Add(new CBotDefaultStrategyFlagsCommand());
+        Add(new CBotDefaultStrategySetCommand());
+    }
 };
 
 class CBotDefaultCommand: public CConsoleCommandContainer
@@ -616,6 +661,7 @@ public:
         Add(new CBotDefaultTeamCommand());
         if ( CMod::aClassNames.size() )
             Add(new CBotDefaultClassCommand());
+        Add(new CBotDefaultStrategyCommand());
     }
 };
 

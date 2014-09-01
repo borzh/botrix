@@ -106,7 +106,7 @@ void CChat::AddSynonims( const good::string& sKey, const good::string& sValue )
     sOthers.lower_case();
     sOthers.split<good::vector>(aSynonims, '.', true);
 
-    BLOG_D( "  %s", CTypeToString::StringVectorToString(aSynonims).c_str() );
+    BLOG_D( "  %s", CTypeToString::StringArrayToString(aSynonims).c_str() );
 
     m_aSynonims.push_back(aSynonims);
 }

@@ -94,13 +94,13 @@ int FlagsFromString( const good::string& s, int iFlagsCount, const good::string 
 
 
 //****************************************************************************************************************
-const good::string& CTypeToString::StringVectorToString( const StringVector& aStrings )
+const good::string& CTypeToString::StringArrayToString( const good::string aStrings[], int iSize )
 {
     static good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
     sbBuffer.erase();
 
-    for ( StringVector::const_iterator it = aStrings.begin(); it != aStrings.end(); ++it )
-        sbBuffer << *it << ' ';
+    for ( int i = 0; i < iSize; ++i )
+        sbBuffer << aStrings[i] << ' ';
 
     if ( sbBuffer.size() )
         sbBuffer.erase(sbBuffer.size()-1, 1); // Erase last space.
@@ -650,8 +650,51 @@ const good::string& CTypeToString::LogLevelToString( int iLevel )
     return EnumToString( iLevel, good::ELogLevelTotal, aLogLevels, sUnknown );
 }
 
-#ifdef BOTRIX_BORZH
 
+//----------------------------------------------------------------------------------------------------------------
+good::string aStrategyFlags[EFightStrategyFlagTotal] =
+{
+    "run-away-if-near",
+    "come-closer-if-far",
+//    "force-stay-far",
+//    "melee-if-close",
+};
+
+int CTypeToString::StrategyFlagsFromString( const good::string& sArg )
+{
+    return FlagsFromString( sArg, EFightStrategyFlagTotal, aStrategyFlags );
+}
+
+const good::string& CTypeToString::StrategyFlagsToString( int iArg )
+{
+    return FlagsToString( iArg, EFightStrategyFlagTotal, aStrategyFlags );
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+good::string aStrategyArgs[EFightStrategyArgTotal] =
+{
+    "near-distance",
+    "far-distance",
+};
+
+int CTypeToString::StrategyArgFromString( const good::string& sArg )
+{
+    return EnumFromString( sArg, EFightStrategyArgTotal, aStrategyArgs );
+}
+
+const good::string& CTypeToString::StrategyArgToString( int iArg )
+{
+    return EnumToString( iArg, EFightStrategyArgTotal, aStrategyArgs, sUnknown );
+}
+
+const good::string& CTypeToString::StrategyArgs()
+{
+    return StringArrayToString( aStrategyArgs, EFightStrategyArgTotal );
+}
+
+
+#ifdef BOTRIX_BORZH
 //----------------------------------------------------------------------------------------------------------------
 // Ordered by TBotAction.
 //----------------------------------------------------------------------------------------------------------------

@@ -42,8 +42,8 @@ public: // Members.
     static TClass iDefaultClass;                        ///< Default class when adding bots without specify class.
     static TFightStrategyFlags iDefaultFightStrategy;   ///< Flags of default fighting strategy.
 
-    static const float fNearDistanceSqr;                ///< Distance to consider to be near enemy.
-    static const float fFarDistanceSqr;                 ///< Distance to consider to be far away from enemy.
+    static float fNearDistanceSqr;                      ///< Distance to consider to be near enemy.
+    static float fFarDistanceSqr;                       ///< Distance to consider to be far away from enemy.
 
 
 public: // Methods.

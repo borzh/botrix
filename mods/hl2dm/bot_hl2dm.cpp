@@ -239,7 +239,8 @@ void CBot_HL2DM::CheckEngagedEnemy()
                     BotDebug( "%s -> Moving to far waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
                     return;
                 }
-                else if ( m_fDistanceSqrToEnemy >= CBot::fFarDistanceSqr )
+                else if ( FLAG_SOME_SET(FFightStrategyComeCloserIfFar, CBot::iDefaultFightStrategy) &&
+                          m_fDistanceSqrToEnemy >= CBot::fFarDistanceSqr )
                 {
                     // Try to come closer a little.
                     iNextWaypoint = CWaypoints::GetNearestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true );

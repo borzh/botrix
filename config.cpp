@@ -273,8 +273,8 @@ void CConfiguration::ProcessModSection( good::ini_file::const_iterator it )
         good::split( (good::string)sbBuffer, CMod::aClassNames, ',', true );
 
         BLOG_D("Classes names:");
-        for ( int i = 0; i < CMod::aTeamsNames.size(); ++i )
-            BLOG_D( "  %s", CMod::aTeamsNames[i].c_str() );
+        for ( int i = 0; i < CMod::aClassNames.size(); ++i )
+            BLOG_D( "  %s", CMod::aClassNames[i].c_str() );
     }
 }
 

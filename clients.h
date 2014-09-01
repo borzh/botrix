@@ -17,7 +17,7 @@ public: // Methods.
     /// Constructor.
     CClient( edict_t* pPlayer ): CPlayer(pPlayer, false),
         iCommandAccessFlags(0), iDestinationWaypoint(-1), iWaypointDrawFlags(0),
-        iPathDrawFlags(0), iItemTypeFlags(0), iItemDrawFlags(0), bAutoCreateWaypoints(false),
+        iPathDrawFlags(0), iVisiblesDrawFlags(0), iItemTypeFlags(0), iItemDrawFlags(0), bAutoCreateWaypoints(false),
         bAutoCreatePaths(true), bDebuggingEvents(false) { }
 
 
@@ -39,6 +39,7 @@ public: // Members and constants.
 
     TWaypointDrawFlags iWaypointDrawFlags;     ///< Draw waypoint flags for this player.
     TPathDrawFlags iPathDrawFlags;             ///< Draw path flags for this player.
+    TPathDrawFlags iVisiblesDrawFlags;         ///< Draw visible waypoints flags for this player.
 
     TEntityTypeFlags iItemTypeFlags;           ///< Items to draw for this player.
     TItemDrawFlags iItemDrawFlags;             ///< Draw item flags for this player.

@@ -422,25 +422,26 @@ typedef int TWeaponType;                         ///< Weapon type.
 //****************************************************************************************************************
 enum TWeaponFlagIds
 {
-    FWeaponFunctionPresent   = 1<<0,             ///< True if weapon has this primary/secondary function.
-    FWeaponZoom              = 1<<1,             ///< This weapon function will zoom.
-    FWeaponTrigger           = 1<<2,             ///< This weapon function is trigger for remote detonation.
-    FWeaponForceRange        = 1<<3,             ///< Don't use weapon if target is not in range.
-    FWeaponForceAim          = 1<<4,             ///< Force to mantain aim while shooting (to rpg like weapons).
-    FWeaponCure              = 1<<5,             ///< This weapon function will cure teammates.
-    FWeaponSameBullets       = 1<<6,             ///< Secondary attack uses same bullets as primary (shotgun for example).
-    FWeaponAddClip           = 1<<7,             ///< Bug for some mods: some weapons add clip size to extra ammo when weapon is picked (crossbow for hl2dm).
-    FWeaponBackgroundReload  = 1<<8,             ///< Bug for some mods: some weapons reload while you hold another weapon (pistol for hl2dm).
-    FWeaponPress             = 1<<9,             ///< Bot will maintain attack button pushed.
-    FWeaponDefaultClipEmpty  = 1<<10,            ///< Clip is empty when respawned / grab this weapon.
-    FWeaponPushAway          = 1<<11,            ///< Will push away enemy.
-    FWeaponDeflect           = 1<<12,            ///< Deflect proyectiles.
-    FWeaponExtinguish        = 1<<13,            ///< Will extinguish fire.
-    FWeaponPrepare           = 1<<14,            ///< Will prepare weapon (spin for minigun). Will use shot time as preparing time.
-    FWeaponSlowing           = 1<<15,            ///< Will slow enemy.
+    FWeaponZoom              = 1<<0,             ///< This weapon function will zoom.
+    FWeaponTrigger           = 1<<1,             ///< This weapon function is trigger for remote detonation.
+    FWeaponCure              = 1<<2,             ///< This weapon function will cure teammates.
+    FWeaponPushAway          = 1<<3,             ///< Will push away enemy.
+    FWeaponDeflect           = 1<<4,             ///< Deflect proyectiles.
+    FWeaponExtinguish        = 1<<5,             ///< Will extinguish fire.
+    FWeaponPrepare           = 1<<6,             ///< Will prepare weapon (spin for minigun). Will use shot time as preparing time.
+    FWeaponSlowing           = 1<<7,             ///< Will slow enemy.
 
-    EWeaponFlagsTotal        = 16,               ///< Amount of flags.
-    FWeaponAll               = (1<<16)-1         ///< All weapon flags.
+    FWeaponHasSecondary      = (1<<8)-1,         ///< Mask to know if weapon has secondary function.
+
+    FWeaponForceRange        = 1<<8,             ///< Don't use weapon if target is not in range.
+    FWeaponForceAim          = 1<<9,             ///< Force to mantain aim while shooting (to rpg like weapons).
+    FWeaponSameBullets       = 1<<10,            ///< Secondary attack uses same bullets as primary (shotgun for example).
+    FWeaponDontAddClip       = 1<<11,            ///< Bug for some mods: some weapons add clip size to extra ammo when weapon is picked (crossbow for hl2dm).
+    FWeaponDefaultClipEmpty  = 1<<12,            ///< Clip is empty when respawned / grab this weapon.
+    FWeaponBackgroundReload  = 1<<13,            ///< Bug for some mods: some weapons reload while you hold another weapon (pistol for hl2dm).
+
+    EWeaponFlagsTotal        = 14,               ///< Amount of flags.
+    FWeaponAll               = (1<<14)-1         ///< Mask for all weapon flags.
 };
 typedef int TWeaponFlags;                        ///< Weapon flags.
 

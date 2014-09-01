@@ -155,7 +155,7 @@ public:
     CWaypointPath( float fLength, TPathFlags iFlags = FPathNone, unsigned short iArgument = 0 ):
         fLength(fLength), iFlags(iFlags), iArgument(iArgument) {}
 
-    bool HasDemo() { return FLAG_SOME_SET_OR_0(FPathDemo, iFlags); }
+    bool HasDemo() { return FLAG_SOME_SET(FPathDemo, iFlags); }
     int DemoNumber() { return iFlags & (FPathDemo-1); }
 
     float fLength;                           ///< Path length.
@@ -219,12 +219,8 @@ public: // Methods.
         return bValidVisibilityTable ? m_aVisTable[iFrom].test(iTo) : false;
     }
 
-    /// Get random neighbour.
-    static TWaypointId GetRandomNeighbour( TWaypointId iWaypoint )
-    {
-        const CWaypoints::WaypointNode& cNode = CWaypoints::GetNode(iWaypoint);
-        return cNode.neighbours[ rand() % cNode.neighbours.size() ].target;
-    }
+    /// Get random neighbour which is visible to given waypoint.
+    static TWaypointId GetRandomNeighbour( TWaypointId iWaypoint, TWaypointId iTo, bool bVisible );
 
     /// Get nearest neighbour to given waypoint.
     static TWaypointId GetNearestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, bool bVisible );
@@ -287,7 +283,6 @@ public: // Methods.
 
 
 protected:
-
     friend class CWaypointNavigator; // Get access to m_cGraph (for A* search implementation).
 
     // Get path color.
@@ -295,6 +290,9 @@ protected:
 
     // Draw waypoint paths.
     static void DrawWaypointPaths( TWaypointId id, TPathDrawFlags iPathDrawFlags );
+
+    // Draw visibles waypoints.
+    static void DrawVisiblePaths( TWaypointId id, TPathDrawFlags iPathDrawFlags );
 
     // Buckets are 3D areas that we will use to optimize nearest waypoints finding.
     static const int BUCKETS_SIZE_X = 96;

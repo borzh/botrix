@@ -386,22 +386,21 @@ const good::string& CTypeToString::WeaponTypeToString( TWeaponType iType )
 //----------------------------------------------------------------------------------------------------------------
 good::string aWeaponFlags[EWeaponFlagsTotal] =
 {
-    "secondary",
     "zoom",
     "trigger",
-    "force_range",
-    "force_aim",
     "cure",
-    "same_ammo",
-    "add_clip",
-    "bg_reload",
-    "press",
-    "default_empty",
     "push_away",
     "deflect",
     "extinguish",
     "prepare",
-    "slowing"
+    "slowing",
+
+    "force_range",
+    "force_aim",
+    "same_ammo",
+    "dont_add_clip",
+    "default_empty",
+    "bg_reload"
 };
 
 TWeaponFlags CTypeToString::WeaponFlagsFromString( const good::string& sType )

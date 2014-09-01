@@ -72,10 +72,16 @@ namespace good
         /// Resize set to given size. Note that new bits will be undefined.
         void resize( int iNewSize ) { m_cContainer.resize( BIT_ARRAY_SIZE(iNewSize) ); m_iSize = iNewSize; }
 
+        /// Get const data of the container.
+        const typename container_t::value_type* data() const
+        {
+            return m_cContainer.data();
+        }
+
         /// Get data of the container.
         typename container_t::value_type* data()
         {
-            return const_cast<typename container_t::value_type*>( m_cContainer.data() );
+            return m_cContainer.data();
         }
 
         /// Clear all bits.

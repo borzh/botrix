@@ -78,7 +78,7 @@ void CBot_HL2DM::KilledEnemy( int iPlayerIndex, CPlayer* pVictim )
 //----------------------------------------------------------------------------------------------------------------
 void CBot_HL2DM::HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow )
 {
-    if ( pAttacker && (pAttacker != this) )
+    if ( !m_bTest && !m_bDontAttack && (pAttacker != this) )
         CheckEnemy(iPlayerIndex, pAttacker, false);
     if ( iHealthNow < (CMod::iPlayerMaxHealth/2) )
         m_bNeedTaskCheck = true; // Check if need search for health.
@@ -187,10 +187,7 @@ void CBot_HL2DM::CheckEngagedEnemy()
                 if ( !m_bChasing || !m_bNeedMove ) // Lost sight of enemy, chase.
                 {
                     if ( iCurrentWaypoint == m_pChasedEnemy->iCurrentWaypoint )
-                    {
                         m_pCurrentEnemy = m_pChasedEnemy;
-                        m_bUnderAttack = true;
-                    }
                     else
                         ChaseEnemy();
                 }
@@ -234,7 +231,7 @@ void CBot_HL2DM::CheckEngagedEnemy()
                       CWaypoint::IsValid(m_pCurrentEnemy->iCurrentWaypoint) &&
                       (m_iIntelligence >= EBotNormal) )
             {
-                if ( FLAG_SOME_SET_OR_0(FFightStrategyRunAwayIfNear, CBot::iDefaultFightStrategy) &&
+                if ( FLAG_SOME_SET(FFightStrategyRunAwayIfNear, CBot::iDefaultFightStrategy) &&
                      (m_fDistanceSqrToEnemy <= CBot::fNearDistanceSqr) )
                 {
                     // Try to run away a little.
@@ -252,7 +249,7 @@ void CBot_HL2DM::CheckEngagedEnemy()
             }
         }
 
-        iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint);
+        iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true);
         BotMessage( "%s -> Moving to random waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
     }
     else if ( m_pCurrentEnemy && m_bUseNavigatorToMove &&

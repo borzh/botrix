@@ -19,8 +19,9 @@
 #include "game/shared/in_buttons.h"
 
 
-#define BotDebug(...)               GOOD_SCOPE_START if ( m_bDebugging ) BLOG_D(__VA_ARGS__); GOOD_SCOPE_END
 #define BotMessage(...)             GOOD_SCOPE_START if ( m_bDebugging ) BLOG_I(__VA_ARGS__); GOOD_SCOPE_END
+#define BotDebug(...)               GOOD_SCOPE_START if ( m_bDebugging ) BLOG_D(__VA_ARGS__); GOOD_SCOPE_END
+#define BotTrace(...)               GOOD_SCOPE_START if ( m_bDebugging ) BLOG_T(__VA_ARGS__); GOOD_SCOPE_END
 
 
 class CBotChat; // Forward declaration.
@@ -108,10 +109,7 @@ public: // Methods.
     virtual void KilledEnemy( int /*iPlayerIndex*/, CPlayer* pPlayer )
     {
         if ( pPlayer == m_pCurrentEnemy )
-        {
             m_pCurrentEnemy = NULL;
-            m_bUnderAttack = false;
-        }
     }
 
     /// Called when enemy just shot this bot.
@@ -375,7 +373,9 @@ protected: // Bot flags.
     bool m_bAimChanged:1;                                          // True if need to change bot's angles (if false m_angLook has been calculated).
     bool m_bNeedAim:1;                                             // True if need to change bot's angles. Will be set to false when finished aiming.
     bool m_bUseSideLook:1;                                         // If true then look at random: forward, left, right or back.
-    bool m_bLockAim:1;                                             // Don't change bot's angles while look is locked. Used when preparing to jump, use, sprint, etc.
+    bool m_bPathAim:1;                                             // Used when preparing to jump, use, sprint, etc.
+    bool m_bEnemyAim:1;                                            // Currently aim at enemy. Has more priority than m_bPathAim.
+    bool m_bLockAim:1;                                             // Don't change bot's angles while aim is locked. To be used by mod, more priority than m_bEnemyAim.
 
     bool m_bDestinationChanged:1;                                  // Set this to true when you change destination to go to.
     bool m_bNeedMove:1;                                            // True if need to move. Will be set to false if reached m_vDestination.
@@ -390,6 +390,7 @@ protected: // Bot flags.
     bool m_bNeedCheckStuck:1;                                      // If true then check if stucked at m_fStuckCheckTime.
     bool m_bStuckBreakObject:1;                                    // If true then will try break m_aNearestItems.
     bool m_bStuckUsePhyscannon:1;                                  // If true then will try move m_aNearestItems with gravity gun.
+    bool m_bStuckPhyscannonEnd:1;                                  // Becomes true when bot is holding object and aimed back/at enemy.
     bool m_bStuckTryingSide:1;                                     // If true then bot is stucked, and going left or right for half second according to m_bStuckTryGoLeft.
     bool m_bStuckTryGoLeft:1;                                      // If true go left when stucked, else go right.
     bool m_bStuckGotoCurrent:1;                                    // When stucked will try go to current waypoint (for 'touching' and so performing action).
@@ -422,7 +423,6 @@ protected: // Bot flags.
     bool m_bDontThrowObjects:1;                                    // Set to true to not to throw nearby objects.
     bool m_bDontAttack:1;                                          // Set to true to ignore enemy (for example if defusing the bomb).
 
-    bool m_bUnderAttack:1;                                         // True if engaging enemy.
     bool m_bFlee:1;                                                // True, if currenly running away from enemy.
     bool m_bAttackDuck:1;                                          // True if need to duck, while attacking enemy.
     bool m_bNeedSetWeapon:1;                                       // Need to set best weapon.

@@ -75,10 +75,10 @@ public:
     bool IsBreakable() const;
 
     /// Return true if item can explode (bot will never break it and can throw it, if near).
-    bool IsExplosive() const { return FLAG_SOME_SET_OR_0(FObjectExplosive, iFlags); }
+    bool IsExplosive() const { return FLAG_SOME_SET(FObjectExplosive, iFlags); }
 
     /// Return true if item can't be picked with physcannon.
-    bool IsHeavy() const { return FLAG_SOME_SET_OR_0(FObjectHeavy, iFlags); }
+    bool IsHeavy() const { return FLAG_SOME_SET(FObjectHeavy, iFlags); }
 
     /// Return current position of the item.
     const Vector& CurrentPosition() const { return pEdict->GetCollideable()->GetCollisionOrigin(); }

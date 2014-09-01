@@ -61,43 +61,43 @@ bool CWaypoints::bValidVisibilityTable = false;
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoint::GetColor(unsigned char& r, unsigned char& g, unsigned char& b) const
 {
-    if ( FLAG_SOME_SET_OR_0(FWaypointStop, iFlags) )
+    if ( FLAG_SOME_SET(FWaypointStop, iFlags) )
     {
         r = 0x00; g = 0x00; b = 0xFF;  // Blue effect, stop.
     }
-    else if ( FLAG_SOME_SET_OR_0(FWaypointCamper, iFlags) )
+    else if ( FLAG_SOME_SET(FWaypointCamper, iFlags) )
     {
         r = 0x33; g = 0x00; b = 0x00;  // Red effect, camper.
     }
-    else if ( FLAG_SOME_SET_OR_0(FWaypointSniper, iFlags) )
+    else if ( FLAG_SOME_SET(FWaypointSniper, iFlags) )
     {
         r = 0xFF; g = 0x00; b = 0x00;  // Red effect, sniper.
     }
-    else if ( FLAG_SOME_SET_OR_0(FWaypointWeapon, iFlags) )
+    else if ( FLAG_SOME_SET(FWaypointWeapon, iFlags) )
     {
         r = 0xFF; g = 0xFF; b = 0x00;  // Light yellow effect, weapon.
     }
-    else if ( FLAG_SOME_SET_OR_0(FWaypointAmmo, iFlags) )
+    else if ( FLAG_SOME_SET(FWaypointAmmo, iFlags) )
     {
         r = 0x33; g = 0x33; b = 0x00;  // Dark yellow effect, ammo.
     }
-    else if ( FLAG_SOME_SET_OR_0(FWaypointHealth, iFlags) )
+    else if ( FLAG_SOME_SET(FWaypointHealth, iFlags) )
     {
         r = 0xFF; g = 0xFF; b = 0xFF;  // Light white effect, health.
     }
-    else if ( FLAG_SOME_SET_OR_0(FWaypointHealthMachine, iFlags) )
+    else if ( FLAG_SOME_SET(FWaypointHealthMachine, iFlags) )
     {
         r = 0x66; g = 0x66; b = 0x66;  // Gray effect, health machine.
     }
-    else if ( FLAG_SOME_SET_OR_0(FWaypointArmor, iFlags) )
+    else if ( FLAG_SOME_SET(FWaypointArmor, iFlags) )
     {
         r = 0x00; g = 0xFF; b = 0x00;  // Light green effect, armor.
     }
-    else if ( FLAG_SOME_SET_OR_0(FWaypointArmorMachine, iFlags) )
+    else if ( FLAG_SOME_SET(FWaypointArmorMachine, iFlags) )
     {
         r = 0x00; g = 0x33; b = 0x00;  // Dark green effect, armor machine.
     }
-    else if ( FLAG_SOME_SET_OR_0(FWaypointButton | FWaypointSeeButton, iFlags) )
+    else if ( FLAG_SOME_SET(FWaypointButton | FWaypointSeeButton, iFlags) )
     {
         r = 0x8A; g = 0x2B; b = 0xE2;  // Violet effect, button.
     }
@@ -159,8 +159,7 @@ bool CWaypoints::Save()
 
     waypoint_header header;
     header.iFlags = 0;
-    if ( m_cAreas.size() > 1 )
-        FLAG_SET(WAYPOINT_FILE_FLAG_AREAS, header.iFlags);
+    FLAG_SET(WAYPOINT_FILE_FLAG_AREAS, header.iFlags);
     FLAG_SET(WAYPOINT_FILE_FLAG_VISIBILITY, header.iFlags);
     header.iNumWaypoints = m_cGraph.size();
     header.iVersion = WAYPOINT_VERSION;
@@ -194,12 +193,12 @@ bool CWaypoints::Save()
     }
 
     // Save area names.
-    int iAreaNamesSize = m_cAreas.size() - 1;
+    int iAreaNamesSize = m_cAreas.size();
     BASSERT( iAreaNamesSize >= 0, iAreaNamesSize=0 );
 
     fwrite(&iAreaNamesSize, sizeof(int), 1, f); // Save area names size.
 
-    for ( int i=1; i < iAreaNamesSize+1; i++ ) // First area name is always empty, for new waypoints.
+    for ( int i=1; i < iAreaNamesSize; i++ ) // First area name is always empty, for new waypoints.
     {
         int iSize = m_cAreas[i].size();
         fwrite(&iSize, 1, sizeof(int), f); // Save string size.
@@ -211,19 +210,18 @@ bool CWaypoints::Save()
     m_aVisTable.resize( Size() );
     for ( TWaypointId i = 0; i < Size(); ++i )
     {
-        if ( !bValidVisibilityTable )
+        good::bitset& cVisibles = m_aVisTable[i];
+        cVisibles.resize( Size() );
+
+        Vector vFrom = Get(i).vOrigin;
+        for ( TWaypointId j = 0; j < Size(); ++j )
         {
-            m_aVisTable[i].resize( Size() );
-            Vector vFrom = Get(i).vOrigin;
-            for ( TWaypointId j = 0; j < Size(); ++j )
-            {
-                if ( i < j )
-                    m_aVisTable[i].set( j, CUtil::IsVisible(vFrom, Get(j).vOrigin) );
-                else
-                    m_aVisTable[i].set( j, (i == j) || m_aVisTable[j].test(i) );
-            }
+            if ( i < j )
+                cVisibles.set( j, CUtil::IsVisible(vFrom, Get(j).vOrigin) );
+            else
+                cVisibles.set( j, (i == j) || m_aVisTable[j].test(i) );
         }
-        fwrite(m_aVisTable[i].data(), 1, m_aVisTable[i].byte_size(), f);
+        fwrite( cVisibles.data(), 1, cVisibles.byte_size(), f );
     }
 
     fclose(f);
@@ -329,24 +327,24 @@ bool CWaypoints::Load()
     }
 
     int iAreaNamesSize = 0;
-    if ( FLAG_SOME_SET_OR_0(WAYPOINT_FILE_FLAG_AREAS, header.iFlags) )
+    if ( FLAG_SOME_SET(WAYPOINT_FILE_FLAG_AREAS, header.iFlags) )
     {
         // Read area names.
         iRead = fread(&iAreaNamesSize, 1, sizeof(int), f);
-        BASSERT( iRead == sizeof(unsigned short), Clear();fclose(f);return false);
-        BreakDebuggerIf( (iAreaNamesSize < 0) || (iAreaNamesSize > header.iNumWaypoints) );
+        BASSERT( iRead == sizeof(int), Clear();fclose(f);return false);
+        BASSERT( (iAreaNamesSize >= 0) && (iAreaNamesSize <= header.iNumWaypoints), Clear();fclose(f);return false );
 
-        m_cAreas.reserve(iAreaNamesSize + 1);
+        m_cAreas.reserve(iAreaNamesSize);
         m_cAreas.push_back("default"); // New waypoints without area id will be put under this empty area id.
 
-        for ( int i=0; i < iAreaNamesSize; i++ )
+        for ( int i=1; i < iAreaNamesSize; i++ )
         {
             int iStrSize;
             iRead = fread(&iStrSize, 1, sizeof(int), f);
             BASSERT(iRead == sizeof(int), Clear();fclose(f);return false);
 
             BASSERT(0 < iStrSize && iStrSize < iMainBufferSize, Clear(); return false);
-            if (iStrSize > 0)
+            if ( iStrSize > 0 )
             {
                 iRead = fread(szMainBuffer, 1, iStrSize+1, f); // Read also trailing 0.
                 BASSERT(iRead == iStrSize+1, Clear();fclose(f);return false);
@@ -359,9 +357,8 @@ bool CWaypoints::Load()
     else
         m_cAreas.push_back("default"); // New waypoints without area id will be put under this empty area id.
 
-    iAreaNamesSize = m_cAreas.size();
-
     // Check for areas names.
+    iAreaNamesSize = m_cAreas.size();
     for ( TWaypointId i = 0; i < header.iNumWaypoints; ++i )
     {
         if ( m_cGraph[i].vertex.iAreaId >= iAreaNamesSize )
@@ -383,7 +380,7 @@ bool CWaypoints::Load()
             iRead = fread( m_aVisTable[i].data(), 1, iByteSize, f );
             if ( iRead != iByteSize )
             {
-                BLOG_E( "Invalid visibility table." );
+                BLOG_E( "Invalid waypoints visibility table." );
                 Clear();
                 fclose(f);
                 return false;
@@ -392,8 +389,8 @@ bool CWaypoints::Load()
         BLOG_I( "Waypoints visibility table loaded." );
     }
     else
-        BLOG_I("No waypoint visibility in file.");
-
+        BLOG_W( "No waypoints visibility table in file." );
+    
     fclose(f);
 
     return true;
@@ -401,9 +398,30 @@ bool CWaypoints::Load()
 
 
 //----------------------------------------------------------------------------------------------------------------
+TWaypointId CWaypoints::GetRandomNeighbour( TWaypointId iWaypoint, TWaypointId iTo, bool bVisible )
+{
+    const WaypointNode::arcs_t& aNeighbours = GetNode(iWaypoint).neighbours;
+    TWaypointId iResult = rand() % aNeighbours.size();
+
+    if ( bValidVisibilityTable )
+    {
+        for ( int i = 0; i < aNeighbours.size(); ++i )
+        {
+            TWaypointId iNeighbour = aNeighbours[iResult].target;
+            if ( m_aVisTable[iNeighbour].test(iTo) == bVisible )
+                return iNeighbour;
+            if ( ++iResult == aNeighbours.size() )
+                iResult = 0;
+        }
+    }
+    return aNeighbours[iResult].target;
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
 TWaypointId CWaypoints::GetNearestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, bool bVisible )
 {
-    GoodAssert(bValidVisibilityTable);
+    GoodAssert( bValidVisibilityTable );
     const WaypointNode::arcs_t& aNeighbours = GetNode(iWaypoint).neighbours;
     if ( !aNeighbours.size() )
         return EWaypointIdInvalid;
@@ -436,7 +454,7 @@ TWaypointId CWaypoints::GetNearestNeighbour( TWaypointId iWaypoint, TWaypointId 
 //----------------------------------------------------------------------------------------------------------------
 TWaypointId CWaypoints::GetFarestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, bool bVisible )
 {
-    GoodAssert(bValidVisibilityTable);
+    GoodAssert( bValidVisibilityTable );
     const WaypointNode::arcs_t& aNeighbours = GetNode(iWaypoint).neighbours;
     if ( !aNeighbours.size() )
         return EWaypointIdInvalid;
@@ -489,7 +507,7 @@ TWaypointId CWaypoints::Add( const Vector& vOrigin, TWaypointFlags iFlags, int i
     TWaypointId id = it - m_cGraph.begin();
 
     AddLocation(id, vOrigin);
-    //AddVisibility(id, vOrigin);
+    bValidVisibilityTable = false;
     return id;
 }
 
@@ -499,8 +517,8 @@ void CWaypoints::Remove( TWaypointId id )
 {
     CItems::WaypointDeleted(id);
     RemoveLocation(id);
-    //RemoveVisibility(id);
     m_cGraph.delete_node( m_cGraph.begin() + id );
+    bValidVisibilityTable = false;
 }
 
 
@@ -750,6 +768,9 @@ void CWaypoints::Draw( CClient* pClient )
             CUtil::DrawText(v, 0, fDrawTime, 0xFF, 0xFF, 0xFF, "Destination");
         }
     }
+
+    if ( bValidVisibilityTable && (pClient->iVisiblesDrawFlags != FPathDrawNone) && CWaypoint::IsValid(pClient->iCurrentWaypoint) )
+        DrawVisiblePaths( pClient->iCurrentWaypoint, pClient->iVisiblesDrawFlags );
 }
 
 
@@ -819,9 +840,32 @@ void CWaypoints::DrawWaypointPaths( TWaypointId id, TPathDrawFlags iPathDrawFlag
         WaypointNode& n = m_cGraph[it->target];
         GetPathColor(it->edge.iFlags, r, g, b);
 
-        if ( FLAG_ALL_SET_OR_0(FPathDrawBeam, iPathDrawFlags) )
+        if ( FLAG_SOME_SET(FPathDrawBeam, iPathDrawFlags) )
             CUtil::DrawBeam(w.vertex.vOrigin + diff, n.vertex.vOrigin + diff, CWaypoint::PATH_WIDTH, fDrawTime, r, g, b);
-        if ( FLAG_SOME_SET_OR_0(FPathDrawLine, iPathDrawFlags) )
+        if ( FLAG_SOME_SET(FPathDrawLine, iPathDrawFlags) )
             CUtil::DrawLine(w.vertex.vOrigin + diff, n.vertex.vOrigin + diff, fDrawTime, r, g, b);
     }
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+void CWaypoints::DrawVisiblePaths( TWaypointId id, TPathDrawFlags iPathDrawFlags )
+{
+    GoodAssert( bValidVisibilityTable && (iPathDrawFlags != FPathDrawNone) );
+
+    Vector vOrigin( Get(id).vOrigin );
+    Vector diff(0, 0, -CMod::iPlayerEyeLevel/2);
+
+    const unsigned char r = 0xFF, g = 0xFF, b = 0xFF;
+    float fDrawTime = CWaypoint::DRAW_INTERVAL + (2.0f / CBotrixPlugin::iFPS); // Add two frames to not flick.
+
+    for ( int i = 0; i < Size(); ++i )
+        if ( (i != id) && m_aVisTable[id].test(i) )
+        {
+            const CWaypoint& cWaypoint = Get(i);
+            if ( FLAG_SOME_SET(FPathDrawBeam, iPathDrawFlags) )
+                CUtil::DrawBeam(vOrigin + diff, cWaypoint.vOrigin + diff, CWaypoint::PATH_WIDTH, fDrawTime, r, g, b);
+            if ( FLAG_SOME_SET(FPathDrawLine, iPathDrawFlags) )
+                CUtil::DrawLine(vOrigin + diff, cWaypoint.vOrigin + diff, fDrawTime, r, g, b);
+        }
 }

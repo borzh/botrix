@@ -107,7 +107,7 @@ class CVisibilityTraceFilter: public ITraceFilter
 public:
     CVisibilityTraceFilter( TVisibilityFlags iFlags ): m_iFlags(iFlags)
     {
-        m_bShouldHitEntity = FLAG_SOME_SET_OR_0(FVisibilityEntity | FVisibilityProps, iFlags); // Props are entities.
+        m_bShouldHitEntity = FLAG_SOME_SET(FVisibilityEntity | FVisibilityProps, iFlags); // Props are entities.
         switch (iFlags)
         {
         case FVisibilityWorld:
@@ -124,7 +124,7 @@ public:
             break;
         default:
             m_TraceType = TRACE_EVERYTHING;
-            if ( FLAG_SOME_SET_OR_0(FVisibilityEntity, iFlags) )
+            if ( FLAG_SOME_SET(FVisibilityEntity, iFlags) )
                 iTraceFlags = MASK_NPCSOLID | MASK_PLAYERSOLID;
             else
                 iTraceFlags = MASK_SOLID_BRUSHONLY;

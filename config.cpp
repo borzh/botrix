@@ -528,13 +528,16 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
             }
             else if ( aCurrent.size() == 1 )
             {
-                TWeaponFlags iFlag = CTypeToString::WeaponFlagsFromString(aCurrent[0]);
-                if ( iFlag == -1 )
-                    bProcessed = false;
-                else if ( iFlag == FWeaponFunctionPresent )
+                if ( aCurrent[0] == "secondary" )
                     iSecondary = CWeapon::SECONDARY;
                 else
-                    FLAG_SET(iFlag, pWeapon->iFlags[iSecondary]);
+                {
+                    TWeaponFlags iFlag = CTypeToString::WeaponFlagsFromString(aCurrent[0]);
+                    if ( iFlag == -1 )
+                        bProcessed = false;
+                    else
+                        FLAG_SET(iFlag, pWeapon->iFlags[iSecondary]);
+                }
             }
             else if ( aCurrent.size() == 2 )
             {
@@ -590,7 +593,7 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
                     if ( iAim == -1 )
                         bProcessed = false;
                     else
-                        pWeapon->iAim = iAim;
+                        pWeapon->iAim[iSecondary] = iAim;
                 }
                 else
                 {
@@ -611,6 +614,9 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
 
                     else if ( aCurrent[0] == "delay" )
                         pWeapon->fShotTime[iSecondary] = iValue / 1000.0f;
+
+                    else if ( aCurrent[0] == "hold" )
+                        pWeapon->fHoldTime[iSecondary] = iValue / 1000.0f;
 
                     else if ( aCurrent[0] == "reload_by" )
                         pWeapon->iReloadBy[iSecondary] = iValue;

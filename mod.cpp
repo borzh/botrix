@@ -48,7 +48,7 @@ int CMod::iPlayerJumpCrouchHeight = 56;
 
 int CMod::iPlayerRadius;
 int CMod::iNearItemMaxDistanceSqr = SQR(312);
-int CMod::iItemPickUpDistance = 0; // Not used for now.
+int CMod::iItemPickUpDistance = 100;
 
 int CMod::iPlayerMaxSlopeGradient = 45;
 int CMod::iPlayerMaxHeightNoFallDamage = 185;
@@ -196,7 +196,7 @@ void CMod::MapLoaded()
 
             // Check if map has waypoints of given type.
             for ( TWaypointId id=0; id < CWaypoints::Size(); ++id )
-                if ( FLAG_SOME_SET_OR_0(CWaypoints::Get(id).iFlags, iFlags) )
+                if ( FLAG_SOME_SET(CWaypoints::Get(id).iFlags, iFlags) )
                 {
                     m_bMapHas[iType] = true;
                     break;

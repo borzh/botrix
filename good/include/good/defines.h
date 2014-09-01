@@ -155,12 +155,16 @@ typedef char TChar;
 #define FLAG_CLEARED(flag, flags)            ( ((flags) & (flag)) == 0 )
 
 /// Return true if some flag is set.
-#define FLAG_SOME_SET(flag, flags)           ( (flag) & (flags) )
+#ifdef _WIN32 // Fix for Windows forcing value to bool 'true' or 'false' (performance warning).
+    #define FLAG_SOME_SET(flag, flags)       ( ((flag) & (flags)) != 0 )
+#else
+    #define FLAG_SOME_SET(flag, flags)       ( (flag) & (flags) )
+#endif
 
 /// Return true if all flags are set.
 #define FLAG_ALL_SET(flag, flags)            ( ((flag) & (flags)) == (flag) )
 
-/// Return true if some flag is set.
+/// Return true if some flag is set or flag is 0.
 #define FLAG_SOME_SET_OR_0(flag, flags)      ( ((flag) & (flags)) || ((flag) == 0) )
 
 /// Return true if all flags are set.

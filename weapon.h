@@ -40,12 +40,13 @@ public:
     TTeam iTeam;                                 ///< Only this team can buy this weapon. Those are really flags.
 
     TWeaponType iType;                           ///< Weapon type.
-    TWeaponAim iAim;                             ///< Where to aim with this weapon.
+    TWeaponAim iAim[2];                          ///< Where to aim with this weapon.
     TWeaponFlags iFlags[2];                      ///< Attack flags.
 
     float fMinDistanceSqr[2];                    ///< Minimum distance to enemy to safely use this weapon (0 by default).
     float fMaxDistanceSqr[2];                    ///< Maximum distance to enemy to be able to use this weapon (0 by default).
     float fHolsterTime;                          ///< Time from change weapon to be able to shoot.
+    float fHoldTime[2];                          ///< Time to hold down attack button. Useful for grenades.
     float fShotTime[2];                          ///< Duration of shoot (primary and secondary).
     float fReloadStartTime[2];                   ///< Time to start reload (primary and secondary).
     float fReloadTime[2];                        ///< Duration of reload (primary and secondary).
@@ -111,7 +112,7 @@ public:
     inline bool IsReloading() const { return m_bReloading || m_bReloadingStart; }
 
     /// Return true if currently shooting.
-    inline bool IsShooting() const { return m_bShooting; }
+    inline bool IsShooting() const { return m_bShooting || m_bHolding; }
 
     /// Return true if currently changing to this weapon.
     inline bool IsChanging() const { return m_bChanging; }
@@ -129,7 +130,7 @@ public:
     /// Return true if weapon has secondary function with different ammo than primary.
     inline bool HasSecondary() const
     {
-        return ( m_pWeapon->iFlags[1] & (FWeaponFunctionPresent | FWeaponSameBullets) ) == FWeaponFunctionPresent;
+        return FLAG_CLEARED( FWeaponSameBullets, m_pWeapon->iFlags[1] );
     }
 
     /// Return true if weapon has ammo.
@@ -158,6 +159,13 @@ public:
     {
         // Shotgun and rocket types can stop reloading and shoot if weapon has bullets in clip.
         return !IsShooting() && !IsChanging() && ( !IsReloading() || ( (m_pWeapon->iType >= EWeaponShotgun) && Bullets(0) ) );
+    }
+
+    /// Return true if weapon can be used from distance to enemy.
+    inline bool CanBeUsed( float fDistanceSqrToEnemy ) const
+    {
+        return ( HasAmmoInClip(CWeapon::PRIMARY) && IsDistanceSafe(fDistanceSqrToEnemy, CWeapon::PRIMARY) ) ||
+               ( HasAmmoInClip(CWeapon::SECONDARY) && IsDistanceSafe(fDistanceSqrToEnemy, CWeapon::SECONDARY) );
     }
 
     /// Return true if can start shooting at enemy right away.
@@ -230,11 +238,13 @@ public:
     /// Zoom in.
     void ToggleZoom()
     {
-        GoodAssert( !IsShooting() && !m_bUsingZoom && IsSniper() );
-        m_bShooting = true;
-        m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fShotTime[1];
+        GoodAssert( CanUse() && IsSniper() );
+        Shoot(CWeapon::SECONDARY);
         m_bUsingZoom = !m_bUsingZoom;
     }
+
+    /// Get where to look at enemy according to aim.
+    void GetLook( const Vector& vFrom, const CPlayer* pTo, TBotIntelligence iIntelligence, int iSecondary, Vector& vResult ) const;
 
     /**
      * @brief Get vector to aim to.
@@ -243,11 +253,14 @@ public:
      * (invalid distance). Will return vector, with random based error and bot intelligence.
      */
     bool GetLook( const Vector& vFrom, const CPlayer* pTo, float fDistanceSqr,
-                  TBotIntelligence iBotIntelligence, int iSecondary, Vector& vResult );
+                  TBotIntelligence iBotIntelligence, int iSecondary, Vector& vResult ) const;
 
 protected:
     // End reloading weapon.
     void EndReload();
+
+    // End holding attack button.
+    void EndHold();
 
     // End using weapon function.
     void EndShoot();
@@ -262,6 +275,7 @@ protected:
     bool m_bWeaponPresent:1;  ///< True, if weapon is present, false if only ammo is present.
     bool m_bReloadingStart:1; ///< True, if started to reload weapon.
     bool m_bReloading:1;      ///< True, if continuing to reload weapon.
+    bool m_bHolding:1;        ///< True, if currently holding attack button.
     bool m_bShooting:1;       ///< True, if currently shooting.
     bool m_bChanging:1;       ///< True, if started to change weapon.
     bool m_bUsingZoom:1;      ///< True, if started to zoom in / zoom out.
@@ -319,17 +333,17 @@ public:
     }
 
     /// Add weapon to weapons.
-    static bool AddWeapon( const CEntityClass* pWeaponClass, good::vector<CWeaponWithAmmo>& aWeapons )
+    static TWeaponId AddWeapon( const CEntityClass* pWeaponClass, good::vector<CWeaponWithAmmo>& aWeapons )
     {
         for ( TWeaponId iWeapon = 0; iWeapon < aWeapons.size(); ++iWeapon )
         {
             if ( aWeapons[iWeapon].GetBaseWeapon()->pWeaponClass == pWeaponClass )
             {
                 aWeapons[iWeapon].AddWeapon();
-                return true;
+                return iWeapon;
             }
         }
-        return false;
+        return EWeaponIdInvalid;
     }
 
     /// Add ammo to weapons.

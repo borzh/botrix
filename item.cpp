@@ -79,23 +79,23 @@ inline string_t GetEntityName( IServerEntity* pServerEntity )
 
 
 //================================================================================================================
-bool CEntity::IsOnMap() const
+bool CItem::IsOnMap() const
 {
     return IsEntityOnMap(pEdict->GetIServerEntity());
 }
 
 //----------------------------------------------------------------------------------------------------------------
-bool CEntity::IsBreakable() const
+bool CItem::IsBreakable() const
 {
     return IsEntityBreakable(pEdict->GetIServerEntity());
 }
 
 
 //================================================================================================================
-good::vector<CEntity> CItems::m_aItems[EEntityTypeTotal];            // Array of items.
-good::vector<CEntityClass> CItems::m_aItemClasses[EEntityTypeTotal]; // Array of item classes.
-TEntityIndex CItems::m_iFreeIndex[EEntityTypeTotal];                 // First free weapon index.
-int CItems::m_iFreeEntityCount[EEntityTypeTotal];                    // Count of unused entities.
+good::vector<CItem> CItems::m_aItems[EItemTypeTotal];            // Array of items.
+good::list<CItemClass> CItems::m_aItemClasses[EItemTypeTotal]; // Array of item classes.
+TItemIndex CItems::m_iFreeIndex[EItemTypeTotal];                 // First free weapon index.
+int CItems::m_iFreeEntityCount[EItemTypeTotal];                    // Count of unused entities.
 
 good::vector<edict_t*> CItems::m_aOthers(1024);                      // Array of other entities.
 
@@ -103,23 +103,23 @@ good::vector<edict_t*> CItems::m_aOthers(1024);                      // Array of
 good::vector<edict_t*> CItems::m_aNewEntities(16);
 #endif
 
-good::vector< good::pair<good::string, TEntityFlags> > CItems::m_aObjectFlagsForModels(4);
+good::vector< good::pair<good::string, TItemFlags> > CItems::m_aObjectFlagsForModels(4);
 good::bitset CItems::m_aUsedItems(MAX_EDICTS);
 int CItems::m_iCurrentEntity;
 bool CItems::m_bMapLoaded = false;
 
 
 //----------------------------------------------------------------------------------------------------------------
-TEntityIndex CItems::GetNearestItem( TEntityType iEntityType, const Vector& vOrigin, const good::vector<CPickedItem>& aSkip, const CEntityClass* pClass )
+TItemIndex CItems::GetNearestItem( TItemType iEntityType, const Vector& vOrigin, const good::vector<CPickedItem>& aSkip, const CItemClass* pClass )
 {
-    good::vector<CEntity>& aItems = m_aItems[iEntityType];
+    good::vector<CItem>& aItems = m_aItems[iEntityType];
 
-    TEntityIndex iResult = -1;
+    TItemIndex iResult = -1;
     float fSqrDistResult = 0.0f;
 
     for ( int i = 0; i < aItems.size(); ++i )
     {
-        CEntity& cItem = aItems[i];
+        CItem& cItem = aItems[i];
         if ( (cItem.pEdict == NULL) || !CWaypoint::IsValid(cItem.iWaypoint) )
             continue;
 
@@ -166,12 +166,12 @@ void CItems::Freed( const edict_t* pEdict )
         return;
 
     m_aUsedItems.reset(iIndex);
-    good::vector<CEntity>& aWeapons = m_aItems[EEntityTypeWeapon];
-    for ( TEntityIndex i=0; i < (int)aWeapons.size(); ++i )
+    good::vector<CItem>& aWeapons = m_aItems[EItemTypeWeapon];
+    for ( TItemIndex i=0; i < (int)aWeapons.size(); ++i )
         if ( aWeapons[i].pEdict == pEdict )
         {
             aWeapons[i].pEdict = NULL;
-            m_iFreeIndex[EEntityTypeWeapon] = i;
+            m_iFreeIndex[EItemTypeWeapon] = i;
             return;
         }
     //BASSERT(false); // Only weapons are allocated/deallocated while map is running.
@@ -181,18 +181,18 @@ void CItems::Freed( const edict_t* pEdict )
 //----------------------------------------------------------------------------------------------------------------
 void CItems::MapUnloaded()
 {
-    for ( TEntityType iEntityType = 0; iEntityType < EEntityTypeTotal; ++iEntityType )
+    for ( TItemType iEntityType = 0; iEntityType < EItemTypeTotal; ++iEntityType )
     {
-        good::vector<CEntityClass>& aClasses = m_aItemClasses[iEntityType];
-        good::vector<CEntity>& aItems = m_aItems[iEntityType];
+        good::list<CItemClass>& aClasses = m_aItemClasses[iEntityType];
+        good::vector<CItem>& aItems = m_aItems[iEntityType];
 
         aItems.clear();
         m_iFreeIndex[iEntityType] = -1;      // Invalidate free entity index.
 
-        for ( int i = 0; i < aClasses.size(); ++i )
+        for ( good::list<CItemClass>::iterator it = aClasses.begin(); it != aClasses.end(); ++it )
         {
-            aClasses[i].szEngineName = NULL; // Invalidate class name, because it was loaded in previous map.
-            aItems.reserve(64);              // At least.
+            it->szEngineName = NULL; // Invalidate class name, because it was loaded in previous map.
+            aItems.reserve(64);      // At least.
         }
     }
 
@@ -229,14 +229,14 @@ void CItems::Update()
     // Source engine 2007 uses IServerPluginCallbacks::OnEdictAllocated instead of checking all array of edicts.
 
     // Update weapons we have in items array.
-    good::vector<CEntity>& aWeapons = m_aItems[EEntityTypeWeapon];
-    for ( TEntityIndex i = 0; i < aWeapons.size(); ++i )
+    good::vector<CItem>& aWeapons = m_aItems[EItemTypeWeapon];
+    for ( TItemIndex i = 0; i < aWeapons.size(); ++i )
     {
-        CEntity& cEntity = aWeapons[i];
+        CItem& cEntity = aWeapons[i];
         edict_t* pEdict = cEntity.pEdict;
         if ( pEdict == NULL )
         {
-            m_iFreeIndex[EEntityTypeWeapon] = i;
+            m_iFreeIndex[EItemTypeWeapon] = i;
             continue;
         }
 
@@ -244,7 +244,7 @@ void CItems::Update()
         if ( pEdict->IsFree() || (pServerEntity == NULL) )
         {
             cEntity.pEdict = NULL;
-            m_iFreeIndex[EEntityTypeWeapon] = i;
+            m_iFreeIndex[EItemTypeWeapon] = i;
             m_aUsedItems.clear( CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict) );
         }
         else if ( IsEntityTaken(pServerEntity) ) // Weapon still belongs to some player.
@@ -253,7 +253,7 @@ void CItems::Update()
         {
             FLAG_CLEAR(FTaken, cEntity.iFlags);
             cEntity.vOrigin = cEntity.CurrentPosition();
-            cEntity.iWaypoint = CWaypoints::GetNearestWaypoint( cEntity.vOrigin, true, CEntity::iMaxDistToWaypoint );
+            cEntity.iWaypoint = CWaypoints::GetNearestWaypoint( cEntity.vOrigin, true, CItem::iMaxDistToWaypoint );
         }
     }
 
@@ -265,7 +265,7 @@ void CItems::Update()
     if ( iTo > iCount )
         iTo = iCount;
 
-    for ( TEntityIndex i = m_iCurrentEntity; i < iTo; ++i )
+    for ( TItemIndex i = m_iCurrentEntity; i < iTo; ++i )
     {
         if ( m_aUsedItems.test(i) )
             continue;
@@ -280,11 +280,11 @@ void CItems::Update()
             continue;
 
         // Check only for new weapons, because new weapon instance is created when weapon is picked up.
-        CEntityClass* pWeaponClass;
-        TEntityType iEntityType = GetEntityType(pEdict->GetClassName(), pWeaponClass, EEntityTypeWeapon, EEntityTypeWeapon+1);
+        CItemClass* pWeaponClass;
+        TItemType iEntityType = GetEntityType(pEdict->GetClassName(), pWeaponClass, EItemTypeWeapon, EItemTypeWeapon+1);
 
-        if ( iEntityType == EEntityTypeWeapon )
-            AddItem( EEntityTypeWeapon, pEdict, pWeaponClass, pServerEntity );
+        if ( iEntityType == EItemTypeWeapon )
+            AddItem( EItemTypeWeapon, pEdict, pWeaponClass, pServerEntity );
     }
     m_iCurrentEntity = (iTo == iCount) ? CPlayers::Size()+1: iTo;
 #else
@@ -296,15 +296,15 @@ void CItems::Update()
 
 
 //----------------------------------------------------------------------------------------------------------------
-TEntityType CItems::GetEntityType( const char* szClassName, CEntityClass* & pEntityClass, TEntityType iFrom, TEntityType iTo, bool bFastCmp )
+TItemType CItems::GetEntityType( const char* szClassName, CItemClass* & pEntityClass, TItemType iFrom, TItemType iTo, bool bFastCmp )
 {
-    for ( TEntityType iEntityType = iFrom; iEntityType < iTo; ++iEntityType )
+    for ( TItemType iEntityType = iFrom; iEntityType < iTo; ++iEntityType )
     {
-        good::vector<CEntityClass>& aItemClasses = m_aItemClasses[iEntityType];
+        good::list<CItemClass>& aItemClasses = m_aItemClasses[iEntityType];
 
-        for ( int j = 0; j < aItemClasses.size(); ++j )
+        for ( good::list<CItemClass>::iterator it = aItemClasses.begin(); it != aItemClasses.end(); ++it )
         {
-            CEntityClass& cEntityClass = aItemClasses[j];
+            CItemClass& cEntityClass = *it;
 
             if ( cEntityClass.szEngineName ) // Fast compare?
             {
@@ -323,7 +323,7 @@ TEntityType CItems::GetEntityType( const char* szClassName, CEntityClass* & pEnt
         }
     }
 
-    return EEntityTypeOther;
+    return EItemTypeOther;
 }
 
 
@@ -336,17 +336,17 @@ void CItems::CheckNewEntity( edict_t* pEdict )
         return;
 
     const char* szClassName = pEdict->GetClassName();
-    CEntityClass* pItemClass;
-    TEntityType iEntityType = GetEntityType(szClassName, pItemClass, 0, EEntityTypeTotal);
-    if ( iEntityType == EEntityTypeOther )
+    CItemClass* pItemClass;
+    TItemType iEntityType = GetEntityType(szClassName, pItemClass, 0, EItemTypeTotal);
+    if ( iEntityType == EItemTypeOther )
         m_aOthers.push_back(pEdict);
-    else if ( iEntityType == EEntityTypeObject )
+    else if ( iEntityType == EItemTypeObject )
         AddObject( pEdict, pItemClass, pServerEntity );
     else
     {
-        TEntityIndex iIndex = AddItem( iEntityType, pEdict, pItemClass, pServerEntity );
+        TItemIndex iIndex = AddItem( iEntityType, pEdict, pItemClass, pServerEntity );
         BASSERT(iIndex >= 0, return);
-        CEntity& cItem = m_aItems[iEntityType][iIndex];
+        CItem& cItem = m_aItems[iEntityType][iIndex];
 
         BLOG_D("New item: %s %d (%s), waypoint %d (%s).", CTypeToString::EntityTypeToString(iEntityType).c_str(), iIndex,
                     pEdict->GetClassName(), cItem.iWaypoint,
@@ -363,13 +363,13 @@ void CItems::CheckNewEntity( edict_t* pEdict )
                 if ( CWaypoint::IsValid(iWaypoint) )
                     BLOG_W("  Nearest waypoint %d.", iWaypoint);
             }
-            else if ( iEntityType == EEntityTypeDoor && !CWaypoint::IsValid((TWaypointId)cItem.pArguments) )
+            else if ( iEntityType == EItemTypeDoor && !CWaypoint::IsValid((TWaypointId)cItem.pArguments) )
                 BLOG_W("Door %d doesn't have 2 waypoints near.", iIndex);
         }
 
 #ifdef SOURCE_ENGINE_2006
         // Weapon entities are allocated / deallocated when respawned / owner killed.
-        if ( iEntityType != EEntityTypeWeapon )
+        if ( iEntityType != EItemTypeWeapon )
 #endif
         {
             int iIndex = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict);
@@ -382,9 +382,9 @@ void CItems::CheckNewEntity( edict_t* pEdict )
 
 
 //----------------------------------------------------------------------------------------------------------------
-TEntityIndex CItems::InsertEntity( int iEntityType, const CEntity& cEntity )
+TItemIndex CItems::InsertEntity( int iEntityType, const CItem& cEntity )
 {
-    good::vector<CEntity>& aItems = m_aItems[iEntityType];
+    good::vector<CItem>& aItems = m_aItems[iEntityType];
 
     if ( m_bMapLoaded ) // Check if there are free space in items array.
     {
@@ -409,10 +409,10 @@ TEntityIndex CItems::InsertEntity( int iEntityType, const CEntity& cEntity )
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CItems::AutoWaypointPathFlagsForEntity( TEntityType iEntityType, TEntityIndex iIndex, CEntity& cEntity )
+void CItems::AutoWaypointPathFlagsForEntity( TItemType iEntityType, TItemIndex iIndex, CItem& cEntity )
 {
     TWaypointId iWaypoint = cEntity.iWaypoint;
-    if ( (iEntityType == EEntityTypeButton) && (iWaypoint != EWaypointIdInvalid) )
+    if ( (iEntityType == EItemTypeButton) && (iWaypoint != EWaypointIdInvalid) )
     {
         // Set waypoint argument to button.
         CWaypoint& cWaypoint = CWaypoints::Get(iWaypoint);
@@ -421,13 +421,13 @@ void CItems::AutoWaypointPathFlagsForEntity( TEntityType iEntityType, TEntityInd
     }
 
     // Check 2nd nearest waypoint for door.
-    if ( iEntityType == EEntityTypeDoor )
+    if ( iEntityType == EItemTypeDoor )
     {
         if ( iWaypoint != EWaypointIdInvalid )
         {
             good::bitset cOmitWaypoints(CWaypoints::Size());
             cOmitWaypoints.set(iWaypoint);
-            iWaypoint = CWaypoints::GetNearestWaypoint( cEntity.vOrigin, &cOmitWaypoints, true, CEntity::iMaxDistToWaypoint );
+            iWaypoint = CWaypoints::GetNearestWaypoint( cEntity.vOrigin, &cOmitWaypoints, true, CItem::iMaxDistToWaypoint );
         }
         cEntity.pArguments = (void*)iWaypoint;
 
@@ -452,9 +452,9 @@ void CItems::AutoWaypointPathFlagsForEntity( TEntityType iEntityType, TEntityInd
 }
 
 //----------------------------------------------------------------------------------------------------------------
-TEntityIndex CItems::AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityClass* pItemClass, IServerEntity* pServerEntity )
+TItemIndex CItems::AddItem( TItemType iEntityType, edict_t* pEdict, CItemClass* pItemClass, IServerEntity* pServerEntity )
 {
-    GoodAssert( (0 <= iEntityType) && (iEntityType < EEntityTypeObject) );
+    GoodAssert( (0 <= iEntityType) && (iEntityType < EItemTypeObject) );
 
     ICollideable* pCollidable = pServerEntity->GetCollideable();
     BASSERT( pCollidable, return -1 );
@@ -479,12 +479,12 @@ TEntityIndex CItems::AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityC
     if ( !IsEntityOnMap(pServerEntity) || IsEntityTaken(pServerEntity) )
         FLAG_SET(FTaken, iFlags);
     else
-        iWaypoint = CWaypoints::GetNearestWaypoint( vItemOrigin, NULL, true, CEntity::iMaxDistToWaypoint );
+        iWaypoint = CWaypoints::GetNearestWaypoint( vItemOrigin, NULL, true, CItem::iMaxDistToWaypoint );
 
-    CEntity cNewEntity(pEdict, iFlags, fPickupDistanceSqr, pItemClass, vItemOrigin, iWaypoint);
-    TEntityIndex iIndex = InsertEntity( iEntityType, cNewEntity );
+    CItem cNewEntity(pEdict, iFlags, fPickupDistanceSqr, pItemClass, vItemOrigin, iWaypoint);
+    TItemIndex iIndex = InsertEntity( iEntityType, cNewEntity );
 
-    CEntity& cEntity = m_aItems[iEntityType][iIndex];
+    CItem& cEntity = m_aItems[iEntityType][iIndex];
     AutoWaypointPathFlagsForEntity( iEntityType, iIndex, cEntity );
 
     return iIndex;
@@ -492,7 +492,7 @@ TEntityIndex CItems::AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityC
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CItems::AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServerEntity* pServerEntity )
+void CItems::AddObject( edict_t* pEdict, const CItemClass* pObjectClass, IServerEntity* pServerEntity )
 {
     // Calculate object radius.
     ICollideable* pCollidable = pServerEntity->GetCollideable();
@@ -518,14 +518,14 @@ void CItems::AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServ
             }
     }
 
-    good::vector<CEntity>& aItems = m_aItems[EEntityTypeObject];
-    CEntity cObject( pEdict, iFlags, fMaxsRadiusSqr, pObjectClass, pCollidable->GetCollisionOrigin(), -1 );
+    good::vector<CItem>& aItems = m_aItems[EItemTypeObject];
+    CItem cObject( pEdict, iFlags, fMaxsRadiusSqr, pObjectClass, pCollidable->GetCollisionOrigin(), -1 );
     if ( m_bMapLoaded ) // Check if there are free space in items array.
     {
-        if ( m_iFreeIndex[EEntityTypeObject] != -1 )
+        if ( m_iFreeIndex[EItemTypeObject] != -1 )
         {
-            CEntity& cResult = aItems[m_iFreeIndex[EEntityTypeObject]];
-            m_iFreeIndex[EEntityTypeObject] = -1;
+            CItem& cResult = aItems[m_iFreeIndex[EItemTypeObject]];
+            m_iFreeIndex[EItemTypeObject] = -1;
             cResult = cObject;
             return;
         }
@@ -541,9 +541,9 @@ void CItems::AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServ
 }
 
 //----------------------------------------------------------------------------------------------------------------
-bool CItems::IsDoorOpened( TEntityIndex iDoor )
+bool CItems::IsDoorOpened( TItemIndex iDoor )
 {
-    const CEntity& cDoor = m_aItems[EEntityTypeDoor][iDoor];
+    const CItem& cDoor = m_aItems[EItemTypeDoor][iDoor];
     TWaypointId w1 = cDoor.iWaypoint, w2 = (TWaypointId)cDoor.pArguments;
 
     BASSERT( CWaypoints::IsValid(w1) && CWaypoints::IsValid(w2), return false); // Door should have two waypoints from each side.
@@ -567,15 +567,15 @@ void CItems::Draw( CClient* pClient )
     int iClusterIndex = CBotrixPlugin::pEngineServer->GetClusterForOrigin( pClient->GetHead() );
     CBotrixPlugin::pEngineServer->GetPVSForCluster( iClusterIndex, sizeof(pvs), pvs );
 
-    for ( TEntityType iEntityType = 0; iEntityType < EEntityTypeTotal+1; ++iEntityType )
+    for ( TItemType iEntityType = 0; iEntityType < EItemTypeTotal+1; ++iEntityType )
     {
         if ( !FLAG_SOME_SET(1<<iEntityType, pClient->iItemTypeFlags) ) // Don't draw items of disabled item type.
             continue;
 
-        int iSize = (iEntityType == EEntityTypeOther) ? m_aOthers.size() : m_aItems[iEntityType].size();
+        int iSize = (iEntityType == EItemTypeOther) ? m_aOthers.size() : m_aItems[iEntityType].size();
         for ( int i = 0; i < iSize; ++i )
         {
-            edict_t* pEdict = (iEntityType == EEntityTypeOther) ? m_aOthers[i] : m_aItems[iEntityType][i].pEdict;
+            edict_t* pEdict = (iEntityType == EItemTypeOther) ? m_aOthers[i] : m_aItems[iEntityType][i].pEdict;
 
             if ( (pEdict == NULL) || pEdict->IsFree() )
                 continue;
@@ -592,7 +592,7 @@ void CItems::Draw( CClient* pClient )
             if ( CBotrixPlugin::pEngineServer->CheckOriginInPVS( vOrigin, pvs, sizeof(pvs) ) &&
                  CUtil::IsVisible(pClient->GetHead(), vOrigin) )
             {
-                const CEntity* pEntity = (iEntityType == EEntityTypeOther) ? NULL : &m_aItems[iEntityType][i];
+                const CItem* pEntity = (iEntityType == EItemTypeOther) ? NULL : &m_aItems[iEntityType][i];
 
                 if ( FLAG_SOME_SET(FItemDrawStats, pClient->iItemDrawFlags) )
                 {
@@ -603,9 +603,9 @@ void CItems::Draw( CClient* pClient )
                     CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, szMainBuffer );
 
                     CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, pEdict->GetClassName() );
-                    if ( iEntityType == EEntityTypeDoor )
+                    if ( iEntityType == EItemTypeDoor )
                         CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsDoorOpened(i) ? "opened" : "closed" );
-                    else if ( iEntityType == EEntityTypeObject )
+                    else if ( iEntityType == EItemTypeObject )
                     {
                         sprintf( szMainBuffer, "%s %d", CTypeToString::EntityTypeToString(iEntityType).c_str(), i );
                         CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityOnMap(pServerEntity) ? "alive" : "dead" );
@@ -613,10 +613,10 @@ void CItems::Draw( CClient* pClient )
                         CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityBreakable(pServerEntity) ? "breakable" : "non breakable" );
                         CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, CTypeToString::EntityClassFlagsToString(pEntity->iFlags).c_str() );
                     }
-                    //if ( iEntityType >= EEntityTypeButton ) // Draw entity name. Doesn't work.
+                    //if ( iEntityType >= EItemTypeButton ) // Draw entity name. Doesn't work.
                     //	CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, GetEntityName(pServerEntity).ToCStr() );
 
-                    if ( iEntityType >= EEntityTypeObject ) // Draw object model.
+                    if ( iEntityType >= EItemTypeObject ) // Draw object model.
                         CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, STRING( pEdict->GetIServerEntity()->GetModelName() ) );
                 }
 
@@ -624,14 +624,14 @@ void CItems::Draw( CClient* pClient )
                 if ( FLAG_SOME_SET(FItemDrawBoundBox, pClient->iItemDrawFlags) )
                     CUtil::DrawBox(vOrigin, pCollide->OBBMins(), pCollide->OBBMaxs(), 1.0f, 0xFF, 0xFF, 0xFF, pCollide->GetCollisionAngles());
 
-                if ( FLAG_SOME_SET(FItemDrawWaypoint, pClient->iItemDrawFlags) && (iEntityType < EEntityTypeObject) )
+                if ( FLAG_SOME_SET(FItemDrawWaypoint, pClient->iItemDrawFlags) && (iEntityType < EItemTypeObject) )
                 {
                     // Draw nearest waypoint from item.
                     if (CWaypoint::IsValid(pEntity->iWaypoint) )
                         CUtil::DrawLine(CWaypoints::Get(pEntity->iWaypoint).vOrigin, vOrigin, 1.0f, 0xFF, 0xFF, 0);
 
                     // Draw second waypoint for door.
-                    if ( (iEntityType == EEntityTypeDoor) && CWaypoint::IsValid( (TWaypointId)pEntity->pArguments ) )
+                    if ( (iEntityType == EItemTypeDoor) && CWaypoint::IsValid( (TWaypointId)pEntity->pArguments ) )
                         CUtil::DrawLine(CWaypoints::Get((TWaypointId)pEntity->pArguments).vOrigin, vOrigin, 1.0f, 0xFF, 0xFF, 0);
                 }
             }
@@ -642,20 +642,20 @@ void CItems::Draw( CClient* pClient )
 //----------------------------------------------------------------------------------------------------------------
 void CItems::WaypointDeleted( TWaypointId id )
 {
-    for ( int iEntityType = 0; iEntityType < EEntityTypeTotal; ++iEntityType )
+    for ( int iEntityType = 0; iEntityType < EItemTypeTotal; ++iEntityType )
     {
-        good::vector<CEntity>& aItems = m_aItems[iEntityType];
+        good::vector<CItem>& aItems = m_aItems[iEntityType];
 
         for ( int i = 0; i < aItems.size(); ++i )
         {
-            CEntity& cItem = aItems[i];
+            CItem& cItem = aItems[i];
             if ( cItem.iWaypoint == id )
                 cItem.iWaypoint = CWaypoints::GetNearestWaypoint( cItem.vOrigin );
             else if ( cItem.iWaypoint > id )
                 --cItem.iWaypoint;
 
             // TODO: update doors.
-            //if ( iEntityType == EEntityTypeDoor )
+            //if ( iEntityType == EItemTypeDoor )
         }
     }
 }

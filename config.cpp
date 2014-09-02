@@ -383,8 +383,9 @@ void CConfiguration::LoadItemClasses()
     sbBuffer = CMod::sModName;
 
     // Load health /armor / object entity classes.
-    for ( TEntityType iType = 0; iType < EEntityTypeTotal; ++iType )
+    for ( TItemType iType = 0; iType < EItemTypeTotal; ++iType )
     {
+        // TODO: shouldn't load weapons/ammo.
         // Get mod item section, i.e. [HalfLife2Deathmatch.items.health].
         sbBuffer.erase( CMod::sModName.size() );
         sbBuffer << ".items.";
@@ -394,14 +395,11 @@ void CConfiguration::LoadItemClasses()
         if ( it == m_iniFile.end() )
             continue;
 
-        // Reserve needed space, as we will use pointers to that space.
-        CItems::SetEntityClassesSizeForType( iType, it->size() );
-
         // Iterate throught key values.
         for ( good::ini_section::const_iterator itemIt = it->begin(); itemIt != it->end(); ++itemIt )
         {
             // String instances will live until plugin is unloaded.
-            CEntityClass cEntityClass;
+            CItemClass cEntityClass;
             cEntityClass.sClassName.assign( itemIt->key.c_str(), itemIt->key.size() );
 
             // Get item flags.
@@ -739,9 +737,9 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
                     pWeapon->iReloadBy[i] = pWeapon->iClipSize[i];
 
             // Add weapon class.
-            CEntityClass cEntityClass;
+            CItemClass cEntityClass;
             cEntityClass.sClassName.assign(itemIt->key, true);
-            pWeapon->pWeaponClass = CItems::AddItemClassFor( EEntityTypeWeapon, cEntityClass );
+            pWeapon->pWeaponClass = CItems::AddItemClassFor( EItemTypeWeapon, cEntityClass );
 
             // Add ammo classes.
             pWeapon->aAmmos[0].reserve(aAmmos[0].size());
@@ -750,12 +748,12 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
                 for ( int i=0; i < aAmmos[iSec].size(); ++i )
                 {
                     const good::string& sAmmo = aAmmos[iSec][i];
-                    const CEntityClass* pAmmoClass = CItems::GetItemClass( EEntityTypeAmmo, sAmmo );
+                    const CItemClass* pAmmoClass = CItems::GetItemClass( EItemTypeAmmo, sAmmo );
                     if ( !pAmmoClass )
                     {
-                        CEntityClass cAmmoClass;
+                        CItemClass cAmmoClass;
                         cAmmoClass.sClassName = sAmmo;
-                        pAmmoClass = CItems::AddItemClassFor( EEntityTypeAmmo, cAmmoClass );
+                        pAmmoClass = CItems::AddItemClassFor( EItemTypeAmmo, cAmmoClass );
                     }
                     pWeapon->aAmmos[iSec].push_back( pAmmoClass );
                     pWeapon->aAmmosCount[iSec].push_back( aAmmosCount[iSec][i] );

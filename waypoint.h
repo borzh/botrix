@@ -31,7 +31,7 @@ public: // Methods.
         vOrigin(vOrigin), iFlags(iFlags), iArgument(iArgument), iAreaId(iAreaId) {}
 
     /// Get waypoint flags for needed entity type (health, armor, weapon, ammo).
-    static TWaypointFlags GetFlagsFor( TEntityType iEntityType ) { return m_aFlagsForEntityType[iEntityType]; }
+    static TWaypointFlags GetFlagsFor( TItemType iEntityType ) { return m_aFlagsForEntityType[iEntityType]; }
 
     /// Get first angle from waypoint argument.
     static void GetFirstAngle( QAngle& a, int iArgument )
@@ -101,10 +101,10 @@ public: // Methods.
 
 
     /// Get button index from waypoint argument.
-    static TEntityIndex GetButton( int iArgument ) { return GET_3RD_BYTE(iArgument); }
+    static TItemIndex GetButton( int iArgument ) { return GET_3RD_BYTE(iArgument); }
 
     /// Set button index for waypoint argument.
-    static void SetButton( TEntityIndex iButton, int& iArgument ) { SET_3RD_BYTE(iButton, iArgument); }
+    static void SetButton( TItemIndex iButton, int& iArgument ) { SET_3RD_BYTE(iButton, iArgument); }
 
 
     /// Return true if point v 'touches' this waypoint.
@@ -142,7 +142,7 @@ public: // Members and constants.
     //unsigned char iPlayersCount;             ///< Count of players that reached this waypoint.
 
 protected:
-    static const TWaypointFlags m_aFlagsForEntityType[EEntityTypeNotObject];
+    static const TWaypointFlags m_aFlagsForEntityType[EItemTypeNotObject];
 };
 
 

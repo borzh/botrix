@@ -275,9 +275,9 @@ const good::string& CTypeToString::PathDrawFlagsToString( TPathDrawFlags iFlags 
 }
 
 //----------------------------------------------------------------------------------------------------------------
-// Ordered by TEntityType.
+// Ordered by TItemType.
 //----------------------------------------------------------------------------------------------------------------
-good::string aItemTypes[EEntityTypeTotal+1] =
+good::string aItemTypes[EItemTypeTotal+1] =
 {
     "health",
     "armor",
@@ -292,29 +292,29 @@ good::string aItemTypes[EEntityTypeTotal+1] =
 
 int CTypeToString::EntityTypeFromString( const good::string& sType )
 {
-    return EnumFromString( sType, EEntityTypeTotal+1, aItemTypes );
+    return EnumFromString( sType, EItemTypeTotal+1, aItemTypes );
 }
 
-const good::string& CTypeToString::EntityTypeToString( TEntityType iType )
+const good::string& CTypeToString::EntityTypeToString( TItemType iType )
 {
-    return EnumToString( iType, EEntityTypeTotal+1, aItemTypes, sUnknown );
+    return EnumToString( iType, EItemTypeTotal+1, aItemTypes, sUnknown );
 }
 
 int CTypeToString::EntityTypeFlagsFromString( const good::string& sFlags )
 {
-    return FlagsFromString( sFlags, EEntityTypeTotal+1, aItemTypes );
+    return FlagsFromString( sFlags, EItemTypeTotal+1, aItemTypes );
 }
 
-const good::string& CTypeToString::EntityTypeFlagsToString( TEntityTypeFlags iItemTypeFlags )
+const good::string& CTypeToString::EntityTypeFlagsToString( TItemTypeFlags iItemTypeFlags )
 {
-    return FlagsToString( iItemTypeFlags, EEntityTypeTotal+1, aItemTypes );
+    return FlagsToString( iItemTypeFlags, EItemTypeTotal+1, aItemTypes );
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
-// Ordered by TEntityFlags.
+// Ordered by TItemFlags.
 //----------------------------------------------------------------------------------------------------------------
-good::string aEntityClassFlags[EEntityFlagTotal] =
+good::string aEntityClassFlags[EItemFlagTotal] =
 {
     "use",
     "respawnable",
@@ -328,15 +328,15 @@ int CTypeToString::EntityClassFlagsFromString( const good::string& sFlags )
     if ( sFlags == sNone )
         return 0;
     else
-        return FlagsFromString( sFlags, EEntityFlagTotal, aEntityClassFlags );
+        return FlagsFromString( sFlags, EItemFlagTotal, aEntityClassFlags );
 }
 
-const good::string& CTypeToString::EntityClassFlagsToString( TEntityFlags iItemFlags )
+const good::string& CTypeToString::EntityClassFlagsToString( TItemFlags iItemFlags )
 {
     if ( iItemFlags == 0 )
         return sNone;
     else
-        return FlagsToString( iItemFlags, EEntityFlagTotal, aEntityClassFlags );
+        return FlagsToString( iItemFlags, EItemFlagTotal, aEntityClassFlags );
 }
 
 

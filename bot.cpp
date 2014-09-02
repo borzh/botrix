@@ -55,7 +55,7 @@ CBot::CBot( edict_t* pEdict, TBotIntelligence iIntelligence, TClass iClass ):
     m_bFeatureAttackDuckEnabled(iIntelligence < EBotNormal), m_bFeatureWeaponCheck(true)
 {
     m_aPickedItems.reserve(16);
-    for ( TEntityType i=0; i < EEntityTypeTotal; ++i )
+    for ( TItemType i=0; i < EItemTypeTotal; ++i )
     {
         int iSize = CItems::GetItems(i).size() >> 4;
         if ( iSize == 0 )
@@ -205,7 +205,7 @@ void CBot::Respawned()
 
     m_fPrevThinkTime = m_fStuckCheckTime = 0.0f;
 
-    for ( TEntityType i=0; i < EEntityTypeTotal; ++i )
+    for ( TItemType i=0; i < EItemTypeTotal; ++i )
     {
         m_iNextNearItem[i] = 0;
         m_aNearItems[i].clear();
@@ -242,18 +242,18 @@ void CBot::Respawned()
 
     // Check near items (skip objects).
     Vector vFoot = m_pController->GetLocalOrigin();
-    for ( TEntityType iType = 0; iType < EEntityTypeObject; ++iType )
+    for ( TItemType iType = 0; iType < EItemTypeObject; ++iType )
     {
-        good::vector<TEntityIndex>& aNear = m_aNearItems[iType];
-        good::vector<TEntityIndex>& aNearest = m_aNearestItems[iType];
+        good::vector<TItemIndex>& aNear = m_aNearItems[iType];
+        good::vector<TItemIndex>& aNearest = m_aNearestItems[iType];
 
-        const good::vector<CEntity>& aItems = CItems::GetItems(iType);
+        const good::vector<CItem>& aItems = CItems::GetItems(iType);
         if ( aItems.size() == 0)
             continue;
 
-        for ( TEntityIndex i = 0; i < (int)aItems.size(); ++i )
+        for ( TItemIndex i = 0; i < (int)aItems.size(); ++i )
         {
-            const CEntity* pItem = &aItems[i];
+            const CItem* pItem = &aItems[i];
 
             if ( pItem->IsFree() || !pItem->IsOnMap() ) // Item is picked or broken.
                 continue;
@@ -505,9 +505,9 @@ void CBot::PreThink()
             if ( CBotrixPlugin::fTime > m_fNextDrawNearObjectsTime )
             {
                 m_fNextDrawNearObjectsTime = CBotrixPlugin::fTime + fDrawNearObjectsTime;
-                for ( TEntityType iType=0; iType < EEntityTypeTotal; ++iType)
+                for ( TItemType iType=0; iType < EItemTypeTotal; ++iType)
                 {
-                    const good::vector<CEntity>& aItems = CItems::GetItems(iType);
+                    const good::vector<CItem>& aItems = CItems::GetItems(iType);
                     for ( int i=0; i < m_aNearItems[iType].size(); ++i) // Draw near items with white color.
                     {
                         ICollideable* pCollide = aItems[ m_aNearItems[iType][i] ].pEdict->GetCollideable();
@@ -742,17 +742,17 @@ void CBot::DoPathAction()
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex iIndex )
+void CBot::PickItem( const CItem& cItem, TItemType iEntityType, TItemIndex iIndex )
 {
     switch ( iEntityType )
     {
-    case EEntityTypeHealth:
+    case EItemTypeHealth:
         BotMessage("%s -> Picked %s. Health now %d.", GetName(), cItem.pItemClass->sClassName.c_str(), m_pPlayerInfo->GetHealth());
         break;
-    case EEntityTypeArmor:
+    case EItemTypeArmor:
         BotMessage("%s -> Picked %s. Armor now %d.", GetName(), cItem.pItemClass->sClassName.c_str(), m_pPlayerInfo->GetArmorValue());
         break;
-    case EEntityTypeWeapon:
+    case EItemTypeWeapon:
         if ( m_bFeatureWeaponCheck )
         {
             TWeaponId iWeapon = CWeapons::AddWeapon(cItem.pItemClass, m_aWeapons);
@@ -771,7 +771,7 @@ void CBot::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex
                 BLOG_W( "%s -> Picked weapon %s, but there is no such weapon.", GetName(), cItem.pItemClass->sClassName.c_str() );
         }
         break;
-    case EEntityTypeAmmo:
+    case EItemTypeAmmo:
         if ( m_bFeatureWeaponCheck )
         {
             if ( CWeapons::AddAmmo(cItem.pItemClass, m_aWeapons) )
@@ -783,14 +783,14 @@ void CBot::PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex
                 BLOG_W("%s -> Picked ammo %s, but bot doesn't have that weapon.", GetName(), cItem.pItemClass->sClassName.c_str() );
         }
         break;
-    case EEntityTypeObject:
+    case EItemTypeObject:
         BotMessage("%s -> Breaked object %s", GetName(), cItem.pItemClass->sClassName.c_str());
         break;
     default:
         BASSERT(false);
     }
 
-    if ( iEntityType != EEntityTypeObject )
+    if ( iEntityType != EItemTypeObject )
     {
         CPickedItem cPickedItem( iEntityType, iIndex, CBotrixPlugin::fTime );
 
@@ -919,13 +919,13 @@ void CBot::WeaponCheckCurrent( bool bAddToBotWeapons )
     {
         // Add weapon class first.
         BLOG_W( "%s -> adding new weapon class %s.", GetName(), szCurrentWeapon );
-        CEntityClass cWeaponClass;
+        CItemClass cWeaponClass;
         cWeaponClass.fPickupDistanceSqr = CMod::iPlayerRadius << 4; // 4*player's radius.
         cWeaponClass.fPickupDistanceSqr *= cWeaponClass.fPickupDistanceSqr;
         // Don't set engine name so mod will think that there is no such weapon in this map.
         //cWeaponClass.szEngineName = szCurrentWeapon;
         cWeaponClass.sClassName = szCurrentWeapon;
-        const CEntityClass* pClass = CItems::AddItemClassFor( EEntityTypeWeapon, cWeaponClass );
+        const CItemClass* pClass = CItems::AddItemClassFor( EItemTypeWeapon, cWeaponClass );
 
         // Add new weapon to default weapons.
         BLOG_W( "%s -> adding new weapon %s, %s.", GetName(), szCurrentWeapon,
@@ -1073,22 +1073,22 @@ void CBot::UpdateWorld()
 
     // Get near items.
     Vector vFoot = m_pController->GetLocalOrigin();
-    for ( TEntityType iType=0; iType < EEntityTypeTotal; ++iType )
+    for ( TItemType iType=0; iType < EItemTypeTotal; ++iType )
     {
-        const good::vector<CEntity>& aItems = CItems::GetItems(iType);
+        const good::vector<CItem>& aItems = CItems::GetItems(iType);
         if ( aItems.size() == 0)
             continue;
 
-        good::vector<TEntityIndex>& aNearest = m_aNearestItems[iType];
+        good::vector<TItemIndex>& aNearest = m_aNearestItems[iType];
         int iNearestSize = aNearest.size();
 
-        good::vector<TEntityIndex>& aNear = m_aNearItems[iType];
+        good::vector<TItemIndex>& aNear = m_aNearItems[iType];
         int iNearSize = aNear.size();
 
         // Update nearest items.
         for ( int i = 0; i < iNearestSize; )
         {
-            const CEntity& cItem = aItems[ aNearest[i] ];
+            const CItem& cItem = aItems[ aNearest[i] ];
             if ( cItem.IsFree() ) // Remove object if it is removed from game.
             {
                 aNearest.erase(aNearest.begin() + i);
@@ -1113,7 +1113,7 @@ void CBot::UpdateWorld()
         // Check if bot becomes too close to near items, to pass it to nearest items (and viceversa).
         for ( int i = 0; i < iNearSize; )
         {
-            const CEntity& cItem = aItems[ aNear[i] ];
+            const CItem& cItem = aItems[ aNear[i] ];
             if ( cItem.IsFree() || !cItem.IsOnMap() )
             {
                 aNear.erase(aNear.begin() + i);
@@ -1149,7 +1149,7 @@ void CBot::UpdateWorld()
 
         for ( int i = m_iNextNearItem[iType]; i < iCheckTo; ++i )
         {
-            const CEntity* pItem = &aItems[i];
+            const CItem* pItem = &aItems[i];
 
             if (   pItem->IsFree() || !pItem->IsOnMap() ||                           // Item is picked or broken.
                  ( find( aNear.begin(), aNear.end(), i ) != aNear.end() ) ||         // Item is near, all checks were already made before for all near items.
@@ -1511,7 +1511,7 @@ void CBot::WeaponShoot( int iSecondary )
         if ( !cWeapon.CanUse() )
             return;
 
-        BotDebug( "%s -> shoot %s %s, ammo %d/%d.", GetName(), (iSecondary) ? "secondary" : "primary",
+        BotDebug( "%s -> Shoot %s %s, ammo %d/%d.", GetName(), (iSecondary) ? "secondary" : "primary",
                   cWeapon.GetName().c_str(), cWeapon.Bullets(iSecondary), cWeapon.ExtraBullets(iSecondary) );
 
         cWeapon.Shoot(iSecondary);
@@ -1631,12 +1631,12 @@ bool CBot::ResolveStuckMove()
         return false;
     }
 
-    const CEntity* pObject = NULL;
+    const CItem* pObject = NULL;
     CWaypoint& wCurr = CWaypoints::Get(iCurrentWaypoint);
 
-    if ( m_aNearestItems[EEntityTypeObject].size() )
+    if ( m_aNearestItems[EItemTypeObject].size() )
     {
-        pObject = &CItems::GetItems(EEntityTypeObject)[ m_aNearestItems[EEntityTypeObject][0] ];
+        pObject = &CItems::GetItems(EItemTypeObject)[ m_aNearestItems[EItemTypeObject][0] ];
         // If object is behind, it doesn't disturb.
         Vector vObject = pObject->CurrentPosition();
         vObject -= m_vHead;
@@ -2261,9 +2261,9 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
         else
         {
             // Check if some object is near.
-            const CEntity* pObject = NULL;
-            if ( m_aNearestItems[EEntityTypeObject].size() )
-                pObject = &CItems::GetItems(EEntityTypeObject)[ m_aNearestItems[EEntityTypeObject][0] ];
+            const CItem* pObject = NULL;
+            if ( m_aNearestItems[EItemTypeObject].size() )
+                pObject = &CItems::GetItems(EItemTypeObject)[ m_aNearestItems[EItemTypeObject][0] ];
 
             if ( pObject && pObject->IsBreakable() && !pObject->IsExplosive() )
             {
@@ -2283,9 +2283,9 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
     // Aim at object (at m_fStartActionTime), press ATTACK2 (physcannon) for a second, aim back, press ATTACK1 once.
     if ( m_bStuckUsePhyscannon )
     {
-        const CEntity* pObject = NULL;
-        if ( m_aNearestItems[EEntityTypeObject].size() )
-            pObject = &CItems::GetItems(EEntityTypeObject)[ m_aNearestItems[EEntityTypeObject][0] ];
+        const CItem* pObject = NULL;
+        if ( m_aNearestItems[EItemTypeObject].size() )
+            pObject = &CItems::GetItems(EItemTypeObject)[ m_aNearestItems[EItemTypeObject][0] ];
 
         // Still not finished throwing object.
         if ( pObject && (CBotrixPlugin::fTime < m_fEndActionTime) )
@@ -2320,7 +2320,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
                             {
                                 BotDebug( "%s -> object position didn't change, aborting.", GetName() );
                                 // Bot can't pick it up? TODO: Maybe bot is standing on object.
-                                // FLAG_SET(FObjectHeavy, ((CEntity*)pObject)->iFlags);
+                                // FLAG_SET(FObjectHeavy, ((CItem*)pObject)->iFlags);
                                 WeaponShoot(CWeapon::PRIMARY);
                                 m_bStuckUsePhyscannon = m_bPathAim = false;
                                 m_bNeedSetWeapon = true;
@@ -2364,9 +2364,9 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
     // Start holding attack after m_fStartActionTime until break object or object moves far away.
     else if ( m_bStuckBreakObject )
     {
-        const CEntity* pObject = NULL;
-        if ( m_aNearestItems[EEntityTypeObject].size() )
-            pObject = &CItems::GetItems(EEntityTypeObject)[ m_aNearestItems[EEntityTypeObject][0] ];
+        const CItem* pObject = NULL;
+        if ( m_aNearestItems[EItemTypeObject].size() )
+            pObject = &CItems::GetItems(EItemTypeObject)[ m_aNearestItems[EItemTypeObject][0] ];
 
         if ( pObject )
         {

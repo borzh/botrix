@@ -41,7 +41,7 @@ public: // Members and constants.
     TPathDrawFlags iPathDrawFlags;             ///< Draw path flags for this player.
     TPathDrawFlags iVisiblesDrawFlags;         ///< Draw visible waypoints flags for this player.
 
-    TEntityTypeFlags iItemTypeFlags;           ///< Items to draw for this player.
+    TItemTypeFlags iItemTypeFlags;           ///< Items to draw for this player.
     TItemDrawFlags iItemDrawFlags;             ///< Draw item flags for this player.
 
     bool bAutoCreateWaypoints;                 ///< Generate automatically new waypoints, if distance is too far.

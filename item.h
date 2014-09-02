@@ -2,7 +2,10 @@
 #define __BOTRIX_ITEM_H__
 
 
+#include <good/list.h>
 #include <good/bitset.h>
+#include <good/vector.h>
+#include <good/utility.h>
 
 #include "defines.h"
 #include "types.h"
@@ -17,11 +20,11 @@ class CPlayer;
 //****************************************************************************************************************
 /// Class that represents class of entities.
 //****************************************************************************************************************
-class CEntityClass
+class CItemClass
 {
 public:
     /// Constructor.
-    CEntityClass(): szEngineName(NULL), iFlags(0), fPickupDistanceSqr(0.0f)  {}
+    CItemClass(): szEngineName(NULL), iFlags(0), fPickupDistanceSqr(0.0f)  {}
 
     /// Set class argument.
     void SetArgument( int iArgument ) { SET_2ND_WORD(iArgument, iFlags); }
@@ -30,7 +33,7 @@ public:
     int GetArgument() const { return GET_2ND_WORD(iFlags); }
 
     /// == operator.
-    bool operator==( const CEntityClass& cOther ) const
+    bool operator==( const CItemClass& cOther ) const
     {
         return ( szEngineName && (szEngineName == cOther.szEngineName) ) ||
                ( sClassName == cOther.sClassName );
@@ -44,7 +47,7 @@ public:
 
     good::string sClassName;            ///< Entity class name (like "prop_physics_multiplayer" or "item_healthkit").
     const char* szEngineName;           ///< Can compare this string with edict_t::GetClassName() only by pointer. Faster.
-    TEntityFlags iFlags;                ///< Entity flags and argument (how much health/armor restore, or bullets gives etc.).
+    TItemFlags iFlags;                  ///< Entity flags and argument (how much health/armor restore, or bullets gives etc.).
     float fPickupDistanceSqr;           ///< Distance to entity to consider it can be picked up.
 };
 
@@ -53,14 +56,14 @@ public:
 //****************************************************************************************************************
 /// Class that represents entity on a map.
 //****************************************************************************************************************
-class CEntity
+class CItem
 {
 public:
     /// Default constructor for array templates.
-    CEntity(): pEdict(NULL) {}
+    CItem(): pEdict(NULL) {}
 
     /// Constructor with parameters.
-    CEntity( edict_t* pEdict, TEntityFlags iFlags, float fPickupDistanceSqr, const CEntityClass* pItemClass,
+    CItem( edict_t* pEdict, TItemFlags iFlags, float fPickupDistanceSqr, const CItemClass* pItemClass,
              const Vector& vOrigin, TWaypointId iWaypoint ):
         pEdict(pEdict), iFlags(iFlags), fPickupDistanceSqr(fPickupDistanceSqr), iWaypoint(iWaypoint),
         vOrigin(vOrigin), pItemClass(pItemClass), pArguments(NULL) {}
@@ -84,17 +87,17 @@ public:
     const Vector& CurrentPosition() const { return pEdict->GetCollideable()->GetCollisionOrigin(); }
 
     /// == operator.
-    bool operator== ( const CEntity& other ) const { return pEdict == other.pEdict; }
+    bool operator== ( const CItem& other ) const { return pEdict == other.pEdict; }
 
     /// Maximum distance from item to waypoint, to consider that to grab item you need to go to that waypoint.
     static const int iMaxDistToWaypoint = 100;
 
     edict_t* pEdict;                    ///< Entity's edict.
-    TEntityFlags iFlags;                ///< Entity's flags.
+    TItemFlags iFlags;                  ///< Entity's flags.
     float fPickupDistanceSqr;           ///< Distance to entity to consider it can be picked up.
     TWaypointId iWaypoint;              ///< Entity's nearest waypoint.
     Vector vOrigin;                     ///< Entity's respawn position on map (bots will be looking there).
-    const CEntityClass* pItemClass;     ///< Entity's class.
+    const CItemClass* pItemClass;       ///< Entity's class.
     void* pArguments;                   ///< Entity's arguments. For example for door we have 2 waypoints.
 };
 
@@ -106,14 +109,14 @@ class CPickedItem
 {
 public:
     /// Constructor with entity.
-    CPickedItem( TEntityType iType, TEntityIndex iIndex, float fRemoveTime = 0.0f ):
+    CPickedItem( TItemType iType, TItemIndex iIndex, float fRemoveTime = 0.0f ):
         iType(iType), iIndex(iIndex), fRemoveTime(fRemoveTime) {}
 
     /// == operator.
     bool operator==( const CPickedItem& other ) const { return (other.iType == iType) && (other.iIndex == iIndex); }
 
-    TEntityType iType;    ///< Item's type (health, armor, ammo or weapon).
-    TEntityIndex iIndex;  ///< Entity's index in array CItems::Get(iType).
+    TItemType iType;    ///< Item's type (health, armor, ammo or weapon).
+    TItemIndex iIndex;  ///< Entity's index in array CItems::Get(iType).
     float fRemoveTime;    ///< Time when item should be removed from array of picked items (0 if shouldn't).
 };
 
@@ -126,48 +129,40 @@ class CItems
 
 public:
     /// Get random item clas for given entity type.
-    static const CEntityClass* GetRandomItemClass( TEntityType iEntityType )
+    static const CItemClass* GetRandomItemClass( TItemType iEntityType )
     {
         BASSERT( !m_aItemClasses[iEntityType].empty(), return NULL );
         int iSize = m_aItemClasses[iEntityType].size();
-        return iSize ? &m_aItemClasses[iEntityType][ rand() % iSize ] : NULL;
+        return iSize ? &good::at(m_aItemClasses[iEntityType], rand() % iSize) : NULL;
     }
 
     /// Get array of items of needed type.
-    static const good::vector<CEntity>& GetItems( TEntityType iEntityType ) { return m_aItems[iEntityType]; }
+    static const good::vector<CItem>& GetItems( TItemType iEntityType ) { return m_aItems[iEntityType]; }
 
     /// Get items class for entity class name.
-    static const CEntityClass* GetItemClass( TEntityType iEntityType, const good::string& sClassName )
+    static const CItemClass* GetItemClass( TItemType iEntityType, const good::string& sClassName )
     {
-        good::vector<CEntityClass>::const_iterator it = good::find(m_aItemClasses[iEntityType], sClassName);
+        good::list<CItemClass>::const_iterator it = good::find(m_aItemClasses[iEntityType], sClassName);
         return ( it == m_aItemClasses[iEntityType].end() ) ? NULL : &*it;
     }
 
     /// Get nearest item for a class (for example some item_battery or item_suitcharger for armor), skipping picked items in aSkip array.
-    static TEntityIndex GetNearestItem( TEntityType iEntityType, const Vector& vOrigin, const good::vector<CPickedItem>& aSkip, const CEntityClass* pClass = NULL );
+    static TItemIndex GetNearestItem( TItemType iEntityType, const Vector& vOrigin, const good::vector<CPickedItem>& aSkip, const CItemClass* pClass = NULL );
 
     /// Return true if at least one entity of this class exists on current map.
-    static bool ExistsOnMap( const CEntityClass* pEntityClass ) { return pEntityClass->szEngineName != NULL; }
-
-    /// Set size of entity classes for entity type.
-    /** This is done for one time allocation of array of entity classes, because pointers to entity classes will be used
-     *  (and we don't want array to be reallocated, as it invalidates pointers). */
-    static void SetEntityClassesSizeForType( TEntityType iEntityType, int iSize )
-    {
-        m_aItemClasses[iEntityType].reserve(iSize);
-    }
+    static bool ExistsOnMap( const CItemClass* pEntityClass ) { return pEntityClass->szEngineName != NULL; }
 
     /// Add item class (for example item_healthkit for health class).
-    static const CEntityClass* AddItemClassFor( TEntityType iEntityType, CEntityClass& cItemClass )
+    static const CItemClass* AddItemClassFor( TItemType iEntityType, CItemClass& cItemClass )
     {
         m_aItemClasses[iEntityType].push_back(cItemClass);
         return &m_aItemClasses[iEntityType].back();
     }
 
     /// Set object flags for given model.
-    static void SetObjectFlagForModel( TEntityFlags iItemFlag, const good::string& sModel )
+    static void SetObjectFlagForModel( TItemFlags iItemFlag, const good::string& sModel )
     {
-        m_aObjectFlagsForModels.push_back( good::pair<good::string, TEntityFlags>(sModel, iItemFlag) );
+        m_aObjectFlagsForModels.push_back( good::pair<good::string, TItemFlags>(sModel, iItemFlag) );
     }
 
 #ifndef SOURCE_ENGINE_2006
@@ -182,7 +177,7 @@ public:
     static void Unload()
     {
         MapUnloaded();
-        for ( int iType = 0; iType < EEntityTypeTotal; ++iType )
+        for ( int iType = 0; iType < EItemTypeTotal; ++iType )
             m_aItemClasses[iType].clear();
         m_aObjectFlagsForModels.clear();
     }
@@ -197,37 +192,37 @@ public:
     static void Update();
 
     /// Check if given door is opened.
-    static bool IsDoorOpened( TEntityIndex iDoor );
+    static bool IsDoorOpened( TItemIndex iDoor );
 
     /// Draw items for a given client.
     static void Draw( CClient* pClient );
 
 protected:
     /// Get entity type and class given entity name.
-    static TEntityType GetEntityType( const char* szClassName, CEntityClass* & pEntityClass,
-                                      TEntityType iFrom, TEntityType iTo, bool bFastCmp = false );
+    static TItemType GetEntityType( const char* szClassName, CItemClass* & pEntityClass,
+                                      TItemType iFrom, TItemType iTo, bool bFastCmp = false );
 
     static void CheckNewEntity( edict_t* pEdict );
-    static TEntityIndex InsertEntity( int iEntityType, const CEntity& cEntity );
-    static void AutoWaypointPathFlagsForEntity( TEntityType iEntityType, TEntityIndex iIndex, CEntity& cEntity );
-    static TEntityIndex AddItem( TEntityType iEntityType, edict_t* pEdict, CEntityClass* pItemClass, IServerEntity* pServerEntity );
-    static void AddObject( edict_t* pEdict, const CEntityClass* pObjectClass, IServerEntity* pServerEntity );
+    static TItemIndex InsertEntity( int iEntityType, const CItem& cEntity );
+    static void AutoWaypointPathFlagsForEntity( TItemType iEntityType, TItemIndex iIndex, CItem& cEntity );
+    static TItemIndex AddItem( TItemType iEntityType, edict_t* pEdict, CItemClass* pItemClass, IServerEntity* pServerEntity );
+    static void AddObject( edict_t* pEdict, const CItemClass* pObjectClass, IServerEntity* pServerEntity );
 
     friend class CWaypoints; // Give access to WaypointDeleted().
     static void WaypointDeleted( TWaypointId id );
 
-    static good::vector<CEntity> m_aItems[EEntityTypeTotal];            // Array of items.
-    static good::vector<CEntityClass> m_aItemClasses[EEntityTypeTotal]; // Array of item classes.
-    static TEntityIndex m_iFreeIndex[EEntityTypeTotal];                 // First free entity index.
-    static int m_iFreeEntityCount[EEntityTypeTotal];                    // Free entities count. TODO:
+    static good::vector<CItem> m_aItems[EItemTypeTotal];            // Array of items.
+    static good::list<CItemClass> m_aItemClasses[EItemTypeTotal];   // List of item classes. Pointer are used so it should not be reallocated.
+    static TItemIndex m_iFreeIndex[EItemTypeTotal];                 // First free entity index.
+    static int m_iFreeEntityCount[EItemTypeTotal];                  // Free entities count. TODO:
 
-    static good::vector<edict_t*> m_aOthers;                            // Array of other entities.
+    static good::vector<edict_t*> m_aOthers;                        // Array of other entities.
 
-    static TEntityIndex m_iCurrentEntity;                               // Current entity index to check.
+    static TItemIndex m_iCurrentEntity;                             // Current entity index to check.
     static const int m_iCheckEntitiesPerFrame = 32;
 
     // This one is to have models specific flags (for example car model with 'heavy' flag, or barrel model with 'explosive' flag).
-    static good::vector< good::pair<good::string, TEntityFlags> > m_aObjectFlagsForModels;
+    static good::vector< good::pair<good::string, TItemFlags> > m_aObjectFlagsForModels;
 
     static good::bitset m_aUsedItems; // To know which items are already in m_aItems.
 

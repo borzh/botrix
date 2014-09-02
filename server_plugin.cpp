@@ -322,7 +322,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 
     //BLOG_W("  No weapons available.");
     //BLOG_W("  No models of type 'object' available.");
-    //else if ( (iType != EEntityTypeAmmo) && (iType != EEntityTypeWeapon) ) // Will load ammo&weapons later.
+    //else if ( (iType != EItemTypeAmmo) && (iType != EItemTypeWeapon) ) // Will load ammo&weapons later.
     //    BLOG_W("  No entities of type '%s' available.", CTypeToString::EntityTypeToString(iType).c_str());
 
 

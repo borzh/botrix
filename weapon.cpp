@@ -66,7 +66,7 @@ void CWeaponWithAmmo::GameFrame( int& iButtons )
 void CWeaponWithAmmo::Shoot( int iSecondary )
 {
     GoodAssert( CanUse() && ( HasAmmoInClip(iSecondary) || IsMelee() || IsPhysics() || FLAG_SOME_SET(FWeaponHasSecondary, m_pWeapon->iFlags[iSecondary]) ) );
-    
+
     m_bReloading = m_bReloadingStart = false; // Stop reloading if weapon time is shotgun-like.
     m_iSecondary = iSecondary;
 
@@ -301,12 +301,12 @@ void CWeapons::GetRespawnWeapons( good::vector<CWeaponWithAmmo>& aWeapons, TTeam
 
 
 //----------------------------------------------------------------------------------------------------------------
-bool CWeapons::AddAmmo( const CEntityClass* pAmmoClass, good::vector<CWeaponWithAmmo>& aWeapons )
+bool CWeapons::AddAmmo( const CItemClass* pAmmoClass, good::vector<CWeaponWithAmmo>& aWeapons )
 {
     bool bResult = false;
     for ( int i=0; i < aWeapons.size(); ++i )
     {
-        const good::vector<const CEntityClass*>* aAmmos = aWeapons[i].GetBaseWeapon()->aAmmos;
+        const good::vector<const CItemClass*>* aAmmos = aWeapons[i].GetBaseWeapon()->aAmmos;
         const good::vector<int>* aAmmosCount = aWeapons[i].GetBaseWeapon()->aAmmosCount;
         for ( int iSec=CWeapon::PRIMARY; iSec <= CWeapon::SECONDARY; ++iSec )
             for ( int j=0; j < aAmmos[iSec].size(); ++j )

@@ -321,41 +321,41 @@ typedef enum TEventType TEventType;
 //****************************************************************************************************************
 /// Items types / object / other entities.
 //****************************************************************************************************************
-enum TEntityTypes
+enum TItemTypes
 {
-    EEntityTypeInvalid = -1,                     ///< Invalid entity type.
-    EEntityTypeHealth = 0,                       ///< Item that restores players health. Can be health machine also.
-    EEntityTypeArmor,                            ///< Item that restores players armor. Can be armor machine also.
-    EEntityTypeWeapon,                           ///< Weapon.
-    EEntityTypeAmmo,                             ///< Ammo for weapon.
-    EEntityTypeButton,                           ///< Button.
-    EEntityTypeDoor,                             ///< Door.
+    EItemTypeInvalid = -1,                     ///< Invalid entity type.
+    EItemTypeHealth = 0,                       ///< Item that restores players health. Can be health machine also.
+    EItemTypeArmor,                            ///< Item that restores players armor. Can be armor machine also.
+    EItemTypeWeapon,                           ///< Weapon.
+    EItemTypeAmmo,                             ///< Ammo for weapon.
+    EItemTypeButton,                           ///< Button.
+    EItemTypeDoor,                             ///< Door.
 
-    EEntityTypeObject,                           ///< Object that can stuck player (or optionally be moved).
-    EEntityTypeTotal,                            ///< Amount of item types. Object and other doens't count as bot can't pick them up.
+    EItemTypeObject,                           ///< Object that can stuck player (or optionally be moved).
+    EItemTypeTotal,                            ///< Amount of item types. Object and other doens't count as bot can't pick them up.
 
-    EEntityTypeNotObject = EEntityTypeTotal-1,   ///< All that is not object nor other.
-    EEntityTypeOther = EEntityTypeTotal,         ///< All other type of entities.
+    EItemTypeNotObject = EItemTypeTotal-1,   ///< All that is not object nor other.
+    EItemTypeOther = EItemTypeTotal,         ///< All other type of entities.
 };
-typedef int TEntityType;                         ///<  Items types / object / other entities.
+typedef int TItemType;                         ///<  Items types / object / other entities.
 
-enum TEntityClassIndexInvalid
+enum TItemClassIndexInvalid
 {
-    EEntityClassIndexInvalid = -1                ///< Invalid entity class index.
+    EItemClassIndexInvalid = -1                ///< Invalid entity class index.
 };
-typedef int TEntityClassIndex;                   ///< Index of entity class in CItems::GetClass().
+typedef int TItemClassIndex;                   ///< Index of entity class in CItems::GetClass().
 
-enum TEntityIndexInvalid
+enum TItemIndexInvalid
 {
-    EEntityIndexInvalid = -1                     ///< Invalid entity index.
+    EItemIndexInvalid = -1                     ///< Invalid entity index.
 };
-typedef int TEntityIndex;                        ///< Index of entity in CItems::GetItems().
+typedef int TItemIndex;                        ///< Index of entity in CItems::GetItems().
 
-enum TEntityTypeFlag
+enum TItemTypeFlag
 {
-    EItemTypeAll = (1<<(EEntityTypeOther+1))-1   ///< Flag to draw all items.
+    EItemTypeAll = (1<<(EItemTypeOther+1))-1   ///< Flag to draw all items.
 };
-typedef int TEntityTypeFlags;                    ///< Item type flags (used to define which items to draw).
+typedef int TItemTypeFlags;                    ///< Item type flags (used to define which items to draw).
 
 
 //****************************************************************************************************************
@@ -377,7 +377,7 @@ typedef int TItemDrawFlags;                      ///< Item draw flags.
 //****************************************************************************************************************
 /// Item flags.
 //****************************************************************************************************************
-enum TEntityFlag
+enum TItemFlag
 {
     FEntityNone                = 0,              ///< Entity has no flags.
     FItemUse                   = 1<<0,           ///< Press button USE to use entity (like health/armor machines).
@@ -386,12 +386,12 @@ enum TEntityFlag
     FObjectHeavy               = 1<<3,           ///< Can't use physcannon on this object.
     FObjectBox                 = 1<<4,           ///< Can use this entity to jump on.
 
-    EEntityFlagTotal           = 5,              ///< Amount of entity flags.
+    EItemFlagTotal           = 5,              ///< Amount of entity flags.
     FEntityAll                 = (1<<5)-1,       ///< All entity flags (that are configurable at config.ini).
 
     FTaken                     = 1<<4,           ///< This flag is set for all weapons that belong to some player.
 };
-typedef int TEntityFlags;                        ///< Entity flags.
+typedef int TItemFlags;                        ///< Entity flags.
 
 
 //****************************************************************************************************************

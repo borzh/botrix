@@ -112,7 +112,7 @@ public: // Methods.
     }
 
     /// Return true if map has items or waypoint's of given type.
-    static bool HasMapItems( TEntityType iEntityType ) { return m_bMapHas[iEntityType]; }
+    static bool HasMapItems( TItemType iEntityType ) { return m_bMapHas[iEntityType]; }
 
     /// Get team index from team name.
     static int GetTeamIndex( const good::string& sTeam )
@@ -193,7 +193,7 @@ protected: // Members.
 
     static TModId m_iModId;                                  // Mod id.
     static good::vector<CEventPtr> m_aEvents;                // Events this mod handles.
-    static bool m_bMapHas[EEntityTypeNotObject];             // To check if map has items or waypoints of types: health, armor, weapon, ammo.
+    static bool m_bMapHas[EItemTypeNotObject];             // To check if map has items or waypoints of types: health, armor, weapon, ammo.
 
     // Events that happend on this frame.
     static good::vector< good::pair<TFrameEvent, TPlayerIndex> > m_aFrameEvents;

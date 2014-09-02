@@ -268,16 +268,16 @@ void CBot_TF2::CheckNewTasks( bool bForceTaskChange )
         : NULL;
     TBotIntelligence iWeaponPreference = m_iIntelligence;
 
-    bool bNeedHealth = CMod::HasMapItems(EEntityTypeHealth) && ( m_pPlayerInfo->GetHealth() < CMod::iPlayerMaxHealth );
+    bool bNeedHealth = CMod::HasMapItems(EItemTypeHealth) && ( m_pPlayerInfo->GetHealth() < CMod::iPlayerMaxHealth );
     bool bNeedHealthBad = bNeedHealth && ( m_pPlayerInfo->GetHealth() < (CMod::iPlayerMaxHealth/2) );
     bool bAlmostDead = bNeedHealthBad && ( m_pPlayerInfo->GetHealth() < (CMod::iPlayerMaxHealth/5) );
-    bool bNeedWeapon = pWeapon && CMod::HasMapItems(EEntityTypeWeapon);
-    bool bNeedAmmo = pWeapon && CMod::HasMapItems(EEntityTypeAmmo);
+    bool bNeedWeapon = pWeapon && CMod::HasMapItems(EItemTypeWeapon);
+    bool bNeedAmmo = pWeapon && CMod::HasMapItems(EItemTypeAmmo);
 
     TWeaponId iWeapon = EWeaponIdInvalid;
     bool bSecondary = false;
 
-    const CEntityClass* pEntityClass = NULL; // Weapon or ammo class to search for.
+    const CItemClass* pEntityClass = NULL; // Weapon or ammo class to search for.
 
     if ( bAlmostDead )
     {
@@ -320,7 +320,7 @@ restart_find_task: // TODO: remove gotos.
         }
         else if ( bNeedHealth ) // Need health (but has more than 50%).
             iNewTask = EBotTaskFindHealth;
-        else if ( CMod::HasMapItems(EEntityTypeArmor) && (m_pPlayerInfo->GetArmorValue() < CMod::iPlayerMaxArmor) ) // Need armor.
+        else if ( CMod::HasMapItems(EItemTypeArmor) && (m_pPlayerInfo->GetArmorValue() < CMod::iPlayerMaxArmor) ) // Need armor.
             iNewTask = EBotTaskFindArmor;
         else if ( bNeedWeapon && (pWeapon->iBotPreference < EBotPro) ) // Check if can find a better weapon.
         {
@@ -403,7 +403,7 @@ restart_find_task: // TODO: remove gotos.
 
     case EBotTaskFindHealth:
     case EBotTaskFindArmor:
-        pEntityClass = CItems::GetRandomItemClass(EEntityTypeHealth + (iNewTask - EBotTaskFindHealth));
+        pEntityClass = CItems::GetRandomItemClass(EItemTypeHealth + (iNewTask - EBotTaskFindHealth));
         break;
     }
 
@@ -416,8 +416,8 @@ find_enemy:
         m_iCurrentTask = iNewTask;
         if ( pEntityClass ) // Health, armor, weapon, ammo.
         {
-            TEntityType iType = EEntityTypeHealth + (iNewTask - EBotTaskFindHealth);
-            TEntityIndex iItemToSearch = CItems::GetNearestItem( iType, GetHead(), m_aPickedItems, pEntityClass );
+            TItemType iType = EItemTypeHealth + (iNewTask - EBotTaskFindHealth);
+            TItemIndex iItemToSearch = CItems::GetNearestItem( iType, GetHead(), m_aPickedItems, pEntityClass );
 
             if ( iItemToSearch == -1 )
             {
@@ -473,7 +473,7 @@ void CBot_TF2::TaskFinished()
 {
     if ( (EBotTaskFindHealth <= m_cItemToSearch.iType) && (m_cItemToSearch.iType <= EBotTaskFindAmmo) )
     {
-        const CEntity& cItem = CItems::GetItems(m_cItemToSearch.iType)[m_cItemToSearch.iIndex];
+        const CItem& cItem = CItems::GetItems(m_cItemToSearch.iType)[m_cItemToSearch.iIndex];
 
         // If item is not respawnable (or just bad configuration), force to not to search for it again right away, but in 1 minute.
         m_cItemToSearch.fRemoveTime = CBotrixPlugin::fTime;

@@ -29,17 +29,22 @@ namespace good
         //========================================================================================================
         /// Node of bidirectional list.
         //========================================================================================================
-        struct list_node
+        struct list_node_t
         {
-            T          elem; ///< Element of the list.
-            list_node* next; ///< Next list element.
-            list_node* prev; ///< Previous list element.
+            T elem;                                 ///< Element of the list.
+            list_node_t* next;                      ///< Next list element.
+            list_node_t* prev;                      ///< Previous list element.
         };
 
-        typedef struct list_node node_t;
+        typedef struct list_node_t node_t;
 
 
     public:
+        typedef T value_type;                       ///< Typedef to value type.
+        typedef int size_type;                      ///< Typedef to size type.
+        typedef T& reference;                       ///< Typedef to reference.
+        typedef const T& const_reference;           ///< Typedef to const reference.
+
         //========================================================================================================
         /// Const iterator of list.
         //========================================================================================================

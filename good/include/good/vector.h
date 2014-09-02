@@ -35,8 +35,10 @@ namespace good
     {
     public:
 
-        typedef T value_type; ///< Typedef to value type.
-        typedef int size_type; ///< Typedef to size type.
+        typedef T value_type;                       ///< Typedef to value type.
+        typedef int size_type;                      ///< Typedef to size type.
+        typedef T& reference;                       ///< Typedef to reference.
+        typedef const T& const_reference;           ///< Typedef to const reference.
 
         //========================================================================================================
         /// Const iterator of vector.

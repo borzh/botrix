@@ -87,7 +87,7 @@ public:
     static int EntityTypeFromString( const good::string& sType );
 
     /// Get string from item type.
-    static const good::string& EntityTypeToString( TEntityType iType );
+    static const good::string& EntityTypeToString( TItemType iType );
 
 
     //------------------------------------------------------------------------------------------------------------
@@ -96,7 +96,7 @@ public:
     static int EntityTypeFlagsFromString( const good::string& sFlag );
 
     /// Get string from item type flags.
-    static const good::string& EntityTypeFlagsToString( TEntityTypeFlags iItemTypeFlags );
+    static const good::string& EntityTypeFlagsToString( TItemTypeFlags iItemTypeFlags );
 
 
     //------------------------------------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ public:
     static int EntityClassFlagsFromString( const good::string& sFlags );
 
     /// Get string from item flags.
-    static const good::string& EntityClassFlagsToString( TEntityFlags iItemFlags );
+    static const good::string& EntityClassFlagsToString( TItemFlags iItemFlags );
 
 
     //------------------------------------------------------------------------------------------------------------

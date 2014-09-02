@@ -41,7 +41,7 @@ static const int WAYPOINT_FILE_FLAG_AREAS      = 1<<1; // Flag for area names.
 // CWaypoint static members.
 //----------------------------------------------------------------------------------------------------------------
 int CWaypoint::iWaypointTexture = -1;
-const TWaypointFlags CWaypoint::m_aFlagsForEntityType[EEntityTypeNotObject] =
+const TWaypointFlags CWaypoint::m_aFlagsForEntityType[EItemTypeNotObject] =
 {
     FWaypointHealth | FWaypointHealthMachine,
     FWaypointArmor | FWaypointArmorMachine,

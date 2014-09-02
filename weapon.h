@@ -34,7 +34,7 @@ public:
     static const int SECONDARY = 1;              ///< Index for secondary ammo.
 
     TWeaponId iId;                               ///< Weapon id.
-    const CEntityClass* pWeaponClass;            ///< Pointer to weapon class.
+    const CItemClass* pWeaponClass;            ///< Pointer to weapon class.
 
     TClass iClass;                               ///< Classes that can uses this weapon. Those are really flags.
     TTeam iTeam;                                 ///< Only this team can buy this weapon. Those are really flags.
@@ -63,7 +63,7 @@ public:
     TBotIntelligence iBotPreference;             ///< Smart bots will prefer weapons with higher preference.
     bool bForbidden;                             ///< True if weapon is forbidden.
 
-    good::vector<const CEntityClass*> aAmmos[2]; ///< Ammo item classes.
+    good::vector<const CItemClass*> aAmmos[2]; ///< Ammo item classes.
     good::vector<int> aAmmosCount[2];            ///< Ammos count for ammo at same index.
 };
 
@@ -324,7 +324,7 @@ public:
     }
 
     /// Get weapon from weapon class. Faster.
-    static TWeaponId GetIdFromWeaponClass( const CEntityClass* pWeaponClass )
+    static TWeaponId GetIdFromWeaponClass( const CItemClass* pWeaponClass )
     {
         for ( int i=0; i < m_aWeapons.size(); ++i )
             if ( m_aWeapons[i].GetBaseWeapon()->pWeaponClass == pWeaponClass )
@@ -333,7 +333,7 @@ public:
     }
 
     /// Add weapon to weapons.
-    static TWeaponId AddWeapon( const CEntityClass* pWeaponClass, good::vector<CWeaponWithAmmo>& aWeapons )
+    static TWeaponId AddWeapon( const CItemClass* pWeaponClass, good::vector<CWeaponWithAmmo>& aWeapons )
     {
         for ( TWeaponId iWeapon = 0; iWeapon < aWeapons.size(); ++iWeapon )
         {
@@ -347,7 +347,7 @@ public:
     }
 
     /// Add ammo to weapons.
-    static bool AddAmmo( const CEntityClass* pAmmoClass, good::vector<CWeaponWithAmmo>& aWeapons );
+    static bool AddAmmo( const CItemClass* pAmmoClass, good::vector<CWeaponWithAmmo>& aWeapons );
 
     /// Allow given weapon.
     static void Allow( TWeaponId iWeaponId ) { ((CWeapon*)m_aWeapons[iWeaponId].GetBaseWeapon())->bForbidden = false; }

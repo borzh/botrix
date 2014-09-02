@@ -169,7 +169,7 @@ protected: // Mod dependend protected functions.
     }
 
     // Bot just picked up given item.
-    virtual void PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex iIndex );
+    virtual void PickItem( const CItem& cItem, TItemType iEntityType, TItemIndex iIndex );
 
 
 protected: // Methods.
@@ -331,9 +331,9 @@ protected: // Members.
     CWaypointNavigator m_cNavigator;                               // Waypoint navigator.
     good::vector<TAreaId> m_aAvoidAreas;                           // Array of areas waypoint navigator must avoid.
 
-    good::vector<TEntityIndex> m_aNearestItems[EEntityTypeTotal];  // Nearest items from m_aNearItems that are checked every frame (to know if bot picked them up).
-    good::vector<TEntityIndex> m_aNearItems[EEntityTypeTotal];     // Items in close range.
-    int m_iNextNearItem[EEntityTypeTotal];                         // Next item to check if close (index in array CItems::GetItems()).
+    good::vector<TItemIndex> m_aNearestItems[EItemTypeTotal];  // Nearest items from m_aNearItems that are checked every frame (to know if bot picked them up).
+    good::vector<TItemIndex> m_aNearItems[EItemTypeTotal];     // Items in close range.
+    int m_iNextNearItem[EItemTypeTotal];                         // Next item to check if close (index in array CItems::GetItems()).
 
     good::bitset m_aNearPlayers;                                   // Bitset of players near (to know if bot can stuck with them).
     good::bitset m_aSeenEnemies;                                   // Bitset of enemies that bot can see right now.

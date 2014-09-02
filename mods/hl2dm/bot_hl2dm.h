@@ -65,10 +65,10 @@ protected:
     virtual bool DoWaypointAction();
 
     /// Bot just picked up given item.
-    virtual void PickItem( const CEntity& cItem, TEntityType iEntityType, TEntityIndex iIndex )
+    virtual void PickItem( const CItem& cItem, TItemType iEntityType, TItemIndex iIndex )
     {
         CBot::PickItem( cItem, iEntityType, iIndex );
-        if ( m_bFlee && (iEntityType == EEntityTypeHealth) )
+        if ( m_bFlee && (iEntityType == EItemTypeHealth) )
         {
             m_bFlee = ( m_pPlayerInfo->GetHealth() < (CMod::iPlayerMaxHealth/8) );
             m_bDontAttack = m_bFlee;

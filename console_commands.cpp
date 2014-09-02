@@ -779,7 +779,7 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
             int i1 = -1;
             sscanf(argv[++i], "%d", &i1);
 
-            int iButtonsCount = CItems::GetItems(EEntityTypeButton).size();
+            int iButtonsCount = CItems::GetItems(EItemTypeButton).size();
             if ( (i1 <= 0) || (i1 > iButtonsCount) )
             {
                 BULOG_W(pClient->GetEdict(), "Error, invalid button argument (must be from 1 to %d).", iButtonsCount);
@@ -2302,7 +2302,7 @@ TCommandResult CItemDrawCommand::Execute( CClient* pClient, int argc, const char
 
     // Retrieve flags from string arguments.
     bool bFinished = false;
-    TEntityTypeFlags iFlags = 0;
+    TItemTypeFlags iFlags = 0;
 
     if ( argc == 1 )
     {

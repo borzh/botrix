@@ -120,6 +120,32 @@ namespace good
 
 
     //************************************************************************************************************
+    /// Util function to get const element from non random access container.
+    //************************************************************************************************************
+    template <typename Container>
+    typename Container::const_reference at( const Container& aContainer, typename Container::size_type iPos )
+    {
+        GoodAssert( (0 <= iPos) && (iPos < aContainer.size()) );
+        typename Container::const_iterator it = aContainer.begin();
+        for ( typename Container::size_type i = 0; ( i != iPos ) && (it != aContainer.end()); ++it, ++i );
+        return *it;
+    }
+
+
+    //************************************************************************************************************
+    /// Util function to get element from non random access container.
+    //************************************************************************************************************
+    template <typename Container>
+    typename Container::reference& at( Container& aContainer, typename Container::size_type iPos )
+    {
+        GoodAssert( (0 <= iPos) && (iPos < aContainer.size()) );
+        typename Container::iterator it = aContainer.begin();
+        for ( typename Container::size_type i = 0; ( i != iPos ) && (it != aContainer.end()); ++it, ++i );
+        return *it;
+    }
+
+
+    //************************************************************************************************************
     /// Template to create reverse iterator from simple iterator.
     //************************************************************************************************************
     template < typename Iterator >

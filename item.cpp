@@ -559,7 +559,7 @@ void CItems::Draw( CClient* pClient )
     static float fNextDrawTime = 0.0f;
     static unsigned char pvs[MAX_MAP_CLUSTERS/8];
 
-    if ( (pClient->iItemDrawFlags == EItemDontDraw) || (pClient->iItemTypeFlags == 0) || (CBotrixPlugin::fTime < fNextDrawTime) )
+    if ( (pClient->iItemDrawFlags == FItemDontDraw) || (pClient->iItemTypeFlags == 0) || (CBotrixPlugin::fTime < fNextDrawTime) )
         return;
 
     fNextDrawTime = CBotrixPlugin::fTime + 1.0f;
@@ -594,7 +594,7 @@ void CItems::Draw( CClient* pClient )
             {
                 const CEntity* pEntity = (iEntityType == EEntityTypeOther) ? NULL : &m_aItems[iEntityType][i];
 
-                if ( FLAG_SOME_SET(EItemDrawStats, pClient->iItemDrawFlags) )
+                if ( FLAG_SOME_SET(FItemDrawStats, pClient->iItemDrawFlags) )
                 {
                     int pos = 0;
 
@@ -621,10 +621,10 @@ void CItems::Draw( CClient* pClient )
                 }
 
                 // Draw box around item.
-                if ( FLAG_SOME_SET(EItemDrawBoundBox, pClient->iItemDrawFlags) )
+                if ( FLAG_SOME_SET(FItemDrawBoundBox, pClient->iItemDrawFlags) )
                     CUtil::DrawBox(vOrigin, pCollide->OBBMins(), pCollide->OBBMaxs(), 1.0f, 0xFF, 0xFF, 0xFF, pCollide->GetCollisionAngles());
 
-                if ( FLAG_SOME_SET(EItemDrawWaypoint, pClient->iItemDrawFlags) && (iEntityType < EEntityTypeObject) )
+                if ( FLAG_SOME_SET(FItemDrawWaypoint, pClient->iItemDrawFlags) && (iEntityType < EEntityTypeObject) )
                 {
                     // Draw nearest waypoint from item.
                     if (CWaypoint::IsValid(pEntity->iWaypoint) )

@@ -202,7 +202,7 @@ enum TCommandAccessFlag
     FCommandAccessBot          = 1<<1,           ///< Access to bot's commands.
     FCommandAccessConfig       = 1<<2,           ///< Access to configuration's commands.
 
-    FCommandAccessTotal        = 3,              ///< Amount of access flags.
+    ECommandAccessFlagTotal    = 3,              ///< Amount of access flags.
     FCommandAccessAll          = (1<<3) - 1      ///< Access to all commands.
 };
 typedef int TCommandAccessFlags;
@@ -230,7 +230,7 @@ enum TWaypointFlag
     FWaypointButton            = 1<<9,           ///< A button is there. Arguments are angle (low word)  button index+1 (3rd byte), door index+1 (4th byte).
     FWaypointSeeButton         = 1<<10,          ///< Button is visible. Arguments are angle (low word), button index+1 (3rd byte), door index+1 (4th byte).
 
-    FWaypointTotal             = 11,             ///< Amount of waypoint flags.
+    EWaypointFlagTotal         = 11,             ///< Amount of waypoint flags.
     FWaypointAll               = (1<<11) - 1     ///< All flags set.
 };
 typedef unsigned short TWaypointFlags;           ///< Set of waypoint flags.
@@ -255,7 +255,7 @@ enum TPathFlag
     FPathDoor                  = 1<<8,           ///< There is a door on the way. Argument is door number (start from 1, 0 - invalid).
     FPathTotem                 = 1<<9,           ///< Need to make ladder of living corpses. Argument is count of players needed (1..).
 
-    FPathTotal                 = 10,             ///< Amount of path flags. Note that FPathDemo not counts.
+    EPathFlagTotal             = 10,             ///< Amount of path flags. Note that FPathDemo not counts.
     FPathAll                   = (1<<10)-1,      ///< All path flags.
 
     FPathDemo                  = 0x8000,         ///< Flag for use demo to reach adjacent waypoints. Demo number is at lower bits.
@@ -285,7 +285,7 @@ enum TWaypointDrawFlag
     FWaypointDrawBox           = 1<<2,           ///< Draw box.
     FWaypointDrawText          = 1<<3,           ///< Draw text (id, area, etc.).
 
-    FWaypointDrawTotal         = 4,              ///< Amount of draw type flags.
+    EWaypointDrawFlagTotal     = 4,              ///< Amount of draw type flags.
     FWaypointDrawAll           = (1<<4)-1,       ///< Draw all.
 };
 typedef int TWaypointDrawFlags;                  ///< Set of waypoint draw types.
@@ -300,7 +300,7 @@ enum TPathDrawFlag
     FPathDrawBeam              = 1<<0,           ///< Draw beam.
     FPathDrawLine              = 1<<1,           ///< Draw line.
 
-    FPathDrawTotal             = 2,              ///< Amount of draw type flags.
+    EPathDrawFlagTotal         = 2,              ///< Amount of draw type flags.
 
     FPathDrawAll               = (1<<2)-1,       ///< Draw beams and lines.
 };
@@ -363,13 +363,13 @@ typedef int TEntityTypeFlags;                    ///< Item type flags (used to d
 //****************************************************************************************************************
 enum TItemDrawFlag
 {
-    EItemDontDraw              = 0,              ///< Don't draw item.
-    EItemDrawStats             = 1<<0,           ///< Draw item class name, stats, model.
-    EItemDrawBoundBox          = 1<<1,           ///< Draw bound box around item.
-    EItemDrawWaypoint          = 1<<2,           ///< Draw line to nearest waypoint.
+    FItemDontDraw              = 0,              ///< Don't draw item.
+    FItemDrawStats             = 1<<0,           ///< Draw item class name, stats, model.
+    FItemDrawBoundBox          = 1<<1,           ///< Draw bound box around item.
+    FItemDrawWaypoint          = 1<<2,           ///< Draw line to nearest waypoint.
 
-    EItemDrawTotal             = 3,              ///< Amount of draw type flags.
-    EItemDrawAll               = (1<<3)-1,       ///< Draw all.
+    EItemDrawFlagTotal         = 3,              ///< Amount of draw type flags.
+    FItemDrawAll               = (1<<3)-1,       ///< Draw all.
 };
 typedef int TItemDrawFlags;                      ///< Item draw flags.
 
@@ -386,7 +386,7 @@ enum TEntityFlag
     FObjectHeavy               = 1<<3,           ///< Can't use physcannon on this object.
     FObjectBox                 = 1<<4,           ///< Can use this entity to jump on.
 
-    FEntityTotal               = 5,              ///< Amount of entity flags.
+    EEntityFlagTotal           = 5,              ///< Amount of entity flags.
     FEntityAll                 = (1<<5)-1,       ///< All entity flags (that are configurable at config.ini).
 
     FTaken                     = 1<<4,           ///< This flag is set for all weapons that belong to some player.

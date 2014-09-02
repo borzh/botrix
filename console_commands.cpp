@@ -229,7 +229,7 @@ CWaypointDrawFlagCommand::CWaypointDrawFlagCommand()
     m_iAccessLevel = FCommandAccessWaypoint;
 
     m_cAutoCompleteArguments.push_back(sNone);
-    for (int i=0; i < FWaypointDrawTotal; ++i)
+    for (int i=0; i < EWaypointDrawFlagTotal; ++i)
         m_cAutoCompleteArguments.push_back( CTypeToString::WaypointDrawFlagsToString(1<<i).duplicate() );
     m_cAutoCompleteArguments.push_back(sAll);
 }
@@ -954,7 +954,7 @@ CWaypointVisibilityCommand::CWaypointVisibilityCommand()
     m_iAccessLevel = FCommandAccessWaypoint;
 
     m_cAutoCompleteArguments.push_back(sNone);
-    for (int i=0; i < FPathDrawTotal; ++i)
+    for (int i=0; i < EPathDrawFlagTotal; ++i)
         m_cAutoCompleteArguments.push_back( CTypeToString::PathDrawFlagsToString(1<<i).duplicate() );
     m_cAutoCompleteArguments.push_back(sAll);
     m_cAutoCompleteArguments.push_back(sNext);
@@ -1234,7 +1234,7 @@ CPathDrawCommand::CPathDrawCommand()
     m_iAccessLevel = FCommandAccessWaypoint;
 
     m_cAutoCompleteArguments.push_back(sNone);
-    for (int i=0; i < FPathDrawTotal; ++i)
+    for (int i=0; i < EPathDrawFlagTotal; ++i)
         m_cAutoCompleteArguments.push_back( CTypeToString::PathDrawFlagsToString(1<<i).duplicate() );
     m_cAutoCompleteArguments.push_back(sAll);
     m_cAutoCompleteArguments.push_back(sNext);
@@ -2363,7 +2363,7 @@ TCommandResult CItemDrawTypeCommand::Execute( CClient* pClient, int argc, const 
 
     // Retrieve flags from string arguments.
     bool bFinished = false;
-    TItemDrawFlags iFlags = EItemDontDraw;
+    TItemDrawFlags iFlags = FItemDontDraw;
 
     if ( argc == 1 )
     {
@@ -2376,13 +2376,13 @@ TCommandResult CItemDrawTypeCommand::Execute( CClient* pClient, int argc, const 
             bFinished = true;
         else if ( sAll == argv[0] )
         {
-            iFlags = EItemDrawAll;
+            iFlags = FItemDrawAll;
             bFinished = true;
         }
         else if ( sNext == argv[0] )
         {
             int iNew = (pClient->iItemDrawFlags)  ?  pClient->iItemDrawFlags << 1  :  1;
-            iFlags = (iNew > EItemDrawAll) ? 0 : iNew;
+            iFlags = (iNew > FItemDrawAll) ? 0 : iNew;
             bFinished = true;
         }
     }
@@ -2394,7 +2394,7 @@ TCommandResult CItemDrawTypeCommand::Execute( CClient* pClient, int argc, const 
             int iAddFlag = CTypeToString::ItemDrawFlagsFromString(argv[i]);
             if ( iAddFlag == -1 )
             {
-                BULOG_W( pClient->GetEdict(), "Error, invalid draw type(s). Can be 'none' / 'all' / 'next' or mix of: %s", CTypeToString::ItemDrawFlagsToString(EItemDrawAll).c_str() );
+                BULOG_W( pClient->GetEdict(), "Error, invalid draw type(s). Can be 'none' / 'all' / 'next' or mix of: %s", CTypeToString::ItemDrawFlagsToString(FItemDrawAll).c_str() );
                 return ECommandError;
             }
             FLAG_SET(iAddFlag, iFlags);

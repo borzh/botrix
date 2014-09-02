@@ -220,7 +220,7 @@ public:
         m_sDescription = good::string("Can be mix of: ") + CTypeToString::WaypointFlagsToString(FWaypointAll);
         m_iAccessLevel = FCommandAccessWaypoint;
 
-        for ( int i=0; i < FWaypointAll; ++i )
+        for ( int i=0; i < EWaypointFlagTotal; ++i )
             m_cAutoCompleteArguments.push_back( CTypeToString::WaypointFlagsToString(1<<i).duplicate() );
     }
 
@@ -392,7 +392,7 @@ public:
         m_sDescription = good::string("Can be mix of: ") + CTypeToString::PathFlagsToString(FPathAll);
         m_iAccessLevel = FCommandAccessWaypoint;
 
-        for ( int i=0; i < FPathTotal; ++i )
+        for ( int i=0; i < EPathFlagTotal; ++i )
             m_cAutoCompleteArguments.push_back( CTypeToString::PathFlagsToString(1<<i).duplicate() );
     }
 
@@ -745,7 +745,7 @@ public:
     {
         m_sCommand = "drawtype";
         m_sHelp = "defines how to draw items";
-        m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::ItemDrawFlagsToString(EItemDrawAll);
+        m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::ItemDrawFlagsToString(FItemDrawAll);
         m_iAccessLevel = FCommandAccessWaypoint;
     }
 

@@ -33,7 +33,7 @@ void CClient::Activated()
     bAutoCreatePaths = FLAG_ALL_SET_OR_0(FCommandAccessWaypoint, iCommandAccessFlags);
     bAutoCreateWaypoints = false;
 
-    iItemDrawFlags = EItemDrawAll;
+    iItemDrawFlags = FItemDrawAll;
     iItemTypeFlags = 0;
 
     iDestinationWaypoint = EWaypointIdInvalid;

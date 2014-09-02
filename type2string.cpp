@@ -20,11 +20,13 @@ extern int iMainBufferSize;
 //================================================================================================================
 const good::string& EnumToString( int iEnum, int iEnumCount, const good::string aStrings[], const good::string& sDefault )
 {
+    GoodAssert( 0 <= iEnumCount );
     return (0 <= iEnum && iEnum < iEnumCount) ? aStrings[iEnum] : sDefault;
 }
 
 int EnumFromString( const good::string& s, int iEnumCount, const good::string aStrings[] )
 {
+    GoodAssert( 0 <= iEnumCount );
     for ( int i=0; i < iEnumCount; ++i )
         if ( s == aStrings[i] )
             return i;
@@ -41,13 +43,13 @@ inline const good::string& EnumToString( int iEnum, const StringVector& aStrings
 inline int EnumFromString( const good::string& s, const StringVector& aStrings )
 {
     return EnumFromString( s, aStrings.size(), aStrings.data() );
-
 }
 
 
 //================================================================================================================
 const good::string& FlagsToString( int iFlags, int iFlagsCount, const good::string aStrings[] )
 {
+    GoodAssert( 0 <= iFlagsCount );
     if ( iFlags == 0 )
         return sNone;
 
@@ -70,11 +72,13 @@ const good::string& FlagsToString( int iFlags, const StringVector& aStrings )
 
 int FlagsFromString( const good::string& s, int iFlagsCount, const good::string aStrings[] )
 {
+    GoodAssert( 0 <= iFlagsCount );
+
     int iResult = 0;
     StringVector aFlags;
     good::split(s, aFlags, ' ', true);
 
-    for ( int i=0; i < (int)aFlags.size(); ++i )
+    for ( StringVector::size_type i=0; i < aFlags.size(); ++i )
     {
         int j;
         for ( j=0; j < iFlagsCount; ++j )
@@ -96,6 +100,8 @@ int FlagsFromString( const good::string& s, int iFlagsCount, const good::string 
 //****************************************************************************************************************
 const good::string& CTypeToString::StringArrayToString( const good::string aStrings[], int iSize )
 {
+    GoodAssert( 0 <= iSize );
+
     static good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
     sbBuffer.erase();
 
@@ -160,7 +166,7 @@ const good::string& CTypeToString::ModToString( TModId iMod )
 //----------------------------------------------------------------------------------------------------------------
 // Ordered by TCommandAccessFlags.
 //----------------------------------------------------------------------------------------------------------------
-good::string aAccessFlags[FCommandAccessTotal] =
+good::string aAccessFlags[ECommandAccessFlagTotal] =
 {
     "waypoint",
     "bot",
@@ -169,19 +175,19 @@ good::string aAccessFlags[FCommandAccessTotal] =
 
 int CTypeToString::AccessFlagsFromString( const good::string& sFlags )
 {
-    return FlagsFromString( sFlags, FCommandAccessTotal, aAccessFlags );
+    return FlagsFromString( sFlags, ECommandAccessFlagTotal, aAccessFlags );
 }
 
 const good::string& CTypeToString::AccessFlagsToString( TCommandAccessFlags iFlags )
 {
-    return FlagsToString( iFlags, FCommandAccessTotal, aAccessFlags );
+    return FlagsToString( iFlags, ECommandAccessFlagTotal, aAccessFlags );
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
 // Ordered by TWaypointFlag.
 //----------------------------------------------------------------------------------------------------------------
-good::string aWaypointFlags[FWaypointTotal] =
+good::string aWaypointFlags[EWaypointFlagTotal] =
 {
     "stop",
     "camper",
@@ -198,19 +204,19 @@ good::string aWaypointFlags[FWaypointTotal] =
 
 int CTypeToString::WaypointFlagsFromString( const good::string& sFlags )
 {
-    return FlagsFromString( sFlags, FWaypointTotal, aWaypointFlags );
+    return FlagsFromString( sFlags, EWaypointFlagTotal, aWaypointFlags );
 }
 
 const good::string& CTypeToString::WaypointFlagsToString(TWaypointFlags iFlags)
 {
-    return FlagsToString( iFlags, FWaypointTotal, aWaypointFlags );
+    return FlagsToString( iFlags, EWaypointFlagTotal, aWaypointFlags );
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
 // Ordered by TPathFlag.
 //----------------------------------------------------------------------------------------------------------------
-good::string aPathFlags[FPathTotal] =
+good::string aPathFlags[EPathFlagTotal] =
 {
     "crouch",
     "jump",
@@ -227,19 +233,19 @@ good::string aPathFlags[FPathTotal] =
 
 int CTypeToString::PathFlagsFromString( const good::string& sFlags )
 {
-    return FlagsFromString( sFlags, FPathTotal, aPathFlags );
+    return FlagsFromString( sFlags, EPathFlagTotal, aPathFlags );
 }
 
 const good::string& CTypeToString::PathFlagsToString( TPathFlags iFlags )
 {
-    return FlagsToString( iFlags, FPathTotal, aPathFlags );
+    return FlagsToString( iFlags, EPathFlagTotal, aPathFlags );
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
 // Ordered by TWaypointDrawFlags.
 //----------------------------------------------------------------------------------------------------------------
-good::string aDrawTypeFlags[FWaypointDrawTotal] =
+good::string aDrawTypeFlags[EWaypointDrawFlagTotal] =
 {
     "beam",
     "line",
@@ -249,23 +255,23 @@ good::string aDrawTypeFlags[FWaypointDrawTotal] =
 
 int CTypeToString::WaypointDrawFlagsFromString( const good::string& sFlags )
 {
-    return FlagsFromString( sFlags, FWaypointDrawTotal, aDrawTypeFlags );
+    return FlagsFromString( sFlags, EWaypointDrawFlagTotal, aDrawTypeFlags );
 }
 
 const good::string& CTypeToString::WaypointDrawFlagsToString( TWaypointDrawFlags iFlags )
 {
-    return FlagsToString( iFlags, FWaypointDrawTotal, aDrawTypeFlags );
+    return FlagsToString( iFlags, EWaypointDrawFlagTotal, aDrawTypeFlags );
 }
 
 
 int CTypeToString::PathDrawFlagsFromString( const good::string& sFlags )
 {
-    return FlagsFromString( sFlags, FPathDrawTotal, aDrawTypeFlags );
+    return FlagsFromString( sFlags, EPathDrawFlagTotal, aDrawTypeFlags );
 }
 
 const good::string& CTypeToString::PathDrawFlagsToString( TPathDrawFlags iFlags )
 {
-    return FlagsToString( iFlags, FPathDrawTotal, aDrawTypeFlags );
+    return FlagsToString( iFlags, EPathDrawFlagTotal, aDrawTypeFlags );
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -308,7 +314,7 @@ const good::string& CTypeToString::EntityTypeFlagsToString( TEntityTypeFlags iIt
 //----------------------------------------------------------------------------------------------------------------
 // Ordered by TEntityFlags.
 //----------------------------------------------------------------------------------------------------------------
-good::string aEntityClassFlags[FEntityTotal] =
+good::string aEntityClassFlags[EEntityFlagTotal] =
 {
     "use",
     "respawnable",
@@ -322,7 +328,7 @@ int CTypeToString::EntityClassFlagsFromString( const good::string& sFlags )
     if ( sFlags == sNone )
         return 0;
     else
-        return FlagsFromString( sFlags, FEntityTotal, aEntityClassFlags );
+        return FlagsFromString( sFlags, EEntityFlagTotal, aEntityClassFlags );
 }
 
 const good::string& CTypeToString::EntityClassFlagsToString( TEntityFlags iItemFlags )
@@ -330,14 +336,14 @@ const good::string& CTypeToString::EntityClassFlagsToString( TEntityFlags iItemF
     if ( iItemFlags == 0 )
         return sNone;
     else
-        return FlagsToString( iItemFlags, FEntityTotal, aEntityClassFlags );
+        return FlagsToString( iItemFlags, EEntityFlagTotal, aEntityClassFlags );
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
 // Ordered by TItemDrawFlags.
 //----------------------------------------------------------------------------------------------------------------
-good::string aItemDrawFlags[EItemDrawTotal] =
+good::string aItemDrawFlags[EItemDrawFlagTotal] =
 {
     "name",
     "box",
@@ -346,12 +352,12 @@ good::string aItemDrawFlags[EItemDrawTotal] =
 
 int CTypeToString::ItemDrawFlagsFromString( const good::string& sFlags )
 {
-    return FlagsFromString( sFlags, EItemDrawTotal, aItemDrawFlags );
+    return FlagsFromString( sFlags, EItemDrawFlagTotal, aItemDrawFlags );
 }
 
 const good::string& CTypeToString::ItemDrawFlagsToString( TItemDrawFlags iFlags )
 {
-    return FlagsToString( iFlags, EItemDrawTotal, aItemDrawFlags );
+    return FlagsToString( iFlags, EItemDrawFlagTotal, aItemDrawFlags );
 }
 
 
@@ -518,7 +524,7 @@ good::string aBotTasks[EBotTasksTotal] =
     "find armor",
     "find weapon",
     "find ammo",
-    "chase enemy",
+    "engage enemy",
     "find enemy",
 };
 

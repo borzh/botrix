@@ -1251,7 +1251,7 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
 
         float fDistanceSqr = m_vHead.DistToSqr( pPlayer->GetHead() );
 
-        // Add 128 units to not to change enemy too often.
+        // Add 128 units to not to change enemy too often. TODO: strategy parameter.
         bEnemyChanged = ( m_pCurrentEnemy == NULL ) || ( bIsDifferentEnemy && (fDistanceSqr < m_fDistanceSqrToEnemy + 16384) );
         if ( bEnemyChanged || (m_pCurrentEnemy == pPlayer) ) // Update distance.
         {
@@ -1261,8 +1261,8 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
         }
 
         // Hit with melee.
-        if (  CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsMelee() && m_aWeapons[m_iWeapon].CanUse() &&
-              ( fDistanceSqr <= (SQR(CMod::iPlayerRadius) << 2) ) ) // (2*radius)^2 = 4*radius^2.
+        if ( CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsMelee() && m_aWeapons[m_iWeapon].CanUse() &&
+             IsMeleeRange(fDistanceSqr) )
             WeaponShoot( m_aWeapons[m_iWeapon].Damage(0) >= m_aWeapons[m_iWeapon].Damage(1) ? 0 : 1 );
     }
     else // Can't see this player anymore or player is dead.
@@ -1779,10 +1779,7 @@ bool CBot::ResolveStuckMove()
         }
     }
     else // Not using navigator and stucked?
-    {
         m_bMoveFailure = true; // Let mod decide what to do.
-        m_cNavigator.Stop();
-    }
     return false;
 }
 

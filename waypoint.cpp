@@ -390,7 +390,7 @@ bool CWaypoints::Load()
     }
     else
         BLOG_W( "No waypoints visibility table in file." );
-    
+
     fclose(f);
 
     return true;
@@ -403,7 +403,7 @@ TWaypointId CWaypoints::GetRandomNeighbour( TWaypointId iWaypoint, TWaypointId i
     const WaypointNode::arcs_t& aNeighbours = GetNode(iWaypoint).neighbours;
     TWaypointId iResult = rand() % aNeighbours.size();
 
-    if ( bValidVisibilityTable )
+    if ( bValidVisibilityTable && CWaypoint::IsValid(iTo) )
     {
         for ( int i = 0; i < aNeighbours.size(); ++i )
         {

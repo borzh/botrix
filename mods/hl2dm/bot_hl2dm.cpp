@@ -103,28 +103,33 @@ void CBot_HL2DM::Think()
     // Check for move failure.
     if ( m_bMoveFailure || m_bStuck )
     {
-        if ( iCurrentWaypoint == m_iFailWaypoint )
-            m_iFailsCount++;
-        else
+        if ( m_bUseNavigatorToMove )
         {
-            m_iFailWaypoint = iCurrentWaypoint;
-            m_iFailsCount = 1;
-        }
+            if ( iCurrentWaypoint == m_iFailWaypoint )
+                m_iFailsCount++;
+            else
+            {
+                m_iFailWaypoint = iCurrentWaypoint;
+                m_iFailsCount = 1;
+            }
 
-        if ( m_iFailsCount >= 3 )
-        {
-            BLOG_W("Failed to follow path on same waypoint %d 3 times, marking task as finished.", iCurrentWaypoint);
-            TaskFinished();
-            m_bNeedTaskCheck = bForceNewTask = true;
-            m_iFailsCount = 0;
-            m_iFailWaypoint = -1;
+            if ( m_iFailsCount >= 3 )
+            {
+                BLOG_W("Failed to follow path on same waypoint %d 3 times, marking task as finished.", iCurrentWaypoint);
+                TaskFinished();
+                m_bNeedTaskCheck = bForceNewTask = true;
+                m_iFailsCount = 0;
+                m_iFailWaypoint = -1;
+            }
+            else if ( m_bMoveFailure )
+            {
+                // Recalculate the route.
+                m_iDestinationWaypoint = m_iTaskDestination;
+                m_bNeedMove = m_bUseNavigatorToMove = m_bDestinationChanged = true;
+            }
         }
-        else if ( m_bMoveFailure )
-        {
-            // Recalculate the route.
-            m_iDestinationWaypoint = m_iTaskDestination;
-            m_bNeedMove = m_bUseNavigatorToMove = m_bDestinationChanged = true;
-        }
+        else
+            m_bNeedMove = false; // As if we got to the needed destination.
 
         m_bMoveFailure = m_bStuck = false;
     }
@@ -177,7 +182,7 @@ void CBot_HL2DM::CheckEngagedEnemy()
         {
             m_pChasedEnemy = m_pCurrentEnemy;
             m_bChasing = CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsMelee();
-            m_bNeedMove = false; // Start moving on next tick.
+            m_bNeedMove = m_bUseNavigatorToMove = false; // Start moving on next tick.
         }
         else
         {
@@ -206,19 +211,21 @@ void CBot_HL2DM::CheckEngagedEnemy()
         // Bot arrived where enemy is or to next random waypoint.
         // Tip: current enemy == chased enemy.
         GoodAssert( m_pChasedEnemy );
-        bool bNearEnemy = (m_pChasedEnemy->iCurrentWaypoint == iCurrentWaypoint);
-
         // Bot arrived at adyacent waypoint or is seeing enemy.
         m_bNeedMove = m_bDestinationChanged = true;
         m_bUseNavigatorToMove = m_bChasing = false;
 
         if ( CWeapon::IsValid(m_iWeapon) )
         {
-            if ( m_aWeapons[m_iWeapon].IsMelee() )
+            if ( m_aWeapons[m_iWeapon].IsMelee() ) // Rush toward enemy.
             {
-                if ( bNearEnemy )
+                CWaypointPath* pPath;
+                bool bNear = (m_pChasedEnemy->iCurrentWaypoint == iCurrentWaypoint) ||
+                             ( (pPath = CWaypoints::GetPath(iCurrentWaypoint, m_pChasedEnemy->iCurrentWaypoint)) &&
+                               !pPath->IsActionPath() );
+                if ( bNear )
                 {
-                    // We are at enemy waypoint using melee weapon, rush to enemy head.
+                    // We are near enemy waypoint using melee weapon, rush to enemy head.
                     iNextWaypoint = EWaypointIdInvalid;
                     m_vDestination = m_pCurrentEnemy->GetHead();
                     m_bNeedMove = true;

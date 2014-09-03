@@ -155,6 +155,8 @@ public:
     CWaypointPath( float fLength, TPathFlags iFlags = FPathNone, unsigned short iArgument = 0 ):
         fLength(fLength), iFlags(iFlags), iArgument(iArgument) {}
 
+    bool IsActionPath() { return iFlags != 0; }
+
     bool HasDemo() { return FLAG_SOME_SET(FPathDemo, iFlags); }
     int DemoNumber() { return iFlags & (FPathDemo-1); }
 

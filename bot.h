@@ -235,6 +235,9 @@ protected: // Methods.
     // Aim at enemy.
     void EnemyAim();
 
+    // Return true if distance to enemy is 2*player radius.
+    bool IsMeleeRange( float fDistanceSqr ) { return fDistanceSqr <= (SQR(CMod::iPlayerRadius) << 2); }
+
     // Get current weapon id.
     TWeaponId WeaponSearch( const char* szWeapon )
     {

@@ -5,6 +5,12 @@
 #include "game/shared/in_buttons.h"
 
 
+#if defined(DEBUG) || defined(_DEBUG)
+    #define WEAPON_TRACE(...)    BLOG_T(__VA_ARGS__)
+#else
+    #define WEAPON_TRACE(...)
+#endif
+
 //----------------------------------------------------------------------------------------------------------------
 good::vector<CWeaponWithAmmo> CWeapons::m_aWeapons;
 
@@ -25,6 +31,7 @@ void CWeaponWithAmmo::GameFrame( int& iButtons )
 
         else if ( m_bReloadingStart )
         {
+            WEAPON_TRACE( "%.5f end reload start.", CBotrixPlugin::fTime );
             m_bReloadingStart = false;
             m_bReloading = true;
             m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadTime[m_iSecondary];
@@ -73,6 +80,7 @@ void CWeaponWithAmmo::Shoot( int iSecondary )
     float fHold = m_pWeapon->fHoldTime[iSecondary];
     if ( fHold )
     {
+        WEAPON_TRACE( "%.5f hold %d.", CBotrixPlugin::fTime, iSecondary );
         m_bHolding = true;
         m_fEndTime = CBotrixPlugin::fTime + fHold;
     }
@@ -93,6 +101,7 @@ void CWeaponWithAmmo::EndHold()
     float fShotTime = m_pWeapon->fShotTime[m_iSecondary];
     if ( fShotTime )
     {
+        WEAPON_TRACE( "%.5f shoot %d.", CBotrixPlugin::fTime, m_iSecondary );
         m_bShooting = true;
         m_fEndTime = CBotrixPlugin::fTime + fShotTime;
     }
@@ -102,15 +111,18 @@ void CWeaponWithAmmo::EndHold()
 //----------------------------------------------------------------------------------------------------------------
 void CWeaponWithAmmo::Reload( int iSecondary )
 {
+
     GoodAssert( CanUse() && NeedReload(iSecondary) );
     m_iSecondary = iSecondary;
     if ( m_pWeapon->fReloadStartTime[iSecondary] )
     {
+        WEAPON_TRACE( "%.5f reload start.", CBotrixPlugin::fTime );
         m_bReloadingStart = true;
         m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadStartTime[iSecondary];
     }
     else
     {
+        WEAPON_TRACE( "%.5f reload.", CBotrixPlugin::fTime );
         m_bReloading = true;
         if ( m_pWeapon->fReloadTime[iSecondary] )
             m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadTime[iSecondary];
@@ -175,9 +187,15 @@ void CWeaponWithAmmo::EndReload()
     m_iBulletsInClip[m_iSecondary] += iReloadBy;
     m_iBulletsExtra[m_iSecondary]  -= iReloadBy;
     if ( (m_iBulletsInClip[m_iSecondary] < iClipSize) && m_iBulletsExtra[m_iSecondary] )
+    {
+        WEAPON_TRACE( "%.5f end partial reload by %d.", CBotrixPlugin::fTime, iReloadBy );
         m_fEndTime = CBotrixPlugin::fTime + m_pWeapon->fReloadTime[m_iSecondary]; // Do next reload.
+    }
     else
+    {
+        WEAPON_TRACE( "%.5f end reload by %d.", CBotrixPlugin::fTime, iReloadBy );
         m_bReloading = false;
+    }
 }
 
 

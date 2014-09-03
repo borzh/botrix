@@ -71,8 +71,10 @@ public:
     /// Get player's view angles.
     void GetEyeAngles( QAngle& a ) const
     {
-        CBotCmd cCmd = m_pPlayerInfo->GetLastUserCommand();
-        a = cCmd.viewangles;
+        // TODO: remove comment if works.
+//        CBotCmd cCmd = m_pPlayerInfo->GetLastUserCommand();
+//        a = cCmd.viewangles;
+        a = m_pPlayerInfo->GetAbsAngles();
     }
 
 

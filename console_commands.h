@@ -165,7 +165,8 @@ public:
     CWaypointDestinationCommand()
     {
         m_sCommand = "destination";
-        m_sHelp = "set given or current waypoint as path 'destination'";
+        m_sHelp = "lock given or current waypoint as path 'destination'";
+        m_sDescription = "Set to -1 to unlock.";
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );

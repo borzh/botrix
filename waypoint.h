@@ -20,7 +20,7 @@ class CWaypoint
 
 public: // Methods.
     /// Return true if waypoint id can be valid. Use CWaypoints::IsValid() to actualy verify waypoint range.
-    static inline bool IsValid(TWaypointId id) { return (id != EWaypointIdInvalid); }
+    static inline bool IsValid(TWaypointId id) { return (id >= 0); }
 
 public: // Methods.
     /// Default constructor.
@@ -187,6 +187,7 @@ public: // Types and constants.
     //typedef WaypointGraph::node_id TWaypointId;     ///< Type for node identifier.
 
     static bool bValidVisibilityTable;              ///< When waypoints are modified vis-table needs to be recalculated.
+    static float fNextDrawWaypointsTime;            ///< Next draw time of waypoints (draw once per second).
 
 public: // Methods.
     /// Return true if waypoint id is valid. Verifies that waypoint is actually exists.
@@ -274,11 +275,17 @@ public: // Methods.
     static StringVector& GetAreas() { return m_cAreas; }
 
     /// Get area id from name.
-    static TAreaId GetAreaId( const good::string& sName );
+    static TAreaId GetAreaId( const good::string& sName )
+    {
+        StringVector::const_iterator it( good::find(m_cAreas.begin(), m_cAreas.end(), sName) );
+        return ( it == m_cAreas.end() )  ?  EAreaIdInvalid  :  ( it - m_cAreas.begin() );
+    }
 
     /// Add new area name.
     static TAreaId AddAreaName( const good::string& sName ) { m_cAreas.push_back(sName); return m_cAreas.size()-1; }
 
+    /// Get waypoint at which player is looking at.
+    static TWaypointId GetAimedWaypoint( const Vector& vOrigin, const QAngle& ang );
 
     /// Draw nearest waypoints around player.
     static void Draw( CClient* pClient );
@@ -349,7 +356,6 @@ protected:
     static StringVector m_cAreas;      // Areas names.
 
     static WaypointGraph m_cGraph;         // Waypoints graph.
-    static float m_fNextDrawWaypointsTime; // Next draw time of waypoints (draw once per second).
 
     static good::vector< good::bitset > m_aVisTable;
 };

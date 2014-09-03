@@ -894,13 +894,15 @@ TCommandResult CWaypointDestinationCommand::Execute( CClient* pClient, int argc,
 
     if ( CWaypoint::IsValid(id) )
     {
+        pClient->bLockDestinationWaypoint = true;
         pClient->iDestinationWaypoint = id;
-        BULOG_I(pClient->GetEdict(), "Path 'destination' is waypoint %d.", id );
+        BULOG_I(pClient->GetEdict(), "Path 'destination' is waypoint %d, locked.", id );
         return ECommandPerformed;
     }
     else
     {
-        BULOG_W(pClient->GetEdict(), "Error, invalid given or current waypoint (move closer to waypoint).");
+        pClient->bLockDestinationWaypoint = false;
+        BULOG_I(pClient->GetEdict(), "Error, invalid arguments or current waypoint (move closer to waypoint).");
         return ECommandError;
     }
 }

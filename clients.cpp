@@ -51,6 +51,10 @@ void CClient::PreThink()
     int iLastWaypoint = iCurrentWaypoint;
     CPlayer::PreThink();
 
+    // Client don't have access to waypoint modification.
+    if ( FLAG_CLEARED(FCommandAccessWaypoint, iCommandAccessFlags) )
+        return;
+
     // Check if lost waypoint, in that case add new one.
     if ( bAutoCreateWaypoints && m_bAlive && !CWaypoint::IsValid(iCurrentWaypoint) )
     {
@@ -80,8 +84,17 @@ void CClient::PreThink()
         }
     }
 
+    // Calculate destination waypoint according to angles. Path's should be drawn.
+    if ( !bLockDestinationWaypoint && (iPathDrawFlags != FPathDrawNone) &&
+         (CWaypoints::fNextDrawWaypointsTime >= CBotrixPlugin::fTime) )
+    {
+        QAngle ang;
+        GetEyeAngles(ang);
+        iDestinationWaypoint = CWaypoints::GetAimedWaypoint( GetHead(), ang );
+    }
+
     // Draw waypoints.
-    CWaypoints::Draw(this);
+    CWaypoints::Draw(this); // TODO: should not draw for several admins...
 
     // Draw entities.
     CItems::Draw(this);

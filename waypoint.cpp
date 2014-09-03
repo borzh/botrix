@@ -52,7 +52,7 @@ const TWaypointFlags CWaypoint::m_aFlagsForEntityType[EItemTypeNotObject] =
 
 StringVector CWaypoints::m_cAreas;
 CWaypoints::WaypointGraph CWaypoints::m_cGraph;
-float CWaypoints::m_fNextDrawWaypointsTime = 0.0f;
+float CWaypoints::fNextDrawWaypointsTime = 0.0f;
 CWaypoints::Bucket CWaypoints::m_cBuckets[CWaypoints::BUCKETS_SIZE_X][CWaypoints::BUCKETS_SIZE_Y][CWaypoints::BUCKETS_SIZE_Z];
 
 good::vector< good::bitset > CWaypoints::m_aVisTable;
@@ -702,21 +702,63 @@ TWaypointId CWaypoints::GetAnyWaypoint(TWaypointFlags iFlags)
 
 
 //----------------------------------------------------------------------------------------------------------------
-TAreaId CWaypoints::GetAreaId( const good::string& sName )
+TWaypointId CWaypoints::GetAimedWaypoint( const Vector& vOrigin, const QAngle& ang )
 {
-    StringVector::const_iterator it( good::find(m_cAreas.begin(), m_cAreas.end(), sName) );
-    return ( it == m_cAreas.end() )  ?  EAreaIdInvalid  :  ( it - m_cAreas.begin() );
+    int x = GetBucketX(vOrigin.x);
+    int y = GetBucketY(vOrigin.y);
+    int z = GetBucketZ(vOrigin.z);
+
+    // Draw only waypoints from nearest buckets.
+    int minX, minY, minZ, maxX, maxY, maxZ;
+    GetBuckets(x, y, z, minX, minY, minZ, maxX, maxY, maxZ);
+
+    // Get visible clusters from player's position.
+    CUtil::SetPVSForVector(vOrigin);
+
+    TWaypointId iResult = EWaypointIdInvalid;
+    float fLowestAngDiff = 180 + 90; // Set to max angle difference.
+
+    for (x = minX; x <= maxX; ++x)
+        for (y = minY; y <= maxY; ++y)
+            for (z = minZ; z <= maxZ; ++z)
+            {
+                Bucket& bucket = m_cBuckets[x][y][z];
+                for (Bucket::iterator it=bucket.begin(); it != bucket.end(); ++it)
+                {
+                    WaypointNode& node = m_cGraph[*it];
+
+                    // Check if waypoint is in pvs from player's position.
+                    if ( CUtil::IsVisiblePVS(node.vertex.vOrigin) )
+                    {
+                        Vector vRelative(node.vertex.vOrigin);
+                        vRelative.z -= CMod::iPlayerEyeLevel>>1; // Consider to look at center of waypoint.
+                        vRelative -= vOrigin;
+
+                        QAngle angDiff;
+                        VectorAngles( vRelative, angDiff );
+                        CUtil::GetAngleDifference(ang, angDiff, angDiff);
+                        float fAngDiff = fabs(angDiff.x) + fabs(angDiff.y);
+                        if ( fAngDiff < fLowestAngDiff )
+                        {
+                            fLowestAngDiff = fAngDiff;
+                            iResult = *it;
+                        }
+                    }
+                }
+            }
+
+    return iResult;
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoints::Draw( CClient* pClient )
 {
-    if ( CBotrixPlugin::fTime < m_fNextDrawWaypointsTime )
+    if ( CBotrixPlugin::fTime < fNextDrawWaypointsTime )
         return;
 
     float fDrawTime = CWaypoint::DRAW_INTERVAL + (2.0f / CBotrixPlugin::iFPS); // Add two frames to not flick.
-    m_fNextDrawWaypointsTime = CBotrixPlugin::fTime + CWaypoint::DRAW_INTERVAL;
+    fNextDrawWaypointsTime = CBotrixPlugin::fTime + CWaypoint::DRAW_INTERVAL;
 
     if ( pClient->iWaypointDrawFlags != FWaypointDrawNone )
     {
@@ -769,7 +811,8 @@ void CWaypoints::Draw( CClient* pClient )
         }
     }
 
-    if ( bValidVisibilityTable && (pClient->iVisiblesDrawFlags != FPathDrawNone) && CWaypoint::IsValid(pClient->iCurrentWaypoint) )
+    if ( bValidVisibilityTable && (pClient->iVisiblesDrawFlags != FPathDrawNone) &&
+         CWaypoint::IsValid(pClient->iCurrentWaypoint) )
         DrawVisiblePaths( pClient->iCurrentWaypoint, pClient->iVisiblesDrawFlags );
 }
 

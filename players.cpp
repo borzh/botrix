@@ -34,17 +34,17 @@ int CPlayers::m_iBotsCount = 0;
 
 //----------------------------------------------------------------------------------------------------------------
 CPlayer::CPlayer(edict_t* pEdict, bool bIsBot):
-    iCurrentWaypoint(-1), iNextWaypoint(-1), iPrevWaypoint(-1), iChatMate(-1),
-    m_pEdict(pEdict), m_iIndex(-1), 
-    m_pPlayerInfo(CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo(m_pEdict)), 
+    iCurrentWaypoint(EWaypointIdInvalid), iNextWaypoint(EWaypointIdInvalid), iPrevWaypoint(EWaypointIdInvalid),
+    iChatMate(-1), m_pEdict(pEdict), m_iIndex(-1),
+    m_pPlayerInfo(CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo(m_pEdict)),
     m_bBot(bIsBot), m_bAlive(false) {}
-        
+
 //----------------------------------------------------------------------------------------------------------------
 void CPlayer::Activated()
 {
-    m_iIndex = CPlayers::GetIndex(m_pEdict);
-
     BLOG_T( "Player %s activated.", GetName() );
+
+    m_iIndex = CPlayers::GetIndex(m_pEdict);
 
     m_sName.assign(GetName(), good::string::npos, true);
     good::lower_case(m_sName);
@@ -82,22 +82,21 @@ void CPlayer::PreThink()
 #endif
 
     m_vPrevHead = m_vHead;
-    CBotrixPlugin::pServerGameClients->ClientEarPosition(m_pEdict, &m_vHead); // borzh
+    CBotrixPlugin::pServerGameClients->ClientEarPosition(m_pEdict, &m_vHead);
 
     // If waypoint is not valid or we are too far, recalculate current waypoint.
+    float fDist;
     if ( !CWaypoint::IsValid(iCurrentWaypoint) ||
-        m_vHead.DistToSqr( CWaypoints::Get(iCurrentWaypoint).vOrigin ) > SQR(CWaypoint::MAX_RANGE))
+       ( (fDist = m_vHead.DistToSqr(CWaypoints::Get(iCurrentWaypoint).vOrigin)) > SQR(CWaypoint::MAX_RANGE) ) )
     {
         iPrevWaypoint = iCurrentWaypoint = CWaypoints::GetNearestWaypoint( m_vHead );
         return;
     }
 
     // Check if we are moved too far away from current waypoint as to be near to one of its neighbour.
-    TWaypointId iNewWaypoint = -1;
+    TWaypointId iNewWaypoint = EWaypointIdInvalid;
 
     CWaypoints::WaypointNode& w = CWaypoints::GetNode(iCurrentWaypoint);
-    float fDist = m_vHead.DistToSqr(w.vertex.vOrigin);
-
     if ( CWaypoint::IsValid(iNextWaypoint) ) // There is next waypoint in path, check if we are closer to it.
     {
         CWaypoint& n = CWaypoints::Get(iNextWaypoint);
@@ -107,7 +106,7 @@ void CPlayer::PreThink()
     }
     else
     {
-        for (int i = 0; i < (int)w.neighbours.size(); ++i)
+        for (int i = 0; i < w.neighbours.size(); ++i)
         {
             TWaypointId id = w.neighbours[i].target;
             CWaypoint& n = CWaypoints::Get(id);
@@ -120,7 +119,7 @@ void CPlayer::PreThink()
         }
     }
 
-    if ( iNewWaypoint >= 0 )
+    if ( CWaypoint::IsValid(iNewWaypoint) )
     {
         iPrevWaypoint = iCurrentWaypoint;
         iCurrentWaypoint = iNewWaypoint;

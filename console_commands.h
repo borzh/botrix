@@ -991,7 +991,67 @@ public:
 
 
 //****************************************************************************************************************
-// Commmand "version".
+// Command "enable".
+//****************************************************************************************************************
+class CEnableCommand: public CConsoleCommand
+{
+public:
+    CEnableCommand()
+    {
+        m_sCommand = "enable";
+        m_sHelp = "enable plugin";
+        m_iAccessLevel = FCommandAccessConfig;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** /*argv*/ )
+    {
+        edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
+        if ( argc )
+        {
+            BULOG_W( pEdict, "Error, invalid arguments count." );
+            return ECommandError;
+        }
+        else
+        {
+            CBotrixPlugin::instance->Enable(true);
+            BULOG_I( pEdict, "Plugin enabled." );
+            return ECommandPerformed;
+        }
+    }
+};
+
+
+// Command "disable".
+class CDisableCommand: public CConsoleCommand
+{
+public:
+    CDisableCommand()
+    {
+        m_sCommand = "disable";
+        m_sHelp = "disable plugin";
+        m_iAccessLevel = FCommandAccessConfig;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** /*argv*/ )
+    {
+        edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
+        if ( argc )
+        {
+            BULOG_W( pEdict, "Error, invalid arguments count." );
+            return ECommandError;
+        }
+        else
+        {
+            CBotrixPlugin::instance->Enable(false);
+            BULOG_I( pEdict, "Plugin disabled." );
+            return ECommandPerformed;
+        }
+    }
+};
+
+
+//****************************************************************************************************************
+// Command "version".
 //****************************************************************************************************************
 class CVersionCommand: public CConsoleCommand
 {

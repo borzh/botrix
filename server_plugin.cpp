@@ -130,7 +130,7 @@ IEngineTrace* CBotrixPlugin::pEngineTrace = NULL;
 IEffects* pEffects = NULL;
 IBotManager* CBotrixPlugin::pBotManager = NULL;
 //CGlobalVars* CBotrixPlugin::pGlobalVars = NULL;
-ICvar* CBotrixPlugin::pCvar = NULL;
+ICvar* CBotrixPlugin::pCVar = NULL;
 
 IVDebugOverlay* pVDebugOverlay = NULL;
 
@@ -155,7 +155,7 @@ IVDebugOverlay* pVDebugOverlay = NULL;
     }
 
 //----------------------------------------------------------------------------------------------------------------
-CBotrixPlugin::CBotrixPlugin(): bIsLoaded(false) {}
+CBotrixPlugin::CBotrixPlugin(): m_bEnabled(true) {}
 
 //----------------------------------------------------------------------------------------------------------------
 CBotrixPlugin::~CBotrixPlugin() {}
@@ -195,7 +195,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 #ifdef SOURCE_ENGINE_2006
     LOAD_INTERFACE(pCvar, ICvar, VENGINE_CVAR_INTERFACE_VERSION);
 #else
-    LOAD_INTERFACE(pCvar, ICvar, CVAR_INTERFACE_VERSION);
+    LOAD_INTERFACE(pCVar, ICvar, CVAR_INTERFACE_VERSION);
 #endif
 
 #endif // DONT_USE_VALVE_FUNCTIONS
@@ -313,7 +313,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     }
 
     // Create console command instance.
-    CMainCommand::instance = good::unique_ptr<CMainCommand>( new CMainCommand() );
+    CMainCommand::instance = new CMainCommand();
 
     // Load mod configuration.
     CMod::Load(iModId);
@@ -333,7 +333,6 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 #endif
     srand( time(NULL) );
 
-    bIsLoaded = true;
     const char* szMod = CMod::sModName.c_str();
     if ( CMod::sModName.size() == 0 )
         szMod = "unknown";
@@ -348,16 +347,13 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 //----------------------------------------------------------------------------------------------------------------
 void CBotrixPlugin::Unload( void )
 {
-    CConfiguration::Save();
     CConfiguration::Unload();
-
     CMainCommand::instance.reset();
 
     if ( pGameEventManager )
         pGameEventManager->RemoveListener(this);
 
     good::log::stop_log_to_file();
-    bIsLoaded = false;
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -365,6 +361,9 @@ void CBotrixPlugin::Unload( void )
 //----------------------------------------------------------------------------------------------------------------
 void CBotrixPlugin::Pause( void )
 {
+    CMainCommand::instance.reset();
+    LevelShutdown();
+    BLOG_W( "Plugin paused." );
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -372,6 +371,8 @@ void CBotrixPlugin::Pause( void )
 //----------------------------------------------------------------------------------------------------------------
 void CBotrixPlugin::UnPause( void )
 {
+    BLOG_W( "Plugin unpaused. It will not work until level change." );
+    CMainCommand::instance = new CMainCommand();
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -387,22 +388,7 @@ const char* CBotrixPlugin::GetPluginDescription( void )
 //----------------------------------------------------------------------------------------------------------------
 void CBotrixPlugin::LevelInit( const char* szMapName )
 {
-    sMapName.assign(szMapName, good::string::npos, true);
-    good::lower_case(sMapName);
-
-#ifndef DONT_USE_VALVE_FUNCTIONS
-    ConVar *pTeamplay = pCvar->FindVar("mp_teamplay");
-    bTeamPlay = pTeamplay ? pTeamplay->GetBool() : false;
-
-#ifdef USE_OLD_GAME_EVENT_MANAGER
-    pGameEventManager->AddListener( this, true );
-#endif
-
-    CWaypoint::iWaypointTexture = CBotrixPlugin::pEngineServer->PrecacheModel( "sprites/lgtning.vmt" );
-#endif
-
-    if ( CWaypoints::Load() )
-        BLOG_I("%d waypoints loaded for map %s.", CWaypoints::Size(), CBotrixPlugin::instance->sMapName.c_str());
+    PrepareLevel(szMapName);
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -411,13 +397,7 @@ void CBotrixPlugin::LevelInit( const char* szMapName )
 //----------------------------------------------------------------------------------------------------------------
 void CBotrixPlugin::ServerActivate( edict_t* /*pEdictList*/, int /*edictCount*/, int clientMax )
 {
-    bMapRunning = true;
-
-    CPlayers::Init(clientMax);
-    CItems::MapLoaded();
-    CMod::MapLoaded();
-
-    BLOG_I("Level \"%s\" has been loaded.", sMapName.c_str());
+    ActivateLevel(clientMax);
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -425,18 +405,20 @@ void CBotrixPlugin::ServerActivate( edict_t* /*pEdictList*/, int /*edictCount*/,
 //----------------------------------------------------------------------------------------------------------------
 void CBotrixPlugin::GameFrame( bool /*simulating*/ )
 {
-    CUtil::PrintMessagesInQueue();
+    if ( bMapRunning && m_bEnabled )
+    {
+        CUtil::PrintMessagesInQueue();
 
-    float fPrevEngineTime = fEngineTime;
-    fEngineTime = pEngineServer->Time();
+        float fPrevEngineTime = fEngineTime;
+        fEngineTime = pEngineServer->Time();
 
-    float fDiff = fEngineTime - fPrevEngineTime;
+        float fDiff = fEngineTime - fPrevEngineTime;
 #if defined(_DEBUG) || defined(DEBUG)
-    if ( fDiff > 1.0f ) // Too low fps, possibly debugging.
-        fTime += 0.1f;
-    else
+        if ( fDiff > 1.0f ) // Too low fps, possibly debugging.
+            fTime += 0.1f;
+        else
 #endif
-        fTime += fDiff;
+            fTime += fDiff;
 
     // FPS counting. Used in draw waypoints. TODO: define.
     /*m_iFramesCount++;
@@ -448,8 +430,6 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
         //BULOG_T(NULL, "FPS: %d", iFPS);
     }*/
 
-    if ( bMapRunning )
-    {
         CMod::Think();
 
         // Show fps.
@@ -491,8 +471,9 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
 //----------------------------------------------------------------------------------------------------------------
 // Called on level end (as the server is shutting down or going to a new map)
 //----------------------------------------------------------------------------------------------------------------
-void CBotrixPlugin::LevelShutdown( void ) // !!!!this can get called multiple times per map change
+void CBotrixPlugin::LevelShutdown( void )
 {
+    // This function gets called multiple times per map change.
     bMapRunning = false;
     sMapName = "";
 
@@ -503,8 +484,6 @@ void CBotrixPlugin::LevelShutdown( void ) // !!!!this can get called multiple ti
 #ifdef USE_OLD_GAME_EVENT_MANAGER
     pGameEventManager->RemoveListener(this);
 #endif
-
-    CConfiguration::Save();
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -512,7 +491,8 @@ void CBotrixPlugin::LevelShutdown( void ) // !!!!this can get called multiple ti
 //----------------------------------------------------------------------------------------------------------------
 void CBotrixPlugin::ClientActive( edict_t* pEntity )
 {
-    CPlayers::PlayerConnected(pEntity);
+    if ( bMapRunning )
+        CPlayers::PlayerConnected(pEntity);
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -520,7 +500,8 @@ void CBotrixPlugin::ClientActive( edict_t* pEntity )
 //----------------------------------------------------------------------------------------------------------------
 void CBotrixPlugin::ClientDisconnect( edict_t* pEntity )
 {
-    CPlayers::PlayerDisconnected(pEntity);
+    if ( bMapRunning )
+        CPlayers::PlayerDisconnected(pEntity);
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -535,7 +516,6 @@ void CBotrixPlugin::ClientPutInServer( edict_t* /*pEntity*/, const char* /*playe
 //----------------------------------------------------------------------------------------------------------------
 void CBotrixPlugin::SetCommandClient( int /*index*/ )
 {
-    //m_iClientCommandIndex = index;
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -605,13 +585,15 @@ PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &ar
 //----------------------------------------------------------------------------------------------------------------
 void CBotrixPlugin::OnEdictAllocated( edict_t *edict )
 {
-    CItems::Allocated(edict);
+    if ( bMapRunning )
+        CItems::Allocated(edict);
 }
 
 //----------------------------------------------------------------------------------------------------------------
 void CBotrixPlugin::OnEdictFreed( const edict_t *edict  )
 {
-    CItems::Freed(edict);
+    if ( bMapRunning )
+        CItems::Freed(edict);
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -619,6 +601,9 @@ void CBotrixPlugin::OnEdictFreed( const edict_t *edict  )
 //----------------------------------------------------------------------------------------------------------------
 PLUGIN_RESULT CBotrixPlugin::NetworkIDValidated( const char *pszUserName, const char *pszNetworkID )
 {
+    if ( !bMapRunning )
+        return PLUGIN_CONTINUE;
+
     TCommandAccessFlags iAccess = CConfiguration::ClientAccessLevel(pszNetworkID);
     if ( iAccess ) // Founded.
     {
@@ -644,11 +629,14 @@ PLUGIN_RESULT CBotrixPlugin::NetworkIDValidated( const char *pszUserName, const 
 }
 
 //----------------------------------------------------------------------------------------------------------------
-// Called when an event is fired
+// Called when an event is fired.
 //----------------------------------------------------------------------------------------------------------------
 #ifdef USE_OLD_GAME_EVENT_MANAGER
 void CBotrixPlugin::FireGameEvent( KeyValues* event )
 {
+    if ( !m_bEnabled || !bMapRunning )
+        return;
+
     good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
 
     const char* type = event->GetName();
@@ -694,6 +682,9 @@ void CBotrixPlugin::GenerateSayEvent( edict_t* pEntity, const char* szText, bool
 
 void CBotrixPlugin::FireGameEvent( IGameEvent * event )
 {
+    if ( !m_bEnabled || !bMapRunning )
+        return;
+
     if ( CPlayers::IsDebuggingEvents() )
         CPlayers::DebugEvent( "Event: %s", event->GetName() );
 
@@ -706,7 +697,7 @@ void CBotrixPlugin::GenerateSayEvent( edict_t* pEntity, const char* szText, bool
     BASSERT(iUserId != -1, return);
 
     IGameEvent* pEvent = pGameEventManager->CreateEvent("player_say");
-    if (pEvent)
+    if ( pEvent )
     {
         pEvent->SetInt("userid", iUserId);
         pEvent->SetString("text", szText);
@@ -720,16 +711,73 @@ void CBotrixPlugin::GenerateSayEvent( edict_t* pEntity, const char* szText, bool
 #endif
 
 
-void CBotrixPlugin::HudTextMessage( edict_t* pEntity, char* /*szTitle*/, char* szMessage, Color colour, int level, int time )
-{
-    KeyValues *kv = new KeyValues( "menu" );
-    kv->SetString( "title", szMessage );
-    //kv->SetString( "msg", szMessage );
-    kv->SetColor( "color", colour);
-    kv->SetInt( "level", level);
-    kv->SetInt( "time", time);
-    //DIALOG_TEXT
-    pServerPluginHelpers->CreateMessage( pEntity, DIALOG_MSG, kv, instance );
+//----------------------------------------------------------------------------------------------------------------
+//void CBotrixPlugin::HudTextMessage( edict_t* pEntity, char* /*szTitle*/, char* szMessage, Color colour, int level, int time )
+//{
+//    KeyValues *kv = new KeyValues( "menu" );
+//    kv->SetString( "title", szMessage );
+//    //kv->SetString( "msg", szMessage );
+//    kv->SetColor( "color", colour);
+//    kv->SetInt( "level", level);
+//    kv->SetInt( "time", time);
+//    //DIALOG_TEXT
+//    pServerPluginHelpers->CreateMessage( pEntity, DIALOG_MSG, kv, instance );
 
-    kv->deleteThis();
+//    kv->deleteThis();
+//}
+
+//----------------------------------------------------------------------------------------------------------------
+void CBotrixPlugin::Enable( bool bEnable )
+{
+    GoodAssert( bEnable != m_bEnabled );
+    m_bEnabled = bEnable;
+    CMainCommand::instance.reset();
+    CMainCommand::instance = new CMainCommand();
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+void CBotrixPlugin::PrepareLevel( const char* szMapName )
+{
+    // Get map name.
+//    const ConVar* pVarMapName = pCVar->FindVar("host_map");
+//    const char* szMapName = pVarMapName->GetString();
+
+//    const char* szPoint = strchr(szMapName, '.');
+//    good::string::size_type iSize = szPoint ? (szPoint - szMapName) : good::string::npos;
+
+    sMapName.assign(szMapName, good::string::npos, true);
+    good::lower_case(sMapName);
+
+#ifndef DONT_USE_VALVE_FUNCTIONS
+    ConVar *pTeamplay = pCVar->FindVar("mp_teamplay");
+    bTeamPlay = pTeamplay ? pTeamplay->GetBool() : false;
+
+#ifdef USE_OLD_GAME_EVENT_MANAGER
+    pGameEventManager->AddListener( this, true );
+#endif
+
+    CWaypoint::iWaypointTexture = CBotrixPlugin::pEngineServer->PrecacheModel( "sprites/lgtning.vmt" );
+#endif
+
+    if ( CWaypoints::Load() )
+        BLOG_I("%d waypoints loaded for map %s.", CWaypoints::Size(), CBotrixPlugin::instance->sMapName.c_str());
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+void CBotrixPlugin::ActivateLevel( int iMaxPlayers )
+{
+    bMapRunning = true;
+
+//    const ConVar* pVarMaxPlayers = pCVar->FindVar("maxplayers");
+//    int iMaxPlayers = pVarMaxPlayers ? pVarMaxPlayers->GetInt() : 64;
+//    if ( iMaxPlayers <= 0 )
+//        iMaxPlayers = 256;
+
+    CPlayers::Init(iMaxPlayers);
+    CItems::MapLoaded();
+    CMod::MapLoaded();
+
+    BLOG_I("Level \"%s\" has been loaded.", sMapName.c_str());
 }

@@ -138,16 +138,16 @@ public:
     static bool bBotsCountEqualsPlayersCount; ///< If true, then maintain bots == players.
 
     /// Get count of players on this server.
-    static int Size() { return m_aPlayers.size(); };
+    static inline int Size() { return m_aPlayers.size(); };
 
     /// Get bots count.
-    static int GetBotsCount() { return m_iBotsCount; }
+    static inline int GetBotsCount() { return m_iBotsCount; }
 
     /// Get clients count.
-    static int GetClientsCount() { return m_iClientsCount; }
+    static inline int GetClientsCount() { return m_iClientsCount; }
 
     /// Get players count.
-    static int GetPlayersCount() { return m_iClientsCount + m_iBotsCount; }
+    static inline int GetPlayersCount() { return m_iClientsCount + m_iBotsCount; }
 
     /// Get players count in given team.
     static int GetTeamCount( TTeam iTeam )
@@ -166,19 +166,19 @@ public:
     static void CheckBotsCount();
 
     /// Get player from index.
-    static CPlayer* Get( TPlayerIndex iIndex ) { return m_aPlayers[iIndex].get(); }
+    static inline CPlayer* Get( TPlayerIndex iIndex ) { return m_aPlayers[iIndex].get(); }
 
     /// Get player from index.
-    static CPlayer* Get( edict_t* pEdict ) { return m_aPlayers[ GetIndex(pEdict) ].get(); }
+    static inline CPlayer* Get( edict_t* pEdict ) { return m_aPlayers[ GetIndex(pEdict) ].get(); }
 
     /// Get player index from edict.
-    static int GetIndex( edict_t* pPlayer )
+    static inline int GetIndex( edict_t* pPlayer )
     {
         return CBotrixPlugin::pEngineServer->IndexOfEdict(pPlayer)-1;
     }
 
     /// Get client that created listen server (not dedicated server).
-    static CClient* GetListenServerClient() { return m_pListenServerClient; }
+    static inline CClient* GetListenServerClient() { return m_pListenServerClient; }
 
 
     /// Start new map.
@@ -226,7 +226,7 @@ public:
     // Debugging events.
     //------------------------------------------------------------------------------------------------------------
     /// Returns true if some client is debugging events.
-    static bool IsDebuggingEvents() { return m_bClientDebuggingEvents; }
+    static inline bool IsDebuggingEvents() { return m_bClientDebuggingEvents; }
 
     /// Check if some client is debugging events. If so, DebugEvent() with event info will be called.
     static void CheckForDebugging();
@@ -234,14 +234,19 @@ public:
     /// Display info message on client that is debugging events.
     static void DebugEvent( const char *szFormat, ... );
 
+    /// Get last error.
+    static inline const good::string& GetLastError() { return m_sLastError; }
 
 protected:
     static good::vector<CPlayerPtr> m_aPlayers;
     static CClient* m_pListenServerClient;                  // Client that created listen server (not dedicated server).
     static bool m_bClientDebuggingEvents;                   // True if some client is debugging event messages.
+    static bool m_bCheckBotCountFinished;                   // True if finished adding/kicking bots.
 
     static int m_iClientsCount;                             // Total amount of clients on this server.
     static int m_iBotsCount;                                // Total amount of bots on this server.
+
+    static good::string m_sLastError;                       // Last error.
 
     static good::vector< good::vector<bool> > m_iChatPairs; // 2D array representing who chats with whom.
 };

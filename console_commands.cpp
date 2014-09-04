@@ -185,7 +185,7 @@ int CConsoleCommandContainer::AutoComplete( const char* partial, int partialLeng
 
 TCommandResult CConsoleCommandContainer::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if (argc > 0)
+    if ( argc > 0 )
     {
         for ( int i = 0; i < m_commands.size(); i ++ )
         {
@@ -402,7 +402,7 @@ TCommandResult CWaypointMoveCommand::Execute( CClient* pClient, int argc, const 
         sscanf(argv[0], "%d", &id);
     else if ( argc != 3 )
     {
-        BULOG_W(pClient->GetEdict(), "Error, invalid arguments count, must be 1 or 3/4 (with given point x/y/z).");
+        BULOG_W(pClient->GetEdict(), "Error, invalid arguments count (waypoint id & point x/y/z).");
         return ECommandError;
     }
 
@@ -1826,14 +1826,17 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
         }
     }
 
-    if ( CPlayers::AddBot(szName, iTeam, iClass, iIntelligence, MAX2(0, argc-iTotal), &argv[iTotal]) )
+    CPlayer* pBot = CPlayers::AddBot(szName, iTeam, iClass, iIntelligence, MAX2(0, argc-iTotal), &argv[iTotal]);
+    if ( pBot )
     {
-        BULOG_I( pEdict, "Bot added: %s.", szName );
+        BULOG_I( pEdict, "Bot added: %s.", pBot->GetName() );
         return ECommandPerformed;
     }
     else
     {
-        BULOG_W( pEdict, CMod::pCurrentMod->GetLastError().c_str() );
+        const good::string& sLastError = CPlayers::GetLastError();
+        if ( sLastError.size() )
+            BULOG_W( pEdict, sLastError.c_str() );
         return ECommandError;
     }
 }
@@ -2605,18 +2608,24 @@ ConCommand botrix(MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. 
 CMainCommand::CMainCommand()
 {
     m_sCommand = "botrix";
-    Add(new CWaypointCommand);
-    Add(new CPathCommand);
-    Add(new CItemCommand);
-    Add(new CBotCommand);
-    Add(new CConfigCommand);
-    Add(new CVersionCommand);
+    if ( CBotrixPlugin::instance->IsEnabled() )
+    {
+        Add(new CBotCommand);
+        Add(new CConfigCommand);
+        Add(new CItemCommand);
+        Add(new CWaypointCommand);
+        Add(new CPathCommand);
+        Add(new CVersionCommand);
+        Add(new CDisableCommand);
+    }
+    else
+        Add(new CEnableCommand);
 
 #ifndef DONT_USE_VALVE_FUNCTIONS
   #ifdef SOURCE_ENGINE_2006
     CBotrixPlugin::pCvar->RegisterConCommandBase( &botrix );
   #else
-    CBotrixPlugin::pCvar->RegisterConCommand( &botrix );
+    CBotrixPlugin::pCVar->RegisterConCommand( &botrix );
   #endif
 #endif
 }
@@ -2624,6 +2633,6 @@ CMainCommand::CMainCommand()
 CMainCommand::~CMainCommand()
 {
 #if !defined(SOURCE_ENGINE_2006) && !defined(DONT_USE_VALVE_FUNCTIONS)
-    CBotrixPlugin::pCvar->UnregisterConCommand( &botrix );
+    CBotrixPlugin::pCVar->UnregisterConCommand( &botrix );
 #endif
 }

@@ -12,6 +12,7 @@
 * @li Plugin is working with Team Fortress 2.
 * @li Added new weapons handling for TF2.
 * @li Escaping new steam ids in config.ini, for example \\[U:1:12345678].
+* @li Bug fix: correct handling of plugin_pause/plugin_unpause commands.
 * @li Bug fix: sometimes bots wasn't aware they picked up item.
 * @li Bug fix: sometimes bots were shooting at spectator.
 * @li Bug fix: when bot was trying to use weapon he actually was creating it.
@@ -29,6 +30,7 @@
 *     -# botrix bot default team <bot-team>
 *     -# botrix bot default class <bot-class>
 *     -# botrix config log <log-level>
+*     -# botrix enable/disable
 *
 * 0.0.2
 * @li Default base folder location is <MOD DIRECTORY>/addons/botrix.
@@ -49,7 +51,7 @@
 #include "public/igameevents.h"
 
 
-#define PLUGIN_VERSION "v0.0.2"
+#define PLUGIN_VERSION "v0.0.3"
 
 class IVEngineServer;
 class IFileSystem;
@@ -89,7 +91,7 @@ public: // Static members.
     static IServerGameClients* pServerGameClients;
     static IEngineTrace* pEngineTrace;
     static IBotManager* pBotManager;
-    static ICvar* pCvar;
+    static ICvar* pCVar;
 
 
 public: // Methods.
@@ -191,14 +193,20 @@ public: // Methods.
     void GenerateSayEvent( edict_t* pEntity, const char* szText, bool bTeamOnly );
 
 public: // Static methods.
-    static void HudTextMessage( edict_t* pEntity, char *szTitle, char *szMessage, Color colour, int level, int time );
+//    static void HudTextMessage( edict_t* pEntity, char *szTitle, char *szMessage,
+//                                Color colour, int level, int time );
+
+    /// Return true if plugin is enabled.
+    bool IsEnabled() const { return m_bEnabled; }
+
+    /// Enable/disable plugin.
+    void Enable( bool bEnable );
 
 public: // Members.
     good::string sGameFolder;             ///< Game folder, i.e. "counter-strike source"
     good::string sModFolder;              ///< Mod folder, i.e. "cstrike"
     good::string sBotrixPath;             ///< Full path to Botrix folder, where config.ini and waypoints are.
 
-    bool bIsLoaded;                       ///< True if this plugin was loaded (Load() was called by Source engine).
     bool bTeamPlay;                       ///< True if game is team based (like Counter-Strike), if false then it is deathmatch.
 
     bool bMapRunning;                     ///< True if map is currently running (LevelInit() was called by Source engine).
@@ -209,8 +217,14 @@ public: // Members.
     static float fEngineTime;             ///< Current engine time.
 
 protected:
-    static float m_fFpsEnd;               // Time of ending counting frames to calculate fps.
-    static int m_iFramesCount;            // Count of frames since m_fFpsStart.
+
+    void PrepareLevel( const char* szMapName );
+    void ActivateLevel( int iMaxPlayers );
+
+    bool m_bEnabled;                      ///< True if this plugin is enabled.
+    bool m_bPaused;                       ///< True if this plugin is paused.
+    static float m_fFpsEnd;               ///< Time of ending counting frames to calculate fps.
+    static int m_iFramesCount;            ///< Count of frames since m_fFpsStart.
 
 };
 

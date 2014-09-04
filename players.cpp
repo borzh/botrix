@@ -26,6 +26,9 @@ CClient* CPlayers::m_pListenServerClient = NULL;
 
 int CPlayers::m_iClientsCount = 0;
 int CPlayers::m_iBotsCount = 0;
+bool CPlayers::m_bCheckBotCountFinished = true;
+
+good::string CPlayers::m_sLastError;
 
 #if defined(DEBUG) || defined(_DEBUG)
     bool CPlayers::m_bClientDebuggingEvents = true;
@@ -138,19 +141,27 @@ void CPlayer::PreThink()
 //********************************************************************************************************************
 void CPlayers::CheckBotsCount()
 {
-    if ( !bBotsCountEqualsPlayersCount && (iBotsPlayersCount == 0) )
+    if ( !CBotrixPlugin::instance->bMapRunning ||
+         ( !bBotsCountEqualsPlayersCount && (iBotsPlayersCount == 0) ) )
         return;
 
-    int iBotsCount = bBotsCountEqualsPlayersCount ? GetClientsCount() : iBotsPlayersCount - GetClientsCount();
-    if ( iBotsCount < 0 )
-        iBotsCount = 0;
-    else if ( iBotsCount + GetClientsCount() > Size() )
-        iBotsCount = Size() - GetClientsCount();
+    int iNeededCount = bBotsCountEqualsPlayersCount ? GetClientsCount() : iBotsPlayersCount - GetClientsCount();
+    if ( iNeededCount < 0 )
+        iNeededCount = 0;
+    else if ( iNeededCount + GetClientsCount() > Size()-1 )
+        iNeededCount = Size()-1 - GetClientsCount(); // Save one space for player.
 
-    while ( iBotsCount > GetBotsCount() )
-        CPlayers::AddBot(NULL, CBot::iDefaultTeam, CBot::iDefaultClass, CBot::iDefaultIntelligence);
-    while ( GetBotsCount() > iBotsCount )
-        CPlayers::KickRandomBot();
+    if ( iNeededCount == GetBotsCount() )
+        m_bCheckBotCountFinished = true;
+    else
+    {
+        m_bCheckBotCountFinished = false;
+
+        if ( iNeededCount > GetBotsCount() )
+            AddBot(NULL, CBot::iDefaultTeam, CBot::iDefaultClass, CBot::iDefaultIntelligence);
+        else
+            KickRandomBot();
+    }
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -158,21 +169,23 @@ void CPlayers::Init( int iMaxPlayers )
 {
     m_aPlayers.clear();
     m_aPlayers.resize( iMaxPlayers );
-    // TODO: Save bots config when changing map.
-    //for (int i = 0; i < CPlayers::Size(); ++i)
-    //{
-    //	if ( m_aPlayers[i].get() )
-    //		m_aPlayers[i]->Respawned();
-    //}
+    m_bCheckBotCountFinished = false;
 }
 
 //----------------------------------------------------------------------------------------------------------------
 void CPlayers::Clear()
 {
-    for (int i = 0; i < CPlayers::Size(); ++i)
-        m_aPlayers[i].reset();
-    m_pListenServerClient = 0;
-
+    for ( int i = 0; i < CPlayers::Size(); ++i )
+    {
+        CPlayer* pPlayer = m_aPlayers[i].get();
+        if ( pPlayer )
+        {
+            if ( pPlayer->IsBot() )
+                KickBot(pPlayer);
+            m_aPlayers[i].reset();
+        }
+    }
+    m_pListenServerClient = NULL;
     m_iClientsCount = m_iBotsCount = 0;
     m_bClientDebuggingEvents = false;
 }
@@ -182,6 +195,12 @@ void CPlayers::Clear()
 CPlayer* CPlayers::AddBot( const char* szName, TTeam iTeam, TClass iClass,
                            TBotIntelligence iIntelligence, int argc, const char** argv )
 {
+    if ( !CBotrixPlugin::instance->bMapRunning )
+    {
+        m_sLastError = "Map is not running.";
+        return NULL;
+    }
+
     if ( iIntelligence == -1 )
         iIntelligence = rand() % EBotIntelligenceTotal;
 
@@ -215,6 +234,8 @@ CPlayer* CPlayers::AddBot( const char* szName, TTeam iTeam, TClass iClass,
         GoodAssert( iIndex >= 0 );
         m_aPlayers[iIndex] = CPlayerPtr(pBot);
     }
+    else
+        m_sLastError = CMod::pCurrentMod->GetLastError();
     return pBot;
 }
 
@@ -245,6 +266,7 @@ bool CPlayers::KickRandomBotOnTeam( int iTeam )
     CBot* toKick = NULL;
     int i;
 
+    // TODO: not use 2 for.
     for (i = index; i >= 0; --i)
     {
         CPlayer* pPlayer = m_aPlayers[i].get();
@@ -323,7 +345,7 @@ void CPlayers::PlayerDisconnected( edict_t* pEdict )
     int iIdx = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict)-1;
     GoodAssert( iIdx >= 0 ); // Valve should not allow this assert.
 
-    if ( m_aPlayers[iIdx].get() == NULL )
+    if ( !m_aPlayers[iIdx].get() )
         return; // Happens when starting new map and pressing cancel button. Valve issue.
 
     CPlayer* pPlayer = m_aPlayers[iIdx].get();
@@ -354,15 +376,19 @@ void CPlayers::PlayerDisconnected( edict_t* pEdict )
             m_pListenServerClient = NULL;
 
         CheckForDebugging();
+        CPlayers::CheckBotsCount();
     }
 
-    BASSERT( (m_iBotsCount >= 0) && (m_iClientsCount >= 0) );
+    GoodAssert( (m_iBotsCount >= 0) && (m_iClientsCount >= 0) );
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
 void CPlayers::PreThink()
 {
+    if ( !m_bCheckBotCountFinished )
+        CheckBotsCount();
+
     for (good::vector<CPlayerPtr>::iterator it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it)
         if ( it->get() )
             it->get()->PreThink();

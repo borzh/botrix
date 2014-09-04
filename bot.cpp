@@ -227,7 +227,7 @@ void CBot::Respawned()
     m_bNeedAim = m_bUseSideLook = false;
     m_bDontAttack = m_bDestinationChanged = m_bNeedMove = m_bLastNeedMove = m_bUseNavigatorToMove = m_bTest;
 
-    m_bPathAim = m_bLockNavigatorMove = m_bLockMove = m_bLockAll = false;
+    m_bPathAim = m_bLockNavigatorMove = m_bLockMove = false;
     m_bMoveFailure = false;
 
     m_bStuck = m_bNeedCheckStuck = m_bStuckBreakObject = m_bStuckUsePhyscannon = false;
@@ -1336,24 +1336,24 @@ void CBot::EnemyAim()
     if ( CWeapon::IsValid(m_iWeapon) )
     {
         CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
-        for ( int i=CWeapon::PRIMARY; i <= CWeapon::SECONDARY; ++i )
+        for ( int i=CWeapon::SECONDARY; i >= CWeapon::PRIMARY; --i ) // Prefer secondary.
         {
             if ( cWeapon.HasAmmoInClip(i) && cWeapon.IsDistanceSafe(m_fDistanceSqrToEnemy, i) )
             {
-                m_aWeapons[m_iWeapon].GetLook( GetHead(), m_pCurrentEnemy, m_fDistanceSqrToEnemy, m_iIntelligence, 0, m_vLook);
+                m_aWeapons[m_iWeapon].GetLook( GetHead(), m_pCurrentEnemy, m_fDistanceSqrToEnemy,
+                                               m_iIntelligence, 0, m_vLook);
                 break;
             }
         }
     }
+    else
+        m_pCurrentEnemy->GetCenter(m_vLook);
 
-    /*
-     * TODO:
-    //float fRand = fDistanceToEnemy / CUtil::iMaxMapSize;
-    // TODO: depend on intelligence.
-    m_vLook.x += 10 - (rand()%20); // -10 .. + 10
-    m_vLook.y += 10 - (rand()%20); // -10 .. + 10
-    m_vLook.z += 10 - (rand()%20); // -10 .. + 10
-    */
+    int iError = (EBotPro - m_iIntelligence) * 4;
+    // Smart: -4..+4, normal -8..+8, stupied -12..+12, fool -16..+16.
+    m_vLook.x += iError - (rand() % (iError<<1));
+    m_vLook.y += iError - (rand() % (iError<<1));
+    m_vLook.z += iError - (rand() % 20);
 
     m_fEndAimTime = GetEndLookTime();
 
@@ -2163,7 +2163,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
                         if ( pWeapon->IsMelee() || pWeapon->IsPhysics() )
                         {
                             if ( !m_bStuckBreakObject && !m_bStuckUsePhyscannon )
-                                WeaponChoose(); // Select some other weapon if not breaking.
+                                WeaponChoose(); // Select some other weapon if not breaking/physcannoning.
                         }
                         else
                         {

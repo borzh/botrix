@@ -429,7 +429,6 @@ protected: // Bot flags.
     bool m_bFlee:1;                                                // True, if currenly running away from enemy.
     bool m_bAttackDuck:1;                                          // True if need to duck, while attacking enemy.
     bool m_bNeedSetWeapon:1;                                       // Need to set best weapon.
-    bool m_bLockAll:1;                                             // Mod can lock aim/move/attack, to do instead whatever bot is doing (like defusing bomb in CSS).
     bool m_bEnemyAimed:1;                                          // If true, then enemy is already aimed.
     bool m_bEnemyOffSight:1;                                       // Enemy is not visible.
     bool m_bStayReloading:1;                                       // If true, then don't change weapon at reload time, but reload current weapon instead.

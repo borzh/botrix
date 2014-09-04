@@ -359,7 +359,10 @@ TWeaponId CWeapons::GetBestWeapon( const good::vector<CWeaponWithAmmo>& aWeapons
              cWeapon.HasAmmo() && (iPreference < pWeapon->iBotPreference) )
         {
             iIdx = i;
-            iPreference = pWeapon->iBotPreference;
+            if ( cWeapon.IsMelee() )
+                iPreference = -1; // Prefer non melee weapons.
+            else
+                iPreference = pWeapon->iBotPreference;
         }
 
         /*

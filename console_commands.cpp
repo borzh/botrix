@@ -26,6 +26,7 @@ const good::string sArmor = "armor";
 const good::string sButton = "button";
 const good::string sFirstAngle = "first_angle";
 const good::string sSecondAngle = "second_angle";
+const good::string sPlayers = "players";
 
 extern char* szMainBuffer;
 extern int iMainBufferSize;
@@ -1776,7 +1777,23 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-    // Second argument: intelligence.
+    // 1st argument: name.
+    int iArg = 0;
+    const char* szName = ( argc > iArg ) ? argv[iArg++] : NULL;
+
+    // 3rd argument: team
+    TTeam iTeam = CBot::iDefaultTeam;
+    if ( argc > iArg )
+    {
+        iTeam = CTypeToString::TeamFromString(argv[2]);
+        if ( iTeam == -1 )
+        {
+            BULOG_W(pEdict, "Invalid team: %s.", argv[2]);
+            return ECommandError;
+        }
+    }
+
+    // 2nd argument: intelligence.
     TBotIntelligence iIntelligence = CBot::iDefaultIntelligence;
     if ( argc > 1 )
     {
@@ -1786,43 +1803,6 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
         {
             BULOG_W(pEdict, "Invalid bot intelligence: %s.", argv[1] );
             //TODO: BULOG_W( pEdict, "  Must be one of: ", CTypeToString::AllIntelligences() );
-            return ECommandError;
-        }
-    }
-
-    if ( iIntelligence == -1 )
-        iIntelligence = rand() % EBotIntelligenceTotal;
-
-
-    // First argument: name.
-    const char* szName;
-    if ( argc == 0 )
-    {
-        const good::string& sName = CMod::GetRandomBotName(iIntelligence);
-
-        if ( CMod::bIntelligenceInBotName )
-        {
-            good::string_buffer sbNameWithIntelligence(szMainBuffer, iMainBufferSize, false); // Don't deallocate.
-            sbNameWithIntelligence = sName;
-            sbNameWithIntelligence.append(' ');
-            sbNameWithIntelligence.append('(');
-            sbNameWithIntelligence.append(CTypeToString::IntelligenceToString(iIntelligence));
-            sbNameWithIntelligence.append(')');
-            szName = sbNameWithIntelligence.c_str();
-        }
-        else
-            szName = sName.c_str();
-    }
-    else
-        szName = argv[0];
-
-    TTeam iTeam = CBot::iDefaultTeam;
-    if ( argc > 2 )
-    {
-        iTeam = CTypeToString::TeamFromString(argv[2]);
-        if ( iTeam == -1 )
-        {
-            BULOG_W(pEdict, "Invalid team: %s.", argv[2]);
             return ECommandError;
         }
     }
@@ -1844,16 +1824,10 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
                 return ECommandError;
             }
         }
-        if ( iClass == -1 )
-             iClass = rand() % CMod::aClassNames.size();
     }
 
-    CPlayers::bAddingBot = true;
-    CPlayer* pBot = CMod::pCurrentMod->AddBot( szName, iIntelligence, iTeam, iClass, MAX2(0, argc-iTotal), &argv[iTotal] );
-    CPlayers::bAddingBot = false;
-    if ( pBot )
+    if ( CPlayers::AddBot(szName, iTeam, iClass, iIntelligence, MAX2(0, argc-iTotal), &argv[iTotal]) )
     {
-        CPlayers::AddBot(pBot);
         BULOG_I( pEdict, "Bot added: %s.", szName );
         return ECommandPerformed;
     }
@@ -1935,6 +1909,49 @@ TCommandResult CBotDebugCommand::Execute( CClient* pClient, int argc, const char
         BULOG_W( pEdict, "Error, no such bot: %s.", argv[0] );
         return ECommandError;
     }
+}
+
+TCommandResult CBotDefaultAmountCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    TCommandResult iResult = ECommandPerformed;
+    if ( argc == 0 )
+    {
+        if ( CPlayers::bBotsCountEqualsPlayersCount )
+            BULOG_I( pEdict, "Bots amount is equal to players amount." );
+        else
+            BULOG_I( pEdict, "Bots+Players amount: %d.", CPlayers::iBotsPlayersCount );
+    }
+    else if ( argc == 1 )
+    {
+        if ( sPlayers == argv[0] )
+        {
+            CPlayers::bBotsCountEqualsPlayersCount = true;
+            BULOG_I( pEdict, "Bots amount is equal to players amount." );
+        }
+        else
+        {
+            int iCount = -1;
+            if ( (sscanf(argv[0], "%d", &iCount) != 1) || (iCount < 0) ||
+                 (CBotrixPlugin::instance->bMapRunning && (iCount > CPlayers::Size())) )
+            {
+                BULOG_W( pEdict, "Error, invalid argument, should be number from 0 to %d.", CPlayers::Size() );
+                return ECommandError;
+            }
+            CPlayers::iBotsPlayersCount = iCount;
+            CPlayers::bBotsCountEqualsPlayersCount = false;
+            BULOG_I( pEdict, "Bots+Players amount: %d.", CPlayers::iBotsPlayersCount );
+        }
+        CPlayers::CheckBotsCount();
+        iResult = ECommandPerformed;
+    }
+    else
+    {
+        BULOG_W( pEdict, "Error, invalid arguments count." );
+        iResult = ECommandError;
+    }
+    return iResult;
 }
 
 TCommandResult CBotDefaultIntelligenceCommand::Execute( CClient* pClient, int argc, const char** argv )
@@ -2267,14 +2284,12 @@ TCommandResult CBotTestPathCommand::Execute( CClient* pClient, int argc, const c
         return ECommandError;
     }
 
-    CPlayers::bAddingBot = true;
-    CPlayer* pPlayer = CMod::pCurrentMod->AddBot("test", EBotFool, 0, 0, 0, NULL);
-    CPlayers::bAddingBot = false;
+    CPlayer* pPlayer = CPlayers::AddBot();
     if ( pPlayer )
     {
-        CPlayers::AddBot(pPlayer);
         ((CBot*)pPlayer)->TestWaypoints(iPathFrom, iPathTo);
-        BULOG_I( pClient->GetEdict(), "Bot added: %s. Testing path from %d to %d.", pPlayer->GetName(), iPathFrom, iPathTo );
+        BULOG_I( pClient->GetEdict(), "Bot added: %s. Testing path from %d to %d.",
+                 pPlayer->GetName(), iPathFrom, iPathTo );
         return ECommandPerformed;
     }
     else

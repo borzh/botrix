@@ -736,6 +736,7 @@ TWaypointId CWaypoints::GetAimedWaypoint( const Vector& vOrigin, const QAngle& a
 
                         QAngle angDiff;
                         VectorAngles( vRelative, angDiff );
+                        CUtil::DeNormalizeAngle(angDiff.y);
                         CUtil::GetAngleDifference(ang, angDiff, angDiff);
                         float fAngDiff = fabs(angDiff.x) + fabs(angDiff.y);
                         if ( fAngDiff < fLowestAngDiff )

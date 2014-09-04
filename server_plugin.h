@@ -24,6 +24,7 @@
 * @li Added new commands:
 *     -# botrix bot weapon add <bot-name> <weapon-name>
 *     -# botrix bot weapon unknown <melee/ranged>.
+*     -# botrix bot default amount <#number/players>
 *     -# botrix bot default intelligence <bot-intelligence>
 *     -# botrix bot default team <bot-team>
 *     -# botrix bot default class <bot-class>

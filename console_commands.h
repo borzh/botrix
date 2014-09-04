@@ -553,6 +553,22 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
+class CBotDefaultAmountCommand: public CConsoleCommand
+{
+public:
+    CBotDefaultAmountCommand()
+    {
+        m_sCommand = "amount";
+        m_sHelp = "set amount of bots+players";
+        m_sDescription = "You can use word 'players' to have #bots = #players.";
+        m_iAccessLevel = FCommandAccessBot;
+
+        m_cAutoCompleteArguments.push_back("players");
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
 class CBotDefaultIntelligenceCommand: public CConsoleCommand
 {
 public:
@@ -647,8 +663,8 @@ public:
     CBotDefaultStrategyCommand()
     {
         m_sCommand = "strategy";
-        Add(new CBotDefaultStrategyFlagsCommand());
-        Add(new CBotDefaultStrategySetCommand());
+        Add(new CBotDefaultStrategyFlagsCommand);
+        Add(new CBotDefaultStrategySetCommand);
     }
 };
 
@@ -658,11 +674,12 @@ public:
     CBotDefaultCommand()
     {
         m_sCommand = "default";
-        Add(new CBotDefaultIntelligenceCommand());
-        Add(new CBotDefaultTeamCommand());
+        Add(new CBotDefaultAmountCommand);
+        Add(new CBotDefaultIntelligenceCommand);
+        Add(new CBotDefaultTeamCommand);
         if ( CMod::aClassNames.size() )
-            Add(new CBotDefaultClassCommand());
-        Add(new CBotDefaultStrategyCommand());
+            Add(new CBotDefaultClassCommand);
+        Add(new CBotDefaultStrategyCommand);
     }
 };
 
@@ -712,11 +729,11 @@ public:
     CBotWeaponCommand()
     {
         m_sCommand = "weapon";
-        Add(new CBotWeaponAddCommand());
-        Add(new CBotWeaponAllowCommand());
-        Add(new CBotWeaponForbidCommand());
-        //Add(new CBotWeaponRemoveCommand());
-        Add(new CBotWeaponUnknownCommand());
+        Add(new CBotWeaponAddCommand);
+        Add(new CBotWeaponAllowCommand);
+        Add(new CBotWeaponForbidCommand);
+        //Add(new CBotWeaponRemoveCommand);
+        Add(new CBotWeaponUnknownCommand);
     }
 };
 
@@ -845,8 +862,8 @@ public:
     CConfigAdminsCommand()
     {
         m_sCommand = "admins";
-        Add(new CConfigAdminsSetAccessCommand());
-        Add(new CConfigAdminsShowCommand());
+        Add(new CConfigAdminsSetAccessCommand);
+        Add(new CConfigAdminsShowCommand);
     }
 };
 
@@ -860,10 +877,10 @@ public:
     CWaypointAreaCommand()
     {
         m_sCommand = "area";
-        Add(new CWaypointAreaRemoveCommand());
-        Add(new CWaypointAreaRenameCommand());
-        Add(new CWaypointAreaSetCommand());
-        Add(new CWaypointAreaShowCommand());
+        Add(new CWaypointAreaRemoveCommand);
+        Add(new CWaypointAreaRenameCommand);
+        Add(new CWaypointAreaSetCommand);
+        Add(new CWaypointAreaShowCommand);
     }
 };
 
@@ -877,22 +894,22 @@ public:
     CWaypointCommand()
     {
         m_sCommand = "waypoint";
-        Add(new CWaypointAddTypeCommand());
-        Add(new CWaypointAreaCommand());
-        Add(new CWaypointArgumentCommand());
-        Add(new CWaypointAutoCreateCommand());
-        Add(new CWaypointClearCommand());
-        Add(new CWaypointCreateCommand());
-        Add(new CWaypointDestinationCommand()); // Todo: change waypoint by look.
-        Add(new CWaypointDrawFlagCommand());
-        Add(new CWaypointInfoCommand());
-        Add(new CWaypointLoadCommand());
-        Add(new CWaypointMoveCommand());
-        Add(new CWaypointRemoveCommand());
-        Add(new CWaypointRemoveTypeCommand());
-        Add(new CWaypointResetCommand());
-        Add(new CWaypointSaveCommand());
-        Add(new CWaypointVisibilityCommand());
+        Add(new CWaypointAddTypeCommand);
+        Add(new CWaypointAreaCommand);
+        Add(new CWaypointArgumentCommand);
+        Add(new CWaypointAutoCreateCommand);
+        Add(new CWaypointClearCommand);
+        Add(new CWaypointCreateCommand);
+        Add(new CWaypointDestinationCommand);
+        Add(new CWaypointDrawFlagCommand);
+        Add(new CWaypointInfoCommand);
+        Add(new CWaypointLoadCommand);
+        Add(new CWaypointMoveCommand);
+        Add(new CWaypointRemoveCommand);
+        Add(new CWaypointRemoveTypeCommand);
+        Add(new CWaypointResetCommand);
+        Add(new CWaypointSaveCommand);
+        Add(new CWaypointVisibilityCommand);
     }
 };
 
@@ -906,15 +923,15 @@ public:
     CPathCommand()
     {
         m_sCommand = "path";
-        Add(new CPathAutoCreateCommand());
-        Add(new CPathAddTypeCommand());
-        Add(new CPathArgumentCommand());
-        Add(new CPathCreateCommand());
-        Add(new CPathDrawCommand());
-        Add(new CPathInfoCommand());
-        //Add(new CPathSwapCommand());
-        Add(new CPathRemoveCommand());
-        Add(new CPathRemoveTypeCommand());
+        Add(new CPathAutoCreateCommand);
+        Add(new CPathAddTypeCommand);
+        Add(new CPathArgumentCommand);
+        Add(new CPathCreateCommand);
+        Add(new CPathDrawCommand);
+        Add(new CPathInfoCommand);
+        //Add(new CPathSwapCommand);
+        Add(new CPathRemoveCommand);
+        Add(new CPathRemoveTypeCommand);
     }
 };
 
@@ -928,9 +945,9 @@ public:
     CItemCommand()
     {
         m_sCommand = "item";
-        Add(new CItemDrawCommand());
-        Add(new CItemDrawTypeCommand());
-        Add(new CItemReloadCommand());
+        Add(new CItemDrawCommand);
+        Add(new CItemDrawTypeCommand);
+        Add(new CItemReloadCommand);
     }
 };
 
@@ -944,14 +961,15 @@ public:
     CBotCommand()
     {
         m_sCommand = "bot";
-        Add(new CBotAddCommand());
-        Add(new CBotDebugCommand());
-        Add(new CBotDrawPathCommand());
-        Add(new CBotDefaultCommand());
-        Add(new CBotKickCommand());
-        Add(new CBotPauseCommand());
-        Add(new CBotTestPathCommand());
-        Add(new CBotWeaponCommand());
+        Add(new CBotAddCommand);
+        Add(new CBotDebugCommand);
+        Add(new CBotDrawPathCommand);
+        Add(new CBotDefaultCommand);
+        Add(new CBotKickCommand);
+        Add(new CBotPauseCommand);
+        if ( CMod::GetModId() != EModId_TF2 ) // TF2 bots can't be spawned after round has started.
+            Add(new CBotTestPathCommand);
+        Add(new CBotWeaponCommand);
     }
 };
 
@@ -965,7 +983,7 @@ public:
     CConfigCommand()
     {
         m_sCommand = "config";
-        Add(new CConfigAdminsCommand());
+        Add(new CConfigAdminsCommand);
         Add(new CConfigEventsCommand);
         Add(new CConfigLogCommand);
     }

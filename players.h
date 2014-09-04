@@ -72,9 +72,9 @@ public:
     void GetEyeAngles( QAngle& a ) const
     {
         // TODO: remove comment if works.
-//        CBotCmd cCmd = m_pPlayerInfo->GetLastUserCommand();
-//        a = cCmd.viewangles;
-        a = m_pPlayerInfo->GetAbsAngles();
+        CBotCmd cCmd = m_pPlayerInfo->GetLastUserCommand();
+        a = cCmd.viewangles;
+//        a = m_pPlayerInfo->GetAbsAngles();
     }
 
 
@@ -131,9 +131,11 @@ typedef good::shared_ptr<CPlayer> CPlayerPtr; ///< Typedef for unique_ptr of CPl
 //****************************************************************************************************************
 class CPlayers
 {
-public:
 
-    static bool bAddingBot; /// True if currently adding bot.
+public:
+    static bool bAddingBot;                   ///< True if currently adding bot.
+    static int iBotsPlayersCount;             ///< Count of bots + players.
+    static bool bBotsCountEqualsPlayersCount; ///< If true, then maintain bots == players.
 
     /// Get count of players on this server.
     static int Size() { return m_aPlayers.size(); };
@@ -159,6 +161,9 @@ public:
         }
         return iCount;
     }
+
+    /// Check amount of bots on server.
+    static void CheckBotsCount();
 
     /// Get player from index.
     static CPlayer* Get( TPlayerIndex iIndex ) { return m_aPlayers[iIndex].get(); }
@@ -187,12 +192,8 @@ public:
     // Bot handling.
     //------------------------------------------------------------------------------------------------------------
     /// Add bot.
-    static void AddBot( CPlayer* pPlayer )
-    {
-        TPlayerIndex iIndex = CBotrixPlugin::pEngineServer->IndexOfEdict( pPlayer->GetEdict() ) - 1;
-        GoodAssert( iIndex >= 0 );
-        m_aPlayers[iIndex] = pPlayer;
-    }
+    static CPlayer* AddBot( const char* sName = NULL, TTeam iTeam = 0, TClass iClass = -1,
+                            TBotIntelligence iIntelligence = -1, int argc = 0, const char** argv = NULL );
 
     /// Kick given bot.
     static void KickBot( CPlayer* pPlayer );

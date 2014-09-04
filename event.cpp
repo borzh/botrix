@@ -105,7 +105,8 @@ IEventInterface* CEvent::GetEventInterface( void* pEvent, TEventType iType )
 //----------------------------------------------------------------------------------------------------------------
 void CPlayerActivateEvent::Execute( IEventInterface* pEvent )
 {
-    edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
+    int iUserId = pEvent->GetInt("userid");
+    edict_t* pActivator = CUtil::GetEntityByUserId( iUserId );
 
     int iIdx = CPlayers::GetIndex(pActivator);
     GoodAssert( iIdx >= 0 );

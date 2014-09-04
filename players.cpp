@@ -18,6 +18,8 @@ extern int iMainBufferSize;
 
 //----------------------------------------------------------------------------------------------------------------
 bool CPlayers::bAddingBot = false;
+int CPlayers::iBotsPlayersCount = 0;
+bool CPlayers::bBotsCountEqualsPlayersCount = false;
 
 good::vector<CPlayerPtr> CPlayers::m_aPlayers(16);
 CClient* CPlayers::m_pListenServerClient = NULL;
@@ -134,6 +136,24 @@ void CPlayer::PreThink()
 
 
 //********************************************************************************************************************
+void CPlayers::CheckBotsCount()
+{
+    if ( !bBotsCountEqualsPlayersCount && (iBotsPlayersCount == 0) )
+        return;
+
+    int iBotsCount = bBotsCountEqualsPlayersCount ? GetClientsCount() : iBotsPlayersCount - GetClientsCount();
+    if ( iBotsCount < 0 )
+        iBotsCount = 0;
+    else if ( iBotsCount + GetClientsCount() > Size() )
+        iBotsCount = Size() - GetClientsCount();
+
+    while ( iBotsCount > GetBotsCount() )
+        CPlayers::AddBot(NULL, CBot::iDefaultTeam, CBot::iDefaultClass, CBot::iDefaultIntelligence);
+    while ( GetBotsCount() > iBotsCount )
+        CPlayers::KickRandomBot();
+}
+
+//----------------------------------------------------------------------------------------------------------------
 void CPlayers::Init( int iMaxPlayers )
 {
     m_aPlayers.clear();
@@ -157,6 +177,46 @@ void CPlayers::Clear()
     m_bClientDebuggingEvents = false;
 }
 
+
+//----------------------------------------------------------------------------------------------------------------
+CPlayer* CPlayers::AddBot( const char* szName, TTeam iTeam, TClass iClass,
+                           TBotIntelligence iIntelligence, int argc, const char** argv )
+{
+    if ( iIntelligence == -1 )
+        iIntelligence = rand() % EBotIntelligenceTotal;
+
+    if ( !szName )
+    {
+        const good::string& sName = CMod::GetRandomBotName(iIntelligence);
+        if ( CMod::bIntelligenceInBotName )
+        {
+            good::string_buffer sbNameWithIntelligence(szMainBuffer, iMainBufferSize, false); // Don't deallocate.
+            sbNameWithIntelligence = sName;
+            sbNameWithIntelligence.append(' ');
+            sbNameWithIntelligence.append('(');
+            sbNameWithIntelligence.append(CTypeToString::IntelligenceToString(iIntelligence));
+            sbNameWithIntelligence.append(')');
+            szName = sbNameWithIntelligence.c_str();
+        }
+        else
+            szName = sName.c_str();
+    }
+
+    if ( (iClass == -1) && CMod::aClassNames.size() )
+         iClass = rand() % CMod::aClassNames.size();
+
+    bAddingBot = true;
+    CPlayer* pBot = CMod::pCurrentMod->AddBot( szName, iIntelligence, iTeam, iClass, argc, argv );
+    bAddingBot = false;
+
+    if ( pBot )
+    {
+        TPlayerIndex iIndex = CBotrixPlugin::pEngineServer->IndexOfEdict( pBot->GetEdict() ) - 1;
+        GoodAssert( iIndex >= 0 );
+        m_aPlayers[iIndex] = CPlayerPtr(pBot);
+    }
+    return pBot;
+}
 
 //----------------------------------------------------------------------------------------------------------------
 void CPlayers::KickBot( CPlayer* pPlayer )
@@ -251,6 +311,8 @@ void CPlayers::PlayerConnected( edict_t* pEdict )
             CChat::SetVariableValue( CChat::iPlayerVar, iIdx, sName );
         }
 #endif
+
+        CPlayers::CheckBotsCount();
     }
 }
 

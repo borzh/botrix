@@ -69,10 +69,10 @@ public: // Methods.
     void SetPaused( bool bPause ) { m_bPaused = bPause; }
 
     /// Emulate console command for bot.
-    void ConsoleCommand(const char* szFormat, ...);
+    void ConsoleCommand( const char* szCommand );
 
     /// Use say command.
-    void Say(bool bTeamOnly, const char* szFormat, ...);
+    void Say( bool bTeamOnly, const char* szFormat, ... );
 
     /// Bot is created for testing path between two waypoints. Will be kicked if fails, killed, or reaches destination.
     virtual void TestWaypoints( TWaypointId iFrom, TWaypointId iTo );

@@ -31,6 +31,7 @@
 *     -# botrix bot default class <bot-class>
 *     -# botrix config log <log-level>
 *     -# botrix enable/disable
+*     -# botrix bot command <bot-name> <command>
 *
 * 0.0.2
 * @li Default base folder location is <MOD DIRECTORY>/addons/botrix.

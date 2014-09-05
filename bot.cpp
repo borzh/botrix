@@ -67,17 +67,10 @@ CBot::CBot( edict_t* pEdict, TBotIntelligence iIntelligence, TClass iClass ):
 
 
 //----------------------------------------------------------------------------------------------------------------
-static char szBotBuffer[2048];
-
-//----------------------------------------------------------------------------------------------------------------
-void CBot::ConsoleCommand(const char* szFormat, ...)
+void CBot::ConsoleCommand( const char* szCommand )
 {
-    va_list vaList;
-    va_start(vaList, szFormat);
-    vsprintf(szBotBuffer, szFormat, vaList);
-    va_end(vaList);
-
-    CBotrixPlugin::pServerPluginHelpers->ClientCommand(m_pEdict, szBotBuffer);
+    BotMessage( "%s -> executing command '%s'.", GetName(), szCommand );
+    CBotrixPlugin::pServerPluginHelpers->ClientCommand(m_pEdict, szCommand);
 }
 
 
@@ -99,8 +92,9 @@ protected:
 };
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot::Say(bool bTeamOnly, const char* szFormat, ...)
+void CBot::Say( bool bTeamOnly, const char* szFormat, ... )
 {
+    static char szBotBuffer[2048];
     good::string_buffer sBuffer(szBotBuffer, 2048, false);
     if ( bTeamOnly )
         sBuffer << "(TEAM) " << GetName() << ": ";

@@ -204,7 +204,7 @@ CPlayer* CPlayers::AddBot( const char* szName, TTeam iTeam, TClass iClass,
     if ( iIntelligence == -1 )
         iIntelligence = rand() % EBotIntelligenceTotal;
 
-    if ( !szName )
+    if ( !szName || !szName[0] )
     {
         const good::string& sName = CMod::GetRandomBotName(iIntelligence);
         if ( CMod::bIntelligenceInBotName )

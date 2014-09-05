@@ -1781,52 +1781,51 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
     int iArg = 0;
     const char* szName = ( argc > iArg ) ? argv[iArg++] : NULL;
 
-    // 3rd argument: team
-    TTeam iTeam = CBot::iDefaultTeam;
-    if ( argc > iArg )
-    {
-        iTeam = CTypeToString::TeamFromString(argv[2]);
-        if ( iTeam == -1 )
-        {
-            BULOG_W(pEdict, "Invalid team: %s.", argv[2]);
-            return ECommandError;
-        }
-    }
-
     // 2nd argument: intelligence.
     TBotIntelligence iIntelligence = CBot::iDefaultIntelligence;
-    if ( argc > 1 )
+    if ( argc > iArg )
     {
-        good::string sIntelligence( argv[1] );
+        good::string sIntelligence( argv[iArg++] );
         iIntelligence = CTypeToString::IntelligenceFromString(sIntelligence);
         if ( (iIntelligence == -1) && (sIntelligence != "random") )
         {
             BULOG_W(pEdict, "Invalid bot intelligence: %s.", argv[1] );
-            //TODO: BULOG_W( pEdict, "  Must be one of: ", CTypeToString::AllIntelligences() );
+            BULOG_W( pEdict, "  Must be one of: fool stupied normal smart pro." );
+            // TODO: CTypeToString::AllIntelligences()
             return ECommandError;
         }
     }
 
-    int iTotal = 3;
+    // 3rd argument: team
+    TTeam iTeam = CBot::iDefaultTeam;
+    if ( argc > iArg )
+    {
+        iTeam = CTypeToString::TeamFromString(argv[iArg]);
+        if ( iTeam == -1 )
+        {
+            BULOG_W(pEdict, "Invalid team: %s.", argv[iArg]);
+            BULOG_W( pEdict, "  Must be one of: %s.", CTypeToString::TeamFlagsToString(-1).c_str() );
+            return ECommandError;
+        }
+        iArg++;
+    }
 
     // Mod can have no classes.
     TClass iClass = CBot::iDefaultClass;
-    if ( CMod::aClassNames.size() )
+    if ( CMod::aClassNames.size() && (argc > iArg) )
     {
-        iTotal++;
-        if ( argc > 3 )
+        good::string sClass( argv[iArg] );
+        iClass = CTypeToString::ClassFromString(sClass);
+        if ( (iClass == -1) && (sClass != "random") )
         {
-            good::string sClass( argv[3] );
-            iClass = CTypeToString::ClassFromString(sClass);
-            if ( (iClass == -1) && (sClass != "random") )
-            {
-                BULOG_W(pEdict, "Invalid class: %s.", argv[3]);
-                return ECommandError;
-            }
+            BULOG_W(pEdict, "Invalid class: %s.", argv[iArg]);
+            BULOG_W( pEdict, "  Must be one of: %s.", CTypeToString::ClassFlagsToString(-1).c_str() );
+            return ECommandError;
         }
+        iArg++;
     }
 
-    CPlayer* pBot = CPlayers::AddBot(szName, iTeam, iClass, iIntelligence, MAX2(0, argc-iTotal), &argv[iTotal]);
+    CPlayer* pBot = CPlayers::AddBot(szName, iTeam, iClass, iIntelligence, argc-iArg, &argv[iArg]);
     if ( pBot )
     {
         BULOG_I( pEdict, "Bot added: %s.", pBot->GetName() );
@@ -1839,6 +1838,36 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
             BULOG_W( pEdict, sLastError.c_str() );
         return ECommandError;
     }
+}
+
+TCommandResult CBotCommandCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( argc != 2 )
+    {
+        BULOG_W( pEdict,"Error, invalid arguments count." );
+        return ECommandError;
+    }
+    else
+    {
+        good::string sName = argv[0];
+        bool bAll = (sName == sAll);
+
+        for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
+        {
+            CPlayer* pPlayer = CPlayers::Get(i);
+            if ( pPlayer && pPlayer->IsBot() )
+            {
+                if ( bAll || good::starts_with( good::string(pPlayer->GetName()), sName ) )
+                {
+                    CBot* pBot = (CBot*)pPlayer;
+                    pBot->ConsoleCommand(argv[1]);
+                }
+            }
+        }
+    }
+    return ECommandPerformed;
 }
 
 TCommandResult CBotKickCommand::Execute( CClient* pClient, int argc, const char** argv )
@@ -1878,7 +1907,7 @@ TCommandResult CBotDebugCommand::Execute( CClient* pClient, int argc, const char
     good::string sName = argv[0];
 
     CBot* pBot = NULL;
-    for ( int i=0; i < CPlayers::Size(); ++i )
+    for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
     {
         CPlayer* pPlayer = CPlayers::Get(i);
         if ( pPlayer && pPlayer->IsBot() )
@@ -2200,7 +2229,7 @@ TCommandResult CBotPauseCommand::Execute( CClient* pClient, int argc, const char
 
     if ( argc == 0 )
     {
-        for ( int i=0; i < CPlayers::Size(); ++i )
+        for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
         {
             CPlayer* pPlayer = CPlayers::Get(i);
             if ( pPlayer && pPlayer->IsBot() )
@@ -2220,7 +2249,7 @@ TCommandResult CBotPauseCommand::Execute( CClient* pClient, int argc, const char
     good::string sName = argv[0];
 
     CBot* pBot = NULL;
-    for ( int i=0; i < CPlayers::Size(); ++i )
+    for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
     {
         CPlayer* pPlayer = CPlayers::Get(i);
         if ( pPlayer && pPlayer->IsBot() )

@@ -520,7 +520,25 @@ public:
     CBotAddCommand()
     {
         m_sCommand = "add";
-        m_sHelp = "add random bot";
+        m_sHelp = "add bot";
+        if ( CMod::aClassNames.size() )
+            m_sDescription = "Parameters: <bot-name> <intelligence> <team> <class>. ";
+        else
+            m_sDescription = "Parameters: <bot-name> <intelligence> <team>. ";
+        m_iAccessLevel = FCommandAccessBot;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CBotCommandCommand: public CConsoleCommand
+{
+public:
+    CBotCommandCommand()
+    {
+        m_sCommand = "command";
+        m_sHelp = "execute console command by bot";
+        m_sDescription = "Parameters: <bot-name> <command>. Example: 'botrix bot command all kill'.";
         m_iAccessLevel = FCommandAccessBot;
     }
 
@@ -962,6 +980,7 @@ public:
     {
         m_sCommand = "bot";
         Add(new CBotAddCommand);
+        Add(new CBotCommandCommand);
         Add(new CBotDebugCommand);
         Add(new CBotDrawPathCommand);
         Add(new CBotDefaultCommand);

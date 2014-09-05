@@ -1045,11 +1045,8 @@ void CBot::UpdateWeapon()
         CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
         cWeapon.GameFrame(m_cCmd.buttons);
 
-        if ( cWeapon.CanUse() )
-        {
-            if ( cWeapon.GetBaseWeapon()->bForbidden ) // Select other weapon.
-                WeaponChoose();
-        }
+        if ( cWeapon.CanUse() && cWeapon.GetBaseWeapon()->bForbidden ) // Select other weapon.
+            WeaponChoose();
     }
 }
 
@@ -1349,11 +1346,14 @@ void CBot::EnemyAim()
     else
         m_pCurrentEnemy->GetCenter(m_vLook);
 
-    int iError = (EBotPro - m_iIntelligence) * 4;
-    // Smart: -4..+4, normal -8..+8, stupied -12..+12, fool -16..+16.
-    m_vLook.x += iError - (rand() % (iError<<1));
-    m_vLook.y += iError - (rand() % (iError<<1));
-    m_vLook.z += iError - (rand() % 20);
+    if ( m_iIntelligence < EBotPro )
+    {
+        // Smart: -4..+4, normal -8..+8, stupied -12..+12, fool -16..+16.
+        int iError = (EBotPro - m_iIntelligence) * 4;
+        m_vLook.x += iError - (rand() % (iError<<1));
+        m_vLook.y += iError - (rand() % (iError<<1));
+        m_vLook.z += iError - (rand() % 20);
+    }
 
     m_fEndAimTime = GetEndLookTime();
 
@@ -1382,20 +1382,21 @@ void CBot::EnemyAim()
 //----------------------------------------------------------------------------------------------------------------
 void CBot::WeaponChoose()
 {
-    GoodAssert( CWeapon::IsValid(m_iWeapon) );
     if ( m_bStuckBreakObject || m_bStuckUsePhyscannon )
         return;
 
+    GoodAssert( CWeapon::IsValid(m_iWeapon) );
     CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
 
     if ( !cWeapon.CanUse() || ( m_pCurrentEnemy &&
-        ( cWeapon.CanShoot(0, m_fDistanceSqrToEnemy) || cWeapon.CanShoot(1, m_fDistanceSqrToEnemy) ) ) )
-        return; // Don't change weapon if enemy is close...
+         ( cWeapon.CanShoot(0, m_fDistanceSqrToEnemy) ||
+           cWeapon.CanShoot(1, m_fDistanceSqrToEnemy) ) ) )
+        return; // Don't change weapon if enemy is close... TODO: sometimes using melee and not changing.
 
     // If not engaging enemy, reload some weapons.
     if ( (m_pCurrentEnemy == NULL) && m_bNeedReload )
     {
-        if ( cWeapon.CanUse() && cWeapon.NeedReload(0) )
+        if ( !cWeapon.IsReloading() && cWeapon.NeedReload(0) ) // Here cWeapon.CanUse() is true.
         {
             WeaponReload();
             return;
@@ -1500,16 +1501,8 @@ void CBot::WeaponShoot( int iSecondary )
     if ( m_bFeatureWeaponCheck )
     {
         GoodAssert( CWeapon::IsValid(m_iWeapon) );
-
         CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
-        if ( cWeapon.GetBaseWeapon()->bForbidden )
-        {
-            WeaponChoose();
-            return;
-        }
-
-        if ( !cWeapon.CanUse() )
-            return;
+        GoodAssert( cWeapon.CanUse() );
 
         BotDebug( "%s -> Shoot %s %s, ammo %d/%d.", GetName(), (iSecondary) ? "secondary" : "primary",
                   cWeapon.GetName().c_str(), cWeapon.Bullets(iSecondary), cWeapon.ExtraBullets(iSecondary) );
@@ -2152,14 +2145,6 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
                 {
                     if ( pWeapon->CanUse() ) // Stay shooting after first time aimed at enemy.
                     {
-                        if ( pWeapon && pWeapon->IsSniper()  ) // Check if need to zoom or out.
-                        {
-                            bool bNeedZoom = pWeapon->ShouldZoom(m_fDistanceSqrToEnemy);
-                            if ( (  bNeedZoom && !pWeapon->IsUsingZoom() ) ||
-                                    ( !bNeedZoom &&  pWeapon->IsUsingZoom() ) )
-                                WeaponToggleZoom();
-                        }
-
                         if ( pWeapon->IsMelee() || pWeapon->IsPhysics() )
                         {
                             if ( !m_bStuckBreakObject && !m_bStuckUsePhyscannon )
@@ -2167,13 +2152,28 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
                         }
                         else
                         {
-                            // Prefer secondary attack.
-                            if ( pWeapon->HasAmmoInClip(1) && pWeapon->IsDistanceSafe(m_fDistanceSqrToEnemy, 1) )
-                                WeaponShoot(CWeapon::SECONDARY);
-                            else if ( pWeapon->HasAmmoInClip(0) && pWeapon->IsDistanceSafe(m_fDistanceSqrToEnemy, 0) )
-                                WeaponShoot(CWeapon::PRIMARY);
-                            else
-                                WeaponChoose(); // No more bullets, select another weapon.
+                            bool bZooming = false;
+                            if ( pWeapon->IsSniper()  ) // Check if need to zoom or out.
+                            {
+                                bool bNeedZoom = pWeapon->ShouldZoom(m_fDistanceSqrToEnemy);
+                                if ( ( bNeedZoom && !pWeapon->IsUsingZoom() ) ||
+                                     ( !bNeedZoom &&  pWeapon->IsUsingZoom() ) )
+                                {
+                                    WeaponToggleZoom();
+                                    bZooming = true;
+                                }
+                            }
+
+                            if ( !bZooming )
+                            {
+                                // Prefer secondary attack.
+                                if ( pWeapon->HasAmmoInClip(1) && pWeapon->IsDistanceSafe(m_fDistanceSqrToEnemy, 1) )
+                                    WeaponShoot(CWeapon::SECONDARY);
+                                else if ( pWeapon->HasAmmoInClip(0) && pWeapon->IsDistanceSafe(m_fDistanceSqrToEnemy, 0) )
+                                    WeaponShoot(CWeapon::PRIMARY);
+                                else
+                                    WeaponChoose(); // No more bullets, select another weapon.
+                            }
                         }
                     }
                 }
@@ -2185,14 +2185,14 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
                     WeaponShoot( CWeapon::SECONDARY );
             }
         }
-        else
+        else // No enemy.
         {
             m_bEnemyAim = m_bAttackDuck = false; // Bot is not under attack now.
             if ( pWeapon )
             {
                 if ( pWeapon->IsSniper() && pWeapon->IsUsingZoom() && pWeapon->CanUse() )
                     WeaponToggleZoom();
-                else if ( m_bNeedReload && !m_bStuckUsePhyscannon && !m_bStuckBreakObject )
+                else if ( m_bNeedReload && !pWeapon->IsReloading() && !m_bStuckUsePhyscannon && !m_bStuckBreakObject )
                     WeaponChoose();
             }
         }
@@ -2268,7 +2268,10 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
                 m_bNeedAttack = false;
             }
             else if ( CBotrixPlugin::fTime < m_fEndActionTime ) // Stop attacking after m_fEndActionTime.
-                WeaponShoot();
+            {
+                if ( CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].CanUse() )
+                    WeaponShoot();
+            }
             else
             {
                 m_bNeedAttack = false;
@@ -2380,7 +2383,8 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
             {
                 if ( pObject && pObject->IsBreakable() && !pObject->IsExplosive() ) // Object still there.
                 {
-                    WeaponShoot();
+                    if ( CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].CanUse() )
+                        WeaponShoot();
 
                     if ( (CBotrixPlugin::fTime >= m_fEndAimTime + 1.0f) ) // Maybe object moved.
                     {

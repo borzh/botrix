@@ -111,8 +111,7 @@ void CWeaponWithAmmo::EndHold()
 //----------------------------------------------------------------------------------------------------------------
 void CWeaponWithAmmo::Reload( int iSecondary )
 {
-
-    GoodAssert( CanUse() && NeedReload(iSecondary) );
+    GoodAssert( !IsReloading() && CanUse() && NeedReload(iSecondary) );
     m_iSecondary = iSecondary;
     if ( m_pWeapon->fReloadStartTime[iSecondary] )
     {

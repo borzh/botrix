@@ -34,6 +34,7 @@ TClass CBot::iDefaultClass = -1;
 TFightStrategyFlags CBot::iDefaultFightStrategy = FFightStrategyRunAwayIfNear | FFightStrategyComeCloserIfFar;
 float CBot::fNearDistanceSqr = SQR(200);
 float CBot::fFarDistanceSqr = SQR(500);
+float CBot::fInvalidWaypointSuicideTime = 10.0f;
 
 float CBot::m_fTimeIntervalCheckUsingMachines = 0.5f;
 int CBot::m_iCheckEntitiesPerFrame = 4;
@@ -276,6 +277,7 @@ void CBot::Respawned()
 //----------------------------------------------------------------------------------------------------------------
 void CBot::Dead()
 {
+    BotDebug( "%s -> dead.", GetName() );
     CPlayer::Dead();
     if ( m_bTest )
         CPlayers::KickBot(this);
@@ -957,7 +959,6 @@ void CBot::WeaponCheckCurrent( bool bAddToBotWeapons )
         m_aWeapons.push_back( cNewWeapon );
         iId = m_aWeapons.size()-1;
         m_aWeapons[iId].AddWeapon();
-        WeaponChange(iId); // As if just switching to this weapon.
 
         if ( !CWeapon::IsValid(m_iMeleeWeapon) && cNewWeapon.IsMelee() )
             m_iMeleeWeapon = iId;
@@ -965,6 +966,8 @@ void CBot::WeaponCheckCurrent( bool bAddToBotWeapons )
             m_iPhyscannon = iId;
         else if ( !CWeapon::IsValid(m_iBestWeapon) && cNewWeapon.IsRanged() )
             m_iBestWeapon = iId;
+
+        WeaponChange(iId); // As if just switching to this weapon.
     }
 }
 
@@ -1028,11 +1031,19 @@ void CBot::UpdateWeapon()
         TWeaponId iCurrentWeapon = WeaponSearch(szCurrentWeapon);
         if ( iCurrentWeapon == EWeaponIdInvalid )
         {
-            BLOG_W( "%s -> Unknown weapon %s.", GetName(), szCurrentWeapon );
             WeaponCheckCurrent( true );
         }
         else
+        {
+            if ( CWeapon::IsValid(m_iWeapon) )
+            {
+                if ( m_aWeapons[m_iWeapon].IsMelee() || m_aWeapons[m_iWeapon].IsPhysics() )
+                    m_aWeapons[m_iWeapon].SetPresent(false);
+                else
+                    m_aWeapons[m_iWeapon].SetEmpty();
+            }
             WeaponChange(iCurrentWeapon); // As if just switching to this weapon.
+        }
     }
     else
     {
@@ -1387,10 +1398,10 @@ void CBot::WeaponChoose()
            cWeapon.CanShoot(1, m_fDistanceSqrToEnemy) ) ) )
         return; // Don't change weapon if enemy is close... TODO: sometimes using melee and not changing.
 
-    // If not engaging enemy, reload some weapons.
+    // If not engaging enemy, reload some weapons. Here cWeapon.CanUse() is true.
     if ( (m_pCurrentEnemy == NULL) && m_bNeedReload )
     {
-        if ( !cWeapon.IsReloading() && cWeapon.NeedReload(0) ) // Here cWeapon.CanUse() is true.
+        if ( !cWeapon.IsReloading() && cWeapon.NeedReload(0) )
         {
             WeaponReload();
             return;
@@ -1408,8 +1419,16 @@ void CBot::WeaponChoose()
             m_bNeedReload = false; // Continue to select best weapon.
         else
         {
-            if ( iIdx != m_iWeapon ) // Will reload current weapon.
+            if ( iIdx == m_iWeapon ) // Will reload current weapon.
+            {
+                cWeapon.Reload(CWeapon::PRIMARY);
+            }
+            else
+            {
+                BotDebug( "%s -> change weapon to reload %s.", GetName(),
+                          m_aWeapons[iIdx].GetName().c_str() );
                 WeaponChange(iIdx);
+            }
             return;
         }
     }
@@ -1426,8 +1445,13 @@ void CBot::WeaponChoose()
         if ( !m_aWeapons[m_iWeapon].HasAmmoInClip(0) )
             m_bStayReloading = true;
     }
-    else if ( CWeapon::IsValid(m_iBestWeapon) && m_aWeapons[m_iBestWeapon].IsPresent() )
+    else if ( CWeapon::IsValid(m_iBestWeapon) )
+    {
+        GoodAssert( m_aWeapons[m_iBestWeapon].IsPresent() );
+        BotDebug( "%s -> set best weapon %s.", GetName(),
+                  m_aWeapons[m_iBestWeapon].GetName().c_str() );
         WeaponChange(m_iBestWeapon);
+    }
     else
         m_iBestWeapon = m_iWeapon;
 
@@ -1453,7 +1477,7 @@ bool CBot::WeaponSet( const good::string& sWeapon )
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot::WeaponChange( int iIndex )
+void CBot::WeaponChange( TWeaponId iIndex )
 {
     //GoodAssert( iIndex != m_iWeapon ); // This can happen when out of bullets, and autoswitch is made to other weapon.
     GoodAssert( m_bFeatureWeaponCheck && CWeapon::IsValid(iIndex) );
@@ -1469,7 +1493,6 @@ void CBot::WeaponChange( int iIndex )
     if ( WeaponSet(sWeaponName) )
     {
         CWeaponWithAmmo::Holster( pOld, cNew );
-        BotMessage( "%s -> Set weapon %s.", GetName(), sWeaponName.c_str() );
         m_iWeapon = iIndex;
     }
     else if ( m_pPlayerInfo->GetWeaponName() )
@@ -1478,6 +1501,12 @@ void CBot::WeaponChange( int iIndex )
         {
             BLOG_W( "%s -> could not set weapon %s, not present?", GetName(), sWeaponName.c_str() );
             cNew.SetPresent(false);
+            if ( m_iMeleeWeapon == iIndex )
+                m_iMeleeWeapon = EWeaponIdInvalid;
+            if ( m_iPhyscannon == iIndex )
+                m_iPhyscannon = EWeaponIdInvalid;
+            if ( m_iBestWeapon == iIndex )
+                m_iBestWeapon = EWeaponIdInvalid;
         }
         else
         {
@@ -1902,17 +1931,28 @@ bool CBot::NormalMove()
 //----------------------------------------------------------------------------------------------------------------
 void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOrigin )
 {
-    //m_cCmd.viewangles = m_pController->GetLocalAngles(); // WTF?
+    //m_cCmd.viewangles = m_pController->GetLocalAngles(); // TODO: WTF?
     //m_cCmd.viewangles = m_pPlayerInfo->GetAbsAngles(); // WTF?
 
-    // Don't perform navigator moves when under attack.
-    //if ( m_bUnderAttack )
-    //{
-    //    if ( m_iIntelligence >= EBotSmart)
-    //    {
-    //        // Move left/stop-shoot/right/stop-shoot.
-    //    }
-    //}
+    if ( CWaypoint::IsValid(iCurrentWaypoint) )
+        m_bInvalidWaypointStart = false;
+    else
+    {
+        if ( m_bInvalidWaypointStart )
+        {
+            if ( CBotrixPlugin::fTime >= m_fInvalidWaypointEnd ) // TODO: config.
+            {
+                BLOG_E( "%s -> Staying away from waypoints too long, suiciding.", GetName() );
+                ConsoleCommand("kill");
+            }
+        }
+        else
+        {
+            m_bInvalidWaypointStart = true;
+            m_fInvalidWaypointEnd = CBotrixPlugin::fTime + CBot::fInvalidWaypointSuicideTime;
+        }
+        return;
+    }
 
     if  ( CheckMoveFailure() )
     {

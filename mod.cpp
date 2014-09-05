@@ -83,25 +83,26 @@ bool CMod::Load( TModId iModId )
 #ifdef BOTRIX_TF2
     case EModId_TF2:
         bHeadShotDoesMoreDamage = false;
-        bResult &= AddEvent(new CPlayerActivateEvent());
-        bResult &= AddEvent(new CPlayerTeamEvent());
-        bResult &= AddEvent(new CPlayerSpawnEvent());
-        bResult &= AddEvent(new CPlayerHurtEvent());
-        bResult &= AddEvent(new CPlayerDeathEvent());
-        // bResult &= AddEvent(new CPlayerChatEvent());
+        AddEvent(new CPlayerHurtEvent);
+        AddEvent(new CPlayerSpawnEvent);
+        AddEvent(new CPlayerDeathEvent);
+        AddEvent(new CPlayerActivateEvent);
+        AddEvent(new CPlayerTeamEvent);
+
+        AddEvent(new CRoundStartEvent);
+        // AddEvent(new CPlayerChatEvent);
 
         // TODO: events https://wiki.alliedmods.net/Team_Fortress_2_Events
         // player_changeclass ctf_flag_captured
         // teamplay_point_startcapture achievement_earned
         // player_calledformedic
-        // teamplay_round_active
 
         iPlayerHeight = 83;
         iPlayerHeightCrouched = 56;
         iPlayerWidth = 49;
         vPlayerCollisionHull = Vector(iPlayerWidth, iPlayerWidth, iPlayerHeight);
 
-        // TODO: for class  https://developer.valvesoftware.com/wiki/TF2/Team_Fortress_2_Mapper%27s_Reference
+        // TODO: for class https://developer.valvesoftware.com/wiki/TF2/Team_Fortress_2_Mapper%27s_Reference
         iPlayerEyeLevel = 68;
         iPlayerEyeLevelCrouched = 48;
 
@@ -132,12 +133,12 @@ bool CMod::Load( TModId iModId )
 #ifdef BOTRIX_HL2DM
     case EModId_HL2DM:
         // TODO: move to hl2dm mod.
-        bResult &= AddEvent(new CPlayerActivateEvent());
-        bResult &= AddEvent(new CPlayerTeamEvent());
-        bResult &= AddEvent(new CPlayerSpawnEvent());
-        bResult &= AddEvent(new CPlayerHurtEvent());
-        bResult &= AddEvent(new CPlayerDeathEvent());
-//        bResult &= AddEvent(new CPlayerChatEvent());
+        AddEvent(new CPlayerActivateEvent());
+        AddEvent(new CPlayerTeamEvent());
+        AddEvent(new CPlayerSpawnEvent());
+        AddEvent(new CPlayerHurtEvent());
+        AddEvent(new CPlayerDeathEvent());
+//        AddEvent(new CPlayerChatEvent());
 
         pCurrentMod = new CModHL2DM();
         break;
@@ -151,12 +152,12 @@ bool CMod::Load( TModId iModId )
 
 #ifdef BOTRIX_MOD_CSS
     case EModId_CSS:
-        bResult &= AddEvent(new CRoundStartEvent());
-        bResult &= AddEvent(new CWeaponFireEvent());
-        bResult &= AddEvent(new CBulletImpactEvent());
-        bResult &= AddEvent(new CPlayerFootstepEvent());
-        bResult &= AddEvent(new CBombDroppedEvent());
-        bResult &= AddEvent(new CBombPickupEvent());
+        AddEvent(new CRoundStartEvent());
+        AddEvent(new CWeaponFireEvent());
+        AddEvent(new CBulletImpactEvent());
+        AddEvent(new CPlayerFootstepEvent());
+        AddEvent(new CBombDroppedEvent());
+        AddEvent(new CBombPickupEvent());
         pCurrentMod = new CModCss();
         break;
 #endif
@@ -170,15 +171,6 @@ bool CMod::Load( TModId iModId )
     return bResult;
 }
 
-//----------------------------------------------------------------------------------------------------------------
-bool CMod::AddEvent( CEvent* pEvent )
-{
-    bool bResult = CBotrixPlugin::pGameEventManager &&
-                   CBotrixPlugin::pGameEventManager->AddListener( CBotrixPlugin::instance, pEvent->GetName().c_str(), true );
-    if ( bResult )
-        m_aEvents.push_back( CEventPtr(pEvent) );
-    return bResult;
-}
 
 //----------------------------------------------------------------------------------------------------------------
 void CMod::MapLoaded()
@@ -223,25 +215,6 @@ const good::string& CMod::GetRandomBotName( TBotIntelligence iIntelligence )
     return aBotNames[iIdx];
 }
 
-//----------------------------------------------------------------------------------------------------------------
-void CMod::ExecuteEvent( void* pEvent, TEventType iType )
-{
-    IEventInterface *pInterface = CEvent::GetEventInterface(pEvent, iType);
-    if ( pInterface == NULL )
-        return;
-
-    const char* szEventName = pInterface->GetName();
-    GoodAssert( szEventName );
-
-    for ( good::vector<CEventPtr>::iterator it = m_aEvents.begin(); it != m_aEvents.end(); ++it )
-    {
-        if ( (*it)->GetName() == szEventName )
-        {
-            (*it)->Execute(pInterface);
-            break;
-        }
-    }
-}
 
 //----------------------------------------------------------------------------------------------------------------
 bool CMod::IsNameTaken( const good::string& cName, TBotIntelligence iIntelligence )

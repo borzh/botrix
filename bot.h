@@ -44,6 +44,7 @@ public: // Members.
 
     static float fNearDistanceSqr;                      ///< Distance to consider to be near enemy.
     static float fFarDistanceSqr;                       ///< Distance to consider to be far away from enemy.
+    static float fInvalidWaypointSuicideTime;           ///< Max time to stay away from waypoints.
 
 
 public: // Methods.
@@ -108,6 +109,7 @@ public: // Methods.
     /// Called when this bot just killed an enemy.
     virtual void KilledEnemy( int /*iPlayerIndex*/, CPlayer* pPlayer )
     {
+        BotMessage( "%s -> killed %s.", GetName(), pPlayer->GetName() );
         if ( pPlayer == m_pCurrentEnemy )
             m_pCurrentEnemy = NULL;
     }
@@ -188,7 +190,7 @@ protected: // Methods.
     {
         if ( !m_bMoveFailure )
         {
-            m_bMoveFailure =  ( !CWaypoint::IsValid(iCurrentWaypoint) ) ||
+            m_bMoveFailure = //TODO: check here waypoint invalid: !CWaypoint::IsValid(iCurrentWaypoint) ||
                 ( m_bNeedMove && m_bUseNavigatorToMove && m_cNavigator.SearchEnded() && !m_bDestinationChanged &&
                 ( !CWaypoint::IsValid(iNextWaypoint) ||
                 ( (iCurrentWaypoint != iNextWaypoint) && !CWaypoints::HasPath(iCurrentWaypoint, iNextWaypoint) ) ) );
@@ -254,7 +256,7 @@ protected: // Methods.
     virtual bool WeaponSet( const good::string& sWeapon );
 
     // Try to swith to other weapon.
-    void WeaponChange( int iIndex );
+    void WeaponChange( TWeaponId iIndex );
 
     // Shoot current weapon.
     void WeaponShoot( int iSecondary = CWeapon::PRIMARY );
@@ -312,8 +314,6 @@ protected: // Members.
     //Vector m_vLastVelocity;                                       // Vector of velocity in previous frame.
     Vector m_vLook;                                                // Point where bot tries to aim to.
 
-    //QAngle m_angLook;                                              // Angles for look.
-
     Vector m_vForward;                                             // Bot will look at this forward vector most time it is moving.
                                                                    // It is set to next waypoint origin in path when bot becomes closer to destination waypoint.
     TWaypointId m_iDestinationWaypoint;                            // Set this to waypoint you want to move to, also m_bDestinationChanged to true.
@@ -334,9 +334,9 @@ protected: // Members.
     CWaypointNavigator m_cNavigator;                               // Waypoint navigator.
     good::vector<TAreaId> m_aAvoidAreas;                           // Array of areas waypoint navigator must avoid.
 
-    good::vector<TItemIndex> m_aNearestItems[EItemTypeTotal];  // Nearest items from m_aNearItems that are checked every frame (to know if bot picked them up).
-    good::vector<TItemIndex> m_aNearItems[EItemTypeTotal];     // Items in close range.
-    int m_iNextNearItem[EItemTypeTotal];                         // Next item to check if close (index in array CItems::GetItems()).
+    good::vector<TItemIndex> m_aNearestItems[EItemTypeTotal];      // Nearest items from m_aNearItems that are checked every frame (to know if bot picked them up).
+    good::vector<TItemIndex> m_aNearItems[EItemTypeTotal];         // Items in close range.
+    int m_iNextNearItem[EItemTypeTotal];                           // Next item to check if close (index in array CItems::GetItems()).
 
     good::bitset m_aNearPlayers;                                   // Bitset of players near (to know if bot can stuck with them).
     good::bitset m_aSeenEnemies;                                   // Bitset of enemies that bot can see right now.
@@ -347,14 +347,15 @@ protected: // Members.
     float m_fDistanceSqrToEnemy;                                   // If m_pCurrentEnemy is not NULL, squared distance to it.
     float m_fTimeToEraseEnemy;                                     // Time to mark enemy no visible after not seeing it.
 
-    good::vector<CPickedItem>::size_type m_iCurrentPickedItem;      // Index in m_aPickedItems to check next frame.
-    good::vector<CPickedItem> m_aPickedItems;                       // Picked items (like health or weapon), for bot to know which items are available to pick on map.
+    good::vector<CPickedItem>::size_type m_iCurrentPickedItem;     // Index in m_aPickedItems to check next frame.
+    good::vector<CPickedItem> m_aPickedItems;                      // Picked items (like health or weapon), for bot to know which items are available to pick on map.
 
-    good::vector<CWeaponWithAmmo> m_aWeapons;                       // Weapons that bot actually has.
+    good::vector<CWeaponWithAmmo> m_aWeapons;                      // Weapons that bot actually has.
     TWeaponId m_iWeapon, m_iBestWeapon;                            // Current / previous / best weapon.
-    TWeaponId m_iPhyscannon, m_iMeleeWeapon;                      // Index of gravity gun / melee gun, -1 if bot doesn't have it.
+    TWeaponId m_iPhyscannon, m_iMeleeWeapon;                       // Index of gravity gun / melee gun, -1 if bot doesn't have it.
 
     float m_fNextDrawNearObjectsTime;                              // Next time to draw near objects.
+    float m_fInvalidWaypointEnd;                                   // Time when suicide because far away from waypoints.
 
     good::pair<int, int> m_cAttackDuckRangeSqr;                    // Will duck if attacking & m_bFeatureAttackDuckEnabled & in range.
 
@@ -372,6 +373,7 @@ protected: // Bot flags.
     bool m_bTest:1;                                                // Bot was created only for testing purposes, it will be eliminated after reaching needed waypoint.
     bool m_bPaused:1;                                              // Bot is paused.
     bool m_bDebugging:1;                                           // Currently debugging this bot.
+    bool m_bInvalidWaypointStart:1;                                // Start counting time to suicide.
 
     bool m_bAimChanged:1;                                          // True if need to change bot's angles (if false m_angLook has been calculated).
     bool m_bNeedAim:1;                                             // True if need to change bot's angles. Will be set to false when finished aiming.

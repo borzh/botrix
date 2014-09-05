@@ -14,6 +14,8 @@ extern char* szMainBuffer;
 extern int iMainBufferSize;
 
 
+bool CBot_TF2::bCanJoinTeams = true;
+
 //----------------------------------------------------------------------------------------------------------------
 CBot_TF2::CBot_TF2( edict_t* pEdict, TBotIntelligence iIntelligence, int iTeam, int iClass ):
     CBot(pEdict, iIntelligence, iClass), m_aWaypoints(CWaypoints::Size()), m_cItemToSearch(-1, -1),
@@ -26,20 +28,35 @@ CBot_TF2::CBot_TF2( edict_t* pEdict, TBotIntelligence iIntelligence, int iTeam, 
 //----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::Respawned()
 {
-    CBot::Respawned();
-    m_bAlive = true;
-
-    m_aWaypoints.reset();
-    m_iFailWaypoint = EWaypointIdInvalid;
-
-    m_iCurrentTask = EBotTaskInvalid;
-    m_bNeedTaskCheck = true;
-    m_bChasing = false;
+    BotMessage( "%s -> current team %s.", GetName(), CMod::aTeamsNames[GetTeam()].c_str() );
 
     if ( m_iDesiredTeam == CMod::iUnassignedTeam )
         m_iDesiredTeam = ( CPlayers::GetTeamCount(2) > CPlayers::GetTeamCount(3) ) ? 3 : 2;
-    if ( m_iDesiredTeam != GetTeam() )
-        m_pPlayerInfo->ChangeTeam(m_iDesiredTeam);
+    if ( bCanJoinTeams )
+    {
+        if ( m_iDesiredTeam == GetTeam() )
+        {
+            CBot::Respawned();
+            m_bAlive = m_bNeedTaskCheck = true;
+        }
+        else
+        {
+            BotMessage( "%s -> will join team %s.", GetName(),
+                        CMod::aTeamsNames[m_iDesiredTeam].c_str() );
+            m_pPlayerInfo->ChangeTeam(m_iDesiredTeam);
+        }
+    }
+    else
+    {
+        BotMessage( "%s -> will join team %s.", GetName(),
+                    CMod::aTeamsNames[CMod::iSpectatorTeam].c_str() );
+        m_pPlayerInfo->ChangeTeam(CMod::iSpectatorTeam);
+    }
+
+    m_aWaypoints.reset();
+    m_iFailWaypoint = EWaypointIdInvalid;
+    m_iCurrentTask = EBotTaskInvalid;
+    m_bChasing = false;
 }
 
 
@@ -86,12 +103,9 @@ void CBot_TF2::Think()
     GoodAssert( !m_bTest );
     if ( !m_bAlive )
     {
-        m_cCmd.buttons = rand() & IN_ATTACK; // Force bot to respawn by hitting randomly attack button.
+        m_cCmd.buttons = rand() & IN_ATTACK; // TODO: force bot to respawn by hitting randomly attack button?
         return;
     }
-
-    if ( iCurrentWaypoint == EWaypointIdInvalid )
-        return;
 
     bool bForceNewTask = false;
 
@@ -464,7 +478,7 @@ find_enemy:
         }
         else
         {
-            BotMessage( "%s -> new task: %s (%s), waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
+            BotMessage( "%s -> new task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
                         pEntityClass ? pEntityClass->sClassName.c_str() : "", m_iTaskDestination, iCurrentWaypoint );
 
             m_iDestinationWaypoint = m_iTaskDestination;

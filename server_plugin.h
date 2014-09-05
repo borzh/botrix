@@ -56,7 +56,6 @@
 
 class IVEngineServer;
 class IFileSystem;
-class IGameEventManager;
 class IGameEventManager2;
 class IPlayerInfoManager;
 class IVEngineServer;
@@ -71,22 +70,14 @@ class ICvar;
 //****************************************************************************************************************
 /// Plugin class.
 //****************************************************************************************************************
-#ifdef USE_OLD_GAME_EVENT_MANAGER
-class CBotrixPlugin : public IServerPluginCallbacks, public IGameEventListener
-#else
-class CBotrixPlugin : public IServerPluginCallbacks, public IGameEventListener2
-#endif
+class CBotrixPlugin : public IServerPluginCallbacks
 {
 
 public: // Static members.
     static CBotrixPlugin* instance;                    ///< Plugin singleton.
 
     static IVEngineServer* pEngineServer;              ///< Interface to util engine functions.
-#ifdef USE_OLD_GAME_EVENT_MANAGER
-    static IGameEventManager* pGameEventManager;       ///< Game events interface.
-#else
     static IGameEventManager2* pGameEventManager;      ///< Game events interface.
-#endif
     static IPlayerInfoManager* pPlayerInfoManager;     ///< Interface to interact with players.
     static IServerPluginHelpers* pServerPluginHelpers; ///< To create menues on client side.
     static IServerGameClients* pServerGameClients;
@@ -172,22 +163,6 @@ public: // Methods.
     /// added with version 3 of the interface.
     virtual void OnEdictAllocated( edict_t *edict );
     virtual void OnEdictFreed( const edict_t *edict  );
-#endif
-
-#ifdef USE_OLD_GAME_EVENT_MANAGER
-    //------------------------------------------------------------------------------------------------------------
-    // IGameEventListener implementation.
-    //------------------------------------------------------------------------------------------------------------
-    // FireEvent is called by EventManager if event just occured
-    // KeyValue memory will be freed by manager if not needed anymore
-    virtual void FireGameEvent( KeyValues * event);
-#else
-    //------------------------------------------------------------------------------------------------------------
-    // IGameEventListener2 implementation.
-    //------------------------------------------------------------------------------------------------------------
-    // FireEvent is called by EventManager if event just occured
-    // IGameEvent memory will be freed by manager if not needed anymore
-    virtual void FireGameEvent( IGameEvent *event );
 #endif
 
     // Generate say event.

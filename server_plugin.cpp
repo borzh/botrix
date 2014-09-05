@@ -349,9 +349,7 @@ void CBotrixPlugin::Unload( void )
 {
     CConfiguration::Unload();
     CMainCommand::instance.reset();
-
-    if ( pGameEventManager )
-        pGameEventManager->RemoveListener(this);
+    CMod::UnLoad();
 
     good::log::stop_log_to_file();
 }
@@ -628,69 +626,8 @@ PLUGIN_RESULT CBotrixPlugin::NetworkIDValidated( const char *pszUserName, const 
     return PLUGIN_CONTINUE;
 }
 
+
 //----------------------------------------------------------------------------------------------------------------
-// Called when an event is fired.
-//----------------------------------------------------------------------------------------------------------------
-#ifdef USE_OLD_GAME_EVENT_MANAGER
-void CBotrixPlugin::FireGameEvent( KeyValues* event )
-{
-    if ( !m_bEnabled || !bMapRunning )
-        return;
-
-    good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
-
-    const char* type = event->GetName();
-
-    if ( CPlayers::IsDebuggingEvents() )
-    {
-        KeyValues* copy = event->MakeCopy(); // Source bug? Heap corrupted if iterate directly on event.
-
-        sbBuffer << "Event: " << type << '\n';
-
-        for ( KeyValues *pk = copy->GetFirstTrueSubKey(); pk; pk = pk->GetNextTrueSubKey() )
-            sbBuffer << pk->GetName() << '\n';
-
-        for ( KeyValues *pk = copy->GetFirstValue(); pk; pk = pk->GetNextValue() )
-            sbBuffer << pk->GetName() << " = " << pk->GetString() << '\n';
-
-        CPlayers::DebugEvent(szMainBuffer);
-
-        copy->deleteThis();
-    }
-
-    CMod::ExecuteEvent( (void*)event, EEventTypeKeyValues );
-}
-
-void CBotrixPlugin::GenerateSayEvent( edict_t* pEntity, const char* szText, bool bTeamOnly )
-{
-    int iUserId = pEngineServer->GetPlayerUserId(pEntity);
-    BASSERT(iUserId != -1, return);
-
-    KeyValues* pEvent = pGameEventManager->GetEvent("player_say", true);
-    if (pEvent)
-    {
-        BASSERT( strcmp(pEvent->GetName(), "player_say") ); // Valve check.
-        pEvent->SetInt("userid", iUserId);
-        pEvent->SetString("text", szText);
-        pEvent->SetBool("teamonly", bTeamOnly);
-        pGameEventManager->FireEvent(pEvent);
-        //pEvent->deleteThis(); // TODO: need to delete?
-    }
-}
-
-#else // USE_OLD_GAME_EVENT_MANAGER
-
-void CBotrixPlugin::FireGameEvent( IGameEvent * event )
-{
-    if ( !m_bEnabled || !bMapRunning )
-        return;
-
-    if ( CPlayers::IsDebuggingEvents() )
-        CPlayers::DebugEvent( "Event: %s", event->GetName() );
-
-    CMod::ExecuteEvent( (void*)event, EEventTypeIGameEvent );
-}
-
 void CBotrixPlugin::GenerateSayEvent( edict_t* pEntity, const char* szText, bool bTeamOnly )
 {
     int iUserId = pEngineServer->GetPlayerUserId(pEntity);
@@ -707,8 +644,6 @@ void CBotrixPlugin::GenerateSayEvent( edict_t* pEntity, const char* szText, bool
         //pGameEventManager2->FreeEvent(pEvent); // Don't free it !!!
     }
 }
-
-#endif
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -752,10 +687,6 @@ void CBotrixPlugin::PrepareLevel( const char* szMapName )
 #ifndef DONT_USE_VALVE_FUNCTIONS
     ConVar *pTeamplay = pCVar->FindVar("mp_teamplay");
     bTeamPlay = pTeamplay ? pTeamplay->GetBool() : false;
-
-#ifdef USE_OLD_GAME_EVENT_MANAGER
-    pGameEventManager->AddListener( this, true );
-#endif
 
     CWaypoint::iWaypointTexture = CBotrixPlugin::pEngineServer->PrecacheModel( "sprites/lgtning.vmt" );
 #endif

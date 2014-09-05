@@ -143,9 +143,10 @@ void CWeaponWithAmmo::AddWeapon()
             AddBullets(m_pWeapon->iClipSize[0], 0);
     }
     else
+    {
         m_iBulletsInClip[0] = m_pWeapon->iClipSize[0]; // Picked weapon has full clip.
-
-    m_bWeaponPresent = true;
+        m_bWeaponPresent = true;
+    }
 }
 
 

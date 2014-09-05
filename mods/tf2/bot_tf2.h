@@ -18,6 +18,9 @@ class CBot_TF2: public CBot
 {
 
 public:
+
+    static bool bCanJoinTeams; ///< True if bot can join teams. If not, then will add bot to spectators.
+
     /// Constructor.
     CBot_TF2( edict_t* pEdict, TBotIntelligence iIntelligence, int iTeam, int iClass );
 

@@ -4,106 +4,16 @@
 #include "server_plugin.h"
 #include "source_engine.h"
 
+#ifdef BOTRIX_TF2
+    #include "mods/tf2/bot_tf2.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 
 //----------------------------------------------------------------------------------------------------------------
-// Class for events of type KeyValues.
-//----------------------------------------------------------------------------------------------------------------
-#ifdef USE_OLD_GAME_EVENT_MANAGER
-class CGameEventInterface1 : public IEventInterface
-{
-public:
-    CGameEventInterface1( KeyValues *pEvent ) { m_pEvent = pEvent; }
-
-    const char *GetName()
-    {
-        return m_pEvent->GetName();
-    }
-
-    bool GetBool( const char *keyName, bool defaultValue = false )
-    {
-        return ( m_pEvent->GetInt(keyName, defaultValue) != 0 );
-    }
-
-    int GetInt( const char *keyName, int defaultValue = 0 )
-    {
-        return m_pEvent->GetInt(keyName, defaultValue);
-    }
-
-    float GetFloat( const char *keyName, float defaultValue = 0 )
-    {
-        return m_pEvent->GetFloat(keyName, defaultValue);
-    }
-
-    const char *GetString( const char *keyName, const char *defaultValue = NULL )
-    {
-        return m_pEvent->GetString(keyName, defaultValue);
-    }
-
-protected:
-    KeyValues *m_pEvent;
-
-};
-
-
-#else // USE_OLD_GAME_EVENT_MANAGER
-
-
-//----------------------------------------------------------------------------------------------------------------
-// Class for events of type IGameEvent.
-//----------------------------------------------------------------------------------------------------------------
-class CGameEventInterface2 : public IEventInterface
-{
-public:
-    CGameEventInterface2( IGameEvent *pEvent ) { m_pEvent = pEvent; }
-
-    const char *GetName() { return m_pEvent->GetName(); }
-
-    bool GetBool( const char *keyName, bool defaultValue = false )
-    {
-        return m_pEvent->GetBool(keyName, defaultValue);
-    }
-
-    int GetInt( const char *keyName, int defaultValue = 0 )
-    {
-        return m_pEvent->GetInt(keyName, defaultValue);
-    }
-
-    float GetFloat( const char *keyName, float defaultValue = 0 )
-    {
-        return m_pEvent->GetFloat(keyName, defaultValue);
-    }
-
-    const char *GetString( const char *keyName, const char *defaultValue = 0 )
-    {
-        return m_pEvent->GetString(keyName, defaultValue);
-    }
-
-protected:
-    IGameEvent *m_pEvent;
-};
-
-
-#endif // USE_OLD_GAME_EVENT_MANAGER
-
-
-//----------------------------------------------------------------------------------------------------------------
-IEventInterface* CEvent::GetEventInterface( void* pEvent, TEventType iType )
-{
-#ifdef USE_OLD_GAME_EVENT_MANAGER
-    GoodAssert( iType == EEventTypeKeyValues );
-    return new CGameEventInterface1( (KeyValues*)pEvent );
-#else
-    GoodAssert( iType == EEventTypeIGameEvent );
-    return new CGameEventInterface2( (IGameEvent*)pEvent );
-#endif
-}
-
-
-//----------------------------------------------------------------------------------------------------------------
-void CPlayerActivateEvent::Execute( IEventInterface* pEvent )
+void CPlayerActivateEvent::FireGameEvent( IGameEvent* pEvent )
 {
     int iUserId = pEvent->GetInt("userid");
     edict_t* pActivator = CUtil::GetEntityByUserId( iUserId );
@@ -116,7 +26,7 @@ void CPlayerActivateEvent::Execute( IEventInterface* pEvent )
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CPlayerTeamEvent::Execute( IEventInterface* pEvent )
+void CPlayerTeamEvent::FireGameEvent( IGameEvent* pEvent )
 {
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
     TTeam iTeam = pEvent->GetInt("team");
@@ -131,7 +41,7 @@ void CPlayerTeamEvent::Execute( IEventInterface* pEvent )
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CPlayerSpawnEvent::Execute( IEventInterface* pEvent )
+void CPlayerSpawnEvent::FireGameEvent( IGameEvent* pEvent )
 {
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
 
@@ -143,7 +53,7 @@ void CPlayerSpawnEvent::Execute( IEventInterface* pEvent )
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CPlayerChatEvent::Execute( IEventInterface* pEvent )
+void CPlayerChatEvent::FireGameEvent( IGameEvent* pEvent )
 {
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
     const char* szText = pEvent->GetString("text");
@@ -154,7 +64,7 @@ void CPlayerChatEvent::Execute( IEventInterface* pEvent )
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CPlayerHurtEvent::Execute( IEventInterface* pEvent )
+void CPlayerHurtEvent::FireGameEvent( IGameEvent* pEvent )
 {
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
     int iActivator = CPlayers::GetIndex(pActivator);
@@ -171,7 +81,7 @@ void CPlayerHurtEvent::Execute( IEventInterface* pEvent )
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CPlayerDeathEvent::Execute( IEventInterface* pEvent )
+void CPlayerDeathEvent::FireGameEvent( IGameEvent* pEvent )
 {
     edict_t* pActivator = CUtil::GetEntityByUserId( pEvent->GetInt("userid") );
     edict_t* pAttacker = CUtil::GetEntityByUserId( pEvent->GetInt("attacker") );
@@ -192,4 +102,12 @@ void CPlayerDeathEvent::Execute( IEventInterface* pEvent )
         if ( pPlayerAttacker && pPlayerAttacker->IsBot() )
             ((CBot*)pPlayerAttacker)->KilledEnemy(iActivator, pPlayerActivator);
     }
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+void CRoundStartEvent::FireGameEvent( IGameEvent* pEvent )
+{
+    BLOG_I( pEvent->GetName() );
+    //CBot_TF2::bCanJoinTeams = true;
 }

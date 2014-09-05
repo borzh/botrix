@@ -85,16 +85,18 @@ public: // Methods.
     static bool Load( TModId iModId );
 
     // Add event and start listening to it.
-    static bool AddEvent( CEvent* pEvent );
+    static void AddEvent( CEvent* pEvent ) { m_aEvents.push_back( CEventPtr(pEvent) ); }
 
     /// Unload mod.
     static void UnLoad()
     {
+        m_aEvents.clear();
+        m_aFrameEvents.clear();
+
         m_iModId = EModId_Invalid;
         sModName = "";
         aTeamsNames.clear();
         aBotNames.clear();
-        m_aEvents.clear();
         delete pCurrentMod;
         pCurrentMod = NULL;
     }
@@ -125,9 +127,6 @@ public: // Methods.
 
     /// Get random bot name from [General] section, key bot_names.
     static const good::string& GetRandomBotName( TBotIntelligence iIntelligence );
-
-    /// Execute event.
-    static void ExecuteEvent( void* pEvent, TEventType iType );
 
 
 public: // Static members.

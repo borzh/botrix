@@ -151,13 +151,13 @@
     </valuelist>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes">
-     <value type="QString">LD_LIBRARY_PATH=/home/noone/.steam/steam/SteamApps/common/Half-Life 2 Deathmatch/bin:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/lib/i386-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/lib:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/usr/lib/i386-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/usr/lib:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/lib/x86_64-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/lib:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib/x86_64-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib</value>
+     <value type="QString">LD_LIBRARY_PATH=${HOME}/.steam/steam/SteamApps/common/Half-Life 2 Deathmatch/bin:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/lib/i386-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/lib:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/usr/lib/i386-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/usr/lib:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/lib/x86_64-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/lib:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib/x86_64-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib</value>
     </valuelist>
     <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Arguments">-insecure -allowdebug -novid -console -game hl2mp</value>
-    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Executable">/home/noone/.steam/steam/SteamApps/common/Half-Life 2 Deathmatch/hl2_linux</value>
-    <value type="bool" key="ProjectExplorer.CustomExecutableRunConfiguration.UseTerminal">false</value>
-    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.WorkingDirectory">/home/noone/.steam/steam/SteamApps/common/Half-Life 2 Deathmatch</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Run /home/noone/.steam/steam/SteamApps/common/Half-Life 2 Deathmatch/hl2_linux</value>
+    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Executable">./hl2_linux</value>
+    <value type="bool" key="ProjectExplorer.CustomExecutableRunConfiguration.UseTerminal">true</value>
+    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.WorkingDirectory">${HOME}/.steam/steam/SteamApps/common/Half-Life 2 Deathmatch</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Run ./hl2_linux</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">hl2dm</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">ProjectExplorer.CustomExecutableRunConfiguration</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
@@ -204,13 +204,13 @@
     </valuelist>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes">
-     <value type="QString">LD_LIBRARY_PATH=/home/noone/.steam/steam/SteamApps/common/Source SDK Base 2013 Multiplayer/bin:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/lib/i386-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/lib:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/usr/lib/i386-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/usr/lib:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/lib/x86_64-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/lib:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib/x86_64-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib</value>
+     <value type="QString">LD_LIBRARY_PATH=${HOME}/.steam/steam/SteamApps/common/Source SDK Base 2013 Multiplayer/bin:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/lib/i386-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/lib:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/usr/lib/i386-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/usr/lib:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/lib/x86_64-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/lib:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib/x86_64-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib</value>
     </valuelist>
     <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Arguments">-insecure -allowdebug -novid -console -game &quot;%{buildDir}/../../source-sdk-2013/mp/game/mod_hl2mp&quot;</value>
-    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Executable">/home/noone/.steam/steam/SteamApps/common/Source SDK Base 2013 Multiplayer/hl2_linux</value>
-    <value type="bool" key="ProjectExplorer.CustomExecutableRunConfiguration.UseTerminal">false</value>
-    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.WorkingDirectory">/home/noone/.steam/steam/SteamApps/common/Source SDK Base 2013 Multiplayer</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Run /home/noone/.steam/steam/SteamApps/common/Source SDK Base 2013 Multiplayer/hl2_linux</value>
+    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Executable">./hl2_linux</value>
+    <value type="bool" key="ProjectExplorer.CustomExecutableRunConfiguration.UseTerminal">true</value>
+    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.WorkingDirectory">${HOME}/.steam/steam/SteamApps/common/Source SDK Base 2013 Multiplayer</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Run ./hl2_linux</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">source sdk 2013</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">ProjectExplorer.CustomExecutableRunConfiguration</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
@@ -257,13 +257,13 @@
     </valuelist>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes">
-     <value type="QString">LD_LIBRARY_PATH=/home/noone/steamcmd/hl2dm/bin:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/lib/i386-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/lib:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/usr/lib/i386-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/usr/lib:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/lib/x86_64-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/lib:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib/x86_64-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib</value>
+     <value type="QString">LD_LIBRARY_PATH=${HOME}/steamcmd/hl2dm/bin:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/lib/i386-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/lib:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/usr/lib/i386-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/usr/lib:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/lib/x86_64-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/lib:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib/x86_64-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib</value>
     </valuelist>
-    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Arguments">-game hl2mp +map dm_underpass +maxplayers 16</value>
-    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Executable">/home/noone/steamcmd/hl2dm/srcds_linux</value>
+    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Arguments">-game hl2mp +map dm_Underpass +maxplayers 16</value>
+    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Executable">./srcds_linux</value>
     <value type="bool" key="ProjectExplorer.CustomExecutableRunConfiguration.UseTerminal">true</value>
-    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.WorkingDirectory">/home/noone/steamcmd/hl2dm</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Run /home/noone/steamcmd/hl2dm/srcds_linux</value>
+    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.WorkingDirectory">${HOME}/steamcmd/hl2dm</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Run ./srcds_linux</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">srcds</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">ProjectExplorer.CustomExecutableRunConfiguration</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
@@ -310,13 +310,13 @@
     </valuelist>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes">
-     <value type="QString">LD_LIBRARY_PATH=/home/noone/.steam/steam/SteamApps/common/Team Fortress 2/bin:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/lib/i386-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/lib:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/usr/lib/i386-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/usr/lib:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/lib/x86_64-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/lib:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib/x86_64-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib</value>
+     <value type="QString">LD_LIBRARY_PATH=${HOME}/.steam/steam/SteamApps/common/Team Fortress 2/bin:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/lib/i386-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/lib:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/usr/lib/i386-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/usr/lib:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/lib/x86_64-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/lib:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib/x86_64-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib</value>
     </valuelist>
     <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Arguments">-insecure -allowdebug -novid -console -game tf</value>
-    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Executable">/home/noone/.steam/steam/SteamApps/common/Team Fortress 2/hl2_linux</value>
-    <value type="bool" key="ProjectExplorer.CustomExecutableRunConfiguration.UseTerminal">false</value>
-    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.WorkingDirectory">/home/noone/.steam/steam/SteamApps/common/Team Fortress 2</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Run /home/noone/.steam/steam/SteamApps/common/Team Fortress 2/hl2_linux</value>
+    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Executable">./hl2_linux</value>
+    <value type="bool" key="ProjectExplorer.CustomExecutableRunConfiguration.UseTerminal">true</value>
+    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.WorkingDirectory">${HOME}/.steam/steam/SteamApps/common/Team Fortress 2</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Run ./hl2_linux</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">TeamFortress2</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">ProjectExplorer.CustomExecutableRunConfiguration</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
@@ -363,12 +363,12 @@
     </valuelist>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes">
-     <value type="QString">LD_LIBRARY_PATH=/home/noone/steamcmd/tf2/bin:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/lib/i386-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/lib:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/usr/lib/i386-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/i386/usr/lib:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/lib/x86_64-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/lib:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib/x86_64-linux-gnu:/home/noone/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib</value>
+     <value type="QString">LD_LIBRARY_PATH=${HOME}/steamcmd/tf2/bin:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/lib/i386-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/lib:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/usr/lib/i386-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/i386/usr/lib:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/lib/x86_64-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/lib:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib/x86_64-linux-gnu:${HOME}/.steam/ubuntu12_32/steam-runtime/amd64/usr/lib</value>
     </valuelist>
-    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Arguments">-game tf +map arena_granary +maxplayers 16</value>
+    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Arguments">-game tf +map arena_Granary +maxplayers 16</value>
     <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Executable">./srcds_linux</value>
     <value type="bool" key="ProjectExplorer.CustomExecutableRunConfiguration.UseTerminal">true</value>
-    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.WorkingDirectory">/home/noone/steamcmd/tf2</value>
+    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.WorkingDirectory">${HOME}/steamcmd/tf2</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Run ./srcds_linux</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">tf2ds</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">ProjectExplorer.CustomExecutableRunConfiguration</value>

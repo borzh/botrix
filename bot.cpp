@@ -456,6 +456,16 @@ void CBot::EndPerformingChatRequest( bool bSayGoodbye )
 //----------------------------------------------------------------------------------------------------------------
 void CBot::PreThink()
 {
+//#define DRAW_BEAM_TO_0_0_0
+#if defined(DEBUG) && defined(DRAW_BEAM_TO_0_0_0)
+    static float fBeamTo000 = 0.0f;
+    if ( CBotrixPlugin::fTime > fBeamTo000 )
+    {
+        fBeamTo000 = CBotrixPlugin::fTime + 0.5f;
+        CUtil::DrawBeam(GetHead(), CUtil::vZero, 5, 0.6f, 0xff, 0xff, 0xff);
+    }
+#endif
+
     if ( m_bPaused )
         return;
 
@@ -463,6 +473,26 @@ void CBot::PreThink()
     {
         BLOG_W( "Please create more waypoints, so I could move. I am paused." );
         m_bPaused = true;
+        return;
+
+    }
+    if ( CWaypoint::IsValid(iCurrentWaypoint) )
+        m_bInvalidWaypointStart = false;
+    else
+    {
+        if ( m_bInvalidWaypointStart )
+        {
+            if ( CBotrixPlugin::fTime >= m_fInvalidWaypointEnd ) // TODO: config.
+            {
+                BLOG_E( "%s -> Staying away from waypoints too long, suiciding.", GetName() );
+                ConsoleCommand("kill");
+            }
+        }
+        else
+        {
+            m_bInvalidWaypointStart = true;
+            m_fInvalidWaypointEnd = CBotrixPlugin::fTime + CBot::fInvalidWaypointSuicideTime;
+        }
         return;
     }
 
@@ -1933,26 +1963,6 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
 {
     //m_cCmd.viewangles = m_pController->GetLocalAngles(); // TODO: WTF?
     //m_cCmd.viewangles = m_pPlayerInfo->GetAbsAngles(); // WTF?
-
-    if ( CWaypoint::IsValid(iCurrentWaypoint) )
-        m_bInvalidWaypointStart = false;
-    else
-    {
-        if ( m_bInvalidWaypointStart )
-        {
-            if ( CBotrixPlugin::fTime >= m_fInvalidWaypointEnd ) // TODO: config.
-            {
-                BLOG_E( "%s -> Staying away from waypoints too long, suiciding.", GetName() );
-                ConsoleCommand("kill");
-            }
-        }
-        else
-        {
-            m_bInvalidWaypointStart = true;
-            m_fInvalidWaypointEnd = CBotrixPlugin::fTime + CBot::fInvalidWaypointSuicideTime;
-        }
-        return;
-    }
 
     if  ( CheckMoveFailure() )
     {

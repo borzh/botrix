@@ -639,6 +639,20 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
+class CBotConfigChangeClassCommand: public CConsoleCommand
+{
+public:
+    CBotConfigChangeClassCommand()
+    {
+        m_sCommand = "change-class";
+        m_sHelp = "change bot class to another random class after x rounds.";
+        m_sDescription = "Set to 0 to disable.";
+        m_iAccessLevel = FCommandAccessBot;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
 class CBotConfigStrategyFlagsCommand: public CConsoleCommand
 {
 public:
@@ -646,7 +660,7 @@ public:
     {
         m_sCommand = "flags";
         m_sHelp = "set bot fight strategy flags";
-        m_sDescription = good::string("Can be one of: ") + CTypeToString::StrategyFlagsToString(FFightStrategyAll);
+        m_sDescription = good::string("Can be mix of: ") + CTypeToString::StrategyFlagsToString(FFightStrategyAll);
         m_iAccessLevel = FCommandAccessBot;
 
         for ( int i=0; i < EFightStrategyFlagTotal; ++i )
@@ -694,7 +708,10 @@ public:
         Add(new CBotConfigIntelligenceCommand);
         Add(new CBotConfigTeamCommand);
         if ( CMod::aClassNames.size() )
+        {
             Add(new CBotConfigClassCommand);
+            Add(new CBotConfigChangeClassCommand);
+        }
         Add(new CBotConfigStrategyCommand);
     }
 };

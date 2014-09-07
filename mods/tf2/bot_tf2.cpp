@@ -37,6 +37,11 @@ void CBot_TF2::Respawned()
         if ( m_iDesiredTeam == GetTeam() )
         {
             CBot::Respawned();
+            if ( iChangeClassRound && !m_iClassChange )
+            {
+                ChangeClass( rand() % CMod::aClassNames.size() );
+                m_iClassChange = iChangeClassRound;
+            }
             m_bAlive = m_bNeedTaskCheck = true;
         }
         else
@@ -64,11 +69,19 @@ void CBot_TF2::Respawned()
 void CBot_TF2::ChangeTeam( TTeam iTeam )
 {
     m_iDesiredTeam = iTeam;
+    BotMessage( "%s -> changed team to %s.", GetName(), CTypeToString::TeamToString(iTeam).c_str() );
+    ChangeClass(m_iClass);
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+void CBot_TF2::ChangeClass( TClass iClass )
+{
+    m_iClass = iClass;
     good::string_buffer sb(szMainBuffer, iMainBufferSize, false);
     const good::string& sClass = CTypeToString::ClassToString(m_iClass);
     sb << "joinclass " << sClass;
-    BotMessage( "%s -> team %s, will joinclass %s.", GetName(),
-                CTypeToString::TeamToString(iTeam).c_str(), sClass.c_str() );
+    BotMessage( "%s -> will joinclass %s.", GetName(), sClass.c_str() );
     CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, sb.c_str() );
 }
 

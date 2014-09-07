@@ -10,28 +10,31 @@
 *
 * 0.0.3
 * @li Plugin is working with Team Fortress 2.
-* @li Added new weapons handling for TF2.
-* @li Escaping new steam ids in config.ini, for example \\[U:1:12345678].
+* @li Added new weapons handling in config.ini for TF2.
+* @li Escaping TF2 steam ids in config.ini, for example \\[U:1:12345678].
 * @li Bug fix: correct handling of plugin_pause/plugin_unpause commands.
-* @li Bug fix: sometimes bots wasn't aware they picked up item.
-* @li Bug fix: sometimes bots were shooting at spectator.
+* @li Bug fix: sometimes bot wasn't aware it picked up item.
+* @li Bug fix: sometimes bot was shooting at spectator.
 * @li Bug fix: when bot was trying to use weapon he actually was creating it.
-* @li Bug fix: waypoints wasn't loading for maps in uppercase (linux).
+* @li Bug fix: waypoints wasn't loading for maps with different case (linux).
 * @li Now bots can use melee weapons.
 * @li Now bots can use unknown weapons.
 * @li Added logic for bot to pursue enemy.
-* @li Bots will run randomly near engaged enemy.
-* @li Smart bots will keep distance according to the weapon they have.
+* @li Bots will run randomly near engaged enemy, preferently using visible areas.
 * @li Added new commands:
+*     -# botrix bot config quota <#number/#player-#bot quota>
+*     -# botrix bot config intelligence <bot-intelligence>
+*     -# botrix bot config team <bot-team>
+*     -# botrix bot config class <bot-class>
+*     -# botrix bot config change-class <change-class-round>
+*     -# botrix bot config strategy flags
+*     -# botrix bot config strategy set
+*     -# botrix bot command <bot-name> <command>
 *     -# botrix bot weapon add <bot-name> <weapon-name>
 *     -# botrix bot weapon unknown <melee/ranged>.
-*     -# botrix bot default amount <#number/players>
-*     -# botrix bot default intelligence <bot-intelligence>
-*     -# botrix bot default team <bot-team>
-*     -# botrix bot default class <bot-class>
 *     -# botrix config log <log-level>
 *     -# botrix enable/disable
-*     -# botrix bot command <bot-name> <command>
+* @li Waypoint editing: aim at waypoint to select 'path destination'.
 *
 * 0.0.2
 * @li Default base folder location is <MOD DIRECTORY>/addons/botrix.
@@ -40,7 +43,11 @@
 * @li Added command "version".
 * @li Don't repeat bot names.
 * @li Fixed several crashes.
+*
+* Originated from botman's bot template (aka HPB_bot).
 */
+
+// TODO: Smart bots will keep distance according to the weapon they have.
 
 #ifndef __BOTRIX_SERVER_PLUGIN_H__
 #define __BOTRIX_SERVER_PLUGIN_H__

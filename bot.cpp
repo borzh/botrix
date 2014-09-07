@@ -30,6 +30,7 @@ bool CBot::bAssumeUnknownWeaponManual = false;
 TBotIntelligence CBot::iDefaultIntelligence = -1;
 TTeam CBot::iDefaultTeam = 0;
 TClass CBot::iDefaultClass = -1;
+int CBot::iChangeClassRound = 0;
 
 TFightStrategyFlags CBot::iDefaultFightStrategy = FFightStrategyRunAwayIfNear | FFightStrategyComeCloserIfFar;
 float CBot::fNearDistanceSqr = SQR(200);
@@ -43,7 +44,8 @@ int CBot::m_iCheckEntitiesPerFrame = 4;
 //----------------------------------------------------------------------------------------------------------------
 CBot::CBot( edict_t* pEdict, TBotIntelligence iIntelligence, TClass iClass ):
     CPlayer(pEdict, true), m_pController( CBotrixPlugin::pBotManager->GetBotController(m_pEdict) ),
-    m_iIntelligence(iIntelligence), m_iClass(iClass), r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ),
+    m_iIntelligence(iIntelligence), m_iClass(iClass), m_iClassChange(0),
+    r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ),
     m_aNearPlayers(CPlayers::Size()), m_aSeenEnemies(CPlayers::Size()), m_aEnemies(CPlayers::Size()),
     m_cAttackDuckRangeSqr(0, SQR(400)),
     m_bTest(false), m_bPaused(false),
@@ -180,6 +182,9 @@ void CBot::Respawned()
 {
     CPlayer::Respawned();
     BotMessage( "%s -> respawned.", GetName() );
+
+    if ( iChangeClassRound && m_iClassChange )
+        m_iClassChange--;
 
 #ifdef BOTRIX_CHAT
     m_iPrevChatMate = m_iPrevTalk = -1;
@@ -456,7 +461,7 @@ void CBot::EndPerformingChatRequest( bool bSayGoodbye )
 //----------------------------------------------------------------------------------------------------------------
 void CBot::PreThink()
 {
-#define DRAW_BEAM_TO_0_0_0
+//#define DRAW_BEAM_TO_0_0_0
 #if defined(DEBUG) && defined(DRAW_BEAM_TO_0_0_0)
     static float fBeamTo000 = 0.0f;
     if ( CBotrixPlugin::fTime > fBeamTo000 )
@@ -1425,8 +1430,8 @@ void CBot::WeaponChoose()
     CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
 
     if ( !cWeapon.CanUse() || ( m_pCurrentEnemy &&
-         ( cWeapon.CanShoot(0, m_fDistanceSqrToEnemy) ||
-           cWeapon.CanShoot(1, m_fDistanceSqrToEnemy) ) ) )
+         ( cWeapon.CanShoot(CWeapon::PRIMARY, m_fDistanceSqrToEnemy) ||
+           cWeapon.CanShoot(CWeapon::SECONDARY, m_fDistanceSqrToEnemy) ) ) )
         return; // Don't change weapon if enemy is close... TODO: sometimes using melee and not changing.
 
     // If not engaging enemy, reload some weapons. Here cWeapon.CanUse() is true.
@@ -1443,7 +1448,7 @@ void CBot::WeaponChoose()
 
         TWeaponId iIdx = EWeaponIdInvalid;
         for ( int i = 0; i < m_aWeapons.size(); ++i )
-            if ( m_aWeapons[i].IsPresent() && (m_aWeapons[i].NeedReload(0) || m_aWeapons[i].NeedReload(1)) )
+            if ( m_aWeapons[i].IsPresent() && m_aWeapons[i].NeedReload(CWeapon::PRIMARY) )
             {
                 iIdx = i;
                 break;

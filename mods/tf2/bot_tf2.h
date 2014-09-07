@@ -40,7 +40,7 @@ public:
     virtual void PlayerDisconnect( int iPlayerIndex, CPlayer* pPlayer )
     {
         CBot::PlayerDisconnect(iPlayerIndex, pPlayer);
-        if ( m_bChasing && (m_pChasedEnemy == pPlayer) )
+        if ( m_pChasedEnemy == pPlayer )
         {
             m_bChasing = false;
             m_pChasedEnemy = NULL;
@@ -63,6 +63,9 @@ public:
 
 
 protected:
+
+    /// Change bot's class.
+    void ChangeClass( TClass iClass );
 
     /// Inherited from CBot. Will check if arrived at m_iTaskDestination and invalidates current task.
     virtual bool DoWaypointAction();

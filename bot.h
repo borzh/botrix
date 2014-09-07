@@ -40,6 +40,7 @@ public: // Members.
     static TBotIntelligence iDefaultIntelligence;       ///< Default team when adding bots without specify team.
     static TTeam iDefaultTeam;                          ///< Default team when adding bots without specify team.
     static TClass iDefaultClass;                        ///< Default class when adding bots without specify class.
+    static int iChangeClassRound;                       ///< For bot to change class every x rounds.
     static TFightStrategyFlags iDefaultFightStrategy;   ///< Flags of default fighting strategy.
 
     static float fNearDistanceSqr;                      ///< Distance to consider to be near enemy.
@@ -307,6 +308,7 @@ protected: // Members.
 
     TBotIntelligence m_iIntelligence;                              // Bot's intelligence.
     TClass m_iClass;                                               // Bot's class.
+    int m_iClassChange;                                            // Will change it's class when reach 0.
 
     float m_fPrevThinkTime;                                        // Previous think time (used to get time difference between this and previous frame).
 

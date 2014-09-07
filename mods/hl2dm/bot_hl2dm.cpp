@@ -95,9 +95,6 @@ void CBot_HL2DM::Think()
         return;
     }
 
-    if ( iCurrentWaypoint == EWaypointIdInvalid )
-        return;
-
     bool bForceNewTask = false;
 
     // Check for move failure.
@@ -258,7 +255,7 @@ void CBot_HL2DM::CheckEngagedEnemy()
         }
 
         iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true);
-        BotDebug( "%s -> Moving to random waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+        BotMessage( "%s -> Moving to random waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
     }
     else if ( m_pCurrentEnemy && m_bUseNavigatorToMove &&
               CWeapon::IsValid(m_iWeapon) && !m_aWeapons[m_iWeapon].IsMelee() )

@@ -25,7 +25,7 @@ public:
     // Next functions are mod dependent.
     //------------------------------------------------------------------------------------------------------------
     /// Called when player becomes active, before first respawn. Sets players model and team.
-    void Activated();
+    virtual void Activated();
 
     /// Called each time bot is respawned.
     virtual void Respawned();

@@ -2063,6 +2063,41 @@ TCommandResult CBotConfigTeamCommand::Execute( CClient* pClient, int argc, const
     return iResult;
 }
 
+TCommandResult CBotConfigChangeClassCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    TCommandResult iResult = ECommandPerformed;
+    if ( argc == 0 )
+    {
+        if ( CBot::iChangeClassRound )
+            BULOG_I( pEdict, "Bots will change their class every %d rounds.", CBot::iChangeClassRound );
+        else
+            BULOG_I( pEdict, "Bots won't change their class." );
+    }
+    else if ( argc == 1 )
+    {
+        int i = -1;
+        if ( (sscanf(argv[0], "%d", &i) != 1) || (i < 0) )
+        {
+            BULOG_W( pEdict, "Error, invalid number: %s.", argv[0] );
+            return ECommandError;
+        }
+
+        CBot::iChangeClassRound = i;
+        if ( i )
+            BULOG_I( pEdict, "Bots will change their class every %d rounds.", CBot::iChangeClassRound );
+        else
+            BULOG_I( pEdict, "Bots won't change their class." );
+    }
+    else
+    {
+        BULOG_W( pEdict, "Error, invalid arguments count." );
+        iResult = ECommandError;
+    }
+    return iResult;
+}
+
 TCommandResult CBotConfigClassCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;

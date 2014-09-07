@@ -26,7 +26,6 @@ const good::string sArmor = "armor";
 const good::string sButton = "button";
 const good::string sFirstAngle = "first_angle";
 const good::string sSecondAngle = "second_angle";
-const good::string sPlayers = "players";
 
 extern char* szMainBuffer;
 extern int iMainBufferSize;
@@ -1943,38 +1942,48 @@ TCommandResult CBotDebugCommand::Execute( CClient* pClient, int argc, const char
     }
 }
 
-TCommandResult CBotDefaultAmountCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CBotConfigQuotaCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     TCommandResult iResult = ECommandPerformed;
     if ( argc == 0 )
     {
-        if ( CPlayers::bBotsCountEqualsPlayersCount )
-            BULOG_I( pEdict, "Bots amount is equal to players amount." );
+        if ( CPlayers::fPlayerBotRatio > 0.0f )
+            BULOG_I( pEdict, "Player-Bot ratio is %.1f.", CPlayers::fPlayerBotRatio );
         else
             BULOG_I( pEdict, "Bots+Players amount: %d.", CPlayers::iBotsPlayersCount );
     }
     else if ( argc == 1 )
     {
-        if ( sPlayers == argv[0] )
+        StringVector aSplit(2);
+        good::split( good::string(argv[0]), aSplit, '-' );
+        int iArg[2] = {-1, -1};
+        if ( aSplit.size() > 2 )
         {
-            CPlayers::bBotsCountEqualsPlayersCount = true;
-            BULOG_I( pEdict, "Bots amount is equal to players amount." );
+            BULOG_W( pEdict, "Error, invalid argument: %s.", argv[0] );
+            return ECommandError;
+        }
+        for ( int i=0; i < aSplit.size(); ++i )
+            if ( (sscanf(aSplit[i].c_str(), "%d", &iArg[i]) != 1) || (iArg[i] <= 0) ||
+                 (CBotrixPlugin::instance->bMapRunning && (iArg[i] > CPlayers::Size())) )
+            {
+                BULOG_W( pEdict, "Error, invalid argument: %s.", aSplit[i].c_str() );
+                return ECommandError;
+            }
+
+        if ( aSplit.size() == 2 )
+        {
+            CPlayers::fPlayerBotRatio = (float)iArg[1]/(float)iArg[0];
+            BULOG_I( pEdict, "Player-Bot ratio is %.1f.", CPlayers::fPlayerBotRatio );
         }
         else
         {
-            int iCount = -1;
-            if ( (sscanf(argv[0], "%d", &iCount) != 1) || (iCount < 0) ||
-                 (CBotrixPlugin::instance->bMapRunning && (iCount > CPlayers::Size())) )
-            {
-                BULOG_W( pEdict, "Error, invalid argument, should be number from 0 to %d.", CPlayers::Size() );
-                return ECommandError;
-            }
-            CPlayers::iBotsPlayersCount = iCount;
-            CPlayers::bBotsCountEqualsPlayersCount = false;
+            CPlayers::fPlayerBotRatio = 0.0f;
+            CPlayers::iBotsPlayersCount = iArg[0];
             BULOG_I( pEdict, "Bots+Players amount: %d.", CPlayers::iBotsPlayersCount );
         }
+
         CPlayers::CheckBotsCount();
         iResult = ECommandPerformed;
     }
@@ -1986,7 +1995,7 @@ TCommandResult CBotDefaultAmountCommand::Execute( CClient* pClient, int argc, co
     return iResult;
 }
 
-TCommandResult CBotDefaultIntelligenceCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CBotConfigIntelligenceCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
@@ -2022,7 +2031,7 @@ TCommandResult CBotDefaultIntelligenceCommand::Execute( CClient* pClient, int ar
     return iResult;
 }
 
-TCommandResult CBotDefaultTeamCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CBotConfigTeamCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
@@ -2054,7 +2063,7 @@ TCommandResult CBotDefaultTeamCommand::Execute( CClient* pClient, int argc, cons
     return iResult;
 }
 
-TCommandResult CBotDefaultClassCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CBotConfigClassCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
@@ -2090,7 +2099,7 @@ TCommandResult CBotDefaultClassCommand::Execute( CClient* pClient, int argc, con
     return iResult;
 }
 
-TCommandResult CBotDefaultStrategyFlagsCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CBotConfigStrategyFlagsCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
@@ -2117,7 +2126,7 @@ TCommandResult CBotDefaultStrategyFlagsCommand::Execute( CClient* pClient, int a
     return ECommandPerformed;
 }
 
-TCommandResult CBotDefaultStrategySetCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CBotConfigStrategySetCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 

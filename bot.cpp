@@ -456,7 +456,7 @@ void CBot::EndPerformingChatRequest( bool bSayGoodbye )
 //----------------------------------------------------------------------------------------------------------------
 void CBot::PreThink()
 {
-//#define DRAW_BEAM_TO_0_0_0
+#define DRAW_BEAM_TO_0_0_0
 #if defined(DEBUG) && defined(DRAW_BEAM_TO_0_0_0)
     static float fBeamTo000 = 0.0f;
     if ( CBotrixPlugin::fTime > fBeamTo000 )
@@ -476,9 +476,10 @@ void CBot::PreThink()
         return;
 
     }
+
     if ( CWaypoint::IsValid(iCurrentWaypoint) )
         m_bInvalidWaypointStart = false;
-    else
+    else if ( m_bAlive )
     {
         if ( m_bInvalidWaypointStart )
         {
@@ -1431,13 +1432,16 @@ void CBot::WeaponChoose()
     // If not engaging enemy, reload some weapons. Here cWeapon.CanUse() is true.
     if ( (m_pCurrentEnemy == NULL) && m_bNeedReload )
     {
-        if ( !cWeapon.IsReloading() && cWeapon.NeedReload(0) )
+        if ( cWeapon.IsReloading() )
+            return;
+
+        if ( cWeapon.NeedReload(0) )
         {
             WeaponReload();
             return;
         }
 
-        int iIdx = -1;
+        TWeaponId iIdx = EWeaponIdInvalid;
         for ( int i = 0; i < m_aWeapons.size(); ++i )
             if ( m_aWeapons[i].IsPresent() && (m_aWeapons[i].NeedReload(0) || m_aWeapons[i].NeedReload(1)) )
             {
@@ -1445,20 +1449,14 @@ void CBot::WeaponChoose()
                 break;
             }
 
-        if ( iIdx == -1 )
+        if ( iIdx == EWeaponIdInvalid )
             m_bNeedReload = false; // Continue to select best weapon.
         else
         {
-            if ( iIdx == m_iWeapon ) // Will reload current weapon.
-            {
-                cWeapon.Reload(CWeapon::PRIMARY);
-            }
-            else
-            {
-                BotDebug( "%s -> change weapon to reload %s.", GetName(),
-                          m_aWeapons[iIdx].GetName().c_str() );
-                WeaponChange(iIdx);
-            }
+            GoodAssert( iIdx != m_iWeapon );
+            BotDebug( "%s -> change weapon to reload %s.", GetName(),
+                      m_aWeapons[iIdx].GetName().c_str() );
+            WeaponChange(iIdx);
             return;
         }
     }

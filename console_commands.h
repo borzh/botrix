@@ -571,26 +571,24 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotDefaultAmountCommand: public CConsoleCommand
+class CBotConfigQuotaCommand: public CConsoleCommand
 {
 public:
-    CBotDefaultAmountCommand()
+    CBotConfigQuotaCommand()
     {
-        m_sCommand = "amount";
-        m_sHelp = "set amount of bots+players";
-        m_sDescription = "You can use word 'players' to have #bots = #players.";
+        m_sCommand = "quota";
+        m_sHelp = "set bots+players quota.";
+        m_sDescription = "You can use 'n-m' to have m bots per n players. Set to 0 to disable quota.";
         m_iAccessLevel = FCommandAccessBot;
-
-        m_cAutoCompleteArguments.push_back("players");
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotDefaultIntelligenceCommand: public CConsoleCommand
+class CBotConfigIntelligenceCommand: public CConsoleCommand
 {
 public:
-    CBotDefaultIntelligenceCommand()
+    CBotConfigIntelligenceCommand()
     {
         m_sCommand = "intelligence";
         m_sHelp = "set default bot intelligence";
@@ -605,10 +603,10 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotDefaultTeamCommand: public CConsoleCommand
+class CBotConfigTeamCommand: public CConsoleCommand
 {
 public:
-    CBotDefaultTeamCommand()
+    CBotConfigTeamCommand()
     {
         m_sCommand = "team";
         m_sHelp = "set default bot team";
@@ -623,10 +621,10 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotDefaultClassCommand: public CConsoleCommand
+class CBotConfigClassCommand: public CConsoleCommand
 {
 public:
-    CBotDefaultClassCommand()
+    CBotConfigClassCommand()
     {
         m_sCommand = "class";
         m_sHelp = "set default bot class";
@@ -641,10 +639,10 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotDefaultStrategyFlagsCommand: public CConsoleCommand
+class CBotConfigStrategyFlagsCommand: public CConsoleCommand
 {
 public:
-    CBotDefaultStrategyFlagsCommand()
+    CBotConfigStrategyFlagsCommand()
     {
         m_sCommand = "flags";
         m_sHelp = "set bot fight strategy flags";
@@ -658,10 +656,10 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotDefaultStrategySetCommand: public CConsoleCommand
+class CBotConfigStrategySetCommand: public CConsoleCommand
 {
 public:
-    CBotDefaultStrategySetCommand()
+    CBotConfigStrategySetCommand()
     {
         m_sCommand = "set";
         m_sHelp = "set bot fight strategy argument";
@@ -675,29 +673,29 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotDefaultStrategyCommand: public CConsoleCommandContainer
+class CBotConfigStrategyCommand: public CConsoleCommandContainer
 {
 public:
-    CBotDefaultStrategyCommand()
+    CBotConfigStrategyCommand()
     {
         m_sCommand = "strategy";
-        Add(new CBotDefaultStrategyFlagsCommand);
-        Add(new CBotDefaultStrategySetCommand);
+        Add(new CBotConfigStrategyFlagsCommand);
+        Add(new CBotConfigStrategySetCommand);
     }
 };
 
-class CBotDefaultCommand: public CConsoleCommandContainer
+class CBotConfigCommand: public CConsoleCommandContainer
 {
 public:
-    CBotDefaultCommand()
+    CBotConfigCommand()
     {
-        m_sCommand = "default";
-        Add(new CBotDefaultAmountCommand);
-        Add(new CBotDefaultIntelligenceCommand);
-        Add(new CBotDefaultTeamCommand);
+        m_sCommand = "config";
+        Add(new CBotConfigQuotaCommand);
+        Add(new CBotConfigIntelligenceCommand);
+        Add(new CBotConfigTeamCommand);
         if ( CMod::aClassNames.size() )
-            Add(new CBotDefaultClassCommand);
-        Add(new CBotDefaultStrategyCommand);
+            Add(new CBotConfigClassCommand);
+        Add(new CBotConfigStrategyCommand);
     }
 };
 
@@ -983,7 +981,7 @@ public:
         Add(new CBotCommandCommand);
         Add(new CBotDebugCommand);
         Add(new CBotDrawPathCommand);
-        Add(new CBotDefaultCommand);
+        Add(new CBotConfigCommand);
         Add(new CBotKickCommand);
         Add(new CBotPauseCommand);
         if ( CMod::GetModId() != EModId_TF2 ) // TF2 bots can't be spawned after round has started.

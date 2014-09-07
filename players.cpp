@@ -19,7 +19,7 @@ extern int iMainBufferSize;
 //----------------------------------------------------------------------------------------------------------------
 bool CPlayers::bAddingBot = false;
 int CPlayers::iBotsPlayersCount = 0;
-bool CPlayers::bBotsCountEqualsPlayersCount = false;
+float CPlayers::fPlayerBotRatio = 0.0f;
 
 good::vector<CPlayerPtr> CPlayers::m_aPlayers(16);
 CClient* CPlayers::m_pListenServerClient = NULL;
@@ -142,10 +142,10 @@ void CPlayer::PreThink()
 void CPlayers::CheckBotsCount()
 {
     if ( !CBotrixPlugin::instance->bMapRunning ||
-         ( !bBotsCountEqualsPlayersCount && (iBotsPlayersCount == 0) ) )
+         ( (fPlayerBotRatio == 0.0f) && (iBotsPlayersCount == 0) ) )
         return;
 
-    int iNeededCount = bBotsCountEqualsPlayersCount ? GetClientsCount() : iBotsPlayersCount - GetClientsCount();
+    int iNeededCount = fPlayerBotRatio ? GetClientsCount()*fPlayerBotRatio : iBotsPlayersCount - GetClientsCount();
     if ( iNeededCount < 0 )
         iNeededCount = 0;
     else if ( iNeededCount + GetClientsCount() > Size()-1 )

@@ -135,7 +135,7 @@ class CPlayers
 public:
     static bool bAddingBot;                   ///< True if currently adding bot.
     static int iBotsPlayersCount;             ///< Count of bots + players.
-    static bool bBotsCountEqualsPlayersCount; ///< If true, then maintain bots == players.
+    static float fPlayerBotRatio;             ///< Player-Bot ratio. For example 3 means 3bots per 1player.
 
     /// Get count of players on this server.
     static inline int Size() { return m_aPlayers.size(); };

@@ -120,10 +120,8 @@ TItemIndex CItems::GetNearestItem( TItemType iEntityType, const Vector& vOrigin,
     for ( int i = 0; i < aItems.size(); ++i )
     {
         CItem& cItem = aItems[i];
-        if ( (cItem.pEdict == NULL) || !CWaypoint::IsValid(cItem.iWaypoint) )
-            continue;
-
-        if ( pClass && (pClass != cItem.pItemClass) ) // If item is already added, we have engine name.
+        if ( (cItem.pEdict == NULL) || cItem.pEdict->IsFree() || !CWaypoint::IsValid(cItem.iWaypoint) ||
+             ( pClass && (pClass != cItem.pItemClass) ) ) // If item is already added, we have engine name.
             continue;
 
         CPickedItem cPickedItem( iEntityType, i );

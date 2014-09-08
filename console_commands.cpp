@@ -2330,7 +2330,7 @@ TCommandResult CBotPauseCommand::Execute( CClient* pClient, int argc, const char
             CPlayer* pPlayer = CPlayers::Get(i);
             if ( pPlayer && pPlayer->IsBot() &&
                  (bAll || good::starts_with(good::string(pPlayer->GetName()), sName)) )
-                ((CBot*)pPlayer)->SetPaused( bPaused == -1 ? !((CBot*)pPlayer)->IsPaused() : bPaused );
+                ((CBot*)pPlayer)->SetPaused( (bPaused == -1) ? !((CBot*)pPlayer)->IsPaused() : (bPaused != 0) );
         }
     }
     else

@@ -89,7 +89,7 @@ bool CMod::Load( TModId iModId )
         AddEvent(new CPlayerActivateEvent);
         AddEvent(new CPlayerTeamEvent);
 
-        AddEvent(new CRoundStartEvent);
+        //AddEvent(new CRoundStartEvent);
         // AddEvent(new CPlayerChatEvent);
 
         // TODO: events https://wiki.alliedmods.net/Team_Fortress_2_Events

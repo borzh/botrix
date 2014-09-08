@@ -26,14 +26,17 @@
 *     -# botrix bot config intelligence <bot-intelligence>
 *     -# botrix bot config team <bot-team>
 *     -# botrix bot config class <bot-class>
-*     -# botrix bot config change-class <change-class-round>
+*     -# botrix bot config change-class <round-limit>
 *     -# botrix bot config strategy flags
 *     -# botrix bot config strategy set
+*     -# botrix bot config suicide <time>
 *     -# botrix bot command <bot-name> <command>
 *     -# botrix bot weapon add <bot-name> <weapon-name>
 *     -# botrix bot weapon unknown <melee/ranged>.
 *     -# botrix config log <log-level>
 *     -# botrix enable/disable
+* @li Fixed commands:
+*     -# botrix bot kick <bot-name/all>
 * @li Waypoint editing: aim at waypoint to select 'path destination'.
 *
 * 0.0.2
@@ -59,7 +62,7 @@
 #include "public/igameevents.h"
 
 
-#define PLUGIN_VERSION "v0.0.3"
+#define PLUGIN_VERSION "0.0.3"
 
 class IVEngineServer;
 class IFileSystem;

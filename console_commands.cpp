@@ -1683,7 +1683,7 @@ TCommandResult CBotWeaponAddCommand::Execute( CClient* pClient, int argc, const 
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-    if ( argc != 2 )
+    if ( argc < 2 )
     {
         BULOG_W( pEdict, "Invalid parameters count." );
         return ECommandError;
@@ -1699,7 +1699,8 @@ TCommandResult CBotWeaponAddCommand::Execute( CClient* pClient, int argc, const 
         {
             good::string sBotName = pPlayer->GetName();
             if ( bAll || good::starts_with(sBotName, sName) )
-                ((CBot*)pPlayer)->AddWeapon(argv[1]);
+                for ( int iWeapon = 1; iWeapon < argc; ++iWeapon )
+                    ((CBot*)pPlayer)->AddWeapon(argv[iWeapon]);
         }
     }
 
@@ -1873,17 +1874,27 @@ TCommandResult CBotKickCommand::Execute( CClient* pClient, int argc, const char*
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-    // TODO: finish params
     if ( argc == 0 )
     {
         if ( !CPlayers::KickRandomBot() )
-            BULOG_W(pEdict,"Error, no bots to kick");
+            BULOG_W(pEdict,"Error, no bots to kick.");
+    }
+    else if ( argc == 1)
+    {
+        good::string sName(argv[0]);
+        bool bAll = (sName == sAll);
+        for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
+        {
+            CPlayer* pPlayer = CPlayers::Get(i);
+            if ( pPlayer && pPlayer->IsBot() &&
+                 (bAll || good::starts_with(good::string(pPlayer->GetName()), sName)) )
+                CPlayers::KickBot(pPlayer);
+        }
     }
     else
     {
-        int team = atoi(argv[0]);
-        if ( !CPlayers::KickRandomBotOnTeam(team) )
-            BULOG_W(pEdict,"Error, no bots to kick on team %d", team);
+        BULOG_W( pEdict, "Error, invalid arguments count.");
+        return ECommandError;
     }
     return ECommandPerformed;
 }
@@ -1946,7 +1957,6 @@ TCommandResult CBotConfigQuotaCommand::Execute( CClient* pClient, int argc, cons
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-    TCommandResult iResult = ECommandPerformed;
     if ( argc == 0 )
     {
         if ( CPlayers::fPlayerBotRatio > 0.0f )
@@ -1969,12 +1979,14 @@ TCommandResult CBotConfigQuotaCommand::Execute( CClient* pClient, int argc, cons
                  (CBotrixPlugin::instance->bMapRunning && (iArg[i] > CPlayers::Size())) )
             {
                 BULOG_W( pEdict, "Error, invalid argument: %s.", aSplit[i].c_str() );
+                BULOG_W( pEdict, "  Should be a number from 0 to %d.", CPlayers::Size() );
                 return ECommandError;
             }
 
         if ( aSplit.size() == 2 )
         {
-            CPlayers::fPlayerBotRatio = (float)iArg[1]/(float)iArg[0];
+            if ( iArg[0] )
+                CPlayers::fPlayerBotRatio = (float)iArg[1]/(float)iArg[0];
             BULOG_I( pEdict, "Player-Bot ratio is %.1f.", CPlayers::fPlayerBotRatio );
         }
         else
@@ -1985,14 +1997,13 @@ TCommandResult CBotConfigQuotaCommand::Execute( CClient* pClient, int argc, cons
         }
 
         CPlayers::CheckBotsCount();
-        iResult = ECommandPerformed;
     }
     else
     {
         BULOG_W( pEdict, "Error, invalid arguments count." );
-        iResult = ECommandError;
+        return ECommandError;
     }
-    return iResult;
+    return ECommandPerformed;
 }
 
 TCommandResult CBotConfigIntelligenceCommand::Execute( CClient* pClient, int argc, const char** argv )
@@ -2035,10 +2046,8 @@ TCommandResult CBotConfigTeamCommand::Execute( CClient* pClient, int argc, const
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-    TCommandResult iResult = ECommandPerformed;
     if ( argc == 0 )
     {
-        BULOG_I( pEdict, "Bot's default team: %s.", CTypeToString::TeamToString(CBot::iDefaultTeam).c_str() );
     }
     else if ( argc == 1 )
     {
@@ -2047,20 +2056,19 @@ TCommandResult CBotConfigTeamCommand::Execute( CClient* pClient, int argc, const
         {
             BULOG_W( pEdict, "Error, invalid team: %s.", argv[0] );
             BULOG_W( pEdict, "Can be one of: %s", CTypeToString::TeamFlagsToString(-1).c_str() );
-            iResult = ECommandError;
+            return ECommandError;
         }
         else
-        {
-            BULOG_I( pEdict, "Bot's default team: %s.", argv[0] );
             CBot::iDefaultTeam = iTeam;
-        }
     }
     else
     {
         BULOG_W( pEdict, "Error, invalid arguments count." );
-        iResult = ECommandError;
+        return ECommandError;
     }
-    return iResult;
+
+    BULOG_I( pEdict, "Bot's default team: %s.", CTypeToString::TeamToString(CBot::iDefaultTeam).c_str() );
+    return ECommandPerformed;
 }
 
 TCommandResult CBotConfigChangeClassCommand::Execute( CClient* pClient, int argc, const char** argv )
@@ -2070,10 +2078,6 @@ TCommandResult CBotConfigChangeClassCommand::Execute( CClient* pClient, int argc
     TCommandResult iResult = ECommandPerformed;
     if ( argc == 0 )
     {
-        if ( CBot::iChangeClassRound )
-            BULOG_I( pEdict, "Bots will change their class every %d rounds.", CBot::iChangeClassRound );
-        else
-            BULOG_I( pEdict, "Bots won't change their class." );
     }
     else if ( argc == 1 )
     {
@@ -2083,18 +2087,18 @@ TCommandResult CBotConfigChangeClassCommand::Execute( CClient* pClient, int argc
             BULOG_W( pEdict, "Error, invalid number: %s.", argv[0] );
             return ECommandError;
         }
-
         CBot::iChangeClassRound = i;
-        if ( i )
-            BULOG_I( pEdict, "Bots will change their class every %d rounds.", CBot::iChangeClassRound );
-        else
-            BULOG_I( pEdict, "Bots won't change their class." );
     }
     else
     {
         BULOG_W( pEdict, "Error, invalid arguments count." );
         iResult = ECommandError;
     }
+
+    if ( CBot::iChangeClassRound )
+        BULOG_I( pEdict, "Bots will change their class every %d rounds.", CBot::iChangeClassRound );
+    else
+        BULOG_I( pEdict, "Bots won't change their class." );
     return iResult;
 }
 
@@ -2134,14 +2138,42 @@ TCommandResult CBotConfigClassCommand::Execute( CClient* pClient, int argc, cons
     return iResult;
 }
 
-TCommandResult CBotConfigStrategyFlagsCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CBotConfigSuicideCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     if ( argc == 0 )
-        BULOG_I( pEdict, "Bot's strategy flags: %s.",
-                 CTypeToString::StrategyFlagsToString(CBot::iDefaultFightStrategy).c_str() );
+    {
+    }
+    else if ( argc == 1 )
+    {
+        float f = -1.0f;
+        if ( (sscanf(argv[0], "%f", &f) != 1) || (f < 0) )
+        {
+            BULOG_W( pEdict, "Error, invalid argument: %s.", argv[0] );
+            return ECommandError;
+        }
+
+        CBot::fInvalidWaypointSuicideTime = f;
+    }
     else
+    {
+        BULOG_W( pEdict, "Error, invalid arguments count." );
+        return ECommandError;
+    }
+
+    if ( CBot::fInvalidWaypointSuicideTime )
+        BULOG_I( pEdict, "Bot's suicide time: %.1f.", CBot::fInvalidWaypointSuicideTime );
+    else
+        BULOG_I( pEdict, "Bot will not commit suicide." );
+    return ECommandPerformed;
+}
+
+TCommandResult CBotConfigStrategyFlagsCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( argc != 0 )
     {
         TFightStrategyFlags iFlags = 0;
         for ( int i = 0; i < argc; ++i )
@@ -2158,6 +2190,9 @@ TCommandResult CBotConfigStrategyFlagsCommand::Execute( CClient* pClient, int ar
         }
         CBot::iDefaultFightStrategy = iFlags;
     }
+
+    BULOG_I( pEdict, "Bot's strategy flags: %s.",
+             CTypeToString::StrategyFlagsToString(CBot::iDefaultFightStrategy).c_str() );
     return ECommandPerformed;
 }
 
@@ -2167,11 +2202,6 @@ TCommandResult CBotConfigStrategySetCommand::Execute( CClient* pClient, int argc
 
     if ( argc == 0 )
     {
-        BULOG_I( pEdict, "Bot's strategy arguments:" );
-        BULOG_I( pEdict, "  %s = %d", CTypeToString::StrategyArgToString(EFightStrategyArgNearDistance).c_str(),
-                 (int)FastSqrt(CBot::fNearDistanceSqr) );
-        BULOG_I( pEdict, "  %s = %d", CTypeToString::StrategyArgToString(EFightStrategyArgFarDistance).c_str(),
-                 (int)FastSqrt(CBot::fFarDistanceSqr) );
     }
     else if ( argc == 2 )
     {
@@ -2207,7 +2237,13 @@ TCommandResult CBotConfigStrategySetCommand::Execute( CClient* pClient, int argc
     {
         BULOG_W( pEdict, "Error, invalid arguments count." );
         return ECommandError;
-   }
+    }
+
+    BULOG_I( pEdict, "Bot's strategy arguments:" );
+    BULOG_I( pEdict, "  %s = %d", CTypeToString::StrategyArgToString(EFightStrategyArgNearDistance).c_str(),
+             (int)FastSqrt(CBot::fNearDistanceSqr) );
+    BULOG_I( pEdict, "  %s = %d", CTypeToString::StrategyArgToString(EFightStrategyArgFarDistance).c_str(),
+             (int)FastSqrt(CBot::fFarDistanceSqr) );
     return ECommandPerformed;
 }
 
@@ -2271,45 +2307,14 @@ TCommandResult CBotPauseCommand::Execute( CClient* pClient, int argc, const char
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-    if ( argc == 0 )
+    if ( argc <= 2 )
     {
-        for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
-        {
-            CPlayer* pPlayer = CPlayers::Get(i);
-            if ( pPlayer && pPlayer->IsBot() )
-            {
-                ((CBot*)pPlayer)->SetPaused( !((CBot*)pPlayer)->IsPaused() );
-            }
-        }
-        return ECommandPerformed;
-    }
+        good::string sName(sAll);
+        if ( argc )
+            sName = argv[0];
+        bool bAll = (sAll == sName);
 
-    if ( argc > 2 )
-    {
-        BULOG_W( pEdict, "Error, invalid arguments count." );
-        return ECommandError;
-    }
-
-    good::string sName = argv[0];
-
-    CBot* pBot = NULL;
-    for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
-    {
-        CPlayer* pPlayer = CPlayers::Get(i);
-        if ( pPlayer && pPlayer->IsBot() )
-        {
-            good::string sBotName = pPlayer->GetName();
-            if ( good::starts_with(sBotName, sName) )
-            {
-                pBot = (CBot*)pPlayer;
-                break;
-            }
-        }
-    }
-
-    if ( pBot )
-    {
-        int bPaused = !pBot->IsPaused();
+        int bPaused = -1;
         if ( argc == 2 )
         {
             bPaused = CTypeToString::BoolFromString(argv[1]);
@@ -2319,14 +2324,21 @@ TCommandResult CBotPauseCommand::Execute( CClient* pClient, int argc, const char
                 return ECommandError;
             }
         }
-        pBot->SetPaused(bPaused ? true : false);
-        return ECommandPerformed;
+
+        for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
+        {
+            CPlayer* pPlayer = CPlayers::Get(i);
+            if ( pPlayer && pPlayer->IsBot() &&
+                 (bAll || good::starts_with(good::string(pPlayer->GetName()), sName)) )
+                ((CBot*)pPlayer)->SetPaused( bPaused == -1 ? !((CBot*)pPlayer)->IsPaused() : bPaused );
+        }
     }
     else
     {
-        BULOG_W( pEdict, "Error, no such bot: %s.", argv[0] );
+        BULOG_W( pEdict, "Error, invalid arguments count." );
         return ECommandError;
     }
+    return ECommandPerformed;
 }
 
 TCommandResult CBotTestPathCommand::Execute( CClient* pClient, int argc, const char** argv )
@@ -2567,11 +2579,6 @@ TCommandResult CConfigAdminsSetAccessCommand::Execute( CClient* pClient, int arg
     }
 
     good::string sSteamId = argv[0];
-    if ( !good::starts_with(sSteamId, "STEAM_") )
-    {
-        BULOG_W(pEdict, "Error, steam id should start with \"STEAM_\".");
-        return ECommandError;
-    }
 
     good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false); // Don't deallocate after use.
     for ( int i=1; i<argc; ++i )
@@ -2620,7 +2627,7 @@ TCommandResult CConfigAdminsShowCommand::Execute( CClient* pClient, int /*argc*/
         {
             CClient* pClient = (CClient*)pPlayer;
             if ( pClient->iCommandAccessFlags )
-                BULOG_I( pEdict, "Name: %s, access: %s, steam ID: %s.", pClient->GetName(),
+                BULOG_I( pEdict, "Name: %s, access: %s, steam id: %s.", pClient->GetName(),
                          CTypeToString::AccessFlagsToString(pClient->iCommandAccessFlags).c_str(), pClient->GetSteamID().c_str() );
         }
     }

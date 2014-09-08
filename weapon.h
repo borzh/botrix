@@ -105,6 +105,9 @@ public:
     /// Return true if weapon is sniper.
     inline bool IsSniper() const { return FLAG_SOME_SET(FWeaponZoom, m_pWeapon->iFlags[1]) != 0; }
 
+    /// Return true if weapon is medic.
+    inline bool IsMedic() const { return FLAG_SOME_SET(FWeaponCure, m_pWeapon->iFlags[0]) != 0; }
+
     /// Return true if weapon is physics.
     inline bool IsPhysics() const { return (m_pWeapon->iType == EWeaponPhysics); }
 
@@ -143,7 +146,10 @@ public:
     inline bool HasFullAmmo( int iSecondary ) const { return m_iBulletsExtra[iSecondary] == m_pWeapon->iMaxAmmo[iSecondary]; }
 
     /// Return true if weapon has ammo.
-    inline bool HasAmmo() const { return HasAmmoInClip(0) || HasAmmoInClip(1) || HasAmmoExtra(0) || HasAmmoExtra(1); }
+    inline bool HasAmmo( int iSecondary ) const { return HasAmmoInClip(iSecondary) || HasAmmoExtra(iSecondary); }
+
+    /// Return true if weapon has ammo.
+    inline bool HasAmmo() const { return HasAmmo(0) || HasAmmo(1); }
 
     /// Return true if this weapon has no bullets.
     inline bool Empty() const { return !HasAmmo(); }

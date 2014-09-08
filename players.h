@@ -66,7 +66,7 @@ public:
     void GetCenter( Vector& v ) const { CUtil::EntityCenter(m_pEdict, v); }
 
     /// Get foot position of player.
-    void GetFoot( Vector& v ) const { v = m_pPlayerInfo->GetAbsOrigin(); }
+    void GetFoot( Vector& v ) const{ v = m_pPlayerInfo->GetAbsOrigin(); }
 
     /// Get player's view angles.
     void GetEyeAngles( QAngle& a ) const

@@ -112,7 +112,7 @@ public:
 
 
 //TODO: MOVE TO TF2 EVENTS.
-class CRoundStartEvent: public CEvent
+/*class CRoundStartEvent: public CEvent
 {
 public:
     CRoundStartEvent(): CEvent("teamplay_round_start")
@@ -143,6 +143,6 @@ public:
 
     virtual void FireGameEvent( IGameEvent* pEvent );
 };
-
+*/
 
 #endif // __BOTRIX_EVENT_H__

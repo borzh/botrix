@@ -522,9 +522,9 @@ public:
         m_sCommand = "add";
         m_sHelp = "add bot";
         if ( CMod::aClassNames.size() )
-            m_sDescription = "Parameters: <bot-name> <intelligence> <team> <class>. ";
+            m_sDescription = "Optional parameters: <bot-name> <intelligence> <team> <class>. ";
         else
-            m_sDescription = "Parameters: <bot-name> <intelligence> <team>. ";
+            m_sDescription = "Optional parameters: <bot-name> <intelligence> <team>. ";
         m_iAccessLevel = FCommandAccessBot;
     }
 
@@ -551,7 +551,8 @@ public:
     CBotKickCommand()
     {
         m_sCommand = "kick";
-        m_sHelp = "kick random bot or bot on team (given argument)";
+        m_sHelp = "kick bot";
+        m_sDescription = "Parameters: <empty/bot-name/all> will kick random/selected/all bots.";
         m_iAccessLevel = FCommandAccessBot;
     }
 
@@ -564,7 +565,8 @@ public:
     CBotDebugCommand()
     {
         m_sCommand = "debug";
-        m_sHelp = "show bot debug messages on server (arguments are bot name and optionally 'on' or 'off')";
+        m_sHelp = "show bot debug messages on server";
+        m_sDescription = "Parameters: <bot-name> <on/off>.";
         m_iAccessLevel = FCommandAccessBot;
     }
 
@@ -653,6 +655,20 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
+class CBotConfigSuicideCommand: public CConsoleCommand
+{
+public:
+    CBotConfigSuicideCommand()
+    {
+        m_sCommand = "suicide";
+        m_sHelp = "when staying far from waypoints for this time (in seconds), suicide";
+        m_sDescription = "Set to 0 to disable.";
+        m_iAccessLevel = FCommandAccessBot;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
 class CBotConfigStrategyFlagsCommand: public CConsoleCommand
 {
 public:
@@ -712,6 +728,7 @@ public:
             Add(new CBotConfigClassCommand);
             Add(new CBotConfigChangeClassCommand);
         }
+        Add(new CBotConfigSuicideCommand);
         Add(new CBotConfigStrategyCommand);
     }
 };
@@ -749,7 +766,7 @@ public:
     CBotTestPathCommand()
     {
         m_sCommand = "test";
-        m_sHelp = "create bot to test path from given (current) to given (destination) waypoints";
+        m_sHelp = "create bot to test path from given (or current) to given (or destination) waypoints";
         m_iAccessLevel = FCommandAccessBot;
     }
 
@@ -836,7 +853,7 @@ public:
     {
         m_sCommand = "access";
         m_sHelp = "set access flags for given admin";
-        m_sDescription = good::string("Arguments: <Steam ID> <Access Flags>. Can be none / all / mix of: ") +
+        m_sDescription = good::string("Arguments: <steam id> <access flags>. Can be none / all / mix of: ") +
                          CTypeToString::AccessFlagsToString(FCommandAccessAll);
         m_iAccessLevel = FCommandAccessConfig;
     }

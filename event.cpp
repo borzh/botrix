@@ -106,8 +106,8 @@ void CPlayerDeathEvent::FireGameEvent( IGameEvent* pEvent )
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CRoundStartEvent::FireGameEvent( IGameEvent* pEvent )
+/*void CRoundStartEvent::FireGameEvent( IGameEvent* pEvent )
 {
     BLOG_I( pEvent->GetName() );
     //CBot_TF2::bCanJoinTeams = true;
-}
+}*/

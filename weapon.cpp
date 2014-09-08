@@ -356,13 +356,12 @@ TWeaponId CWeapons::GetBestWeapon( const good::vector<CWeaponWithAmmo>& aWeapons
         const CWeapon* pWeapon = cWeapon.GetBaseWeapon();
 
         if ( !pWeapon->bForbidden && cWeapon.IsPresent() &&
-             cWeapon.HasAmmo() && (iPreference < pWeapon->iBotPreference) )
+             (iPreference < pWeapon->iBotPreference) &&
+             ( ( cWeapon.HasAmmo(CWeapon::PRIMARY) && (cWeapon.Damage(CWeapon::PRIMARY) > 0.0f) ) ||
+               ( cWeapon.HasAmmo(CWeapon::SECONDARY) && (cWeapon.Damage(CWeapon::SECONDARY) > 0.0f) ) ) )
         {
             iIdx = i;
-            if ( cWeapon.IsMelee() )
-                iPreference = -1; // Prefer non melee weapons.
-            else
-                iPreference = pWeapon->iBotPreference;
+            iPreference = cWeapon.IsMelee() ? -1 : pWeapon->iBotPreference; // Prefer non melee weapons.
         }
 
         /*

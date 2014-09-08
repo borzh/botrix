@@ -238,6 +238,8 @@ void CBot::Respawned()
     m_bNeedUse = m_bAlreadyUsed = m_bUsingHealthMachine = false;
     m_bNeedAttack = m_bNeedAttack2 = m_bNeedJumpDuck = m_bNeedJump = false;
 
+    m_bInvalidWaypointStart = false;
+
     m_fNextDrawNearObjectsTime = 0.0f;
 
     // Check near items (skip objects).
@@ -484,7 +486,7 @@ void CBot::PreThink()
 
     if ( CWaypoint::IsValid(iCurrentWaypoint) )
         m_bInvalidWaypointStart = false;
-    else if ( m_bAlive )
+    else if ( m_bAlive && fInvalidWaypointSuicideTime )
     {
         if ( m_bInvalidWaypointStart )
         {

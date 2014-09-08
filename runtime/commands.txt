@@ -1,0 +1,121 @@
+Usefull definitions
+===================
+
+Waypoint path defines a connection between 2 waypoints. Current path is a path
+from current waypoint (nearest one, use 'botrix waypoint reset' command to
+reset) to waypoint destination (use 'botrix waypoint destination' command to
+set or just aim at waypoint to set destination).
+
+Items are objects on the map, such as weapons, bullets, health-kits, armor,
+buttons, doors, boxes, etc. They are defined in the MOD's configuration file.
+
+
+Console commands
+================
+
+Every command in Botrix starts with "botrix".
+At any time you can check for help of the command typing incomplete command (for
+example just type botrix at the console to see available commands).
+
+Here is the help you get typing "botrix" command:
+
+[botrix]
+| [bot]
+| | [add]: add bot
+| |   Optional parameters: <bot-name> <intelligence> <team> <class>.
+| | [command]: execute console command by bot
+| |   Parameters: <bot-name> <command>. Example: 'botrix bot command all kill'.
+| | [debug]: show bot debug messages on server
+| |   Parameters: <bot-name> <on/off>.
+| | [drawpath]: defines how to draw bot's path
+| |   Can be 'none' / 'all' / 'next' or mix of: beam line
+| | [config]
+| | | [quota]: set bots+players quota.
+| | |   You can use 'n-m' to have m bots per n players. Set to 0 to disable quota.
+| | | [intelligence]: set default bot intelligence
+| | |   Can be one of: random fool stupied normal smart pro
+| | | [class]: set default bot class
+| | |   Can be one of: random scout soldier pyro demoman heavyweapons engineer medic sniper spy
+| | | [team]: set default bot team
+| | |   Can be one of: unassigned spectators red blu
+| | | [change-class]: change bot class to another random class after x rounds.
+| | |   Set to 0 to disable.
+| | | [suicide]: when staying far from waypoints for this time (in seconds), suicide
+| | |   Set to 0 to disable.
+| | | [strategy]
+| | |   [flags]: set bot fight strategy flags
+| | |     Can be mix of: run-away-if-near come-closer-if-far
+| | |   [set]: set bot fight strategy argument
+| | *     Can be one of: near-distance far-distance
+| | [kick]: kick bot
+| |   Parameters: <empty/bot-name/all> will kick random/selected/all bots.
+| | [pause]: pause/resume given or all bots
+| | [test]: create bot to test path from given (or current) to given (or destination) waypoints
+| | [weapon]
+| |   [add]: add a weapon to bot
+| |   [allow]: allow bots to use given weapons
+| |   [forbid]: forbid bots to use given weapons
+| |   [unknown]: bot assumption about unknown weapons ('melee' or 'ranged')
+| *     If bot grabs or respawns with unknown weapon, choose it to be marked as melee or ranged
+|
+| [config]
+| | [admins]
+| |   [access]: set access flags for given admin
+| |     Arguments: <steam id> <access flags>. Can be none / all / mix of: waypoint bot config
+| |   [show]: show admins currently on server
+| | [event]: display events on console ('off' - disable, 'on' - enable)
+| * [log]: set console log level (none, trace, debug, info, warning, error).
+|
+| [item]
+| | [draw]: defines which items to draw
+| |   Can be 'none' / 'all' / 'next' or mix of: health armor weapon ammo button door object other
+| | [drawtype]: defines how to draw items
+| |   Can be 'none' / 'all' / 'next' or mix of: name box waypoint
+| * [reload]: reload all items (and recalculate nearest waypoints)
+|
+| [waypoint]
+| | [addtype]: add type to waypoint
+| |   Can be mix of: stop camper sniper weapon ammo health armor health_machine armor_machine button see_button
+| | [area]
+| |   [remove]: delete waypoint area
+| |   [set]: set waypoint area
+| |   [rename]: rename area
+| |   [show]: print all waypoint areas
+| | [argument]: set waypoint arguments (angles, ammo count, weapon index/subindex, armor count, health count)
+| | [autocreate]: automatically create new waypoints ('off' - disable, 'on' - enable)
+| |   Waypoint will be added when player goes too far from current one.
+| | [clear]: delete all waypoints
+| | [create]: create new waypoint at current player's position
+| | [destination]: lock given or current waypoint as path 'destination'
+| |   Set to -1 to unlock.
+| | [drawtype]: defines how to draw waypoint
+| |   Can be 'none' / 'all' / 'next' or mix of: beam line box text
+| | [load]: load waypoints
+| | [info]: display info of current waypoint at console
+| | [move]: moves destination or given waypoint to current player's position
+| | [remove]: delete given or current waypoint
+| | [removetype]: remove all waypoint types
+| | [reset]: reset current waypoint to nearest
+| * [save]: save waypoints
+|
+| [path]
+| | [autocreate]: enable auto path creation for new waypoints ('off' - disable, 'on' - enable)
+| |   If disabled, only path from 'destination' to new waypoint will be added
+| | [addtype]: add path type (from current waypoint to 'destination').
+| |   Can be mix of: crouch jump break sprint ladder stop damage flashlight door totem
+| | [create]: create path (from current waypoint to 'destination')
+| | [argument]: set path arguments.
+| |   First parameter is time to wait before action, and second is action duration.
+| | [drawtype]: defines how to draw path
+| |   Can be 'none' / 'all' / 'next' or mix of: beam line
+| | [info]: display path info on console (from current waypoint to 'destination')
+| | [remove]: remove path (from current waypoint to 'destination')
+| | [removetype]: remove path type (from current waypoint to 'destination')
+| | [visibility]: defines how to draw visible waypoints
+| *   Can be 'none' / 'all' / 'next' or mix of: beam line
+| [version]: display plugin version
+|
+| [enable]: enable plugin
+|
+* [disable]: disable plugin
+

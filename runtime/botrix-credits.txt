@@ -1,0 +1,21 @@
+Credits
+=======
+* Botrix was created as a thesis for an academic degree. Thanks a lot to my 
+  thesis director to give me a chance to make something I like.
+
+* Plugin's grandfather is Botman's bot template (aka HPB_bot). Thanks grandpa!
+
+* Plugin is working on Team Fortress 2 because of HappoKala345 (aka AcidFish)
+  request. It also works with VSH plugin, for which manual weapon handling was 
+  added.
+  Many of HappoKala's ideas were used, thanks a lot for waypoints creation, TF2
+  weapons configuration for bots and testing!
+  HappoKala created waypoints for next TF2 maps:
+    - arena_granary
+    - arena_lumberyard
+    - arena_offblast_final
+    - arena_pool_day
+    - arena_sawmill
+    - arena_well
+    - koth_deku
+    - vsh_warebloom_b7

@@ -481,8 +481,15 @@ void CBot::PreThink()
         BLOG_W( "Please create more waypoints, so I could move. I am paused." );
         m_bPaused = true;
         return;
-
     }
+
+    if ( m_pPlayerInfo->IsDead() ) // CBasePlayer::IsDead() returns true only when player became dead,  but when
+        m_bAlive = false;          // player is respawnable (but still dead) it returns false.
+
+    Vector vPrevOrigin = m_vHead;
+    int iPrevCurrWaypoint = iCurrentWaypoint;
+
+    CPlayer::PreThink(); // Will invalidate current waypoint if away.
 
     if ( CWaypoint::IsValid(iCurrentWaypoint) )
         m_bInvalidWaypointStart = false;
@@ -503,14 +510,6 @@ void CBot::PreThink()
         }
         return;
     }
-
-    Vector vPrevOrigin = m_vHead;
-    int iPrevCurrWaypoint = iCurrentWaypoint;
-
-    CPlayer::PreThink();
-
-    if ( m_pPlayerInfo->IsDead() ) // CBasePlayer::IsDead() returns true only when player became dead,  but when
-        m_bAlive = false;          // player is respawnable (but still dead) it returns false.
 
     // Reset bot's command.
     m_cCmd.forwardmove = 0;

@@ -52,17 +52,17 @@ Here is the help you get typing "botrix" command:
 | | [pause]: pause/resume given or all bots
 | | [test]: create bot to test path from given (or current) to given (or destination) waypoints
 | | [weapon]
-| |   [add]: add a weapon to bot
-| |   [allow]: allow bots to use given weapons
-| |   [forbid]: forbid bots to use given weapons
-| |   [unknown]: bot assumption about unknown weapons ('melee' or 'ranged')
-| *     If bot grabs or respawns with unknown weapon, choose it to be marked as melee or ranged
+| | | [add]: add a weapon to bot
+| | | [allow]: allow bots to use given weapons
+| | | [forbid]: forbid bots to use given weapons
+| | | [unknown]: bot assumption about unknown weapons ('melee' or 'ranged')
+| * *   If bot grabs or respawns with unknown weapon, choose it to be marked as melee or ranged
 |
 | [config]
 | | [admins]
-| |   [access]: set access flags for given admin
-| |     Arguments: <steam id> <access flags>. Can be none / all / mix of: waypoint bot config
-| |   [show]: show admins currently on server
+| | | [access]: set access flags for given admin
+| | |   Arguments: <steam id> <access flags>. Can be none / all / mix of: waypoint bot config
+| | * [show]: show admins currently on server
 | | [event]: display events on console ('off' - disable, 'on' - enable)
 | * [log]: set console log level (none, trace, debug, info, warning, error).
 |
@@ -77,10 +77,10 @@ Here is the help you get typing "botrix" command:
 | | [addtype]: add type to waypoint
 | |   Can be mix of: stop camper sniper weapon ammo health armor health_machine armor_machine button see_button
 | | [area]
-| |   [remove]: delete waypoint area
-| |   [set]: set waypoint area
-| |   [rename]: rename area
-| |   [show]: print all waypoint areas
+| | | [remove]: delete waypoint area
+| | | [set]: set waypoint area
+| | | [rename]: rename area
+| | * [show]: print all waypoint areas
 | | [argument]: set waypoint arguments (angles, ammo count, weapon index/subindex, armor count, health count)
 | | [autocreate]: automatically create new waypoints ('off' - disable, 'on' - enable)
 | |   Waypoint will be added when player goes too far from current one.

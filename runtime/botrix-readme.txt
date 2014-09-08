@@ -3,60 +3,7 @@ Botrix
 Botrix (from BOT's matRIX) is a plugin for Valve Source Engine games that allows
 to play with bots. Currently supported games:
 * Half-Life 2: Deathmatch
-* Team Fortress 2 (arena maps)
-
-
-Changelog
-=========
-0.0.3
-* Plugin is working with Team Fortress 2.
-* Added new weapons handling in config.ini for TF2.
-* Escaping TF2 steam ids in config.ini, for example \\[U:1:12345678].
-* Bug fix: correct handling of plugin_pause/plugin_unpause commands.
-* Bug fix: sometimes bot wasn't aware it picked up item.
-* Bug fix: sometimes bot was shooting at spectator.
-* Bug fix: when bot was trying to use weapon he actually was creating it.
-* Bug fix: waypoints wasn't loading for maps with different case (linux).
-* Now bots can use melee weapons.
-* Now bots can use unknown weapons.
-* Added logic for bot to pursue enemy.
-* Bots will run randomly near engaged enemy, preferently using visible areas.
-* Added new commands:
-*     botrix bot config quota <#number/#player-#bot quota>
-*     botrix bot config intelligence <bot-intelligence>
-*     botrix bot config team <bot-team>
-*     botrix bot config class <bot-class>
-*     botrix bot config change-class <round-limit>
-*     botrix bot config strategy flags
-*     botrix bot config strategy set
-*     botrix bot command <bot-name> <command>
-*     botrix bot weapon add <bot-name> <weapon-name>
-*     botrix bot weapon unknown <melee/ranged>.
-*     botrix config log <log-level>
-*     botrix enable/disable
-* Fixed commands:
-*     botrix bot kick <bot-name/all>
-* Waypoint edition: aim at waypoint to select 'path destination'.
-
-0.0.2
-* Works in Linux.
-* Default base folder location is <MOD DIRECTORY>/addons/botrix.
-* Searching for base folder in 4 different locations.
-* Log with levels (none, trace, debug, info, warning, error).
-* Added command "version".
-* Don't repeat bot names.
-* Fixed several crashes.
- 
-
-Credits
-=======
-* Plugin's grandfather is Botman's bot template (aka HPB_bot). Thanks grandpa!
-* Botrix was created as a thesis for an academic degree. Thanks a lot to my
-  thesis director to give me a chance to make something I like.
-* Plugin is working on Team Fortress 2 because of HappoKala345 (aka AcidFish)
-  request. It also works with VSH plugin, for which manual weapon handling was
-  added. Many of HappoKala's ideas were used, thanks a lot for waypoints 
-  creation and testing!
+* Team Fortress 2
 
 
 Fast installation for HL2DM

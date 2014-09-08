@@ -1,0 +1,42 @@
+Changelog
+=========
+0.0.3
+* Plugin is working with Team Fortress 2 (arena maps + VSH plugin).
+    - Added new weapons handling in config.ini for TF2.
+    - Escaping TF2 steam ids in config.ini, for example \[U:1:12345678].
+* New features:
+    - Now bots can use melee weapons.
+    - Now bots can use unknown weapons.
+    - Added logic for bot to pursue enemy.
+    - Bots will run randomly near engaged enemy, preferently using visible areas.
+    - Waypoint edition: aim at waypoint to select 'path destination'.
+    - Added new commands:
+          + botrix bot config quota <#number/#player-#bot quota>
+          + botrix bot config intelligence <bot-intelligence>
+          + botrix bot config team <bot-team>
+          + botrix bot config class <bot-class>
+          + botrix bot config change-class <round-limit>
+          + botrix bot config strategy flags
+          + botrix bot config strategy set
+          + botrix bot command <bot-name> <command>
+          + botrix bot weapon add <bot-name> <weapon-name>
+          + botrix bot weapon unknown <melee/ranged>
+          + botrix config log <log-level>
+          + botrix enable/disable
+* Bug fixes:
+    - Correct handling of plugin_pause/plugin_unpause commands.
+    - Sometimes bot wasn't aware it picked up item.
+    - Sometimes bot was shooting at spectator.
+    - When bot was trying to use weapon he actually was creating it.
+    - Waypoints weren't loading for maps with different case (linux).
+    - Fixed command botrix bot kick <bot-name/all>.
+
+0.0.2
+* Works in Linux.
+* Default base folder location is <MOD DIRECTORY>/addons/botrix.
+* Searching for base folder in 4 different locations.
+* Log with levels (none, trace, debug, info, warning, error).
+* Added command "version".
+* Don't repeat bot names.
+* Fixed several crashes.
+

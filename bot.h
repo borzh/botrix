@@ -112,7 +112,7 @@ public: // Methods.
     {
         BotMessage( "%s -> killed %s.", GetName(), pPlayer->GetName() );
         if ( pPlayer == m_pCurrentEnemy )
-            m_pCurrentEnemy = NULL;
+            ClearCurrentEnemy();
     }
 
     /// Called when enemy just shot this bot.
@@ -217,6 +217,11 @@ protected: // Methods.
     // Update nearest objects, players, items and weapons.
     void UpdateWorld();
 
+    inline void ClearCurrentEnemy()
+    {
+        m_bEnemyAim = m_bEnemyOffSight = m_bAttackDuck = false;
+        m_pCurrentEnemy = NULL;
+    }
     // Check if this enemy can be seen / should be attacked.
     void CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility );
 

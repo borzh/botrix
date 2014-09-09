@@ -297,10 +297,7 @@ void CBot::PlayerDisconnect( int iPlayerIndex, CPlayer* pPlayer )
     m_aSeenEnemies.reset(iPlayerIndex);
 
     if ( pPlayer == m_pCurrentEnemy )
-    {
-        m_pCurrentEnemy = NULL;
-        m_bAttackDuck = false;
-    }
+        ClearCurrentEnemy();
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -1205,6 +1202,10 @@ void CBot::UpdateWorld()
     }
 
     // Check only 1 player per frame.
+    if ( m_bEnemyOffSight && (CBotrixPlugin::fTime >= m_fTimeToEraseEnemy) )
+        ClearCurrentEnemy();
+
+
     CPlayer* pCheckPlayer = NULL;
     while ( m_iNextCheckPlayer < CPlayers::Size() )
     {
@@ -1254,7 +1255,7 @@ void CBot::UpdateWorld()
         }
         else
             m_aNearPlayers.reset(m_iNextCheckPlayer);
-
+        
         // Check if this enemy can be seen / should be attacked.
         if ( !m_bTest && !m_bDontAttack && IsEnemy(pCheckPlayer) )
             CheckEnemy(m_iNextCheckPlayer, pCheckPlayer, true);
@@ -1269,18 +1270,10 @@ void CBot::UpdateWorld()
 //----------------------------------------------------------------------------------------------------------------
 void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility )
 {
-    BASSERT( !m_bDontAttack && m_pCurrentEnemy != this, return );
-
-    if ( m_bEnemyOffSight && (CBotrixPlugin::fTime >= m_fTimeToEraseEnemy) )
-    {
-        m_bEnemyOffSight = false;
-        m_pCurrentEnemy = NULL;
-        m_bAttackDuck = false;
-    }
+    BASSERT( !m_bDontAttack && (m_pCurrentEnemy != this), return );
 
     // Assume that current enemy is in view cone.
     bool bIsDifferentEnemy = ( m_pCurrentEnemy != pPlayer );
-
     bool bEnemyChanged = false;
 
     if ( pPlayer->IsAlive() && ( !bCheckVisibility || IsVisible(pPlayer, bIsDifferentEnemy) ) )
@@ -1319,16 +1312,13 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
                 }
             }
             else
-            {
-                m_pCurrentEnemy = NULL;
-                m_bAttackDuck = false;
-            }
+                ClearCurrentEnemy();
         }
     }
 
     if ( bEnemyChanged )
     {
-        m_bEnemyAimed = false; // Still need to aim at enemy before shooting.
+        m_bEnemyAimed = m_bEnemyOffSight = false; // Still need to aim at enemy before shooting.
         EnemyAim();
     }
 

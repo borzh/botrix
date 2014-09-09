@@ -401,8 +401,10 @@ bool CWaypoints::Load()
 TWaypointId CWaypoints::GetRandomNeighbour( TWaypointId iWaypoint, TWaypointId iTo, bool bVisible )
 {
     const WaypointNode::arcs_t& aNeighbours = GetNode(iWaypoint).neighbours;
-    TWaypointId iResult = rand() % aNeighbours.size();
+    if ( !aNeighbours.size() )
+        return EWaypointIdInvalid;
 
+    TWaypointId iResult = rand() % aNeighbours.size();
     if ( bValidVisibilityTable && CWaypoint::IsValid(iTo) )
     {
         for ( int i = 0; i < aNeighbours.size(); ++i )

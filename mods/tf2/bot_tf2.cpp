@@ -142,7 +142,8 @@ void CBot_TF2::Think()
 
             if ( m_iFailsCount >= 3 )
             {
-                BLOG_W("Failed to follow path on same waypoint %d 3 times, marking task as finished.", iCurrentWaypoint);
+                BLOG_W( "%s -> Failed to follow path from %d to %d 3 times, marking task as finished.",
+                        GetName(), m_iFailWaypoint, m_iDestinationWaypoint );
                 TaskFinished();
                 m_bNeedTaskCheck = bForceNewTask = true;
                 m_iFailsCount = 0;
@@ -285,7 +286,7 @@ void CBot_TF2::CheckEngagedEnemy()
         }
 
         iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true);
-        BotMessage( "%s -> Moving to random waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+        BotMessage( "%s -> Moving to random neighbour waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
     }
     else if ( m_pCurrentEnemy && m_bUseNavigatorToMove &&
               CWeapon::IsValid(m_iWeapon) && !m_aWeapons[m_iWeapon].IsMelee() )

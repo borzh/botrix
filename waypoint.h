@@ -214,10 +214,10 @@ public: // Methods.
 
 
     /// Get waypoint.
-    static CWaypoint& Get( TWaypointId id ) { return m_cGraph[id].vertex; }
+    static inline CWaypoint& Get( TWaypointId id ) { return m_cGraph[id].vertex; }
 
     /// Check if waypoint @p iTo is visible from @p iFrom.
-    static bool IsVisible( TWaypointId iFrom, TWaypointId iTo )
+    static inline bool IsVisible( TWaypointId iFrom, TWaypointId iTo )
     {
         return bValidVisibilityTable ? m_aVisTable[iFrom].test(iTo) : false;
     }
@@ -232,7 +232,7 @@ public: // Methods.
     static TWaypointId GetFarestNeighbour( TWaypointId iWaypoint, TWaypointId iTo, bool bVisible );
 
     /// Return true if there is a path from waypoint source to waypoint dest.
-    static bool HasPath(TWaypointId source, TWaypointId dest)
+    static inline bool HasPath( TWaypointId source, TWaypointId dest )
     {
         WaypointNode& w = m_cGraph[source];
         return w.find_arc_to(dest) != w.neighbours.end();
@@ -249,6 +249,16 @@ public: // Methods.
 
     /// Remove waypoint.
     static void Remove( TWaypointId id );
+
+    /// Move waypoint to new position.
+    static inline void Move( TWaypointId id, const Vector& vOrigin )
+    {
+        GoodAssert( CWaypoint::IsValid(id) );
+        CWaypoint& cWaypoint = Get(id);
+        RemoveLocation( id, cWaypoint.vOrigin );
+        AddLocation(id, vOrigin);
+        cWaypoint.vOrigin = vOrigin;
+    }
 
     /// Add path from waypoint iFrom to waypoint iTo.
     static bool AddPath( TWaypointId iFrom, TWaypointId iTo, float fDistance = 0.0f, TPathFlags iFlags = FPathNone );
@@ -313,12 +323,12 @@ protected:
     static const int BUCKETS_SPACE_Z = CUtil::iMaxMapSize/BUCKETS_SIZE_Z;
 
     // Get bucket indexes in array of buckets.
-    static int GetBucketX(float fPositionX) { return (int)(fPositionX + CUtil::iHalfMaxMapSize) / BUCKETS_SPACE_X; }
-    static int GetBucketY(float fPositionY) { return (int)(fPositionY + CUtil::iHalfMaxMapSize) / BUCKETS_SPACE_Y; }
-    static int GetBucketZ(float fPositionZ) { return (int)(fPositionZ + CUtil::iHalfMaxMapSize) / BUCKETS_SPACE_Z; }
+    static int GetBucketX( float fPositionX ) { return (int)(fPositionX + CUtil::iHalfMaxMapSize) / BUCKETS_SPACE_X; }
+    static int GetBucketY( float fPositionY ) { return (int)(fPositionY + CUtil::iHalfMaxMapSize) / BUCKETS_SPACE_Y; }
+    static int GetBucketZ( float fPositionZ ) { return (int)(fPositionZ + CUtil::iHalfMaxMapSize) / BUCKETS_SPACE_Z; }
 
     // Get adjacent buckets.
-    static void GetBuckets(int x, int y, int z, int& minX, int& minY, int& minZ, int& maxX, int& maxY, int& maxZ)
+    static void GetBuckets( int x, int y, int z, int& minX, int& minY, int& minZ, int& maxX, int& maxY, int& maxZ )
     {
         minX = (x>0) ? x-1 : x;
         minY = (y>0) ? y-1 : y;
@@ -330,14 +340,21 @@ protected:
     }
 
     // Add location for waypoint.
-    static void AddLocation(TWaypointId id, const Vector& vOrigin)
+    static inline void AddLocation( TWaypointId id, const Vector& vOrigin )
     {
         m_cBuckets[GetBucketX(vOrigin.x)][GetBucketY(vOrigin.y)][GetBucketZ(vOrigin.z)].push_back(id);
     }
 
     // Add location for waypoint.
-    static void RemoveLocation(TWaypointId id);
+    static inline void RemoveLocation( TWaypointId id, const Vector& vOrigin )
+    {
+        Bucket& cBucket = m_cBuckets[GetBucketX(vOrigin.x)][GetBucketY(vOrigin.y)][GetBucketZ(vOrigin.z)];
+        cBucket.erase( find(cBucket, id) );
+    }
 
+    // Add location for waypoint.
+    static void DecrementLocationIds( TWaypointId id );
+    
     // Clear all locations.
     static void ClearLocations()
     {

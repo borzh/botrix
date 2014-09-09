@@ -1471,8 +1471,13 @@ void CBot::WeaponChoose()
     m_iBestWeapon = CWeapons::GetBestWeapon(m_aWeapons);
 
     // Choose melee weapon.
-    if ( m_iBestWeapon == -1 )
-        m_iBestWeapon = m_iMeleeWeapon;
+    if ( !CWeapon::IsValid(m_iBestWeapon) && CWeapon::IsValid(m_iMeleeWeapon) )
+    {
+        if ( m_aWeapons[m_iMeleeWeapon].IsPresent() )
+            m_iBestWeapon = m_iMeleeWeapon;
+        else
+            m_iMeleeWeapon = EWeaponIdInvalid;
+    }
 
     if ( m_iBestWeapon == m_iWeapon )
     {

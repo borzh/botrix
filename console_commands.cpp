@@ -420,7 +420,7 @@ TCommandResult CWaypointMoveCommand::Execute( CClient* pClient, int argc, const 
         return ECommandError;
     }
 
-    CWaypoints::Get(id).vOrigin = vOrigin;
+    CWaypoints::Move(id, vOrigin);
     BULOG_I(pClient->GetEdict(), "Set new position for waypoint %d (%d, %d, %d).", id, (int)vOrigin.x, (int)vOrigin.y, (int)vOrigin.z);
 
     return ECommandPerformed;
@@ -897,14 +897,13 @@ TCommandResult CWaypointDestinationCommand::Execute( CClient* pClient, int argc,
         pClient->bLockDestinationWaypoint = true;
         pClient->iDestinationWaypoint = id;
         BULOG_I(pClient->GetEdict(), "Path 'destination' is waypoint %d, locked.", id );
-        return ECommandPerformed;
     }
     else
     {
         pClient->bLockDestinationWaypoint = false;
-        BULOG_I(pClient->GetEdict(), "Error, invalid arguments or current waypoint (move closer to waypoint).");
-        return ECommandError;
+        BULOG_I(pClient->GetEdict(), "Aim at waypoint to select path 'destination'.");
     }
+    return ECommandPerformed;
 }
 
 TCommandResult CWaypointSaveCommand::Execute( CClient* pClient, int /*argc*/, const char** /*argv*/ )

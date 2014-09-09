@@ -14,6 +14,11 @@ extern char* szMainBuffer;
 extern int iMainBufferSize;
 
 
+#ifdef _WIN32
+    #pragma warning(disable:4706) // Assignment in expression.
+#endif
+
+
 bool CBot_TF2::bCanJoinTeams = true;
 
 //----------------------------------------------------------------------------------------------------------------

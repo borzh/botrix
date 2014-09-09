@@ -11,6 +11,11 @@
 #include "mods/hl2dm/mod_hl2dm.h"
 
 
+#ifdef _WIN32
+    #pragma warning(disable:4706) // Assignment in expression.
+#endif
+
+
 extern char* szMainBuffer;
 extern int iMainBufferSize;
 

@@ -132,7 +132,11 @@ if exist "D:\Steam\SteamApps\common\team fortress 2\tf\" (
     copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\team fortress 2\tf\addons\"
     copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\team fortress 2\tf\addons"
 )
-</Command>
+if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\"
+    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons"
+)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying dll to sourcemods.</Message>
@@ -223,7 +227,11 @@ if exist "D:\Steam\SteamApps\common\team fortress 2\tf\" (
     copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\team fortress 2\tf\addons\"
     copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\team fortress 2\tf\addons"
 )
-</Command>
+if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\"
+    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons"
+)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying dll to sourcemods.</Message>

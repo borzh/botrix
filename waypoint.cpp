@@ -516,7 +516,7 @@ TWaypointId CWaypoints::Add( const Vector& vOrigin, TWaypointFlags iFlags, int i
 void CWaypoints::Remove( TWaypointId id )
 {
     CItems::WaypointDeleted(id);
-    RemoveLocation(id);
+    DecrementLocationIds(id);
     m_cGraph.delete_node( m_cGraph.begin() + id );
     bValidVisibilityTable = false;
 }
@@ -616,7 +616,7 @@ void CWaypoints::CreateAutoPaths( TWaypointId id, bool bIsCrouched )
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CWaypoints::RemoveLocation( TWaypointId id )
+void CWaypoints::DecrementLocationIds( TWaypointId id )
 {
     BASSERT( CWaypoint::IsValid(id), return );
 
@@ -634,7 +634,7 @@ void CWaypoints::RemoveLocation( TWaypointId id )
     // Remove waypoint id from bucket.
     Vector vOrigin = m_cGraph[id].vertex.vOrigin;
     Bucket& bucket = m_cBuckets[GetBucketX(vOrigin.x)][GetBucketY(vOrigin.y)][GetBucketZ(vOrigin.z)];
-    bucket.erase(find(bucket.begin(), bucket.end(), id));
+    bucket.erase(find(bucket, id));
 }
 
 

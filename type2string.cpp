@@ -137,7 +137,7 @@ int CTypeToString::BoolFromString( const good::string& sBool )
 
 const good::string& CTypeToString::BoolToString( bool b )
 {
-    return aBools[b];
+    return aBools[b*iYesNoSynonims];
 }
 
 

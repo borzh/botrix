@@ -56,17 +56,18 @@ void CClient::PreThink()
         return;
 
     // Check if lost waypoint, in that case add new one.
-    if ( bAutoCreateWaypoints && m_bAlive && !CWaypoint::IsValid(iCurrentWaypoint) )
+    if ( bAutoCreateWaypoints && m_bAlive &&
+         ( !CWaypoint::IsValid(iCurrentWaypoint) || GetHead().DistTo(CWaypoints::Get(iCurrentWaypoint).vOrigin) ) )
     {
         Vector vOrigin( GetHead() );
 
-        // Add new waypoint, but distance from previous one must not be bigger than MAX_RANGE.
+        // Add new waypoint, but distance from previous one must not be bigger than iDefaultDistance.
         if ( CWaypoint::IsValid(iLastWaypoint) )
         {
             CWaypoint& wLast = CWaypoints::Get(iLastWaypoint);
             vOrigin -= wLast.vOrigin;
             vOrigin.NormalizeInPlace();
-            vOrigin *= CWaypoint::MAX_RANGE;
+            vOrigin *= CWaypoint::iDefaultDistance;
             vOrigin += wLast.vOrigin;
         }
 

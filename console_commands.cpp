@@ -1227,6 +1227,37 @@ TCommandResult CPathSwapCommand::Execute( CClient* pClient, int argc, const char
 }
 */
 
+TCommandResult CPathDistanceCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
+
+    if ( argc == 0 )
+        BULOG_I( pEdict, "Default path distance: %d.", CWaypoint::iDefaultDistance );
+    else if ( argc == 1 )
+    {
+        if ( pClient == NULL )
+        {
+            BLOG_W( "Please login to server to execute this command." );
+            return ECommandError;
+        }
+
+        int i = -1;
+        if ( (sscanf(argv[0], "%d", &i) != 1) || (i < 0) || (i > CWaypoint::MAX_RANGE) )
+        {
+            BULOG_W( pClient->GetEdict(), "Error, number from 0 to %d expected.", CWaypoint::MAX_RANGE );
+            return ECommandError;
+        }
+        CWaypoint::iDefaultDistance = i;
+    }
+    else
+    {
+        BULOG_W( pEdict, "Error, invalid arguments count." );
+        return ECommandError;
+    }
+
+    return ECommandPerformed;
+}
+
 CPathDrawCommand::CPathDrawCommand()
 {
     m_sCommand = "drawtype";

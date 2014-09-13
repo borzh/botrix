@@ -195,7 +195,7 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, const Vector& vDest, f
     if ( fDistance == 0.0f )
         fDistance = vSrc.DistTo(vDest);
 
-    if ( fDistance > CWaypoint::MAX_RANGE )
+    if ( fDistance > CWaypoint::iDefaultDistance )
         return EReachNotReachable;
 
     if ( !CUtil::IsVisible(vSrc, vDest) )

@@ -130,9 +130,10 @@ public: // Members and constants.
     static const int WIDTH = 8;              ///< Waypoint width for drawing.
     static const int PATH_WIDTH = 4;         ///< Waypoint's path width for drawing.
 
-    static const int MAX_RANGE = 256;        ///< Max waypoint range to automatically add path to nearby waypoints.
+    static const int MAX_RANGE = 256;        ///< Max waypoint range to invalidate current waypoint.
 
     static int iWaypointTexture;             ///< Texture of waypoint. Precached at CWaypoints::Load().
+    static int iDefaultDistance;             ///< Max waypoint distance to automatically add path to nearby waypoints.
 
     Vector vOrigin;                          ///< Coordinates of waypoint (x, y, z).
     TWaypointFlags iFlags;                   ///< Waypoint flags.
@@ -354,7 +355,7 @@ protected:
 
     // Add location for waypoint.
     static void DecrementLocationIds( TWaypointId id );
-    
+
     // Clear all locations.
     static void ClearLocations()
     {

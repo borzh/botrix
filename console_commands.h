@@ -320,6 +320,18 @@ public:
 //****************************************************************************************************************
 // Path waypoint commands.
 //****************************************************************************************************************
+class CPathDistanceCommand: public CConsoleCommand
+{
+public:
+    CPathDistanceCommand()
+    {
+        m_sCommand = "distance";
+        m_sHelp = "set distance to add default paths & auto add waypoints";
+        m_iAccessLevel = FCommandAccessWaypoint;
+    }
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
 class CPathDrawCommand: public CConsoleCommand
 {
 public:
@@ -977,6 +989,7 @@ public:
         Add(new CPathAddTypeCommand);
         Add(new CPathArgumentCommand);
         Add(new CPathCreateCommand);
+        Add(new CPathDistanceCommand);
         Add(new CPathDrawCommand);
         Add(new CPathInfoCommand);
         //Add(new CPathSwapCommand);

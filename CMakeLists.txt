@@ -43,7 +43,8 @@ elseif( CMAKE_BUILD_TYPE MATCHES "Debug" )
 elseif( CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo" )
     message( "Flags: ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
 else()
-    message( "Flags: ${CMAKE_CXX_FLAGS_RELEASE}" )
+    set( CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_RELEASE} )
+    message( "Flags: ${CMAKE_CXX_FLAGS}" )
 endif()
 
 

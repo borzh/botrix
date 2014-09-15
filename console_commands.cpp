@@ -2441,16 +2441,116 @@ TCommandResult CBotDrawPathCommand::Execute( CClient* pClient, int argc, const c
     return ECommandPerformed;
 }
 
-TCommandResult CBotPauseCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CBotAttackCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
+    bool bSomeone = false;
     if ( argc <= 2 )
     {
         good::string sName(sAll);
         if ( argc )
             sName = argv[0];
-        bool bAll = (sAll == sName);
+        bool bAll = !argc || (sAll == sName);
+
+        int bAttack = -1;
+        if ( argc == 2 )
+        {
+            bAttack = CTypeToString::BoolFromString(argv[1]);
+            if ( bAttack == -1 )
+            {
+                BULOG_W( pEdict, "Error, unknown parameter %s, should be 'on' or 'off'.", argv[1] );
+                return ECommandError;
+            }
+        }
+
+        for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
+        {
+            CPlayer* pPlayer = CPlayers::Get(i);
+            if ( pPlayer && pPlayer->IsBot() &&
+                 (bAll || good::starts_with(good::string(pPlayer->GetName()), sName)) )
+            {
+                bSomeone = true;
+                bool bAttacking = (bAttack == -1) ? !((CBot*)pPlayer)->IsAttacking() : (bAttack != 0);
+                ((CBot*)pPlayer)->SetAttack( bAttacking );
+                BULOG_I( pEdict, "Bot %s %s.", pPlayer->GetName(), bAttacking ? "attacks" : "doesn't attack" );
+            }
+        }
+    }
+    else
+    {
+        BULOG_W( pEdict, "Error, invalid arguments count." );
+        return ECommandError;
+    }
+    if ( !bSomeone )
+    {
+        BULOG_W( pEdict, "Error, no matched bots." );
+        return ECommandError;
+    }
+    return ECommandPerformed;
+}
+
+TCommandResult CBotMoveCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    bool bSomeone = false;
+    if ( argc <= 2 )
+    {
+        good::string sName(sAll);
+        if ( argc )
+            sName = argv[0];
+        bool bAll = !argc || (sAll == sName);
+
+        int bMove = -1;
+        if ( argc == 2 )
+        {
+            bMove = CTypeToString::BoolFromString(argv[1]);
+            if ( bMove == -1 )
+            {
+                BULOG_W( pEdict, "Error, unknown parameter %s, should be 'on' or 'off'.", argv[1] );
+                return ECommandError;
+            }
+        }
+
+        for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
+        {
+            CPlayer* pPlayer = CPlayers::Get(i);
+            if ( pPlayer && pPlayer->IsBot() &&
+                 (bAll || good::starts_with(good::string(pPlayer->GetName()), sName)) )
+            {
+                bSomeone = true;
+                bool bMoving = (bMove == -1) ? !((CBot*)pPlayer)->IsStopped() : (bMove == 0);
+                ((CBot*)pPlayer)->SetStopped( bMoving );
+                BULOG_I( pEdict, "Bot %s %s.", pPlayer->GetName(), bMoving ? "can move" : "can't move" );
+            }
+        }
+    }
+    else
+    {
+        BULOG_W( pEdict, "Error, invalid arguments count." );
+        return ECommandError;
+    }
+
+    if ( !bSomeone )
+    {
+        BULOG_W( pEdict, "Error, no matched bots." );
+        return ECommandError;
+    }
+    return ECommandPerformed;
+}
+
+TCommandResult CBotPauseCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    bool bSomeone = false;
+    if ( argc <= 2 )
+    {
+        good::string sName(sAll);
+        if ( argc )
+            sName = argv[0];
+        bool bAll = !argc || (sAll == sName);
 
         int bPaused = -1;
         if ( argc == 2 )
@@ -2468,12 +2568,22 @@ TCommandResult CBotPauseCommand::Execute( CClient* pClient, int argc, const char
             CPlayer* pPlayer = CPlayers::Get(i);
             if ( pPlayer && pPlayer->IsBot() &&
                  (bAll || good::starts_with(good::string(pPlayer->GetName()), sName)) )
-                ((CBot*)pPlayer)->SetPaused( (bPaused == -1) ? !((CBot*)pPlayer)->IsPaused() : (bPaused != 0) );
+            {
+                bSomeone = true;
+                bool bPausing = (bPaused == -1) ? !((CBot*)pPlayer)->IsPaused() : (bPaused != 0);
+                ((CBot*)pPlayer)->SetPaused( bPausing );
+                BULOG_I( pEdict, "Bot %s is %s.", pPlayer->GetName(), bPausing ? "paused" : "not paused" );
+            }
         }
     }
     else
     {
         BULOG_W( pEdict, "Error, invalid arguments count." );
+        return ECommandError;
+    }
+    if ( !bSomeone )
+    {
+        BULOG_W( pEdict, "Error, no matched bots." );
         return ECommandError;
     }
     return ECommandPerformed;

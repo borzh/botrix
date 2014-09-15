@@ -65,10 +65,22 @@ public: // Methods.
     void SetDebugging( bool bOn ) { m_bDebugging = bOn; }
 
     /// Return true if bot is paused.
-    bool IsPaused() { return m_bPaused; }
+    bool IsAttacking() { return m_bCommandAttack; }
+
+    /// Return true if bot is paused.
+    bool IsPaused() { return m_bCommandPaused; }
+
+    /// Return true if bot is paused.
+    bool IsStopped() { return m_bCommandStopped; }
+
+    /// Start/stop bot attack.
+    void SetAttack( bool bAttack ) { m_bCommandAttack = bAttack; }
 
     /// Pause/resume bot.
-    void SetPaused( bool bPause ) { m_bPaused = bPause; }
+    void SetPaused( bool bPause ) { m_bCommandPaused = bPause; }
+
+    /// Prevent bot from moving.
+    void SetStopped( bool bStop ) { m_bCommandStopped = bStop; }
 
     /// Emulate console command for bot.
     void ConsoleCommand( const char* szCommand );
@@ -243,9 +255,6 @@ protected: // Methods.
     // Aim at enemy.
     void EnemyAim();
 
-    // Return true if distance to enemy is 2*player radius.
-    bool IsMeleeRange( float fDistanceSqr ) { return fDistanceSqr <= (SQR(CMod::iPlayerRadius) << 2); }
-
     // Get current weapon id.
     TWeaponId WeaponSearch( const char* szWeapon )
     {
@@ -378,7 +387,9 @@ protected: // Members.
 
 protected: // Bot flags.
     bool m_bTest:1;                                                // Bot was created only for testing purposes, it will be eliminated after reaching needed waypoint.
-    bool m_bPaused:1;                                              // Bot is paused.
+    bool m_bCommandAttack:1;                                   // Bot can't attack by console command.
+    bool m_bCommandPaused:1;                                       // Bot is paused by console command.
+    bool m_bCommandStopped:1;                                      // Bot is stopped (can't move) by console command.
     bool m_bDebugging:1;                                           // Currently debugging this bot.
     bool m_bInvalidWaypointStart:1;                                // Start counting time to suicide.
 

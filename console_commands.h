@@ -757,14 +757,26 @@ public:
     }
 };
 
-class CBotDrawPathCommand: public CConsoleCommand
+class CBotAttackCommand: public CConsoleCommand
 {
 public:
-    CBotDrawPathCommand()
+    CBotAttackCommand()
     {
-        m_sCommand = "drawpath";
-        m_sHelp = "defines how to draw bot's path";
-        m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::PathDrawFlagsToString(FPathDrawAll);
+        m_sCommand = "attack";
+        m_sHelp = "forces bot to start/stop attacking";
+        m_iAccessLevel = FCommandAccessBot;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CBotMoveCommand: public CConsoleCommand
+{
+public:
+    CBotMoveCommand()
+    {
+        m_sCommand = "move";
+        m_sHelp = "forces bot to start/stop moving";
         m_iAccessLevel = FCommandAccessBot;
     }
 
@@ -784,19 +796,6 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotTestPathCommand: public CConsoleCommand
-{
-public:
-    CBotTestPathCommand()
-    {
-        m_sCommand = "test";
-        m_sHelp = "create bot to test path from given (or current) to given (or destination) waypoints";
-        m_iAccessLevel = FCommandAccessBot;
-    }
-
-    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
-};
-
 class CBotWeaponCommand: public CConsoleCommandContainer
 {
 public:
@@ -809,6 +808,33 @@ public:
         //Add(new CBotWeaponRemoveCommand);
         Add(new CBotWeaponUnknownCommand);
     }
+};
+
+class CBotDrawPathCommand: public CConsoleCommand
+{
+public:
+    CBotDrawPathCommand()
+    {
+        m_sCommand = "drawpath";
+        m_sHelp = "defines how to draw bot's path";
+        m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::PathDrawFlagsToString(FPathDrawAll);
+        m_iAccessLevel = FCommandAccessBot;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CBotTestPathCommand: public CConsoleCommand
+{
+public:
+    CBotTestPathCommand()
+    {
+        m_sCommand = "test";
+        m_sHelp = "create bot to test path from given (or current) to given (or destination) waypoints";
+        m_iAccessLevel = FCommandAccessBot;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
 
@@ -1037,11 +1063,13 @@ public:
     {
         m_sCommand = "bot";
         Add(new CBotAddCommand);
+        Add(new CBotAttackCommand);
         Add(new CBotCommandCommand);
+        Add(new CBotConfigCommand);
         Add(new CBotDebugCommand);
         Add(new CBotDrawPathCommand);
-        Add(new CBotConfigCommand);
         Add(new CBotKickCommand);
+        Add(new CBotMoveCommand);
         Add(new CBotPauseCommand);
         if ( CMod::GetModId() != EModId_TF2 ) // TF2 bots can't be spawned after round has started.
             Add(new CBotTestPathCommand);

@@ -8,6 +8,11 @@
 *
 * @section Changelog
 *
+* 0.0.4
+* @li Added new commands:
+*     -# botrixbotrix bot attack <bot-name> <yes/no>
+*     -# botrixbotrix bot move <bot-name> <yes/no>
+*
 * 0.0.3
 * @li Plugin is working with Team Fortress 2.
 * @li Added new weapons handling in config.ini for TF2.

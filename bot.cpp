@@ -48,7 +48,7 @@ CBot::CBot( edict_t* pEdict, TBotIntelligence iIntelligence, TClass iClass ):
     r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ),
     m_aNearPlayers(CPlayers::Size()), m_aSeenEnemies(CPlayers::Size()), m_aEnemies(CPlayers::Size()),
     m_cAttackDuckRangeSqr(0, SQR(400)),
-    m_bTest(false), m_bPaused(false),
+    m_bTest(false), m_bCommandAttack(true), m_bCommandPaused(false), m_bCommandStopped(false),
 #if defined(DEBUG) || defined(_DEBUG)
     m_bDebugging(true),
 #else
@@ -470,13 +470,13 @@ void CBot::PreThink()
     }
 #endif
 
-    if ( m_bPaused )
+    if ( m_bCommandPaused )
         return;
 
     if ( CWaypoints::Size() <= 3 )
     {
         BLOG_W( "Please create more waypoints, so I could move. I am paused." );
-        m_bPaused = true;
+        m_bCommandPaused = true;
         return;
     }
 
@@ -1291,11 +1291,6 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
             m_pCurrentEnemy = pPlayer;
             m_fDistanceSqrToEnemy = fDistanceSqr;
         }
-
-        // Hit with melee.
-        if ( CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsMelee() && m_aWeapons[m_iWeapon].CanUse() &&
-             IsMeleeRange(fDistanceSqr) )
-            WeaponShoot( m_aWeapons[m_iWeapon].Damage(0) >= m_aWeapons[m_iWeapon].Damage(1) ? 0 : 1 );
     }
     else // Can't see this player anymore or player is dead.
     {
@@ -1982,7 +1977,8 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
     if ( m_bNeedMove && !m_bMoveFailure )
         bArrived = ( m_bUseNavigatorToMove ) ? NavigatorMove() : NormalMove();
 
-    bool bMove = m_bNeedMove && !m_bMoveFailure && !m_bStuckBreakObject && !m_bStuckUsePhyscannon;
+    bool bMove = m_bNeedMove && !m_bMoveFailure && !m_bStuckBreakObject && !m_bStuckUsePhyscannon &&
+                !m_bCommandStopped && !m_bAttackDuck;
     if ( m_bUseNavigatorToMove && ( !m_cNavigator.SearchEnded() || m_bLockNavigatorMove ) )
         bMove = false; // Check if search is finished (m_bMoveFailure will be set if search fails).
 
@@ -1998,7 +1994,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
         float fTimeLeft = m_fEndAimTime - CBotrixPlugin::fTime;
         int iFramesLeft = (int)((float)CBotrixPlugin::iFPS * fTimeLeft);
 
-        if (iFramesLeft > 0)
+        if ( iFramesLeft > 0 )
         {
             // Make smoother angle change (break in several angle changes).
             // https://developer.valvesoftware.com/wiki/QAngle
@@ -2035,7 +2031,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
     }
 
     // Check if need moving.
-    if ( bMove && !m_bAttackDuck )
+    if ( bMove )
     {
         float fDeltaTime = CBotrixPlugin::fTime - m_fPrevThinkTime;
         BASSERT( CBotrixPlugin::fTime != m_fPrevThinkTime, fDeltaTime = 0.000001f ); // Should not happend, sometimes happends.
@@ -2046,9 +2042,8 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
         vSpeed /= fDeltaTime; // v = (x - x0)/t
 
         // Cancel stuck check if bot needs to stop, or use, or perform action, or it is stucked already.
-        if ( m_bNeedStop || m_bNeedUse || m_bStuck ||
-             m_bStuckBreakObject || m_bStuckUsePhyscannon || m_bStuckTryingSide ||
-            (CBotrixPlugin::fTime <= m_fEndActionTime) )
+        if ( m_bNeedStop || m_bNeedUse || m_bStuck || m_bStuckTryingSide ||
+             (CBotrixPlugin::fTime <= m_fEndActionTime) )
         {
             m_bNeedCheckStuck = false;
         }
@@ -2167,7 +2162,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
 
 
     //---------------------------------------------------------------
-    if ( !m_bDontAttack )
+    if ( !m_bDontAttack && m_bCommandAttack )
     {
         CWeaponWithAmmo* pWeapon = CWeapon::IsValid(m_iWeapon) ? &m_aWeapons[m_iWeapon] : NULL;
         if ( m_pCurrentEnemy )
@@ -2188,11 +2183,9 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
                 {
                     if ( pWeapon->CanUse() ) // Stay shooting after first time aimed at enemy.
                     {
-                        if ( pWeapon->IsMelee() || pWeapon->IsPhysics() )
-                        {
-                            if ( !m_bStuckBreakObject && !m_bStuckUsePhyscannon )
+                        if ( ( pWeapon->IsMelee() || pWeapon->IsPhysics() ) &&
+                             !m_bStuckBreakObject && !m_bStuckUsePhyscannon )
                                 WeaponChoose(); // Select some other weapon if not breaking/physcannoning.
-                        }
                         else
                         {
                             bool bZooming = false;
@@ -2209,10 +2202,22 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
 
                             if ( !bZooming )
                             {
+
+                                // Hit with melee.
+                                if ( pWeapon->IsMelee() )
+                                {
+                                    int iSec = pWeapon->Damage(CWeapon::PRIMARY) < pWeapon->Damage(CWeapon::SECONDARY);
+                                    if ( pWeapon->IsDistanceSafe(m_fDistanceSqrToEnemy, iSec) )
+                                        WeaponShoot(iSec);
+                                    else
+                                        WeaponChoose();
+                                }
                                 // Prefer secondary attack.
-                                if ( pWeapon->HasAmmoInClip(1) && pWeapon->IsDistanceSafe(m_fDistanceSqrToEnemy, 1) )
+                                else if ( pWeapon->HasAmmoInClip(CWeapon::SECONDARY) &&
+                                     pWeapon->IsDistanceSafe(m_fDistanceSqrToEnemy, CWeapon::SECONDARY) )
                                     WeaponShoot(CWeapon::SECONDARY);
-                                else if ( pWeapon->HasAmmoInClip(0) && pWeapon->IsDistanceSafe(m_fDistanceSqrToEnemy, 0) )
+                                else if ( pWeapon->HasAmmoInClip(CWeapon::PRIMARY) &&
+                                          pWeapon->IsDistanceSafe(m_fDistanceSqrToEnemy, CWeapon::PRIMARY) )
                                     WeaponShoot(CWeapon::PRIMARY);
                                 else
                                     WeaponChoose(); // No more bullets, select another weapon.

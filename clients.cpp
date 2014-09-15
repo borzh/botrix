@@ -57,7 +57,8 @@ void CClient::PreThink()
 
     // Check if lost waypoint, in that case add new one.
     if ( bAutoCreateWaypoints && m_bAlive &&
-         ( !CWaypoint::IsValid(iCurrentWaypoint) || GetHead().DistTo(CWaypoints::Get(iCurrentWaypoint).vOrigin) ) )
+         ( !CWaypoint::IsValid(iCurrentWaypoint) ||
+           (GetHead().DistToSqr(CWaypoints::Get(iCurrentWaypoint).vOrigin) >= SQR(CWaypoint::iDefaultDistance)) ) )
     {
         Vector vOrigin( GetHead() );
 

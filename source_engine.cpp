@@ -195,7 +195,7 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, const Vector& vDest, f
     if ( fDistance == 0.0f )
         fDistance = vSrc.DistTo(vDest);
 
-    if ( fDistance > CWaypoint::iDefaultDistance )
+    if ( SQR(fDistance) > (SQR(CWaypoint::iDefaultDistance) << 1) ) // Pitagoras.
         return EReachNotReachable;
 
     if ( !CUtil::IsVisible(vSrc, vDest) )
@@ -227,7 +227,7 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, const Vector& vDest, f
     bool bAlreadyJumped = false;
 
     bool bVisible = CUtil::IsVisible(vSrcGround, vDestGround);
-    Vector vHit = TraceResult().endpos, vT;
+    Vector vHit = TraceResult().endpos;
 
     if ( bVisible ) // Check if can climb up slope.
     {

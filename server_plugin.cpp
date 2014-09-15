@@ -313,7 +313,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     }
 
     // Create console command instance.
-    CMainCommand::instance = new CMainCommand();
+    CBotrixCommand::instance = new CBotrixCommand();
 
     // Load mod configuration.
     CMod::Load(iModId);
@@ -348,7 +348,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 void CBotrixPlugin::Unload( void )
 {
     CConfiguration::Unload();
-    CMainCommand::instance.reset();
+    CBotrixCommand::instance.reset();
     CMod::UnLoad();
 
     good::log::stop_log_to_file();
@@ -359,7 +359,7 @@ void CBotrixPlugin::Unload( void )
 //----------------------------------------------------------------------------------------------------------------
 void CBotrixPlugin::Pause( void )
 {
-    CMainCommand::instance.reset();
+    CBotrixCommand::instance.reset();
     LevelShutdown();
     BLOG_W( "Plugin paused." );
 }
@@ -370,7 +370,7 @@ void CBotrixPlugin::Pause( void )
 void CBotrixPlugin::UnPause( void )
 {
     BLOG_W( "Plugin unpaused. It will not work until level change." );
-    CMainCommand::instance = new CMainCommand();
+    CBotrixCommand::instance = new CBotrixCommand();
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -547,7 +547,7 @@ PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &ar
 #ifdef SOURCE_ENGINE_2006
     int argc = MIN2(CBotrixPlugin::pEngineServer->Cmd_Argc(), 16);
 
-    if ( (argc == 0) || !CMainCommand::instance->IsCommand( CBotrixPlugin::pEngineServer->Cmd_Argv(0) ) )
+    if ( (argc == 0) || !CBotrixCommand::instance->IsCommand( CBotrixPlugin::pEngineServer->Cmd_Argv(0) ) )
         return PLUGIN_CONTINUE;
 
     static const char* argv[16];
@@ -557,7 +557,7 @@ PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &ar
     int argc = args.ArgC();
     const char** argv = args.ArgV();
 
-    if ( (argc == 0) || !CMainCommand::instance->IsCommand( argv[0] ) )
+    if ( (argc == 0) || !CBotrixCommand::instance->IsCommand( argv[0] ) )
         return PLUGIN_CONTINUE; // Not a "botrix" command.
 #endif
 
@@ -566,7 +566,7 @@ PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &ar
 
     CClient* pClient = (CClient*)pPlayer;
 
-    TCommandResult iResult = CMainCommand::instance->Execute( pClient, argc-1, &argv[1] );
+    TCommandResult iResult = CBotrixCommand::instance->Execute( pClient, argc-1, &argv[1] );
 
     if (iResult != ECommandPerformed)
     {
@@ -666,8 +666,8 @@ void CBotrixPlugin::Enable( bool bEnable )
 {
     GoodAssert( bEnable != m_bEnabled );
     m_bEnabled = bEnable;
-    CMainCommand::instance.reset();
-    CMainCommand::instance = new CMainCommand();
+    CBotrixCommand::instance.reset();
+    CBotrixCommand::instance = new CBotrixCommand();
 }
 
 

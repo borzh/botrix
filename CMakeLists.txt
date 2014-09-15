@@ -22,7 +22,7 @@ cmake_minimum_required( VERSION 2.6 )
 # -fvisibility=hidden: Default symbols visibility is hidden.
 
 set( SHARED_COMPILE_FLAGS "-std=c++11 -Wall -Wextra -m32 -march=pentium4 -Wno-format-security -Wno-free-nonheap-object" )
-set( SHARED_LINKER_FLAGS  "-Wl,--no-undefined -fvisibility=hidden" )
+set( SHARED_LINKER_FLAGS  "-fvisibility=hidden -Wl,--no-undefined -Wl,--as-needed" )
 
 set( SHARED_FLAGS "${SHARED_COMPILE_FLAGS} ${SHARED_LINKER_FLAGS}")
 
@@ -53,6 +53,7 @@ add_subdirectory ( good )
 # Defines. Don't put comments between them :).
 # Not used: -DDONT_USE_VALVE_FUNCTIONS -DBOTRIX_SHOW_PERFORMANCE
 add_definitions(
+    -DUSE_OLD_COMMAND_COMPLETION
     -DBOTRIX_SOURCE_2013
     -DBOTRIX_TF2
     -DBOTRIX_HL2DM

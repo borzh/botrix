@@ -34,9 +34,15 @@ public:
     }
 
     virtual TCommandResult Execute( CClient* pClient, int argc, const char** argv ) = 0;
-
-    virtual int AutoComplete( const char* partial, int partialLength, char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ], int strIndex, int charIndex );
     virtual void PrintCommand( edict_t* pPrintTo, int indent = 0);
+
+#ifdef USE_OLD_COMMAND_COMPLETION
+    virtual int AutoComplete( const char* partial, int partialLength,
+                              char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ],
+                              int strIndex, int charIndex );
+#else
+    virtual int AutoComplete( const char* partial, int partialLength, CUtlVector<CUtlString>& cCommands, int charIndex );
+#endif
 
 protected:
     CConsoleCommand() : m_iAccessLevel(0), m_bAutoCompleteOnlyOneArgument(false) {}
@@ -59,13 +65,19 @@ class CConsoleCommandContainer: public CConsoleCommand
 public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 
-    void Add( CConsoleCommand* newCommand ) { m_commands.push_back( good::unique_ptr<CConsoleCommand>(newCommand) ); }
-
-    virtual int AutoComplete( const char* partial, int partialLength, char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ], int strIndex, int charIndex );
+    void Add( CConsoleCommand* newCommand ) { m_aCommands.push_back( good::unique_ptr<CConsoleCommand>(newCommand) ); }
     virtual void PrintCommand( edict_t* pPrintTo, int indent = 0);
 
+#ifdef USE_OLD_COMMAND_COMPLETION
+    virtual int AutoComplete( const char* partial, int partialLength,
+                              char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ],
+                              int strIndex, int charIndex );
+#else
+    virtual int AutoComplete( const char* partial, int partialLength, CUtlVector< CUtlString > &commands, int charIndex );
+#endif
+
 protected:
-    good::vector< good::unique_ptr<CConsoleCommand> > m_commands;
+    good::vector< good::unique_ptr<CConsoleCommand> > m_aCommands;
 };
 
 
@@ -1137,15 +1149,37 @@ public:
 
 
 //****************************************************************************************************************
-// Container of all commands starting with "botrix".
+/// Container of all commands starting with "botrix".
 //****************************************************************************************************************
-class CMainCommand: public CConsoleCommandContainer
+class CBotrixCommand: public CConsoleCommandContainer
+#ifndef USE_OLD_COMMAND_COMPLETION
+    , public ICommandCompletionCallback, public ICommandCallback
+#endif
 {
 public:
-    CMainCommand();
-    ~CMainCommand();
+    /// Contructor.
+    CBotrixCommand();
 
-    static good::unique_ptr<CMainCommand> instance; ///< Singleton of this class.
+    /// Destructor.
+    ~CBotrixCommand();
+
+#ifndef USE_OLD_COMMAND_COMPLETION
+    /// Execute "botrix" command on server (not as client).
+    virtual void CommandCallback( const CCommand &command );
+
+    /// Autocomplete "botrix" command on server (not as client).
+    virtual int CommandCompletionCallback( const char *pPartial, CUtlVector< CUtlString > &commands )
+    {
+        int len = strlen(pPartial);
+        return AutoComplete(pPartial, len, commands, 0);
+    }
+#endif
+
+    static good::unique_ptr<CBotrixCommand> instance; ///< Singleton of this class.
+
+protected:
+    ConCommand m_cServerCommand;
 };
+
 
 #endif // __BOTRIX_CONSOLE_COMMANDS_H__

@@ -11,7 +11,9 @@
 #include "tier0/memdbgon.h"
 
 
-good::unique_ptr<CMainCommand> CMainCommand::instance;
+#define MAIN_COMMAND "botrix"
+
+good::unique_ptr<CBotrixCommand> CBotrixCommand::instance;
 
 const good::string sHelp("help"); // TODO: all commands.
 
@@ -46,7 +48,11 @@ extern int iMainBufferSize;
 //----------------------------------------------------------------------------------------------------------------
 // CConsoleCommand.
 //----------------------------------------------------------------------------------------------------------------
-int CConsoleCommand::AutoComplete( const char* partial, int partialLength, char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ], int strIndex, int charIndex )
+#ifdef USE_OLD_COMMAND_COMPLETION
+
+int CConsoleCommand::AutoComplete( const char* partial, int partialLength,
+                                   char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ],
+                                   int strIndex, int charIndex )
 {
     if (charIndex + partialLength >= COMMAND_COMPLETION_ITEM_LENGTH ||
         strIndex >= COMMAND_COMPLETION_ITEM_LENGTH-1)
@@ -109,6 +115,68 @@ int CConsoleCommand::AutoComplete( const char* partial, int partialLength, char 
     return result;
 }
 
+#else // USE_OLD_COMMAND_COMPLETION
+
+int CConsoleCommand::AutoComplete( const char* partial, int partialLength, CUtlVector<CUtlString>& cCommands, int charIndex )
+{
+    int result = 0;
+
+    int iLen = partialLength - charIndex;
+    const char* szSubPartial = &partial[charIndex];
+
+    if ( iLen <= m_sCommand.size() )
+    {
+        if ( strncmp( m_sCommand.c_str(), szSubPartial, iLen ) == 0 )
+        {
+            // Autocomplete only command name.
+            CUtlString sStr( partial );
+            sStr.Append( m_sCommand.c_str() );
+            cCommands.InsertBefore( cCommands.Size(), sStr );
+            result++;
+        }
+    }
+    else
+    {
+        if ( (m_cAutoCompleteArguments.size() > 0) &&
+             (strncmp( m_sCommand.c_str(), szSubPartial, m_sCommand.size() ) == 0) )
+        {
+            szSubPartial += m_sCommand.size() + 1;
+            iLen -= m_sCommand.size() + 1;
+
+            while ( *szSubPartial == ' ' )
+            {
+                ++szSubPartial;
+                --iLen;
+            }
+
+            // Autocomplete command name with arguments.
+            good::string sArg(szSubPartial, false, false, iLen);
+            int lastSpace = sArg.rfind(' ');
+
+            if ( !m_bAutoCompleteOnlyOneArgument || (lastSpace == good::string::npos) )
+            {
+                lastSpace++; // Include last space.
+                good::string sPartArg(&sArg[lastSpace], true, true, iLen - lastSpace);
+                good::string sCmd(partial, false, false, sArg.c_str() - partial + lastSpace);
+
+                for ( int i = 0; i < m_cAutoCompleteArguments.size(); ++i )
+                {
+                    const good::string& arg = m_cAutoCompleteArguments[i];
+                    if ( good::starts_with(arg, sPartArg) )
+                    {
+                        CUtlString sStr( sCmd.c_str() );
+                        sStr.Append( arg.c_str() );
+                        cCommands.InsertBefore( cCommands.Size(), sStr );
+                        result++;
+                    }
+                }
+            }
+        }
+    }
+    return result;
+}
+
+#endif // USE_OLD_COMMAND_COMPLETION
 
 void CConsoleCommand::PrintCommand( edict_t* pPrintTo, int indent )
 {
@@ -138,6 +206,8 @@ void CConsoleCommand::PrintCommand( edict_t* pPrintTo, int indent )
 //----------------------------------------------------------------------------------------------------------------
 // CConsoleCommandContainer.
 //----------------------------------------------------------------------------------------------------------------
+#ifdef USE_OLD_COMMAND_COMPLETION
+
 int CConsoleCommandContainer::AutoComplete( const char* partial, int partialLength, char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ], int strIndex, int charIndex )
 {
     int result = 0;
@@ -157,7 +227,7 @@ int CConsoleCommandContainer::AutoComplete( const char* partial, int partialLeng
         {
             partial += command_size;
             partialLength -= command_size;
-            while ( partial[0] == ' ' )
+            while ( *partial == ' ' )
             {
                 partial++; // remove root command from partial command(e.g. "botrix way" -> "way")
                 partialLength--;
@@ -165,9 +235,9 @@ int CConsoleCommandContainer::AutoComplete( const char* partial, int partialLeng
 
             int charIdx = charIndex + command_size + 1; // 1 is for space
 
-            for ( int i = 0; i < m_commands.size(); i ++ )
+            for ( int i = 0; i < m_aCommands.size(); i ++ )
             {
-                int count = m_commands[i]->AutoComplete(partial, partialLength, commands, strIndex, charIdx);
+                int count = m_aCommands[i]->AutoComplete(partial, partialLength, commands, strIndex, charIdx);
                 for ( int j = 0; j < count; j ++ )
                 {
                     strncpy(&commands[strIndex][charIndex], m_sCommand.c_str(), command_size);
@@ -182,13 +252,51 @@ int CConsoleCommandContainer::AutoComplete( const char* partial, int partialLeng
     return result;
 }
 
+#else // USE_OLD_COMMAND_COMPLETION
+
+int CConsoleCommandContainer::AutoComplete( const char* partial, int partialLength, CUtlVector< CUtlString > &commands, int charIndex )
+{
+    return 0;
+    int result = 0;
+    int command_size = m_sCommand.size();
+
+    if ( command_size >= partialLength ) // Only add command to commands array.
+    {
+        if ( strncmp( m_sCommand.c_str(), partial, partialLength ) == 0 )
+        {
+            commands.InsertBefore( commands.Size(), m_sCommand.c_str() ); // e.g. "way" -> "waypoint"
+            result++;
+        }
+    }
+    else
+    {
+        if ( strncmp( m_sCommand.c_str(), &partial[charIndex], command_size ) == 0 )
+        {
+            int iLen = partialLength - charIndex - command_size - 1;
+            const char* szSubPartial = &partial[iLen];
+            while ( *szSubPartial == ' ' )
+            {
+                szSubPartial++;
+                iLen--;
+            }
+
+            for ( int i = 0; i < m_aCommands.size(); i ++ )
+                result += m_aCommands[i]->AutoComplete(partial, partialLength, commands, partialLength-iLen);
+        }
+    }
+
+    return result;
+}
+
+#endif // USE_OLD_COMMAND_COMPLETION
+
 TCommandResult CConsoleCommandContainer::Execute( CClient* pClient, int argc, const char** argv )
 {
     if ( argc > 0 )
     {
-        for ( int i = 0; i < m_commands.size(); i ++ )
+        for ( int i = 0; i < m_aCommands.size(); i ++ )
         {
-            CConsoleCommand *pCommand = m_commands[i].get();
+            CConsoleCommand *pCommand = m_aCommands[i].get();
 
             if ( pCommand->IsCommand(argv[0]) )
             {
@@ -212,8 +320,8 @@ void CConsoleCommandContainer::PrintCommand( edict_t* pPrintTo, int indent )
     szMainBuffer[i]=0;
 
     BULOG_I( pPrintTo, "%s[%s]", szMainBuffer, m_sCommand.c_str() );
-    for ( int i = 0; i < m_commands.size(); i ++ )
-        m_commands[i]->PrintCommand( pPrintTo, indent+1 );
+    for ( int i = 0; i < m_aCommands.size(); i ++ )
+        m_aCommands[i]->PrintCommand( pPrintTo, indent+1 );
 }
 
 
@@ -2669,8 +2777,6 @@ TCommandResult CConfigAdminsShowCommand::Execute( CClient* pClient, int /*argc*/
 //----------------------------------------------------------------------------------------------------------------
 // Static "botrix" command (server side).
 //----------------------------------------------------------------------------------------------------------------
-#define MAIN_COMMAND "botrix"
-
 #ifdef SOURCE_ENGINE_2006
 
 void bbotCommandCallback()
@@ -2692,7 +2798,7 @@ void bbotCommandCallback( const CCommand &command )
 
     CClient* pClient = CPlayers::GetListenServerClient();
 
-    TCommandResult result = CMainCommand::instance->Execute( pClient, argc-1, &argv[1] );
+    TCommandResult result = CBotrixCommand::instance->Execute( pClient, argc-1, &argv[1] );
     if (result == ECommandRequireAccess)
         BULOG_W(pClient ? pClient->GetEdict() : NULL, "Error, you don't have access to this command.");
     else if (result == ECommandNotFound)
@@ -2702,20 +2808,36 @@ void bbotCommandCallback( const CCommand &command )
 }
 
 
+#ifdef USE_OLD_COMMAND_COMPLETION
+
 int bbotCompletion( const char* partial, char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ] )
 {
     int len = strlen(partial);
-    return CMainCommand::instance->AutoComplete(partial, len, commands, 0, 0);
+    return CBotrixCommand::instance->AutoComplete(partial, len, commands, 0, 0);
 }
 
-
 ConCommand botrix(MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, bbotCompletion);
+
+#else
+
+void CBotrixCommand::CommandCallback( const CCommand &command )
+{
+    bbotCommandCallback(command);
+}
+
+#endif // USE_OLD_COMMAND_COMPLETION
 
 
 //----------------------------------------------------------------------------------------------------------------
 // Main "botrix" command.
 //----------------------------------------------------------------------------------------------------------------
-CMainCommand::CMainCommand()
+CBotrixCommand::CBotrixCommand():
+#ifdef USE_OLD_COMMAND_COMPLETION
+    m_cServerCommand(MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, bbotCompletion)
+#else
+    m_cServerCommand(MAIN_COMMAND, this, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n",
+                     FCVAR_NONE, this)
+#endif
 {
     m_sCommand = "botrix";
     if ( CBotrixPlugin::instance->IsEnabled() )
@@ -2733,16 +2855,16 @@ CMainCommand::CMainCommand()
 
 #ifndef DONT_USE_VALVE_FUNCTIONS
   #ifdef SOURCE_ENGINE_2006
-    CBotrixPlugin::pCvar->RegisterConCommandBase( &botrix );
+    CBotrixPlugin::pCvar->RegisterConCommandBase( m_cServerCommand );
   #else
-    CBotrixPlugin::pCVar->RegisterConCommand( &botrix );
+    CBotrixPlugin::pCVar->RegisterConCommand( &m_cServerCommand );
   #endif
 #endif
 }
 
-CMainCommand::~CMainCommand()
+CBotrixCommand::~CBotrixCommand()
 {
 #if !defined(SOURCE_ENGINE_2006) && !defined(DONT_USE_VALVE_FUNCTIONS)
-    CBotrixPlugin::pCVar->UnregisterConCommand( &botrix );
+    CBotrixPlugin::pCVar->UnregisterConCommand( &m_cServerCommand );
 #endif
 }

@@ -1255,7 +1255,7 @@ void CBot::UpdateWorld()
         }
         else
             m_aNearPlayers.reset(m_iNextCheckPlayer);
-        
+
         // Check if this enemy can be seen / should be attacked.
         if ( !m_bTest && !m_bDontAttack && IsEnemy(pCheckPlayer) )
             CheckEnemy(m_iNextCheckPlayer, pCheckPlayer, true);

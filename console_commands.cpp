@@ -117,7 +117,7 @@ int CConsoleCommand::AutoComplete( const char* partial, int partialLength,
 
 #else // USE_OLD_COMMAND_COMPLETION
 
-int CConsoleCommand::AutoComplete( const char* partial, int partialLength, CUtlVector<CUtlString>& cCommands, int charIndex )
+int CConsoleCommand::AutoComplete( char* partial, int partialLength, CUtlVector<CUtlString>& cCommands, int charIndex )
 {
     int result = 0;
 
@@ -128,10 +128,12 @@ int CConsoleCommand::AutoComplete( const char* partial, int partialLength, CUtlV
     {
         if ( strncmp( m_sCommand.c_str(), szSubPartial, iLen ) == 0 )
         {
+            partial[charIndex] = 0;
+
             // Autocomplete only command name.
             CUtlString sStr( partial );
             sStr.Append( m_sCommand.c_str() );
-            cCommands.InsertBefore( cCommands.Size(), sStr );
+            cCommands.AddToTail( sStr );
             result++;
         }
     }
@@ -166,7 +168,7 @@ int CConsoleCommand::AutoComplete( const char* partial, int partialLength, CUtlV
                     {
                         CUtlString sStr( sCmd.c_str() );
                         sStr.Append( arg.c_str() );
-                        cCommands.InsertBefore( cCommands.Size(), sStr );
+                        cCommands.AddToTail( sStr );
                         result++;
                     }
                 }
@@ -254,34 +256,38 @@ int CConsoleCommandContainer::AutoComplete( const char* partial, int partialLeng
 
 #else // USE_OLD_COMMAND_COMPLETION
 
-int CConsoleCommandContainer::AutoComplete( const char* partial, int partialLength, CUtlVector< CUtlString > &commands, int charIndex )
+int CConsoleCommandContainer::AutoComplete( char* partial, int partialLength, CUtlVector< CUtlString > &cCommands, int charIndex )
 {
-    return 0;
     int result = 0;
     int command_size = m_sCommand.size();
 
-    if ( command_size >= partialLength ) // Only add command to commands array.
+    if ( command_size >= partialLength - charIndex ) // Only add command to commands array.
     {
-        if ( strncmp( m_sCommand.c_str(), partial, partialLength ) == 0 )
+        if ( strncmp(m_sCommand.c_str(), &partial[charIndex], partialLength - charIndex) == 0 )
         {
-            commands.InsertBefore( commands.Size(), m_sCommand.c_str() ); // e.g. "way" -> "waypoint"
+            // Autocomplete only command name.
+            partial[charIndex] = 0;
+
+            CUtlString sStr( partial );
+            sStr.Append( m_sCommand.c_str() );
+            cCommands.AddToTail( sStr );
             result++;
         }
     }
     else
     {
-        if ( strncmp( m_sCommand.c_str(), &partial[charIndex], command_size ) == 0 )
+        if ( strncmp(m_sCommand.c_str(), &partial[charIndex], command_size) == 0 )
         {
             int iLen = partialLength - charIndex - command_size - 1;
-            const char* szSubPartial = &partial[iLen];
+            const char* szSubPartial = &partial[partialLength-iLen];
             while ( *szSubPartial == ' ' )
             {
                 szSubPartial++;
                 iLen--;
             }
 
-            for ( int i = 0; i < m_aCommands.size(); i ++ )
-                result += m_aCommands[i]->AutoComplete(partial, partialLength, commands, partialLength-iLen);
+            for ( int i = 0; i < m_aCommands.size(); i++ )
+                result += m_aCommands[i]->AutoComplete(partial, partialLength, cCommands, partialLength-iLen);
         }
     }
 
@@ -2926,8 +2932,6 @@ int bbotCompletion( const char* partial, char commands[ COMMAND_COMPLETION_MAXIT
     return CBotrixCommand::instance->AutoComplete(partial, len, commands, 0, 0);
 }
 
-ConCommand botrix(MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, bbotCompletion);
-
 #else
 
 void CBotrixCommand::CommandCallback( const CCommand &command )
@@ -2943,7 +2947,7 @@ void CBotrixCommand::CommandCallback( const CCommand &command )
 //----------------------------------------------------------------------------------------------------------------
 CBotrixCommand::CBotrixCommand():
 #ifdef USE_OLD_COMMAND_COMPLETION
-    m_cServerCommand(MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, bbotCompletion)
+    m_cServerCommand(MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, 0/*bbotCompletion*/)
 #else
     m_cServerCommand(MAIN_COMMAND, this, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n",
                      FCVAR_NONE, this)

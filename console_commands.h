@@ -41,7 +41,7 @@ public:
                               char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ],
                               int strIndex, int charIndex );
 #else
-    virtual int AutoComplete( const char* partial, int partialLength, CUtlVector<CUtlString>& cCommands, int charIndex );
+    virtual int AutoComplete( char* partial, int partialLength, CUtlVector<CUtlString>& cCommands, int charIndex );
 #endif
 
 protected:
@@ -73,7 +73,7 @@ public:
                               char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ],
                               int strIndex, int charIndex );
 #else
-    virtual int AutoComplete( const char* partial, int partialLength, CUtlVector< CUtlString > &commands, int charIndex );
+    virtual int AutoComplete( char* partial, int partialLength, CUtlVector< CUtlString > &commands, int charIndex );
 #endif
 
 protected:
@@ -1198,8 +1198,8 @@ public:
     /// Autocomplete "botrix" command on server (not as client).
     virtual int CommandCompletionCallback( const char *pPartial, CUtlVector< CUtlString > &commands )
     {
-        int len = strlen(pPartial);
-        return AutoComplete(pPartial, len, commands, 0);
+        good::string sPartial(pPartial, true, true);
+        return AutoComplete((char*)sPartial.c_str(), sPartial.size(), commands, 0);
     }
 #endif
 

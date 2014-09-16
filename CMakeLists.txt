@@ -30,7 +30,7 @@ set( SHARED_FLAGS "${SHARED_COMPILE_FLAGS} ${SHARED_LINKER_FLAGS}")
 set( CMAKE_CXX_FLAGS_DEBUG          "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -O0 -g -rdynamic" )
 set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -g -O2 -rdynamic" )
 set( CMAKE_CXX_FLAGS_RELEASE        "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -O3 -Wl,--strip-all " )
-set( CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS_RELEASE}" )
+
 #-ffunction-sections -Wl,--gc-sections
 #-O2 -falign-functions=16 -falign-loops=16" )
 #TODO: set( CMAKE_CXX_FLAGS_GCOV           "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -O0 -g -rdynamic --coverage -fprofile-arcs -ftest-coverage -lgcov" )
@@ -43,7 +43,7 @@ elseif( CMAKE_BUILD_TYPE MATCHES "Debug" )
 elseif( CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo" )
     message( "Flags: ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
 else()
-    set( CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_RELEASE} )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE}" )
     message( "Flags: ${CMAKE_CXX_FLAGS}" )
 endif()
 
@@ -53,6 +53,7 @@ add_subdirectory ( good )
 
 # Defines. Don't put comments between them :).
 # Not used: -DDONT_USE_VALVE_FUNCTIONS -DBOTRIX_SHOW_PERFORMANCE
+# Valve not working: -DNO_MALLOC_OVERRIDE
 add_definitions(
     -DUSE_OLD_COMMAND_COMPLETION
     -DBOTRIX_SOURCE_2013

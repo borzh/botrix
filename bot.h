@@ -122,7 +122,10 @@ public: // Methods.
     /// Called when this bot just killed an enemy.
     virtual void KilledEnemy( int /*iPlayerIndex*/, CPlayer* pPlayer )
     {
-        BotMessage( "%s -> killed %s.", GetName(), pPlayer->GetName() );
+        if ( pPlayer == this )
+            BotMessage( "%s -> Suicide.", GetName() );
+        else
+            BotMessage( "%s -> Killed %s.", GetName(), pPlayer->GetName() );
         if ( pPlayer == m_pCurrentEnemy )
             ClearCurrentEnemy();
     }
@@ -453,8 +456,6 @@ protected: // Bot flags.
     bool m_bEnemyOffSight:1;                                       // Enemy is not visible.
     bool m_bStayReloading:1;                                       // If true, then don't change weapon at reload time, but reload current weapon instead.
     bool m_bShootAtHead:1;                                         // If true, then will shoot at head instead of body.
-
-    bool m_bObjectiveChanged:1;                                    // If true, then objective was changed, recalculate next move.
 
     // Features.
     bool m_bFeatureAttackDuckEnabled:1;                            // Duck while attacking. Will duck if in attack duck range.

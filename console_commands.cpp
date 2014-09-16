@@ -2520,9 +2520,9 @@ TCommandResult CBotMoveCommand::Execute( CClient* pClient, int argc, const char*
                  (bAll || good::starts_with(good::string(pPlayer->GetName()), sName)) )
             {
                 bSomeone = true;
-                bool bMoving = (bMove == -1) ? !((CBot*)pPlayer)->IsStopped() : (bMove == 0);
-                ((CBot*)pPlayer)->SetStopped( bMoving );
-                BULOG_I( pEdict, "Bot %s %s.", pPlayer->GetName(), bMoving ? "can move" : "can't move" );
+                bool bStop = (bMove == -1) ? !((CBot*)pPlayer)->IsStopped() : (bMove == 0);
+                ((CBot*)pPlayer)->SetStopped( bStop );
+                BULOG_I( pEdict, "Bot %s %s move.", pPlayer->GetName(), bStop ? "can't" : "can" );
             }
         }
     }

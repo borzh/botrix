@@ -117,7 +117,8 @@ void CBot_HL2DM::Think()
 
             if ( m_iFailsCount >= 3 )
             {
-                BLOG_W("Failed to follow path on same waypoint %d 3 times, marking task as finished.", iCurrentWaypoint);
+                BLOG_W( "%s -> Failed to follow path from %d to %d 3 times, marking task as finished.",
+                        GetName(), m_iFailWaypoint, m_iDestinationWaypoint );
                 TaskFinished();
                 m_bNeedTaskCheck = bForceNewTask = true;
                 m_iFailsCount = 0;
@@ -460,7 +461,7 @@ find_enemy:
         // Check if waypoint to go to is valid.
         if ( (m_iTaskDestination == EWaypointIdInvalid) || (m_iTaskDestination == iCurrentWaypoint) )
         {
-            BLOG_W( "%s -> task %s, invalid destination waypoint %d (current %d), recalculate task.", GetName(),
+            BLOG_W( "%s -> Task %s, invalid destination waypoint %d (current %d), recalculate task.", GetName(),
                     CTypeToString::BotTaskToString(m_iCurrentTask).c_str(), m_iTaskDestination, iCurrentWaypoint );
             m_iCurrentTask = -1;
             m_bNeedTaskCheck = true; // Check new task in next frame.
@@ -471,7 +472,7 @@ find_enemy:
         }
         else
         {
-            BotMessage( "%s -> new task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
+            BotMessage( "%s -> New task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
                         pEntityClass ? pEntityClass->sClassName.c_str() : "", m_iTaskDestination, iCurrentWaypoint );
 
             m_iDestinationWaypoint = m_iTaskDestination;

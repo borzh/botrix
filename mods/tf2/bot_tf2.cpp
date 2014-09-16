@@ -33,7 +33,7 @@ CBot_TF2::CBot_TF2( edict_t* pEdict, TBotIntelligence iIntelligence, int iTeam, 
 //----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::Respawned()
 {
-    BotMessage( "%s -> current team %s.", GetName(), CMod::aTeamsNames[GetTeam()].c_str() );
+    BotMessage( "%s -> Current team %s.", GetName(), CMod::aTeamsNames[GetTeam()].c_str() );
 
     if ( m_iDesiredTeam == CMod::iUnassignedTeam )
         m_iDesiredTeam = ( CPlayers::GetTeamCount(2) > CPlayers::GetTeamCount(3) ) ? 3 : 2;
@@ -51,14 +51,14 @@ void CBot_TF2::Respawned()
         }
         else
         {
-            BotMessage( "%s -> will join team %s.", GetName(),
+            BotMessage( "%s -> Will join team %s.", GetName(),
                         CMod::aTeamsNames[m_iDesiredTeam].c_str() );
             m_pPlayerInfo->ChangeTeam(m_iDesiredTeam);
         }
     }
     else
     {
-        BotMessage( "%s -> will join team %s.", GetName(),
+        BotMessage( "%s -> Will join team %s.", GetName(),
                     CMod::aTeamsNames[CMod::iSpectatorTeam].c_str() );
         m_pPlayerInfo->ChangeTeam(CMod::iSpectatorTeam);
     }
@@ -74,7 +74,7 @@ void CBot_TF2::Respawned()
 void CBot_TF2::ChangeTeam( TTeam iTeam )
 {
     m_iDesiredTeam = iTeam;
-    BotMessage( "%s -> changed team to %s.", GetName(), CTypeToString::TeamToString(iTeam).c_str() );
+    BotMessage( "%s -> Changed team to %s.", GetName(), CTypeToString::TeamToString(iTeam).c_str() );
     ChangeClass(m_iClass);
 }
 
@@ -86,7 +86,7 @@ void CBot_TF2::ChangeClass( TClass iClass )
     good::string_buffer sb(szMainBuffer, iMainBufferSize, false);
     const good::string& sClass = CTypeToString::ClassToString(m_iClass);
     sb << "joinclass " << sClass;
-    BotMessage( "%s -> will joinclass %s.", GetName(), sClass.c_str() );
+    BotMessage( "%s -> Will joinclass %s.", GetName(), sClass.c_str() );
     CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, sb.c_str() );
 }
 
@@ -486,7 +486,7 @@ find_enemy:
         // Check if waypoint to go to is valid.
         if ( (m_iTaskDestination == EWaypointIdInvalid) || (m_iTaskDestination == iCurrentWaypoint) )
         {
-            BLOG_W( "%s -> task %s, invalid destination waypoint %d (current %d), recalculate task.", GetName(),
+            BLOG_W( "%s -> Task %s, invalid destination waypoint %d (current %d), recalculate task.", GetName(),
                     CTypeToString::BotTaskToString(m_iCurrentTask).c_str(), m_iTaskDestination, iCurrentWaypoint );
             m_iCurrentTask = -1;
             m_bNeedTaskCheck = true; // Check new task in next frame.
@@ -497,7 +497,7 @@ find_enemy:
         }
         else
         {
-            BotMessage( "%s -> new task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
+            BotMessage( "%s -> New task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
                         pEntityClass ? pEntityClass->sClassName.c_str() : "", m_iTaskDestination, iCurrentWaypoint );
 
             m_iDestinationWaypoint = m_iTaskDestination;

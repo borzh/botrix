@@ -757,6 +757,20 @@ public:
     }
 };
 
+class CBotAllyCommand: public CConsoleCommand
+{
+public:
+    CBotAllyCommand()
+    {
+        m_sCommand = "ally";
+        m_sHelp = "will not attack another user/bot";
+        m_sDescription = "";
+        m_iAccessLevel = FCommandAccessBot;
+    }
+
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
 class CBotAttackCommand: public CConsoleCommand
 {
 public:
@@ -1063,6 +1077,7 @@ public:
     {
         m_sCommand = "bot";
         Add(new CBotAddCommand);
+        Add(new CBotAllyCommand);
         Add(new CBotAttackCommand);
         Add(new CBotCommandCommand);
         Add(new CBotConfigCommand);

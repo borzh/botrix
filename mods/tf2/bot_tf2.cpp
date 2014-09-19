@@ -108,7 +108,7 @@ void CBot_TF2::KilledEnemy( int iPlayerIndex, CPlayer* pVictim )
 //----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow )
 {
-    if ( !m_bTest && !m_bDontAttack && (pAttacker != this) )
+    if ( !m_bTest && !m_bDontAttack && (pAttacker != this) && IsEnemy(pAttacker) )
         CheckEnemy(iPlayerIndex, pAttacker, false);
     if ( iHealthNow < (CMod::iPlayerMaxHealth/2) )
         m_bNeedTaskCheck = true; // Check if need search for health.

@@ -83,7 +83,7 @@ void CBot_HL2DM::KilledEnemy( int iPlayerIndex, CPlayer* pVictim )
 //----------------------------------------------------------------------------------------------------------------
 void CBot_HL2DM::HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow )
 {
-    if ( !m_bTest && !m_bDontAttack && (pAttacker != this) )
+    if ( !m_bTest && !m_bDontAttack && (pAttacker != this) && IsEnemy(pAttacker) )
         CheckEnemy(iPlayerIndex, pAttacker, false);
     if ( iHealthNow < (CMod::iPlayerMaxHealth/2) )
         m_bNeedTaskCheck = true; // Check if need search for health.

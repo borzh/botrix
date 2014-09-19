@@ -46,7 +46,8 @@ CBot::CBot( edict_t* pEdict, TBotIntelligence iIntelligence, TClass iClass ):
     CPlayer(pEdict, true), m_pController( CBotrixPlugin::pBotManager->GetBotController(m_pEdict) ),
     m_iIntelligence(iIntelligence), m_iClass(iClass), m_iClassChange(0),
     r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ),
-    m_aNearPlayers(CPlayers::Size()), m_aSeenEnemies(CPlayers::Size()), m_aEnemies(CPlayers::Size()),
+    m_aNearPlayers(CPlayers::Size()), m_aSeenEnemies(CPlayers::Size()),
+    m_aEnemies(CPlayers::Size()), m_aAllies(CPlayers::Size()),
     m_cAttackDuckRangeSqr(0, SQR(400)),
     m_bTest(false), m_bCommandAttack(true), m_bCommandPaused(false), m_bCommandStopped(false),
 #if defined(DEBUG) || defined(_DEBUG)

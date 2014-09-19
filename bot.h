@@ -61,11 +61,14 @@ public: // Methods.
     /// Get bot's intelligence.
     TBotIntelligence GetIntelligence() { return m_iIntelligence; }
 
-    /// Show or hide bot messages.
-    void SetDebugging( bool bOn ) { m_bDebugging = bOn; }
+    /// Return true if @p iPlayer is ally for bot.
+    bool IsAlly( TPlayerIndex iPlayer ) { return m_aAllies.test(iPlayer); }
 
     /// Return true if bot is paused.
     bool IsAttacking() { return m_bCommandAttack; }
+
+    /// Return true if bot is printing debug messages.
+    bool IsDebugging() { return m_bDebugging; }
 
     /// Return true if bot is paused.
     bool IsPaused() { return m_bCommandPaused; }
@@ -73,8 +76,19 @@ public: // Methods.
     /// Return true if bot is paused.
     bool IsStopped() { return m_bCommandStopped; }
 
+    /// Set ally/enemy for bot.
+    void SetAlly( TPlayerIndex iPlayer, bool bAlly )
+    {
+        m_aAllies.set(iPlayer, bAlly);
+        if ( bAlly && (m_pCurrentEnemy == CPlayers::Get(iPlayer)) )
+            ClearCurrentEnemy();
+    }
+
     /// Start/stop bot attack.
     void SetAttack( bool bAttack ) { m_bCommandAttack = bAttack; }
+
+    /// Show or hide bot messages.
+    void SetDebugging( bool bOn ) { m_bDebugging = bOn; }
 
     /// Pause/resume bot.
     void SetPaused( bool bPause ) { m_bCommandPaused = bPause; }
@@ -183,7 +197,8 @@ protected: // Mod dependend protected functions.
     {
         int idx = pPlayer->GetTeam();
         return (idx != CMod::iSpectatorTeam) &&
-               ( (idx != GetTeam()) || (idx == CMod::iUnassignedTeam) ); // Deathmatch team?
+               ( (idx != GetTeam()) || (idx == CMod::iUnassignedTeam) ) && // Deathmatch team?
+               !m_aAllies.test( pPlayer->GetIndex() );
     }
 
     // Bot just picked up given item.
@@ -360,6 +375,7 @@ protected: // Members.
     good::bitset m_aNearPlayers;                                   // Bitset of players near (to know if bot can stuck with them).
     good::bitset m_aSeenEnemies;                                   // Bitset of enemies that bot can see right now.
     good::bitset m_aEnemies;                                       // Bitset of enemies that bot can't see right now, but it knows they are there.
+    good::bitset m_aAllies;                                        // Allies for bot.
     int m_iNextCheckPlayer;                                        // Next player to check if close.
 
     CPlayer* m_pCurrentEnemy;                                      // Current enemy.

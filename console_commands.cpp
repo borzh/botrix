@@ -2047,54 +2047,49 @@ TCommandResult CBotDebugCommand::Execute( CClient* pClient, int argc, const char
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-    if ( argc == 0 )
+    bool bSomeone = false;
+    if ( argc <= 2 )
     {
-        BULOG_W( pEdict, "Error, you need to provide bot's name (or at least how it starts) or 'all'/'none'."); // TODO: all none.
-        return ECommandError;
-    }
-    if ( argc > 2 )
-    {
-        BULOG_W( pEdict, "Error, invalid arguments count.");
-        return ECommandError;
-    }
+        good::string sName(sAll);
+        if ( argc )
+            sName = argv[0];
+        bool bAll = !argc || (sAll == sName);
 
-    good::string sName = argv[0];
-
-    CBot* pBot = NULL;
-    for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
-    {
-        CPlayer* pPlayer = CPlayers::Get(i);
-        if ( pPlayer && pPlayer->IsBot() )
-        {
-            good::string sBotName = pPlayer->GetName();
-            if ( good::starts_with(sBotName, sName) )
-            {
-                pBot = (CBot*)pPlayer;
-                break;
-            }
-        }
-    }
-
-    if ( pBot )
-    {
-        int bDebug = true;
+        int bDebug = -1;
         if ( argc == 2 )
         {
             bDebug = CTypeToString::BoolFromString(argv[1]);
             if ( bDebug == -1 )
             {
-                BULOG_W( pEdict, "Error, unknown parameter %s, should be 'on' or 'off'.", argv[1] );
+                BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[1] );
                 return ECommandError;
             }
         }
-        pBot->SetDebugging(bDebug != 0);
-        return ECommandPerformed;
+
+        for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
+        {
+            CPlayer* pPlayer = CPlayers::Get(i);
+            if ( pPlayer && pPlayer->IsBot() &&
+                 (bAll || good::starts_with(good::string(pPlayer->GetName()), sName)) )
+            {
+                bSomeone = true;
+                bool bDebuging = (bDebug == -1) ? !((CBot*)pPlayer)->IsDebugging() : (bDebug != 0);
+                ((CBot*)pPlayer)->SetDebugging( bDebuging );
+                BULOG_I( pEdict, "%s bot %s.", bDebuging ? "Debugging" : "Not debugging", pPlayer->GetName() );
+            }
+        }
     }
     else
     {
-        BULOG_W( pEdict, "Error, no such bot: %s.", argv[0] );
+        BULOG_W( pEdict, "Error, invalid arguments count." );
         return ECommandError;
     }
+    if ( !bSomeone )
+    {
+        BULOG_W( pEdict, "Error, no matched bots." );
+        return ECommandError;
+    }
+    return ECommandPerformed;
 }
 
 TCommandResult CBotConfigQuotaCommand::Execute( CClient* pClient, int argc, const char** argv )
@@ -2447,6 +2442,56 @@ TCommandResult CBotDrawPathCommand::Execute( CClient* pClient, int argc, const c
     return ECommandPerformed;
 }
 
+TCommandResult CBotAllyCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( (argc == 2) || (argc == 3) )
+    {
+        good::string sBot(argv[0]);
+        good::string sPlayer(argv[1]);
+        bool bAllBots = (sBot == sAll);
+        bool bAllPlayers = (sPlayer == sAll);
+        int iAllyOnOff = -1;
+        if ( argc == 3 )
+        {
+            iAllyOnOff = CTypeToString::BoolFromString(argv[2]);
+            if ( iAllyOnOff == -1 )
+            {
+                BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[1] );
+                return ECommandError;
+            }
+        }
+
+        for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
+        {
+            CPlayer* pBot = CPlayers::Get(i);
+            if ( pBot && pBot->IsBot() &&
+                 (bAllBots || good::starts_with(good::string(pBot->GetName()), sBot)) )
+            {
+                for ( TPlayerIndex j = 0; j < CPlayers::Size(); ++j )
+                {
+                    CPlayer* pPlayer = CPlayers::Get(j);
+                    if ( pPlayer && (i != j) &&
+                         (bAllPlayers || good::starts_with(good::string(pPlayer->GetName()), sPlayer)) )
+                    {
+                        bool bAlly = (iAllyOnOff == -1) ? !((CBot*)pBot)->IsAlly(j) : (iAllyOnOff != 0);
+                        ((CBot*)pBot)->SetAlly( j, bAlly );
+                        BULOG_I( pEdict, "%s is thinking that %s is its %s.",
+                                 pBot->GetName(), pPlayer->GetName(), bAlly ? "ally" : "enemy" );
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        BULOG_W( pEdict, "Error, invalid arguments count." );
+        return ECommandError;
+    }
+    return ECommandPerformed;
+}
+
 TCommandResult CBotAttackCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
@@ -2465,7 +2510,7 @@ TCommandResult CBotAttackCommand::Execute( CClient* pClient, int argc, const cha
             bAttack = CTypeToString::BoolFromString(argv[1]);
             if ( bAttack == -1 )
             {
-                BULOG_W( pEdict, "Error, unknown parameter %s, should be 'on' or 'off'.", argv[1] );
+                BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[1] );
                 return ECommandError;
             }
         }
@@ -2514,7 +2559,7 @@ TCommandResult CBotMoveCommand::Execute( CClient* pClient, int argc, const char*
             bMove = CTypeToString::BoolFromString(argv[1]);
             if ( bMove == -1 )
             {
-                BULOG_W( pEdict, "Error, unknown parameter %s, should be 'on' or 'off'.", argv[1] );
+                BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[1] );
                 return ECommandError;
             }
         }
@@ -2564,7 +2609,7 @@ TCommandResult CBotPauseCommand::Execute( CClient* pClient, int argc, const char
             bPaused = CTypeToString::BoolFromString(argv[1]);
             if ( bPaused == -1 )
             {
-                BULOG_W( pEdict, "Error, unknown parameter %s, should be 'on' or 'off'.", argv[1] );
+                BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[1] );
                 return ECommandError;
             }
         }

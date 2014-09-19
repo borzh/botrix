@@ -109,7 +109,8 @@ namespace good
             return IniFileTooBig;
 
         long read = good::file::file_to_memory(name.c_str(), buf, fsize);
-        GoodCheck(fsize == read, return IniFileTooBig);
+        if ( fsize != read )
+            return IniFileTooBig;
         buf[fsize] = 0;
 
         char *section = NULL, *key = NULL, *value = NULL, *junk = NULL;

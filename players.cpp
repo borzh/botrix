@@ -74,6 +74,9 @@ void CPlayer::PreThink()
     if ( !m_bAlive && m_bBot ) // Don't update current waypoint for dead bots.
         return;
 
+    if ( m_pPlayerInfo->IsDead() ) // CBasePlayer::IsDead() returns true only when player became dead,  but when
+        m_bAlive = false;          // player is respawnable (but still dead) it returns false.
+
 #if DRAW_PLAYER_HULL
     static const float fDrawTime = 0.1f;
     if ( CBotrixPlugin::fTime >= m_fNextDrawHullTime )

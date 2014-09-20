@@ -152,7 +152,7 @@ public:
     inline bool HasAmmo() const { return HasAmmo(0) || HasAmmo(1); }
 
     /// Return true if this weapon has no bullets.
-    inline bool Empty() const { return !HasAmmo(); }
+    inline bool Empty() const { return !IsMelee() && !IsPhysics() && !HasAmmo(); }
 
     /// Return time when weapon can be used.
     inline float GetEndTime() const { return m_fEndTime; }

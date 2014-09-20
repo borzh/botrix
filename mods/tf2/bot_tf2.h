@@ -36,21 +36,15 @@ public:
     /// Called when player's team changed.
     virtual void ChangeTeam( TTeam iTeam );
 
-    /// Called when player got disconnected / kicked.
-    virtual void PlayerDisconnect( int iPlayerIndex, CPlayer* pPlayer )
+    /// Enemy is dead or got disconnected.
+    virtual void EraseCurrentEnemy()
     {
-        CBot::PlayerDisconnect(iPlayerIndex, pPlayer);
-        if ( m_pChasedEnemy == pPlayer )
-        {
-            m_bChasing = false;
-            m_pChasedEnemy = NULL;
-            m_iCurrentTask = EBotTaskInvalid;
-            m_bNeedTaskCheck = true;
-        }
+        CBot::EraseCurrentEnemy();
+        m_bChasing = false;
+        m_pChasedEnemy = NULL;
+        m_iCurrentTask = EBotTaskInvalid;
+        m_bNeedTaskCheck = true;
     }
-
-    /// Called when this bot just killed an enemy.
-    virtual void KilledEnemy( int iPlayerIndex, CPlayer* pVictim );
 
     /// Called when enemy just shot this bot.
     virtual void HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow );

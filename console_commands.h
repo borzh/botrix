@@ -36,7 +36,8 @@ public:
     virtual TCommandResult Execute( CClient* pClient, int argc, const char** argv ) = 0;
     virtual void PrintCommand( edict_t* pPrintTo, int indent = 0);
 
-#ifdef USE_OLD_COMMAND_COMPLETION
+#if defined(BOTRIX_NO_COMMAND_COMPLETION)
+#elif defined(BOTRIX_OLD_COMMAND_COMPLETION)
     virtual int AutoComplete( const char* partial, int partialLength,
                               char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ],
                               int strIndex, int charIndex );
@@ -68,7 +69,8 @@ public:
     void Add( CConsoleCommand* newCommand ) { m_aCommands.push_back( good::unique_ptr<CConsoleCommand>(newCommand) ); }
     virtual void PrintCommand( edict_t* pPrintTo, int indent = 0);
 
-#ifdef USE_OLD_COMMAND_COMPLETION
+#if defined(BOTRIX_NO_COMMAND_COMPLETION)
+#elif defined(BOTRIX_OLD_COMMAND_COMPLETION)
     virtual int AutoComplete( const char* partial, int partialLength,
                               char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ],
                               int strIndex, int charIndex );
@@ -256,13 +258,7 @@ public:
 class CWaypointArgumentCommand: public CConsoleCommand
 {
 public:
-    CWaypointArgumentCommand()
-    {
-        m_sCommand = "argument";
-        m_sHelp = "set waypoint arguments (angles, ammo count, weapon index/subindex, armor count, health count)";
-        m_iAccessLevel = FCommandAccessWaypoint; // TODO: autocomplete
-    }
-
+    CWaypointArgumentCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
@@ -1195,7 +1191,7 @@ public:
 /// Container of all commands starting with "botrix".
 //****************************************************************************************************************
 class CBotrixCommand: public CConsoleCommandContainer
-#ifndef USE_OLD_COMMAND_COMPLETION
+#if !defined(BOTRIX_NO_COMMAND_COMPLETION) && !defined(BOTRIX_OLD_COMMAND_COMPLETION)
     , public ICommandCompletionCallback, public ICommandCallback
 #endif
 {
@@ -1206,7 +1202,7 @@ public:
     /// Destructor.
     ~CBotrixCommand();
 
-#ifndef USE_OLD_COMMAND_COMPLETION
+#if !defined(BOTRIX_NO_COMMAND_COMPLETION) && !defined(BOTRIX_OLD_COMMAND_COMPLETION)
     /// Execute "botrix" command on server (not as client).
     virtual void CommandCallback( const CCommand &command );
 

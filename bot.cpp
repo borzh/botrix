@@ -298,7 +298,7 @@ void CBot::PlayerDisconnect( int iPlayerIndex, CPlayer* pPlayer )
     m_aSeenEnemies.reset(iPlayerIndex);
 
     if ( pPlayer == m_pCurrentEnemy )
-        ClearCurrentEnemy();
+        EraseCurrentEnemy();
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -480,9 +480,6 @@ void CBot::PreThink()
         m_bCommandPaused = true;
         return;
     }
-
-    if ( m_pPlayerInfo->IsDead() ) // CBasePlayer::IsDead() returns true only when player became dead,  but when
-        m_bAlive = false;          // player is respawnable (but still dead) it returns false.
 
     Vector vPrevOrigin = m_vHead;
     int iPrevCurrWaypoint = iCurrentWaypoint;
@@ -1087,8 +1084,8 @@ void CBot::UpdateWeapon()
         if ( m_bDontAttack || !m_bCommandAttack )
             m_cCmd.buttons = 0;
 
-        if ( cWeapon.CanUse() && cWeapon.GetBaseWeapon()->bForbidden ) // Select other weapon.
-            WeaponChoose();
+        if ( cWeapon.CanUse() && ( cWeapon.GetBaseWeapon()->bForbidden || cWeapon.Empty() ) )
+            WeaponChoose(); // Select other weapon.
     }
 }
 
@@ -1206,14 +1203,13 @@ void CBot::UpdateWorld()
 
     // Check only 1 player per frame.
     if ( m_bEnemyOffSight && (CBotrixPlugin::fTime >= m_fTimeToEraseEnemy) )
-        ClearCurrentEnemy();
-
-
+        CurrentEnemyNotVisible();
+    
     CPlayer* pCheckPlayer = NULL;
     while ( m_iNextCheckPlayer < CPlayers::Size() )
     {
         CPlayer* pPlayer = CPlayers::Get(m_iNextCheckPlayer);
-        if ( pPlayer && (this != pPlayer) && (pPlayer->GetTeam() != CMod::iSpectatorTeam) )
+        if ( pPlayer && (this != pPlayer) )
         {
             pCheckPlayer = pPlayer;
             break;
@@ -1260,7 +1256,7 @@ void CBot::UpdateWorld()
         {
             m_aNearPlayers.reset(m_iNextCheckPlayer);
             if ( m_pCurrentEnemy == pCheckPlayer )
-                ClearCurrentEnemy();
+                EraseCurrentEnemy();
         }
 
         // Check if this enemy can be seen / should be attacked.
@@ -1309,12 +1305,12 @@ void CBot::CheckEnemy( int iPlayerIndex, CPlayer* pPlayer, bool bCheckVisibility
                 if ( !m_bEnemyOffSight )
                 {
                     m_bEnemyOffSight = true;
-                    m_fTimeToEraseEnemy = CBotrixPlugin::fTime + 1.5f; // Give some time to erase enemy.
+                    m_fTimeToEraseEnemy = CBotrixPlugin::fTime + 1.5f; // TODO: CONCOMMAND. Give some time to erase enemy.
                     m_bAttackDuck = false;
                 }
             }
             else
-                ClearCurrentEnemy();
+                EraseCurrentEnemy();
         }
     }
 

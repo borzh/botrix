@@ -26,8 +26,8 @@ const good::string sAmmo = "ammo";
 const good::string sHealth = "health";
 const good::string sArmor = "armor";
 const good::string sButton = "button";
-const good::string sFirstAngle = "first_angle";
-const good::string sSecondAngle = "second_angle";
+const good::string sFirstAngle = "first";
+const good::string sSecondAngle = "second";
 
 extern char* szMainBuffer;
 extern int iMainBufferSize;
@@ -48,7 +48,8 @@ extern int iMainBufferSize;
 //----------------------------------------------------------------------------------------------------------------
 // CConsoleCommand.
 //----------------------------------------------------------------------------------------------------------------
-#ifdef USE_OLD_COMMAND_COMPLETION
+#if defined(BOTRIX_NO_COMMAND_COMPLETION)
+#elif defined(BOTRIX_OLD_COMMAND_COMPLETION)
 
 int CConsoleCommand::AutoComplete( const char* partial, int partialLength,
                                    char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ],
@@ -115,7 +116,7 @@ int CConsoleCommand::AutoComplete( const char* partial, int partialLength,
     return result;
 }
 
-#else // USE_OLD_COMMAND_COMPLETION
+#else // BOTRIX_OLD_COMMAND_COMPLETION
 
 int CConsoleCommand::AutoComplete( char* partial, int partialLength, CUtlVector<CUtlString>& cCommands, int charIndex )
 {
@@ -178,7 +179,7 @@ int CConsoleCommand::AutoComplete( char* partial, int partialLength, CUtlVector<
     return result;
 }
 
-#endif // USE_OLD_COMMAND_COMPLETION
+#endif // BOTRIX_OLD_COMMAND_COMPLETION
 
 void CConsoleCommand::PrintCommand( edict_t* pPrintTo, int indent )
 {
@@ -208,7 +209,8 @@ void CConsoleCommand::PrintCommand( edict_t* pPrintTo, int indent )
 //----------------------------------------------------------------------------------------------------------------
 // CConsoleCommandContainer.
 //----------------------------------------------------------------------------------------------------------------
-#ifdef USE_OLD_COMMAND_COMPLETION
+#if defined(BOTRIX_NO_COMMAND_COMPLETION)
+#elif defined(BOTRIX_OLD_COMMAND_COMPLETION)
 
 int CConsoleCommandContainer::AutoComplete( const char* partial, int partialLength, char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ], int strIndex, int charIndex )
 {
@@ -254,7 +256,7 @@ int CConsoleCommandContainer::AutoComplete( const char* partial, int partialLeng
     return result;
 }
 
-#else // USE_OLD_COMMAND_COMPLETION
+#else // BOTRIX_OLD_COMMAND_COMPLETION
 
 int CConsoleCommandContainer::AutoComplete( char* partial, int partialLength, CUtlVector< CUtlString > &cCommands, int charIndex )
 {
@@ -294,7 +296,7 @@ int CConsoleCommandContainer::AutoComplete( char* partial, int partialLength, CU
     return result;
 }
 
-#endif // USE_OLD_COMMAND_COMPLETION
+#endif // BOTRIX_OLD_COMMAND_COMPLETION
 
 TCommandResult CConsoleCommandContainer::Execute( CClient* pClient, int argc, const char** argv )
 {
@@ -679,6 +681,20 @@ TCommandResult CWaypointRemoveTypeCommand::Execute( CClient* pClient, int argc, 
     }
 }
 
+CWaypointArgumentCommand::CWaypointArgumentCommand()
+{
+    m_sCommand = "angle";
+    m_sHelp = "set waypoint angles";
+    m_iAccessLevel = FCommandAccessWaypoint;
+    //m_cAutoCompleteArguments.push_back(sWeapon);
+    //m_cAutoCompleteArguments.push_back(sAmmo);
+    //m_cAutoCompleteArguments.push_back(sHealth);
+    //m_cAutoCompleteArguments.push_back(sArmor);
+    //m_cAutoCompleteArguments.push_back(sButton);
+    m_cAutoCompleteArguments.push_back(sFirstAngle);
+    m_cAutoCompleteArguments.push_back(sSecondAngle);
+}
+
 TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     if ( pClient == NULL )
@@ -736,10 +752,7 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
 
     if ( sHelp == argv[0] )
     {
-        BULOG_I(pClient->GetEdict(), "You can mix next arguments:");
-        BULOG_I(pClient->GetEdict(), " - 'weapon' number1 number2: set weapon index/subindex (for ammo and/or weapon)");
-        BULOG_I(pClient->GetEdict(), " - 'health' number: set health amount (also for health machine, 30 by default)");
-        BULOG_I(pClient->GetEdict(), " - 'armor' number: set armor amount (also for armor machine, 30 by default)");
+        BULOG_I(pClient->GetEdict(), "You can add next arguments:");
         BULOG_I(pClient->GetEdict(), " - 'first_angle': set your current angles as waypoint first angles (camper, sniper, machines)");
         BULOG_I(pClient->GetEdict(), " - 'second_angle': set your current angles as second angles (camper, sniper)");
         return ECommandPerformed;
@@ -2968,8 +2981,8 @@ void bbotCommandCallback( const CCommand &command )
         BULOG_W(pClient ? pClient->GetEdict() : NULL, "Command error.");
 }
 
-
-#ifdef USE_OLD_COMMAND_COMPLETION
+#if defined(BOTRIX_NO_COMMAND_COMPLETION)
+#elif defined(BOTRIX_OLD_COMMAND_COMPLETION)
 
 int bbotCompletion( const char* partial, char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ] )
 {
@@ -2984,18 +2997,19 @@ void CBotrixCommand::CommandCallback( const CCommand &command )
     bbotCommandCallback(command);
 }
 
-#endif // USE_OLD_COMMAND_COMPLETION
+#endif // BOTRIX_OLD_COMMAND_COMPLETION
 
 
 //----------------------------------------------------------------------------------------------------------------
 // Main "botrix" command.
 //----------------------------------------------------------------------------------------------------------------
 CBotrixCommand::CBotrixCommand():
-#ifdef USE_OLD_COMMAND_COMPLETION
-    m_cServerCommand(MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, 0/*bbotCompletion*/)
+#if defined(BOTRIX_NO_COMMAND_COMPLETION)
+    m_cServerCommand(MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, 0)
+#elif defined(BOTRIX_OLD_COMMAND_COMPLETION)
+    m_cServerCommand(MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, bbotCompletion)
 #else
-    m_cServerCommand(MAIN_COMMAND, this, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n",
-                     FCVAR_NONE, this)
+    m_cServerCommand(MAIN_COMMAND, this, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, this)
 #endif
 {
     m_sCommand = "botrix";

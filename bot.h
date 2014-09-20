@@ -81,7 +81,7 @@ public: // Methods.
     {
         m_aAllies.set(iPlayer, bAlly);
         if ( bAlly && (m_pCurrentEnemy == CPlayers::Get(iPlayer)) )
-            ClearCurrentEnemy();
+            EraseCurrentEnemy();
     }
 
     /// Start/stop bot attack.
@@ -141,7 +141,7 @@ public: // Methods.
         else
             BotMessage( "%s -> Killed %s.", GetName(), pPlayer->GetName() );
         if ( pPlayer == m_pCurrentEnemy )
-            ClearCurrentEnemy();
+            EraseCurrentEnemy();
     }
 
     /// Called when enemy just shot this bot.
@@ -193,12 +193,18 @@ protected: // Mod dependend protected functions.
     virtual void DoPathAction();
 
     // Return true if given player is enemy. Really it is mod's dependant.
-    virtual bool IsEnemy( CPlayer* pPlayer ) const
+    inline bool IsEnemy( CPlayer* pPlayer ) const
     {
         int idx = pPlayer->GetTeam();
         return (idx != CMod::iSpectatorTeam) &&
                ( (idx != GetTeam()) || (idx == CMod::iUnassignedTeam) ) && // Deathmatch team?
                !m_aAllies.test( pPlayer->GetIndex() );
+    }
+
+    // Enemy is dead or got disconnected.
+    virtual void EraseCurrentEnemy()
+    {
+        CurrentEnemyNotVisible();
     }
 
     // Bot just picked up given item.
@@ -247,7 +253,7 @@ protected: // Methods.
     // Update nearest objects, players, items and weapons.
     void UpdateWorld();
 
-    inline void ClearCurrentEnemy()
+    inline void CurrentEnemyNotVisible()
     {
         m_bEnemyAim = m_bEnemyOffSight = m_bAttackDuck = false;
         m_pCurrentEnemy = NULL;

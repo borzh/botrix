@@ -67,20 +67,6 @@ void CBot_HL2DM::Respawned()
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot_HL2DM::KilledEnemy( int iPlayerIndex, CPlayer* pVictim )
-{
-    CBot::KilledEnemy( iPlayerIndex, pVictim );
-    if ( pVictim == m_pChasedEnemy )
-    {
-        m_pChasedEnemy = NULL;
-        m_bChasing = false;
-        m_iCurrentTask = EBotTaskInvalid;
-        m_bNeedTaskCheck = true;
-    }
-}
-
-
-//----------------------------------------------------------------------------------------------------------------
 void CBot_HL2DM::HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow )
 {
     if ( !m_bTest && !m_bDontAttack && (pAttacker != this) && IsEnemy(pAttacker) )

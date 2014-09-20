@@ -2,13 +2,14 @@
 * @mainpage Botrix plugin.
 * @author Botrix ( botrix.plugin\@gmail.com )
 *
-* @version 0.0.3
+* @version 0.0.4
 *
 * <h2>Bots plugin for Valve Games made with Source SDK.</h2>
 *
 * @section Changelog
 *
 * 0.0.4
+* @li Fix crash autocompleting commands on listen server. No command completion for now.
 * @li Added new commands:
 *     -# botrix bot ally <bot-name> <player-name> <yes/no>
 *     -# botrix bot attack <bot-name> <yes/no>
@@ -68,7 +69,7 @@
 #include "public/igameevents.h"
 
 
-#define PLUGIN_VERSION "0.0.3"
+#define PLUGIN_VERSION "0.0.4"
 
 class IVEngineServer;
 class IFileSystem;

@@ -356,7 +356,9 @@ void CItems::CheckNewEntity( edict_t* pEdict )
         {
             if ( !CWaypoint::IsValid(cItem.iWaypoint) )
             {
-                BLOG_W("Warning: entity %s %d doesn't have waypoint close.", pEdict->GetClassName(), iIndex+1);
+                const Vector& vOrigin = cItem.CurrentPosition();
+                BLOG_W( "Warning: entity %s %d (%.0f %.0f %.0f) doesn't have waypoint close.", pEdict->GetClassName(), iIndex+1,
+                        vOrigin.x, vOrigin.y, vOrigin.z );
                 TWaypointId iWaypoint = CWaypoints::GetNearestWaypoint( cItem.vOrigin );
                 if ( CWaypoint::IsValid(iWaypoint) )
                     BLOG_W("  Nearest waypoint %d.", iWaypoint);

@@ -613,8 +613,8 @@ public:
     CBotConfigIntelligenceCommand()
     {
         m_sCommand = "intelligence";
-        m_sHelp = "set default bot intelligence";
-        m_sDescription = "Can be one of: random fool stupied normal smart pro";// TODO: intelligence flags to string.
+        m_sHelp = "set min/max bot intelligence";
+        m_sDescription = "Arguments: <min> <max>. Can be one of: random fool stupied normal smart pro";// TODO: intelligence flags to string.
         m_iAccessLevel = FCommandAccessBot;
 
         m_cAutoCompleteArguments.push_back("random");

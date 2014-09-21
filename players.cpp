@@ -161,7 +161,7 @@ void CPlayers::CheckBotsCount()
         m_bCheckBotCountFinished = false;
 
         if ( iNeededCount > GetBotsCount() )
-            AddBot(NULL, CBot::iDefaultTeam, CBot::iDefaultClass, CBot::iDefaultIntelligence);
+            AddBot(NULL, CBot::iDefaultTeam, CBot::iDefaultClass, -1);
         else
             KickRandomBot();
     }
@@ -205,7 +205,7 @@ CPlayer* CPlayers::AddBot( const char* szName, TTeam iTeam, TClass iClass,
     }
 
     if ( iIntelligence == -1 )
-        iIntelligence = rand() % EBotIntelligenceTotal;
+        iIntelligence = ( rand() % (CBot::iMaxIntelligence - CBot::iMinIntelligence + 1) ) + CBot::iMinIntelligence;
 
     if ( !szName || !szName[0] )
     {

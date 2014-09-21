@@ -37,7 +37,8 @@ class CBot: public CPlayer
 
 public: // Members.
     static bool bAssumeUnknownWeaponManual;             ///< Assume that unknown weapon are melees.
-    static TBotIntelligence iDefaultIntelligence;       ///< Default team when adding bots without specify team.
+    static TBotIntelligence iMinIntelligence;           ///< Minimum default bot intelligence.
+    static TBotIntelligence iMaxIntelligence;           ///< Maximum default bot intelligence.
     static TTeam iDefaultTeam;                          ///< Default team when adding bots without specify team.
     static TClass iDefaultClass;                        ///< Default class when adding bots without specify class.
     static int iChangeClassRound;                       ///< For bot to change class every x rounds.

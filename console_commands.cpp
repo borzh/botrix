@@ -1939,7 +1939,7 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
     const char* szName = ( argc > iArg ) ? argv[iArg++] : NULL;
 
     // 2nd argument: intelligence.
-    TBotIntelligence iIntelligence = CBot::iDefaultIntelligence;
+    TBotIntelligence iIntelligence = -1;
     if ( argc > iArg )
     {
         good::string sIntelligence( argv[iArg++] );
@@ -2165,32 +2165,35 @@ TCommandResult CBotConfigIntelligenceCommand::Execute( CClient* pClient, int arg
     TCommandResult iResult = ECommandPerformed;
     if ( argc == 0 )
     {
-        const char* szIntelligence = (CBot::iDefaultIntelligence == -1)
-            ? "random"
-            : CTypeToString::IntelligenceToString(CBot::iDefaultIntelligence).c_str();
-        BULOG_I( pEdict, "Bot's default intelligence: %s.", szIntelligence );
     }
-    else if ( argc == 1 )
+    else if ( argc < 3 )
     {
-        good::string sIntelligence( argv[0] );
-        TBotIntelligence iIntelligence = CTypeToString::IntelligenceFromString(sIntelligence);
-        if ( (iIntelligence == -1) && (sIntelligence != "random") )
+        TBotIntelligence iIntelligenceMin = CTypeToString::IntelligenceFromString(argv[0]);
+        TBotIntelligence iIntelligenceMax = (argc == 2) ? CTypeToString::IntelligenceFromString(argv[1]) : EBotPro;
+        if ( (iIntelligenceMin == -1) || (iIntelligenceMax == -1) )
         {
-            BULOG_W( pEdict, "Error, invalid intelligence: %s.", argv[0] );
+            BULOG_W( pEdict, "Error, invalid intelligence: %s.", (iIntelligenceMin == -1) ? argv[0] : argv[1] );
             BULOG_W( pEdict, "Can be one of: random fool stupied normal smart pro" );
-            iResult = ECommandError;
+            return ECommandError;
         }
-        else
+        else if ( iIntelligenceMin > iIntelligenceMax )
         {
-            BULOG_I( pEdict, "Bot's default intelligence: %s.", argv[0] );
-            CBot::iDefaultIntelligence = iIntelligence;
+            BULOG_W( pEdict, "Error, min bot intelligence should be less than max bot intelligence." );
+            return ECommandError;
+        }
+        else 
+        {
+            CBot::iMinIntelligence = iIntelligenceMin;
+            CBot::iMaxIntelligence = iIntelligenceMax;
         }
     }
     else
     {
         BULOG_W( pEdict, "Error, invalid arguments count." );
-        iResult = ECommandError;
+        return ECommandError;
     }
+    BULOG_I( pEdict, "Bot's intelligence: min %s, max %s.", CTypeToString::IntelligenceToString(CBot::iMinIntelligence).c_str(),
+                CTypeToString::IntelligenceToString(CBot::iMaxIntelligence).c_str() );
     return iResult;
 }
 

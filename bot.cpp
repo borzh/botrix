@@ -27,7 +27,8 @@ extern int iMainBufferSize;
 //----------------------------------------------------------------------------------------------------------------
 
 bool CBot::bAssumeUnknownWeaponManual = false;
-TBotIntelligence CBot::iDefaultIntelligence = -1;
+TBotIntelligence CBot::iMinIntelligence = EBotFool;
+TBotIntelligence CBot::iMaxIntelligence = EBotPro;
 TTeam CBot::iDefaultTeam = 0;
 TClass CBot::iDefaultClass = -1;
 int CBot::iChangeClassRound = 0;

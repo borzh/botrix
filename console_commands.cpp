@@ -1704,7 +1704,7 @@ TCommandResult CPathArgumentCommand::Execute( CClient* pClient, int argc, const 
         return ECommandError;
     }
 
-    if (argc == 0)
+    if ( argc == 0 )
     {
         BULOG_I( pClient->GetEdict(), "Path (from %d to %d) action time %d, action duration %d. Time in deciseconds.",
                         pClient->iCurrentWaypoint, pClient->iDestinationWaypoint, GET_1ST_BYTE(pPath->iArgument), GET_2ND_BYTE(pPath->iArgument) );
@@ -1713,7 +1713,7 @@ TCommandResult CPathArgumentCommand::Execute( CClient* pClient, int argc, const 
     else
     {
         TWaypointId iFirst = -1, iSecond = -1;
-        if (argc == 2)
+        if ( argc == 2 )
         {
             sscanf(argv[0], "%d", &iFirst);
             sscanf(argv[1], "%d", &iSecond);
@@ -1721,7 +1721,7 @@ TCommandResult CPathArgumentCommand::Execute( CClient* pClient, int argc, const 
 
         if ( iFirst < 0 || iSecond < 0 || (iFirst & ~0xFF) || (iSecond & ~0xFF) )
         {
-            BULOG_W(pClient->GetEdict(), "Error, invalid parameters, must be from 0 to 256.");
+            BULOG_W(pClient->GetEdict(), "Error, invalid parameters, time must be from 0 to 256.");
             return ECommandError;
         }
 

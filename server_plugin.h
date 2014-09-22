@@ -8,12 +8,16 @@
 *
 * @section Changelog
 *
+* 0.0.5
+* @li
+*
 * 0.0.4
 * @li Fix crash autocompleting commands on listen server. No command completion for now.
 * @li Added new commands:
 *     -# botrix bot ally <bot-name> <player-name> <yes/no>
 *     -# botrix bot attack <bot-name> <yes/no>
 *     -# botrix bot move <bot-name> <yes/no>
+*     -# botrix path distance
 *
 * 0.0.3
 * @li Plugin is working with Team Fortress 2.
@@ -69,7 +73,7 @@
 #include "public/igameevents.h"
 
 
-#define PLUGIN_VERSION "0.0.4"
+#define PLUGIN_VERSION "0.0.5"
 
 class IVEngineServer;
 class IFileSystem;

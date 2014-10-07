@@ -12,3 +12,6 @@ build
 good/build
 CMakeLists.txt.user
 good/CMakeLists.txt.user
+
+# macos files
+.DS_Store

@@ -221,7 +221,6 @@ namespace good
         void _get_path()
         {
             int total = m_cANodes[m_nTarget].visited;
-            const_node_it begin = m_pGraph->begin();
             m_path.resize(total);
             for (node_id id = m_nTarget; id != graph_t::invalid_node_id; id = m_cANodes[id].prev)
                 m_path[--total] = id;

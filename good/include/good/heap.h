@@ -167,7 +167,7 @@ namespace good
     /// Restore heap property after modifying element at position iPos.
     //------------------------------------------------------------------------------------------------------------
     template < typename T >
-    void heap_modify( T* aHeap, int iPos, int iSize )
+    void heap_modify( T* aHeap, int iPos, int /*iSize*/ )
     {
         heap_modify( aHeap, iPos, good::less<T>() );
     }

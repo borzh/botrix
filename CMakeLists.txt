@@ -1,3 +1,5 @@
+set ( CMAKE_CXX_COMPILER /opt/local/bin/gcc-mp-4.7 )
+
 project( botrix )
 
 cmake_minimum_required( VERSION 2.6 )
@@ -21,19 +23,18 @@ cmake_minimum_required( VERSION 2.6 )
 # -rdynamic: instructs the linker to add all symbols, not only used ones, to the dynamic symbol table. Needed to debug.
 # -fvisibility=hidden: Default symbols visibility is hidden.
 
-set( SHARED_COMPILE_FLAGS "-std=c++11 -Wall -Wextra -m32 -march=pentium4 -Wno-format-security -Wno-free-nonheap-object" )
-set( SHARED_LINKER_FLAGS  "-fvisibility=hidden -Wl,--no-undefined -Wl,--as-needed" )
+set( SHARED_COMPILE_FLAGS "-Wall -Wextra -m32 -march=pentium4 -Wno-format-security -Wno-free-nonheap-object" ) #  -std=c++11
+set( SHARED_LINKER_FLAGS  "-arch i386 -fvisibility=hidden" ) # -Wl,--no-undefined -Wl,--as-needed
 
 set( SHARED_FLAGS "${SHARED_COMPILE_FLAGS} ${SHARED_LINKER_FLAGS}")
 
 
-set( CMAKE_CXX_FLAGS_DEBUG          "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -O0 -g -rdynamic" )
-set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -g -O2 -rdynamic" )
-set( CMAKE_CXX_FLAGS_RELEASE        "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -O3 -Wl,--strip-all " )
+set( CMAKE_CXX_FLAGS_DEBUG          "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -rdynamic -O0 -g" ) #
+set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -rdynamic -g -O2" ) #
+set( CMAKE_CXX_FLAGS_RELEASE        "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -O3" ) # -Wl,--strip-all
 
-#-ffunction-sections -Wl,--gc-sections
-#-O2 -falign-functions=16 -falign-loops=16" )
-#TODO: set( CMAKE_CXX_FLAGS_GCOV           "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -O0 -g -rdynamic --coverage -fprofile-arcs -ftest-coverage -lgcov" )
+#-ffunction-sections -Wl,--gc-sections -O2 -falign-functions=16 -falign-loops=16" )
+#TODO: set( CMAKE_CXX_FLAGS_COVERAGE       "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -O0 -g --coverage -fprofile-arcs -ftest-coverage -lgcov" ) # -rdynamic
 
 message( "Build type: ${CMAKE_BUILD_TYPE}" )
 if( CMAKE_BUILD_TYPE MATCHES "None" )
@@ -71,12 +72,13 @@ add_definitions(
     -DHL2_EPISODIC
     -DMP_SDK
     -DVPC
-    -DLINUX=1
-    -D_LINUX=1
-    -DPOSIX=1
     -DGNUC=1
-    -DCOMPILER_GCC
+    -DPOSIX=1
+    -DOSX=1
 )
+    #-DLINUX=1
+    #-D_LINUX=1
+    #-DCOMPILER_GCC
 
 # Get files list.
 file( GLOB PROJECT_SOURCES
@@ -117,16 +119,19 @@ include_directories(
 set( CMAKE_SKIP_BUILD_RPATH true )
 
 # Link libraries.
-set( SOURCE_SDK_2013_LINK_PATH "${SOURCE_SDK_2013_PATH}/mp/src/lib/public/linux32" )
+set( SOURCE_SDK_2013_LINK_PATH "${SOURCE_SDK_2013_PATH}/mp/src/lib/public/osx32" )
 link_directories( ${SOURCE_SDK_2013_LINK_PATH} )
+
 
 set( PROJECT_LINK_LIBS
     ${SOURCE_SDK_2013_LINK_PATH}/mathlib.a
     ${SOURCE_SDK_2013_LINK_PATH}/tier1.a
-    libtier0.so
-    libvstdlib.so
+    tier0
+    vstdlib
     dl                   # tier1.a needs that
     good
+    iconv
+    c++
 )
 
 

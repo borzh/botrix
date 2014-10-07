@@ -284,7 +284,7 @@ namespace good
                 if ( bUseMemCpy )
                 {
                     m_iSize = aOther.m_iSize;
-                    memcpy(data(), aOther.data(), m_iSize * sizeof(T));
+                    memcpy((void*)data(), (void*)aOther.data(), m_iSize * sizeof(T));
                 }
                 else
                 {
@@ -373,7 +373,7 @@ namespace good
             GoodAssert( iPos <= m_iSize );
             increment(1);
             if ( iPos < m_iSize )
-                memmove( &m_pBuffer[iPos + 1], &m_pBuffer[iPos],(m_iSize - iPos) * sizeof(T) );
+                memmove( (void*)&m_pBuffer[iPos + 1], (void*)&m_pBuffer[iPos], (m_iSize - iPos) * sizeof(T) );
             m_cAlloc.construct( &m_pBuffer[iPos], tElem );
             m_iSize++;
             return iterator(m_pBuffer + iPos);
@@ -398,7 +398,7 @@ namespace good
             m_cAlloc.destroy(&m_pBuffer[iPos]);
             m_iSize--;
             if ( iPos < m_iSize )
-                memmove( &m_pBuffer[iPos], &m_pBuffer[iPos+1], (m_iSize - iPos) * sizeof(T) );
+                memmove( (void*)&m_pBuffer[iPos], (void*)&m_pBuffer[iPos+1], (m_iSize - iPos) * sizeof(T) );
             return iterator(m_pBuffer + iPos);
         }
 

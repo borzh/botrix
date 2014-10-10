@@ -1,9 +1,6 @@
-set ( CMAKE_CXX_COMPILER /opt/local/bin/gcc-mp-4.7 )
-
 project( botrix )
 
 cmake_minimum_required( VERSION 2.6 )
-
 
 # Build type.
 # CMAKE_BUILD_TYPE gets created as what's called a cache variable on an initial configure. Don't set it here.
@@ -12,7 +9,6 @@ cmake_minimum_required( VERSION 2.6 )
 # -DCMAKE_BUILD_TYPE=Debug
 # -DCMAKE_BUILD_TYPE=Release
 # -DCMAKE_BUILD_TYPE=RelWithDebInfo
-
 
 # Compile flags.
 # -g: produce debugging information in the operating system's native format.
@@ -23,23 +19,19 @@ cmake_minimum_required( VERSION 2.6 )
 # -rdynamic: instructs the linker to add all symbols, not only used ones, to the dynamic symbol table. Needed to debug.
 # -fvisibility=hidden: Default symbols visibility is hidden.
 
-set( SHARED_COMPILE_FLAGS "-Wall -Wextra -m32 -march=pentium4 -Wno-format-security -Wno-free-nonheap-object" ) #  -std=c++11
-set( SHARED_LINKER_FLAGS  "-arch i386 -fvisibility=hidden" ) # -Wl,--no-undefined -Wl,--as-needed
+set( SHARED_COMPILE_FLAGS "-Wall -Wextra -m32 -march=pentium4 -Wno-format-security" ) #  -std=c++11
+set( SHARED_LINKER_FLAGS  "-fvisibility=hidden" ) #
 
 set( SHARED_FLAGS "${SHARED_COMPILE_FLAGS} ${SHARED_LINKER_FLAGS}")
 
-
-set( CMAKE_CXX_FLAGS_DEBUG          "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -rdynamic -O0 -g" ) #
-set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -rdynamic -g -O2" ) #
-set( CMAKE_CXX_FLAGS_RELEASE        "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -O3" ) # -Wl,--strip-all
-
+set( CMAKE_CXX_FLAGS_COVERAGE       "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -O0 -g --coverage -fprofile-arcs -ftest-coverage -lgcov" )
+set( CMAKE_CXX_FLAGS_DEBUG          "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -O0 -g" )
+set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -O2 -g" )
+set( CMAKE_CXX_FLAGS_RELEASE        "${SHARED_FLAGS} -DNDEBUG -D_NDEBUG -O3" )
 #-ffunction-sections -Wl,--gc-sections -O2 -falign-functions=16 -falign-loops=16" )
-#TODO: set( CMAKE_CXX_FLAGS_COVERAGE       "${SHARED_FLAGS} -DDEBUG  -D_DEBUG  -O0 -g --coverage -fprofile-arcs -ftest-coverage -lgcov" ) # -rdynamic
 
 message( "Build type: ${CMAKE_BUILD_TYPE}" )
-if( CMAKE_BUILD_TYPE MATCHES "None" )
-    message( "Flags: ${CMAKE_CXX_FLAGS}" )
-elseif( CMAKE_BUILD_TYPE MATCHES "Debug" )
+if( CMAKE_BUILD_TYPE MATCHES "Debug" )
     message( "Flags: ${CMAKE_CXX_FLAGS_DEBUG}" )
 elseif( CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo" )
     message( "Flags: ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
@@ -47,7 +39,6 @@ else()
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE}" )
     message( "Flags: ${CMAKE_CXX_FLAGS}" )
 endif()
-
 
 # Source code.
 add_subdirectory ( good )
@@ -72,13 +63,23 @@ add_definitions(
     -DHL2_EPISODIC
     -DMP_SDK
     -DVPC
-    -DGNUC=1
-    -DPOSIX=1
-    -DOSX=1
 )
-    #-DLINUX=1
-    #-D_LINUX=1
-    #-DCOMPILER_GCC
+
+# OS dependant parameters.
+if(APPLE)
+    add_definitions( -DCOMPILER_GCC -DGNUC=1 -DPOSIX=1 -DOSX=1 )
+    set( SOURCE_SDK_2013_LINK_PATH_SUFFIX "/osx32" )
+    set( PROJECT_LINK_LIBS_CACHE iconv c++ )
+    set( STEAMAPP_DIR "$ENV{HOME}/Library/Application\ Support/Steam/SteamApps" )
+    set( STEAMCMD_DIR "$ENV{HOME}/steamcmd" )
+elseif(UNIX)
+    add_definitions( -DCOMPILER_GCC -DGNUC=1 -DPOSIX=1 -DLINUX=1 -D_LINUX=1 )
+    add_definitions( -Wno-free-nonheap-object -rdynamic -Wl,--no-undefined -Wl,--as-needed -Wl,--strip-all )
+    set( SOURCE_SDK_2013_LINK_PATH_SUFFIX "/linux" )
+    set( STEAMAPP_DIR "$ENV{HOME}/.steam/steam/SteamApps" )
+    set( STEAMCMD_DIR "$ENV{HOME}/steamcmd" )
+else()
+endif()
 
 # Get files list.
 file( GLOB PROJECT_SOURCES
@@ -94,6 +95,7 @@ file( GLOB PROJECT_SOURCES
 #    "${CMAKE_CURRENT_SOURCE_DIR}/mods/borzh/*.cpp"
 )
 
+# Source SDK 2013 sources/libs.
 set( SOURCE_SDK_2013_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../source-sdk-2013" )
 
 # SYSTEM is used to not show warnings/errors for included files.
@@ -114,41 +116,34 @@ include_directories(
     SYSTEM "${SOURCE_SDK_2013_PATH}/mp/src/"
 )
 
-
 # Don't use full path dependencies in generated library.
 set( CMAKE_SKIP_BUILD_RPATH true )
 
 # Link libraries.
-set( SOURCE_SDK_2013_LINK_PATH "${SOURCE_SDK_2013_PATH}/mp/src/lib/public/osx32" )
-link_directories( ${SOURCE_SDK_2013_LINK_PATH} )
-
-
-set( PROJECT_LINK_LIBS
+set( SOURCE_SDK_2013_LINK_PATH "${SOURCE_SDK_2013_PATH}/mp/src/lib/public${SOURCE_SDK_2013_LINK_PATH_SUFFIX}" )
+set( PROJECT_LINK_LIBS ${PROJECT_LINK_LIBS_CACHE}
     ${SOURCE_SDK_2013_LINK_PATH}/mathlib.a
     ${SOURCE_SDK_2013_LINK_PATH}/tier1.a
     tier0
     vstdlib
     dl                   # tier1.a needs that
     good
-    iconv
-    c++
 )
 
-
 # Link Botrix plugin library.
+link_directories( ${SOURCE_SDK_2013_LINK_PATH} )
 add_library( ${PROJECT_NAME} SHARED ${PROJECT_SOURCES} )
 target_link_libraries( ${PROJECT_NAME} ${PROJECT_LINK_LIBS} )
 
-
 # Post-build: copy runtime files and botrix plugin to source-sdk-2013.
-get_target_property( BOTRIX_LIB_PATH ${PROJECT_NAME} LOCATION )
+set( BOTRIX_LIB_PATH $<TARGET_FILE:${PROJECT_NAME}> )
 set( RUNTIME_PATH "${CMAKE_CURRENT_SOURCE_DIR}/runtime" )
 set( INSTALL_PATHS
     "${SOURCE_SDK_2013_PATH}/mp/game/mod_hl2mp"
-    "$ENV{HOME}/steamcmd/hl2dm/hl2mp"
-    "$ENV{HOME}/steamcmd/tf2/tf"
-    "$ENV{HOME}/.steam/steam/SteamApps/common/Half-Life 2 Deathmatch/hl2mp"
-    "$ENV{HOME}/.steam/steam/SteamApps/common/Team Fortress 2/tf"
+    "${STEAMCMD_DIR}/hl2dm/hl2mp"
+    "${STEAMCMD_DIR}/tf2/tf"
+    "${STEAMAPP_DIR}/common/Half-Life 2 Deathmatch/hl2mp"
+    "${STEAMAPP_DIR}/common/Team Fortress 2/tf"
 )
 
 # Post-build: copy runtime files and botrix plugin to INSTALL_PATHS.

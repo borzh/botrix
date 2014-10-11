@@ -176,7 +176,11 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 
     //pGlobalVars = pPlayerInfoManager->GetGlobalVars();
 
+#ifdef OSX
     LOAD_INTERFACE(pEngineServer, IVEngineServer, INTERFACEVERSION_VENGINESERVER_VERSION_21);
+#else
+    LOAD_INTERFACE(pEngineServer, IVEngineServer, INTERFACEVERSION_VENGINESERVER);
+#endif
     LOAD_INTERFACE(pServerPluginHelpers, IServerPluginHelpers, INTERFACEVERSION_ISERVERPLUGINHELPERS);
     LOAD_INTERFACE(pEngineTrace, IEngineTrace, INTERFACEVERSION_ENGINETRACE_SERVER);
     LOAD_GAME_SERVER_INTERFACE(pEffects, IEffects, IEFFECTS_INTERFACE_VERSION);

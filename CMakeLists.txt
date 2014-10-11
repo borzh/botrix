@@ -43,10 +43,26 @@ endif()
 # Source code.
 add_subdirectory ( good )
 
+# OS dependant parameters.
+if(APPLE)
+    set( OS_COMPILE_FLAGS -DCOMPILER_GCC -DGNUC=1 -DPOSIX=1 -DOSX=1 )
+    set( OS_LINK_LIBS iconv c++ )
+    set( SOURCE_SDK_2013_LINK_PATH_SUFFIX "/osx32" )
+    set( STEAMAPP_DIR "$ENV{HOME}/Library/Application\ Support/Steam/SteamApps" )
+    set( STEAMCMD_DIR "$ENV{HOME}/steamcmd" )
+elseif(UNIX)
+    set( OS_COMPILE_FLAGS -DCOMPILER_GCC -DGNUC=1 -DPOSIX=1 -DLINUX=1 -D_LINUX=1 )
+    set( OS_LINK_FLAGS -Wno-free-nonheap-object -rdynamic -Wl,--no-undefined -Wl,--as-needed -Wl,--strip-all )
+    set( SOURCE_SDK_2013_LINK_PATH_SUFFIX "/linux32" )
+    set( STEAMAPP_DIR "$ENV{HOME}/.steam/steam/SteamApps" )
+    set( STEAMCMD_DIR "$ENV{HOME}/steamcmd" )
+else()
+endif()
+
 # Defines. Don't put comments between them :).
 # Not used: -DDONT_USE_VALVE_FUNCTIONS -DBOTRIX_SHOW_PERFORMANCE
 # Valve not working: -DNO_MALLOC_OVERRIDE
-add_definitions(
+add_definitions( ${OS_COMPILE_FLAGS}
     -DBOTRIX_NO_COMMAND_COMPLETION
     -DBOTRIX_SOURCE_2013
     -DBOTRIX_TF2
@@ -64,22 +80,6 @@ add_definitions(
     -DMP_SDK
     -DVPC
 )
-
-# OS dependant parameters.
-if(APPLE)
-    add_definitions( -DCOMPILER_GCC -DGNUC=1 -DPOSIX=1 -DOSX=1 )
-    set( SOURCE_SDK_2013_LINK_PATH_SUFFIX "/osx32" )
-    set( PROJECT_LINK_LIBS_CACHE iconv c++ )
-    set( STEAMAPP_DIR "$ENV{HOME}/Library/Application\ Support/Steam/SteamApps" )
-    set( STEAMCMD_DIR "$ENV{HOME}/steamcmd" )
-elseif(UNIX)
-    add_definitions( -DCOMPILER_GCC -DGNUC=1 -DPOSIX=1 -DLINUX=1 -D_LINUX=1 )
-    add_definitions( -Wno-free-nonheap-object -rdynamic -Wl,--no-undefined -Wl,--as-needed -Wl,--strip-all )
-    set( SOURCE_SDK_2013_LINK_PATH_SUFFIX "/linux" )
-    set( STEAMAPP_DIR "$ENV{HOME}/.steam/steam/SteamApps" )
-    set( STEAMCMD_DIR "$ENV{HOME}/steamcmd" )
-else()
-endif()
 
 # Get files list.
 file( GLOB PROJECT_SOURCES
@@ -121,7 +121,7 @@ set( CMAKE_SKIP_BUILD_RPATH true )
 
 # Link libraries.
 set( SOURCE_SDK_2013_LINK_PATH "${SOURCE_SDK_2013_PATH}/mp/src/lib/public${SOURCE_SDK_2013_LINK_PATH_SUFFIX}" )
-set( PROJECT_LINK_LIBS ${PROJECT_LINK_LIBS_CACHE}
+set( PROJECT_LINK_LIBS ${OS_LINK_FLAGS} ${OS_LINK_LIBS}
     ${SOURCE_SDK_2013_LINK_PATH}/mathlib.a
     ${SOURCE_SDK_2013_LINK_PATH}/tier1.a
     tier0

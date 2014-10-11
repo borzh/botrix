@@ -422,7 +422,7 @@ namespace good
 #ifdef DEBUG_STRING_PRINT
                 DebugPrint( "base_string deallocate(): %s; free: %d\n", (m_iSize?m_pBuffer:"null"), !m_iStatic && m_pBuffer );
 #endif
-                free( m_pBuffer );
+                m_cAlloc.deallocate( m_pBuffer );
             }
         }
 

@@ -237,7 +237,7 @@ bool CWeaponWithAmmo::GetLook( const Vector& vFrom, const CPlayer* pTo, float fD
     if ( fParabolicDistance45 && (fDistanceSqr > SQR(fParabolicDistance45)) ) // Can't reach enemy.
         return false;
 
-    Vector vTo;
+    Vector vTo(CUtil::vZero);
     GetLook(vFrom, pTo, iBotIntelligence, iSecondary, vTo);
 
     float fParabolicDistance0 = m_pWeapon->iParabolicDistance0[iSecondary];

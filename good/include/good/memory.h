@@ -70,7 +70,7 @@ public:
     //--------------------------------------------------------------------------------------------------------
     /// Deallocate memory pointing to an object of type T.
     //--------------------------------------------------------------------------------------------------------
-    void deallocate( pointer_t pPtr, int /*iSize*/ ) const
+    void deallocate( pointer_t pPtr, int /*iSize*/ = 0 ) const
     {
         free(pPtr);
     }

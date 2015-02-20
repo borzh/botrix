@@ -1962,7 +1962,7 @@ bool CBot::NormalMove()
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOrigin )
+void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin )
 {
     //m_cCmd.viewangles = m_pController->GetLocalAngles(); // TODO: WTF?
     //m_cCmd.viewangles = m_pPlayerInfo->GetAbsAngles(); // WTF?
@@ -1978,7 +1978,7 @@ void CBot::PerformMove( TWaypointId iPrevCurrentWaypoint, const Vector& vPrevOri
     m_bLastNeedMove = m_bNeedMove;
 
     // Waypoint just changed from previous and valid waypoint.
-    bool bCurrentWaypointChanged = CWaypoint::IsValid(iPrevCurrentWaypoint) && (iPrevCurrentWaypoint != iCurrentWaypoint);
+    bool bCurrentWaypointChanged = CWaypoint::IsValid(iPreviousWaypoint) && (iPreviousWaypoint != iCurrentWaypoint);
     if ( bCurrentWaypointChanged )
         CurrentWaypointJustChanged();
 

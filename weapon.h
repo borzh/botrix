@@ -174,6 +174,13 @@ public:
                ( HasAmmoInClip(CWeapon::SECONDARY) && IsDistanceSafe(fDistanceSqrToEnemy, CWeapon::SECONDARY) );
     }
 
+    // 
+    inline bool NeedsToBeCloser( float fDistanceSqrToEnemy ) const
+    {
+        return ( HasAmmoInClip(CWeapon::PRIMARY) && (m_pWeapon->fMaxDistanceSqr[CWeapon::PRIMARY] < fDistanceSqrToEnemy) ) ||
+               ( HasAmmoInClip(CWeapon::SECONDARY) && (m_pWeapon->fMaxDistanceSqr[CWeapon::SECONDARY] < fDistanceSqrToEnemy) );
+    }
+
     /// Return true if can start shooting at enemy right away.
     inline bool CanShoot( int iSecondary, float fDistanceSqr ) const
     {

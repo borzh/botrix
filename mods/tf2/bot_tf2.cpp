@@ -230,7 +230,7 @@ void CBot_TF2::CheckEngagedEnemy()
 
         if ( CWeapon::IsValid(m_iWeapon) )
         {
-            if ( m_aWeapons[m_iWeapon].IsMelee() ) // Rush toward enemy.
+            if ( m_aWeapons[m_iWeapon].IsMelee() || m_aWeapons[m_iWeapon].NeedsToBeCloser(m_fDistanceSqrToEnemy) ) // Rush toward enemy.
             {
                 CWaypointPath* pPath;
                 bool bNear = (m_pChasedEnemy->iCurrentWaypoint == iCurrentWaypoint) ||
@@ -243,7 +243,7 @@ void CBot_TF2::CheckEngagedEnemy()
                     m_vDestination = m_pCurrentEnemy->GetHead();
                     m_bNeedMove = true;
                 }
-                else
+                else if ( !m_bChasing || (CBotrixPlugin::fTime >= m_fChaseEnemyTime) )
                     ChaseEnemy();
                 return;
             }
@@ -273,12 +273,14 @@ void CBot_TF2::CheckEngagedEnemy()
         iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true);
         BotMessage( "%s -> Moving to random neighbour waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
     }
-    else if ( m_pCurrentEnemy && m_bUseNavigatorToMove &&
-              CWeapon::IsValid(m_iWeapon) && !m_aWeapons[m_iWeapon].IsMelee() )
-        m_bNeedMove = m_bUseNavigatorToMove = false;
-    else if ( m_bChasing && (iCurrentWaypoint != m_pChasedEnemy->iCurrentWaypoint ) &&
-              (CBotrixPlugin::fTime >= m_fChaseEnemyTime) )
-        ChaseEnemy(); // Recalculate route to enemy every 3 seconds.
+    else if ( m_pCurrentEnemy )
+    {
+        if ( m_bUseNavigatorToMove && CWeapon::IsValid(m_iWeapon) && 
+             ( !m_aWeapons[m_iWeapon].IsMelee() && !m_aWeapons[m_iWeapon].NeedsToBeCloser(m_fDistanceSqrToEnemy) ) )
+            m_bNeedMove = m_bUseNavigatorToMove = false; // Stop running and start moving randomly.
+        else if ( m_bChasing && (iCurrentWaypoint != m_pChasedEnemy->iCurrentWaypoint ) && (CBotrixPlugin::fTime >= m_fChaseEnemyTime) )
+            ChaseEnemy(); // Recalculate route to enemy every 3 seconds.
+    }
 }
 
 

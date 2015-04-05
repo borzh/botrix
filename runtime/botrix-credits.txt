@@ -19,3 +19,55 @@ Credits
     - arena_well
     - koth_deku
     - vsh_warebloom_b7
+
+* Thanks to Jaidan Escott for dm_runoff waypoints
+
+* Thanks to Pokk for waypoints:
+    - aim_arena_reloaded
+    - dm_alcys_big_temple
+    - dm_amplitude
+    - dm_assault
+    - dm_avalon_b1
+    - dm_baghdad
+    - dm_biohazard_cal
+    - dm_bluebox_b2
+    - dm_bounce
+    - dm_box_bs_final
+    - dm_bwo_parking_np
+    - dm_bwo_undercranes_fixed
+    - dm_c17
+    - dm_canals_hd
+    - dm_carousel
+    - dm_castigate
+    - dm_cigsub_ggo_v2
+    - dm_cine_map_3d
+    - dm_concretenight2
+    - dm_corrugated
+    - dm_cottage_beta3
+    - dm_crossfire_final
+    - dm_datacore
+    - dm_domebox
+    - dm_dust2
+    - dm_fortwick
+    - dm_frenzy_v2
+    - dm_hometown_1999_no_nuke
+    - dm_industry_canals_v2
+    - dm_killarena_v1
+    - dm_killbox2
+    - dm_killbox911
+    - dm_killbox_bunker_v2a
+    - dm_killroofz
+    - dm_koteamv8_final
+    - dm_loststation
+    - dm_outside_b2
+    - dm_overwatch_cm
+    - dm_rapidcore
+    - dm_resistance_hurtlocker_v1
+    - dm_riposte
+    - dm_runoff_winter_storm_v1_2
+    - dm_snarkpit
+    - dm_tox_ug
+    - dm_urban_small
+    - pg_crossfire_final
+    - pg_lockdown
+    - fpg_stalkyard

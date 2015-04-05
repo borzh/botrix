@@ -165,7 +165,7 @@ public:
         m_aObjectFlagsForModels.push_back( good::pair<good::string, TItemFlags>(sModel, iItemFlag) );
     }
 
-#ifndef SOURCE_ENGINE_2006
+#ifndef BOTRIX_SOURCE_ENGINE_2006
     /// Called when entity is allocated. Return true if entity is health/armor/weapon/ammo/object.
     static void Allocated( edict_t* pEdict );
 
@@ -228,7 +228,7 @@ protected:
 
     static bool m_bMapLoaded; // Will be set to true at MapLoaded() and to false at Clear().
 
-#ifndef SOURCE_ENGINE_2006
+#ifndef BOTRIX_SOURCE_ENGINE_2006
     static good::vector<edict_t*> m_aNewEntities; // When Allocated() is called, new entity still has no IServerEntity, check at next frame.
 #endif
 };

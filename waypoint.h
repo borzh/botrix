@@ -9,7 +9,7 @@
 #include "source_engine.h"
 #include "types.h"
 
-#include "public/mathlib/vector.h"
+#include "vector.h"
 
 
 //****************************************************************************************************************

@@ -7,7 +7,7 @@
 #include "mods/hl2dm/bot_hl2dm.h"
 #include "mods/hl2dm/mod_hl2dm.h"
 
-#include "public/game/server/iplayerinfo.h"
+#include "iplayerinfo.h"
 
 
 extern char* szMainBuffer;

@@ -14,9 +14,9 @@
 #include "waypoint_navigator.h"
 #include "weapon.h"
 
-#include "public/mathlib/vector.h"
+#include "vector.h"
 #include "public/eiface.h"
-#include "game/shared/in_buttons.h"
+#include "in_buttons.h"
 
 
 #define BotMessage(...)             GOOD_SCOPE_START if ( m_bDebugging ) BLOG_I(__VA_ARGS__); GOOD_SCOPE_END

@@ -69,8 +69,8 @@
 
 #include <good/string.h>
 
-#include "public/engine/iserverplugin.h"
-#include "public/igameevents.h"
+#include "iserverplugin.h"
+#include "igameevents.h"
 
 
 #define PLUGIN_VERSION "0.0.4"
@@ -169,7 +169,7 @@ public: // Methods.
     /// A user has had their network id setup and validated
     virtual PLUGIN_RESULT NetworkIDValidated( const char *pszUserName, const char *pszNetworkID );
 
-#ifdef SOURCE_ENGINE_2006
+#ifdef BOTRIX_SOURCE_ENGINE_2006
     // The client has typed a command at the console
     virtual PLUGIN_RESULT ClientCommand( edict_t *pEntity );
 #else

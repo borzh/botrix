@@ -25,7 +25,9 @@ extern int iMainBufferSize;
 
 char szValueBuffer[16];
 
-#define BOTRIX_ENTITY_USE_KEY_VALUE
+#ifndef BOTRIX_SOURCE_ENGINE_2006
+    #define BOTRIX_ENTITY_USE_KEY_VALUE
+#endif
 
 //================================================================================================================
 inline int GetEntityFlags( IServerEntity* pServerEntity )
@@ -99,7 +101,7 @@ int CItems::m_iFreeEntityCount[EItemTypeTotal];                    // Count of u
 
 good::vector<edict_t*> CItems::m_aOthers(1024);                      // Array of other entities.
 
-#ifndef SOURCE_ENGINE_2006
+#ifndef BOTRIX_SOURCE_ENGINE_2006
 good::vector<edict_t*> CItems::m_aNewEntities(16);
 #endif
 
@@ -140,7 +142,7 @@ TItemIndex CItems::GetNearestItem( TItemType iEntityType, const Vector& vOrigin,
 }
 
 
-#ifndef SOURCE_ENGINE_2006
+#ifndef BOTRIX_SOURCE_ENGINE_2006
 
 //----------------------------------------------------------------------------------------------------------------
 void CItems::Allocated( edict_t* pEdict )
@@ -174,7 +176,7 @@ void CItems::Freed( const edict_t* pEdict )
         }
     //BASSERT(false); // Only weapons are allocated/deallocated while map is running.
 }
-#endif // SOURCE_ENGINE_2006
+#endif // BOTRIX_SOURCE_ENGINE_2006
 
 //----------------------------------------------------------------------------------------------------------------
 void CItems::MapUnloaded()
@@ -223,7 +225,7 @@ void CItems::MapLoaded()
 //----------------------------------------------------------------------------------------------------------------
 void CItems::Update()
 {
-#ifdef SOURCE_ENGINE_2006
+#ifdef BOTRIX_SOURCE_ENGINE_2006
     // Source engine 2007 uses IServerPluginCallbacks::OnEdictAllocated instead of checking all array of edicts.
 
     // Update weapons we have in items array.
@@ -243,7 +245,7 @@ void CItems::Update()
         {
             cEntity.pEdict = NULL;
             m_iFreeIndex[EItemTypeWeapon] = i;
-            m_aUsedItems.clear( CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict) );
+            m_aUsedItems.reset( CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict) );
         }
         else if ( IsEntityTaken(pServerEntity) ) // Weapon still belongs to some player.
             FLAG_SET(FTaken, cEntity.iFlags);
@@ -251,7 +253,7 @@ void CItems::Update()
         {
             FLAG_CLEAR(FTaken, cEntity.iFlags);
             cEntity.vOrigin = cEntity.CurrentPosition();
-            cEntity.iWaypoint = CWaypoints::GetNearestWaypoint( cEntity.vOrigin, true, CItem::iMaxDistToWaypoint );
+            cEntity.iWaypoint = CWaypoints::GetNearestWaypoint( cEntity.vOrigin, NULL, true, CItem::iMaxDistToWaypoint );
         }
     }
 
@@ -289,7 +291,7 @@ void CItems::Update()
     for ( int i = 0; i < m_aNewEntities.size(); ++i )
         CheckNewEntity( m_aNewEntities[i] );
     m_aNewEntities.clear();
-#endif // SOURCE_ENGINE_2006
+#endif // BOTRIX_SOURCE_ENGINE_2006
 }
 
 
@@ -367,7 +369,7 @@ void CItems::CheckNewEntity( edict_t* pEdict )
                 BLOG_W("Door %d doesn't have 2 waypoints near.", iIndex);
         }
 
-#ifdef SOURCE_ENGINE_2006
+#ifdef BOTRIX_SOURCE_ENGINE_2006
         // Weapon entities are allocated / deallocated when respawned / owner killed.
         if ( iEntityType != EItemTypeWeapon )
 #endif

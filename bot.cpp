@@ -12,7 +12,7 @@
 
 #include "bot.h"
 
-#include "game/shared/in_buttons.h"
+#include "in_buttons.h"
 #include "public/irecipientfilter.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -556,7 +556,7 @@ void CBot::PreThink()
     }
 
     m_pController->RunPlayerMove(&m_cCmd);
-#ifndef BOTRIX_SOURCE_2013
+#ifdef BOTRIX_SOURCE_ENGINE_2006
     m_pController->PostClientMessagesSent();
 #endif
 

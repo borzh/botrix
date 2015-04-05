@@ -196,8 +196,8 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     LOAD_GAME_SERVER_INTERFACE(pServerGameClients, IServerGameClients, INTERFACEVERSION_SERVERGAMECLIENTS);
     //LOAD_GAME_SERVER_INTERFACE(pServerGameEnts, IServerGameEnts, INTERFACEVERSION_SERVERGAMECLIENTS);
 
-#ifdef SOURCE_ENGINE_2006
-    LOAD_INTERFACE(pCvar, ICvar, VENGINE_CVAR_INTERFACE_VERSION);
+#ifdef BOTRIX_SOURCE_ENGINE_2006
+    LOAD_INTERFACE(pCVar, ICvar, VENGINE_CVAR_INTERFACE_VERSION);
 #else
     LOAD_INTERFACE(pCVar, ICvar, CVAR_INTERFACE_VERSION);
 #endif
@@ -330,7 +330,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     //    BLOG_W("  No entities of type '%s' available.", CTypeToString::EntityTypeToString(iType).c_str());
 
 
-#ifdef SOURCE_ENGINE_2006
+#ifdef BOTRIX_SOURCE_ENGINE_2006
     MathLib_Init(1.0, 1.0, 1.0, 1.0, false, true, false, true);
 #else
     MathLib_Init();
@@ -540,7 +540,7 @@ PLUGIN_RESULT CBotrixPlugin::ClientConnect( bool* /*bAllowConnect*/, edict_t* /*
 //----------------------------------------------------------------------------------------------------------------
 // Called when a client types in a command (only a subset of commands however, not CON_COMMAND's)
 //----------------------------------------------------------------------------------------------------------------
-#ifdef SOURCE_ENGINE_2006
+#ifdef BOTRIX_SOURCE_ENGINE_2006
 PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity )
 #else
 PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &args )
@@ -548,7 +548,7 @@ PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &ar
 {
     GoodAssert( pEntity && !pEntity->IsFree() ); // Valve check.
 
-#ifdef SOURCE_ENGINE_2006
+#ifdef BOTRIX_SOURCE_ENGINE_2006
     int argc = MIN2(CBotrixPlugin::pEngineServer->Cmd_Argc(), 16);
 
     if ( (argc == 0) || !CBotrixCommand::instance->IsCommand( CBotrixPlugin::pEngineServer->Cmd_Argv(0) ) )
@@ -585,6 +585,7 @@ PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &ar
 }
 
 //----------------------------------------------------------------------------------------------------------------
+#ifndef BOTRIX_SOURCE_ENGINE_2006
 void CBotrixPlugin::OnEdictAllocated( edict_t *edict )
 {
     if ( bMapRunning )
@@ -597,6 +598,7 @@ void CBotrixPlugin::OnEdictFreed( const edict_t *edict  )
     if ( bMapRunning )
         CItems::Freed(edict);
 }
+#endif
 
 //----------------------------------------------------------------------------------------------------------------
 // Called when a client is authenticated

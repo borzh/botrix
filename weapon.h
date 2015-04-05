@@ -10,7 +10,7 @@
 #include <good/bitset.h>
 #include <good/memory.h>
 
-#include "public/mathlib/vector.h"
+#include "vector.h"
 
 
 //****************************************************************************************************************

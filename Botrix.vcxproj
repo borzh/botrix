@@ -1,8 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug-2006|Win32">
+      <Configuration>Debug-2006</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release-2006|Win32">
+      <Configuration>Release-2006</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
@@ -21,7 +29,17 @@
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-2006|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-2006|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
@@ -33,7 +51,15 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release-2006|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-2006|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
   </ImportGroup>
@@ -41,13 +67,21 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug-2006|Win32'">$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug-2006|Win32'">.\Debug\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug-2006|Win32'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release-2006|Win32'">$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release-2006|Win32'">.\Release\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release-2006|Win32'">false</LinkIncremental>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">botrix</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug-2006|Win32'">botrix</TargetName>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</GenerateManifest>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release-2006|Win32'">false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <CustomBuildStep>
@@ -70,7 +104,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_2013;BOTRIX_BOT_AIM_ERROR;BOTRIX_NO_COMMAND_COMPLETION;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_ENGINE_2013;BOTRIX_BOT_AIM_ERROR;BOTRIX_NO_COMMAND_COMPLETION;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -142,6 +176,99 @@ if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
       <Message>Copying dll to sourcemods.</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-2006|Win32'">
+    <CustomBuildStep>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+      <Outputs>
+      </Outputs>
+    </CustomBuildStep>
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\$(OutDir)botrix.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2006;$(ProjectDir)\..\source-sdk-2006\dlls;$(ProjectDir)\..\source-sdk-2006\dlls\hl2_dll;$(ProjectDir)\..\source-sdk-2006\public;$(ProjectDir)\..\source-sdk-2006\public\engine;$(ProjectDir)\..\source-sdk-2006\public\tier0;$(ProjectDir)\..\source-sdk-2006\public\tier1;$(ProjectDir)\..\source-sdk-2006\public\dlls;$(ProjectDir)\..\source-sdk-2006\public\mathlib;$(ProjectDir)\..\source-sdk-2006\public\vstdlib;$(ProjectDir)\..\source-sdk-2006\game_shared;$(ProjectDir)\..\source-sdk-2006\cl_dll;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_ENGINE_2006;BOTRIX_BOT_AIM_ERROR;BOTRIX_NO_COMMAND_COMPLETION;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessToFile>false</PreprocessToFile>
+      <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeaderOutputFile>.\$(OutDir)botrix.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(OutDir)</AssemblerListingLocation>
+      <ObjectFileName>.\$(OutDir)</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(OutDir)</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+      <ForcedIncludeFiles>%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ExceptionHandling>Sync</ExceptionHandling>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;steam_api.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)botrix.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(OutDir)botrix.pdb</ProgramDatabaseFile>
+      <GenerateMapFile>false</GenerateMapFile>
+      <MapFileName>$(OutDir)botrix.map</MapFileName>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <ImportLibrary>.\$(OutDir)botrix.lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+      <ShowProgress>NotSet</ShowProgress>
+      <MapExports>false</MapExports>
+    </Link>
+    <PostBuildEvent>
+      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+    xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
+    copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
+    copy /Y "$(OutDir)botrix.pdb" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
+)
+if exist "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
+)
+if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons"
+)
+if exist "D:\Steam\SteamApps\common\team fortress 2\tf\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\Steam\SteamApps\common\team fortress 2\tf\"
+    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\team fortress 2\tf\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\team fortress 2\tf\addons"
+)
+if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\"
+    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons"
+)</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying dll to sourcemods.</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <CustomBuildStep>
       <Message>
@@ -164,7 +291,102 @@ if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_2013;BOTRIX_BOT_AIM_ERROR;BOTRIX_NO_COMMAND_COMPLETION;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_ENGINE_2013;BOTRIX_BOT_AIM_ERROR;BOTRIX_NO_COMMAND_COMPLETION;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\$(OutDir)botrix.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(OutDir)</AssemblerListingLocation>
+      <ObjectFileName>.\$(OutDir)</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(OutDir)</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)botrix.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMTD;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(IntDir)/$(TargetName).pdb</ProgramDatabaseFile>
+      <GenerateMapFile>false</GenerateMapFile>
+      <MapFileName>
+      </MapFileName>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <ImportLibrary>.\$(OutDir)botrix.lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>false</EnableCOMDATFolding>
+      <LinkErrorReporting>PromptImmediately</LinkErrorReporting>
+      <AdditionalOptions> /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+    <PostBuildEvent>
+      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+    xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
+    copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
+    copy /Y "$(OutDir)botrix.pdb" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
+)
+if exist "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
+)
+if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons"
+)
+if exist "D:\Steam\SteamApps\common\team fortress 2\tf\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\Steam\SteamApps\common\team fortress 2\tf\"
+    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\team fortress 2\tf\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\team fortress 2\tf\addons"
+)
+if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\"
+    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons"
+)</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying dll to sourcemods.</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-2006|Win32'">
+    <CustomBuildStep>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+      <Outputs>
+      </Outputs>
+    </CustomBuildStep>
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\$(OutDir)botrix.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_ENGINE_2006;BOTRIX_BOT_AIM_ERROR;BOTRIX_NO_COMMAND_COMPLETION;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>

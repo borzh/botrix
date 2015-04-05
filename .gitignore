@@ -1,11 +1,12 @@
 # windows files
 Debug
 Release
-Debug2006
-Release2006
+Debug-2006
+Release-2006
 *.suo
 *.ncb
 Botrix.vcxproj.user
+*sdf
 
 # linux files
 build

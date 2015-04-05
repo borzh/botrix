@@ -2954,7 +2954,7 @@ TCommandResult CConfigAdminsShowCommand::Execute( CClient* pClient, int /*argc*/
 //----------------------------------------------------------------------------------------------------------------
 // Static "botrix" command (server side).
 //----------------------------------------------------------------------------------------------------------------
-#ifdef SOURCE_ENGINE_2006
+#ifdef BOTRIX_SOURCE_ENGINE_2006
 
 void bbotCommandCallback()
 {
@@ -3030,8 +3030,8 @@ CBotrixCommand::CBotrixCommand():
         Add(new CEnableCommand);
 
 #ifndef DONT_USE_VALVE_FUNCTIONS
-  #ifdef SOURCE_ENGINE_2006
-    CBotrixPlugin::pCvar->RegisterConCommandBase( m_cServerCommand );
+  #ifdef BOTRIX_SOURCE_ENGINE_2006
+    CBotrixPlugin::pCVar->RegisterConCommandBase( &m_cServerCommand );
   #else
     CBotrixPlugin::pCVar->RegisterConCommand( &m_cServerCommand );
   #endif
@@ -3040,7 +3040,7 @@ CBotrixCommand::CBotrixCommand():
 
 CBotrixCommand::~CBotrixCommand()
 {
-#if !defined(SOURCE_ENGINE_2006) && !defined(DONT_USE_VALVE_FUNCTIONS)
+#if !defined(BOTRIX_SOURCE_ENGINE_2006) && !defined(DONT_USE_VALVE_FUNCTIONS)
     CBotrixPlugin::pCVar->UnregisterConCommand( &m_cServerCommand );
 #endif
 }

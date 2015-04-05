@@ -2,7 +2,7 @@
 #include "source_engine.h"
 #include "weapon.h"
 
-#include "game/shared/in_buttons.h"
+#include "in_buttons.h"
 
 
 #if defined(DEBUG) || defined(_DEBUG)

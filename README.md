@@ -29,3 +29,8 @@ Steps to compile
         Enter to build directory. In linux rename libbotrix.so to botrix.so.
         Move botrix.so (botrix.dll) to hl2mp/addons, replacing old files.
 
+- Plugin's videos:
+
+        http://www.youtube.com/watch?v=6MCQTqh8Z9c
+        http://www.youtube.com/watch?v=rDhOGZde0s4
+        http://www.youtube.com/watch?v=ciSjeTX-0gI

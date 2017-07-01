@@ -22,7 +22,7 @@ Credits
 
 * Thanks to Jaidan Escott for dm_runoff waypoints
 
-* Thanks to Pokk for waypoints:
+* Thanks Pokk for waypoints for maps:
     - aim_arena_reloaded
     - dm_alcys_big_temple
     - dm_amplitude
@@ -71,3 +71,50 @@ Credits
     - pg_crossfire_final
     - pg_lockdown
     - fpg_stalkyard
+
+* Thanks darkredspyder (DRS) for halls3 waypoints
+
+* Thanks Yvis for waypoints for maps:
+    - dm_biohazard
+    - dm_lostvillage
+    - dm_traintracks
+    - dm_weaver
+
+* Thanks Sergey Davydow for waypoints for maps:
+    - dm_airfusion_final
+    - dm_crossfire
+    - dm_frenzy_cu
+    - dm_hydro
+    - dm_killbox_kbh
+    - dm_lostarena
+    - dm_nuclearis_rc1
+    - dm_octagon
+
+* Thanks jmcpit for waypoints for maps:
+    - dm_austyn
+    - dm_avalon
+    - dm_backbone
+    - dm_balcony_v3
+    - dm_barrage_midday
+    - dm_biohazard_calmix2
+    - dm_bridge_b2
+    - dm_egypt_story_b2
+    - dm_egypte_final
+    - dm_fragyard
+    - dm_glasshouse_jmc_v1
+    - dm_glasstowers_cll
+    - dm_killbox_2014_rc1
+    - dm_killbox_sanctuary_b3
+    - dm_kin
+    - dm_kingofheavenv01_5
+    - dm_marble
+    - dm_motordrive
+    - dm_mousekitchen_2012_cll
+    - dm_playground_deluxe
+    - dm_rat_cuisine_final
+    - dm_sandland
+    - dm_spookface2
+    - dm_train_loadingdock
+    - dm_zest
+    - jmc_glasstrap_dm2ndfinal
+

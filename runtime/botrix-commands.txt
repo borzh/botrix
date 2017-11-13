@@ -119,3 +119,5 @@ Here is the help you get typing "botrix" command:
 |
 * [disable]: disable plugin
 
+Example of commands===================
+    * botrix bot add James pro - add bot James with max intelligence.    * botrix bot kick James - kick bot James.    * botrix bot command all kill - all bots will perform command kill (suicide all bots).    * botrix bot drawpath beam - bots will mark a path to destination with a beam of light.    * botrix bot config cuota 5 - have a max of 5 bots on the server.    * botrix waypoint add - add a waypoint at current player's position.    * botrix waypoint addtype health - bot will know that he can go to current waypoint to find a medic kit.    * botrix waypoint save - save waypoints.

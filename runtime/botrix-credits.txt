@@ -1,15 +1,16 @@
 Credits
 =======
-* Botrix was created as a thesis for an academic degree. Thanks a lot to my 
+* Botrix was created as a thesis for an academic degree. Thanks a lot to my
   thesis director to give me a chance to make something I like.
 
 * Plugin's grandfather is Botman's bot template (aka HPB_bot). Thanks grandpa!
 
 * Plugin is working on Team Fortress 2 because of HappoKala345 (aka AcidFish)
-  request. It also works with VSH plugin, for which manual weapon handling was 
+  request. It also works with VSH plugin, for which manual weapon handling was
   added.
   Many of HappoKala's ideas were used, thanks a lot for waypoints creation, TF2
   weapons configuration for bots and testing!
+
   HappoKala created waypoints for next TF2 maps:
     - arena_granary
     - arena_lumberyard
@@ -89,6 +90,30 @@ Credits
     - dm_lostarena
     - dm_nuclearis_rc1
     - dm_octagon
+    - dm_airfusion_final
+    - dm_biohazard_mod_remixed
+    - dm_caverns_r1
+    - dm_crossfire
+    - dm_drift
+    - dm_frenzy_cu
+    - dm_helix
+    - dm_hydro
+    - dm_lockdown_r6
+    - dm_intensity_cu
+    - dm_lostvillage_r1
+    - dm_killbox_kbh
+    - dm_killbox_ultra
+    - dm_lostarena
+    - dm_megawatt
+    - dm_nuclearis_rc1
+    - dm_octagon
+    - dm_overwatch_cu
+    - dm_rapidfire
+    - dm_resident_cu
+    - dm_tigcrick_r2
+    - dm_torque
+    - junkcity_pro
+    - vsh_block_fort_v2
 
 * Thanks jmcpit for waypoints for maps:
     - dm_austyn

@@ -422,15 +422,15 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
 #endif
             fTime += fDiff;
 
-    // FPS counting. Used in draw waypoints. TODO: define.
-    /*m_iFramesCount++;
-    if (fEngineTime >= m_fFpsEnd)
-    {
-        iFPS = m_iFramesCount;
-        m_iFramesCount = 0;
-        m_fFpsEnd = fEngineTime + 1.0f;
-        //BULOG_T(NULL, "FPS: %d", iFPS);
-    }*/
+		// FPS counting. Used in draw waypoints. TODO: define.
+		/*m_iFramesCount++;
+		if (fEngineTime >= m_fFpsEnd)
+		{
+			iFPS = m_iFramesCount;
+			m_iFramesCount = 0;
+			m_fFpsEnd = fEngineTime + 1.0f;
+			//BULOG_T(NULL, "FPS: %d", iFPS);
+		}*/
 
         CMod::Think();
 

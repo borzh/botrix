@@ -1,5 +1,6 @@
 #include <good/string_buffer.h>
 #include <good/string_utils.h>
+#include <good/log.h>
 
 #include "bot.h"
 #include "clients.h"
@@ -129,19 +130,20 @@ int CConsoleCommand::AutoComplete( char* partial, int partialLength, CUtlVector<
     {
         if ( strncmp( m_sCommand.c_str(), szSubPartial, iLen ) == 0 )
         {
-            partial[charIndex] = 0;
-
             // Autocomplete only command name.
-            CUtlString sStr( partial );
+            CUtlString sStr( partial, charIndex );
             sStr.Append( m_sCommand.c_str() );
+			//sStr.Append(" ");
             cCommands.AddToTail( sStr );
             result++;
         }
     }
     else
     {
+		char last = szSubPartial[m_sCommand.size()];
         if ( (m_cAutoCompleteArguments.size() > 0) &&
-             (strncmp( m_sCommand.c_str(), szSubPartial, m_sCommand.size() ) == 0) )
+             (strncmp( m_sCommand.c_str(), szSubPartial, m_sCommand.size() ) == 0) &&
+			 (last == ' ' || last == 0))
         {
             szSubPartial += m_sCommand.size() + 1;
             iLen -= m_sCommand.size() + 1;
@@ -156,11 +158,11 @@ int CConsoleCommand::AutoComplete( char* partial, int partialLength, CUtlVector<
             good::string sArg(szSubPartial, false, false, iLen);
             int lastSpace = sArg.rfind(' ');
 
-            if ( !m_bAutoCompleteOnlyOneArgument || (lastSpace == good::string::npos) )
+            if ( !m_bAutoCompleteOnlyOneArgument || (lastSpace == good::string::npos) ) // Several args or this is first arg.
             {
-                lastSpace++; // Include last space.
-                good::string sPartArg(&sArg[lastSpace], true, true, iLen - lastSpace);
-                good::string sCmd(partial, false, false, sArg.c_str() - partial + lastSpace);
+				int pos = lastSpace == good::string::npos ? 0 : lastSpace + 1; // Include last space.
+				good::string sPartArg(&sArg[pos], true, true, iLen - pos);
+				good::string sCmd(partial, true, true, partialLength - sPartArg.size());
 
                 for ( int i = 0; i < m_cAutoCompleteArguments.size(); ++i )
                 {
@@ -272,13 +274,14 @@ int CConsoleCommandContainer::AutoComplete( char* partial, int partialLength, CU
 
             CUtlString sStr( partial );
             sStr.Append( m_sCommand.c_str() );
+			//sStr.Append(" ");
             cCommands.AddToTail( sStr );
             result++;
         }
     }
     else
     {
-        if ( strncmp(m_sCommand.c_str(), &partial[charIndex], command_size) == 0 )
+		if (strncmp(m_sCommand.c_str(), &partial[charIndex], command_size) == 0)
         {
             int iLen = partialLength - charIndex - command_size - 1;
             const char* szSubPartial = &partial[partialLength-iLen];
@@ -345,9 +348,10 @@ CWaypointDrawFlagCommand::CWaypointDrawFlagCommand()
     m_iAccessLevel = FCommandAccessWaypoint;
 
     m_cAutoCompleteArguments.push_back(sNone);
-    for (int i=0; i < EWaypointDrawFlagTotal; ++i)
+	m_cAutoCompleteArguments.push_back(sAll);
+	m_cAutoCompleteArguments.push_back(sNext);
+	for (int i = 0; i < EWaypointDrawFlagTotal; ++i)
         m_cAutoCompleteArguments.push_back( CTypeToString::WaypointDrawFlagsToString(1<<i).duplicate() );
-    m_cAutoCompleteArguments.push_back(sAll);
 }
 
 TCommandResult CWaypointDrawFlagCommand::Execute( CClient* pClient, int argc, const char** argv )
@@ -447,6 +451,10 @@ TCommandResult CWaypointCreateCommand::Execute( CClient* pClient, int /*argc*/, 
         CWaypoints::CreatePathsWithAutoFlags( pClient->iDestinationWaypoint, pClient->iCurrentWaypoint, bIsCrouched );
 
     BULOG_I(pClient->GetEdict(), "Waypoint %d added.", id);
+
+	CItems::MapUnloaded();
+	CItems::MapLoaded(false);
+
     return ECommandPerformed;
 }
 
@@ -461,8 +469,14 @@ TCommandResult CWaypointRemoveCommand::Execute( CClient* pClient, int argc, cons
     TWaypointId id = -1;
     if (argc == 0)
         id = pClient->iCurrentWaypoint;
-    else if (argc == 1)
-        sscanf(argv[0], "%d", &id);
+	else if (argc == 1) {
+		if (strcmp(argv[0], "current") == 0)
+			id = pClient->iCurrentWaypoint;
+		if (strcmp(argv[0], "destination") == 0)
+			id = pClient->iDestinationWaypoint;
+		else
+			sscanf(argv[0], "%d", &id);
+	}
 
     if ( !CWaypoints::IsValid(id) )
     {
@@ -498,6 +512,9 @@ TCommandResult CWaypointRemoveCommand::Execute( CClient* pClient, int argc, cons
             }
         }
     }
+
+	CItems::MapUnloaded();
+	CItems::MapLoaded(false);
 
     return ECommandPerformed;
 }
@@ -538,6 +555,9 @@ TCommandResult CWaypointMoveCommand::Execute( CClient* pClient, int argc, const 
 
     CWaypoints::Move(id, vOrigin);
     BULOG_I(pClient->GetEdict(), "Set new position for waypoint %d (%d, %d, %d).", id, (int)vOrigin.x, (int)vOrigin.y, (int)vOrigin.z);
+
+	CItems::MapUnloaded();
+	CItems::MapLoaded(false);
 
     return ECommandPerformed;
 }
@@ -594,6 +614,10 @@ TCommandResult CWaypointClearCommand::Execute( CClient* pClient, int /*argc*/, c
 
     CWaypoints::Clear();
     BULOG_I(pClient->GetEdict(), "All waypoints deleted.");
+
+	CItems::MapUnloaded();
+	CItems::MapLoaded(false);
+
     return ECommandPerformed;
 }
 
@@ -691,6 +715,7 @@ CWaypointArgumentCommand::CWaypointArgumentCommand()
     //m_cAutoCompleteArguments.push_back(sHealth);
     //m_cAutoCompleteArguments.push_back(sArmor);
     //m_cAutoCompleteArguments.push_back(sButton);
+	m_bAutoCompleteOnlyOneArgument = true;
     m_cAutoCompleteArguments.push_back(sFirstAngle);
     m_cAutoCompleteArguments.push_back(sSecondAngle);
 }
@@ -831,7 +856,7 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
         {
             if ( i+1 >= argc )
             {
-                BULOG_W(pClient->GetEdict(), "Error, you must provide 1 argument to health/health_machine (health amount).");
+                BULOG_W(pClient->GetEdict(), "Error, you must provide 1 argument to health/health_charger (health amount).");
                 return ECommandError;
             }
             if ( bAngle2 )
@@ -841,7 +866,7 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
             }
             if ( !bHealth )
             {
-                BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (health/health_machine).");
+                BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (health/health_charger).");
                 return ECommandError;
             }
 
@@ -860,7 +885,7 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
         {
             if ( i+1 >= argc )
             {
-                BULOG_W(pClient->GetEdict(), "Error, you must provide 1 argument to armor/armor_machine (armor amount).");
+                BULOG_W(pClient->GetEdict(), "Error, you must provide 1 argument to armor/armor_charger (armor amount).");
                 return ECommandError;
             }
             if ( bAngle2 )
@@ -870,7 +895,7 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
             }
             if ( !bArmor )
             {
-                BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (armor/armor_machine).");
+                BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (armor/armor_charger).");
                 return ECommandError;
             }
 
@@ -924,7 +949,7 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
             }
             if ( !bAngle1 )
             {
-                BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (camper/sniper/armor_machine/health_machine).");
+                BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (camper/sniper/armor_charger/health_charger).");
                 return ECommandError;
             }
 
@@ -1041,16 +1066,20 @@ TCommandResult CWaypointSaveCommand::Execute( CClient* pClient, int /*argc*/, co
         return ECommandError;
     }
 
-    if ( CWaypoints::Save() )
+	bool bResult = CWaypoints::Save();
+    if ( bResult )
     {
         BULOG_I(pClient->GetEdict(), "%d waypoints saved.", CWaypoints::Size());
-        return ECommandPerformed;
     }
     else
     {
         BULOG_W(pClient->GetEdict(), "Error, could not save waypoints.");
-        return ECommandError;
     }
+
+	CItems::MapUnloaded();
+	CItems::MapLoaded(true);
+
+	return bResult ? ECommandPerformed : ECommandError;
 }
 
 TCommandResult CWaypointLoadCommand::Execute( CClient* pClient, int /*argc*/, const char** /*argv*/ )
@@ -1061,16 +1090,20 @@ TCommandResult CWaypointLoadCommand::Execute( CClient* pClient, int /*argc*/, co
         return ECommandError;
     }
 
-    if ( CWaypoints::Load() )
+	bool result = CWaypoints::Load();
+	if (result)
     {
         BULOG_I(pClient->GetEdict(), "%d waypoints loaded for map %s.", CWaypoints::Size(), CBotrixPlugin::instance->sMapName.c_str() );
-        return ECommandPerformed;
     }
     else
     {
         BULOG_E( pClient->GetEdict(), "Error, could not load waypoints for %s.", CBotrixPlugin::instance->sMapName.c_str() );
-        return ECommandError;
     }
+
+	CItems::MapUnloaded();
+	CItems::MapLoaded(true);
+
+	return result ? ECommandPerformed : ECommandError;
 }
 
 
@@ -2402,6 +2435,20 @@ TCommandResult CBotConfigStrategySetCommand::Execute( CClient* pClient, int argc
     return ECommandPerformed;
 }
 
+CBotDrawPathCommand::CBotDrawPathCommand()
+{
+	m_sCommand = "drawpath";
+	m_sHelp = "defines how to draw bot's path";
+	m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::PathDrawFlagsToString(FPathDrawAll);
+	m_iAccessLevel = FCommandAccessBot;
+
+	m_cAutoCompleteArguments.push_back(sNone);
+	m_cAutoCompleteArguments.push_back(sAll);
+	m_cAutoCompleteArguments.push_back(sNext);
+	for (int i = 0; i < EPathDrawFlagTotal; ++i)
+		m_cAutoCompleteArguments.push_back(CTypeToString::PathDrawFlagsToString(1 << i).duplicate());
+}
+
 TCommandResult CBotDrawPathCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
@@ -2705,6 +2752,20 @@ TCommandResult CBotTestPathCommand::Execute( CClient* pClient, int argc, const c
 //----------------------------------------------------------------------------------------------------------------
 // Item commands.
 //----------------------------------------------------------------------------------------------------------------
+CItemDrawCommand::CItemDrawCommand()
+{
+	m_sCommand = "draw";
+	m_sHelp = "defines which items to draw";
+	m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::EntityTypeFlagsToString(EItemTypeAll);
+	m_iAccessLevel = FCommandAccessWaypoint; // User doesn't have control over items, he only can draw them.
+
+	m_cAutoCompleteArguments.push_back(sNone);
+	m_cAutoCompleteArguments.push_back(sAll);
+	m_cAutoCompleteArguments.push_back(sNext);
+	for (int i = 0; i < EItemTypeOther + 1; ++i)
+		m_cAutoCompleteArguments.push_back(CTypeToString::EntityTypeFlagsToString(1 << i).duplicate());
+}
+
 TCommandResult CItemDrawCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     if ( pClient == NULL )
@@ -2764,6 +2825,20 @@ TCommandResult CItemDrawCommand::Execute( CClient* pClient, int argc, const char
     const good::string& sFlags = CTypeToString::EntityTypeFlagsToString(pClient->iItemTypeFlags);
     BULOG_I(pClient->GetEdict(), "Item types to draw: %s.", sFlags.size() ? sFlags.c_str(): "none");
     return ECommandPerformed;
+}
+
+CItemDrawTypeCommand::CItemDrawTypeCommand()
+{
+	m_sCommand = "drawtype";
+	m_sHelp = "defines how to draw items";
+	m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::ItemDrawFlagsToString(FItemDrawAll);
+	m_iAccessLevel = FCommandAccessWaypoint;
+
+	m_cAutoCompleteArguments.push_back(sNone);
+	m_cAutoCompleteArguments.push_back(sAll);
+	m_cAutoCompleteArguments.push_back(sNext);
+	for (int i = 0; i < EItemDrawFlagTotal; ++i)
+		m_cAutoCompleteArguments.push_back(CTypeToString::ItemDrawFlagsToString(1 << i).duplicate());
 }
 
 TCommandResult CItemDrawTypeCommand::Execute( CClient* pClient, int argc, const char** argv )
@@ -2859,6 +2934,19 @@ TCommandResult CConfigEventsCommand::Execute( CClient* pClient, int argc, const 
     return ECommandPerformed;
 }
 
+CConfigLogCommand::CConfigLogCommand()
+{
+	m_sCommand = "log";
+	m_sHelp = "set console log level (none, trace, debug, info, warning, error).";
+	m_iAccessLevel = FCommandAccessConfig;
+
+	m_bAutoCompleteOnlyOneArgument = true;
+	m_cAutoCompleteArguments.push_back(sNone);
+	for (int i = 0; i < good::ELogLevelTotal; ++i)
+		m_cAutoCompleteArguments.push_back(CTypeToString::LogLevelToString(i).duplicate());
+
+}
+
 TCommandResult CConfigLogCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
@@ -2881,6 +2969,20 @@ TCommandResult CConfigLogCommand::Execute( CClient* pClient, int argc, const cha
     CUtil::iLogLevel = iLogLevel;
     BULOG_I( pEdict, "Console log level: %s.", argv[0] );
     return ECommandPerformed;
+}
+
+CConfigAdminsSetAccessCommand::CConfigAdminsSetAccessCommand()
+{
+	m_sCommand = "access";
+	m_sHelp = "set access flags for given admin";
+	m_sDescription = good::string("Arguments: <steam id> <access flags>. Can be none / all / mix of: ") +
+		CTypeToString::AccessFlagsToString(FCommandAccessAll);
+	m_iAccessLevel = FCommandAccessConfig;
+
+	m_cAutoCompleteArguments.push_back(sNone);
+	m_cAutoCompleteArguments.push_back(sAll);
+	for (int i = 0; i < ECommandAccessFlagTotal; ++i)
+		m_cAutoCompleteArguments.push_back(CTypeToString::AccessFlagsToString(1 << i).duplicate());
 }
 
 TCommandResult CConfigAdminsSetAccessCommand::Execute( CClient* pClient, int argc, const char** argv )

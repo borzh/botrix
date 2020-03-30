@@ -135,9 +135,9 @@ int CTypeToString::BoolFromString( const good::string& sBool )
     return (iResult == -1) ? -1 : (iResult/iYesNoSynonims);
 }
 
-const good::string& CTypeToString::BoolToString( bool b )
+const good::string& CTypeToString::BoolToString( bool b, int which)
 {
-    return aBools[b*iYesNoSynonims];
+    return aBools[b*iYesNoSynonims + which];
 }
 
 
@@ -196,8 +196,8 @@ good::string aWaypointFlags[EWaypointFlagTotal] =
     "ammo",
     "health",
     "armor",
-    "health_machine",
-    "armor_machine",
+    "health_charger",
+    "armor_charger",
     "button",
     "see_button",
 };

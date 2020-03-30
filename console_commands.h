@@ -125,9 +125,13 @@ public:
     CWaypointRemoveCommand()
     {
         m_sCommand = "remove";
-        m_sHelp = "delete given or current waypoint";
+        m_sHelp = "delete current, destination or given waypoint";
         m_iAccessLevel = FCommandAccessWaypoint;
-    }
+
+		m_bAutoCompleteOnlyOneArgument = true;
+		m_cAutoCompleteArguments.push_back("current");
+		m_cAutoCompleteArguments.push_back("destination");
+	}
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
@@ -154,9 +158,10 @@ public:
         m_sHelp = "automatically create new waypoints ('off' - disable, 'on' - enable)";
         m_sDescription = "Waypoint will be added when player goes too far from current one.";
         m_iAccessLevel = FCommandAccessWaypoint;
-        m_cAutoCompleteArguments.push_back("on");
-        m_cAutoCompleteArguments.push_back("off");
-    }
+		m_bAutoCompleteOnlyOneArgument = true;
+		m_cAutoCompleteArguments.push_back(CTypeToString::BoolToString(true, BoolStringOnOff).duplicate());
+		m_cAutoCompleteArguments.push_back(CTypeToString::BoolToString(false, BoolStringOnOff).duplicate());
+	}
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
@@ -382,6 +387,9 @@ public:
         m_sHelp = "enable auto path creation for new waypoints ('off' - disable, 'on' - enable)";
         m_sDescription = "If disabled, only path from 'destination' to new waypoint will be added";
         m_iAccessLevel = FCommandAccessWaypoint;
+		m_bAutoCompleteOnlyOneArgument = true;
+		m_cAutoCompleteArguments.push_back(CTypeToString::BoolToString(true, BoolStringOnOff).duplicate());
+		m_cAutoCompleteArguments.push_back(CTypeToString::BoolToString(false, BoolStringOnOff).duplicate());
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -617,6 +625,7 @@ public:
         m_sDescription = "Arguments: <min> <max>. Can be one of: random fool stupied normal smart pro";// TODO: intelligence flags to string.
         m_iAccessLevel = FCommandAccessBot;
 
+		m_bAutoCompleteOnlyOneArgument = true;
         m_cAutoCompleteArguments.push_back("random");
         for ( int i=0; i < EBotIntelligenceTotal; ++i )
             m_cAutoCompleteArguments.push_back( CTypeToString::IntelligenceToString(i).duplicate() );
@@ -716,6 +725,7 @@ public:
         m_sDescription = good::string("Can be one of: ") + CTypeToString::StrategyArgs();
         m_iAccessLevel = FCommandAccessBot;
 
+		m_bAutoCompleteOnlyOneArgument = true;
         for ( int i=0; i < EFightStrategyArgTotal; ++i )
             m_cAutoCompleteArguments.push_back( CTypeToString::StrategyArgToString(i).duplicate() );
     }
@@ -823,14 +833,7 @@ public:
 class CBotDrawPathCommand: public CConsoleCommand
 {
 public:
-    CBotDrawPathCommand()
-    {
-        m_sCommand = "drawpath";
-        m_sHelp = "defines how to draw bot's path";
-        m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::PathDrawFlagsToString(FPathDrawAll);
-        m_iAccessLevel = FCommandAccessBot;
-    }
-
+	CBotDrawPathCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
@@ -854,14 +857,7 @@ public:
 class CItemDrawCommand: public CConsoleCommand
 {
 public:
-    CItemDrawCommand()
-    {
-        m_sCommand = "draw";
-        m_sHelp = "defines which items to draw";
-        m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::EntityTypeFlagsToString(EItemTypeAll);
-        m_iAccessLevel = FCommandAccessWaypoint; // User doesn't have control over items, he only can draw them.
-    }
-
+	CItemDrawCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
@@ -869,14 +865,7 @@ public:
 class CItemDrawTypeCommand: public CConsoleCommand
 {
 public:
-    CItemDrawTypeCommand()
-    {
-        m_sCommand = "drawtype";
-        m_sHelp = "defines how to draw items";
-        m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::ItemDrawFlagsToString(FItemDrawAll);
-        m_iAccessLevel = FCommandAccessWaypoint;
-    }
-
+	CItemDrawTypeCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
@@ -897,7 +886,7 @@ public:
             return ECommandError;
 
         CItems::MapUnloaded();
-        CItems::MapLoaded();
+		CItems::MapLoaded(true);
         return ECommandPerformed;
     }
 };
@@ -909,15 +898,7 @@ public:
 class CConfigAdminsSetAccessCommand: public CConsoleCommand
 {
 public:
-    CConfigAdminsSetAccessCommand()
-    {
-        m_sCommand = "access";
-        m_sHelp = "set access flags for given admin";
-        m_sDescription = good::string("Arguments: <steam id> <access flags>. Can be none / all / mix of: ") +
-                         CTypeToString::AccessFlagsToString(FCommandAccessAll);
-        m_iAccessLevel = FCommandAccessConfig;
-    }
-
+	CConfigAdminsSetAccessCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 
 };
@@ -944,7 +925,10 @@ public:
         m_sCommand = "event";
         m_sHelp = "display events on console ('off' - disable, 'on' - enable)";
         m_iAccessLevel = FCommandAccessConfig;
-    }
+		m_bAutoCompleteOnlyOneArgument = true;
+		m_cAutoCompleteArguments.push_back(CTypeToString::BoolToString(false, BoolStringOnOff));
+		m_cAutoCompleteArguments.push_back(CTypeToString::BoolToString(true, BoolStringOnOff));
+	}
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
@@ -952,13 +936,7 @@ public:
 class CConfigLogCommand: public CConsoleCommand
 {
 public:
-    CConfigLogCommand()
-    {
-        m_sCommand = "log";
-        m_sHelp = "set console log level (none, trace, debug, info, warning, error).";
-        m_iAccessLevel = FCommandAccessConfig;
-    }
-
+	CConfigLogCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 

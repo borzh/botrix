@@ -1,7 +1,11 @@
 Changelog
 =========
+1.0.0
+* Fixed crash when respawning bot was killing another bot on the same position (occuring a lot after map change).
+* Auto-complete commands are working again (updated & compiled Source SDK).
+
 0.0.4
-* Fix crash autocompleting commands on listen server. No command completion for now.
+* Fixed crash autocompleting commands on listen server. No command completion for now.
 * New features:
     - Added new commands:
         + botrix bot ally <bot-name> <player-name> <yes/no>

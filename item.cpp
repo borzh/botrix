@@ -203,8 +203,9 @@ void CItems::MapUnloaded()
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CItems::MapLoaded()
+void CItems::MapLoaded(bool bLog)
 {
+
     m_iCurrentEntity = CPlayers::Size()+1;
 
     // 0 is world, 1..max players are players. Other entities are from indexes above max players.
@@ -216,7 +217,7 @@ void CItems::MapLoaded()
             continue;
 
         // Check items and objects.
-        CheckNewEntity(pEdict);
+		CheckNewEntity(pEdict, bLog);
     }
     m_bMapLoaded = true;
 }
@@ -328,7 +329,7 @@ TItemType CItems::GetEntityType( const char* szClassName, CItemClass* & pEntityC
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CItems::CheckNewEntity( edict_t* pEdict )
+void CItems::CheckNewEntity(edict_t* pEdict, bool bLog)
 {
     // Check only server entities.
     IServerEntity* pServerEntity = pEdict->GetIServerEntity();
@@ -348,21 +349,23 @@ void CItems::CheckNewEntity( edict_t* pEdict )
         BASSERT(iIndex >= 0, return);
         CItem& cItem = m_aItems[iEntityType][iIndex];
 
-        BLOG_D("New item: %s %d (%s), waypoint %d (%s).", CTypeToString::EntityTypeToString(iEntityType).c_str(), iIndex,
-                    pEdict->GetClassName(), cItem.iWaypoint,
-                    CWaypoints::IsValid(cItem.iWaypoint)
-                        ? CTypeToString::WaypointFlagsToString( CWaypoints::Get(cItem.iWaypoint).iFlags ).c_str()
-                        : "");
+		if (bLog)
+			BLOG_D("New item: %s %d (%s), waypoint %d (%s).", CTypeToString::EntityTypeToString(iEntityType).c_str(), iIndex,
+			pEdict->GetClassName(), cItem.iWaypoint,
+			CWaypoints::IsValid(cItem.iWaypoint)
+			? CTypeToString::WaypointFlagsToString(CWaypoints::Get(cItem.iWaypoint).iFlags).c_str()
+			: "");
 
         if (  !m_bMapLoaded && FLAG_CLEARED(FTaken, cItem.iFlags) ) // Item should have waypoint near.
         {
             if ( !CWaypoint::IsValid(cItem.iWaypoint) )
             {
                 const Vector& vOrigin = cItem.CurrentPosition();
-                BLOG_W( "Warning: entity %s %d (%.0f %.0f %.0f) doesn't have waypoint close.", pEdict->GetClassName(), iIndex+1,
-                        vOrigin.x, vOrigin.y, vOrigin.z );
+				if (bLog)
+					BLOG_W( "Warning: entity %s %d (%.0f %.0f %.0f) doesn't have waypoint close.", pEdict->GetClassName(), iIndex+1,
+						    vOrigin.x, vOrigin.y, vOrigin.z );
                 TWaypointId iWaypoint = CWaypoints::GetNearestWaypoint( cItem.vOrigin );
-                if ( CWaypoint::IsValid(iWaypoint) )
+                if ( CWaypoint::IsValid(iWaypoint) && bLog)
                     BLOG_W("  Nearest waypoint %d.", iWaypoint);
             }
             else if ( iEntityType == EItemTypeDoor && !CWaypoint::IsValid((TWaypointId)cItem.pArguments) )
@@ -642,22 +645,22 @@ void CItems::Draw( CClient* pClient )
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CItems::WaypointDeleted( TWaypointId id )
-{
-    for ( int iEntityType = 0; iEntityType < EItemTypeTotal; ++iEntityType )
-    {
-        good::vector<CItem>& aItems = m_aItems[iEntityType];
-
-        for ( int i = 0; i < aItems.size(); ++i )
-        {
-            CItem& cItem = aItems[i];
-            if ( cItem.iWaypoint == id )
-                cItem.iWaypoint = CWaypoints::GetNearestWaypoint( cItem.vOrigin );
-            else if ( cItem.iWaypoint > id )
-                --cItem.iWaypoint;
-
-            // TODO: update doors.
-            //if ( iEntityType == EItemTypeDoor )
-        }
-    }
-}
+//void CItems::WaypointDeleted( TWaypointId id )
+//{
+//    for ( int iEntityType = 0; iEntityType < EItemTypeTotal; ++iEntityType )
+//    {
+//        good::vector<CItem>& aItems = m_aItems[iEntityType];
+//
+//        for ( int i = 0; i < aItems.size(); ++i )
+//        {
+//            CItem& cItem = aItems[i];
+//            if ( cItem.iWaypoint == id )
+//                cItem.iWaypoint = CWaypoints::GetNearestWaypoint( cItem.vOrigin );
+//            else if ( cItem.iWaypoint > id )
+//                --cItem.iWaypoint;
+//
+//            // TODO: update doors.
+//            //if ( iEntityType == EItemTypeDoor )
+//        }
+//    }
+//}

@@ -1,5 +1,6 @@
 #include "clients.h"
 #include "config.h"
+#include "console_commands.h"
 #include "item.h"
 #include "type2string.h"
 
@@ -60,30 +61,36 @@ void CClient::PreThink()
          ( !CWaypoint::IsValid(iCurrentWaypoint) ||
            (GetHead().DistToSqr(CWaypoints::Get(iCurrentWaypoint).vOrigin) >= SQR(CWaypoint::iDefaultDistance)) ) )
     {
-        Vector vOrigin( GetHead() );
+		// Execute command: botrix waypoint create
+		const char* aCommands[] = { "waypoint", "create" };
+		const int iSize = sizeof(aCommands) / sizeof(aCommands[0]);
+		CBotrixCommand::instance->Execute(this, iSize, aCommands);
 
-        // Add new waypoint, but distance from previous one must not be bigger than iDefaultDistance.
-        if ( CWaypoint::IsValid(iLastWaypoint) )
-        {
-            CWaypoint& wLast = CWaypoints::Get(iLastWaypoint);
-            vOrigin -= wLast.vOrigin;
-            vOrigin.NormalizeInPlace();
-            vOrigin *= CWaypoint::iDefaultDistance;
-            vOrigin += wLast.vOrigin;
-        }
+		// Old code auto adding waypoint directly
+        //Vector vOrigin( GetHead() );
 
-        // Add new waypoint.
-        iCurrentWaypoint = CWaypoints::Add(vOrigin);
+        //// Add new waypoint, but distance from previous one must not be bigger than iDefaultDistance.
+        //if ( CWaypoint::IsValid(iLastWaypoint) )
+        //{
+        //    CWaypoint& wLast = CWaypoints::Get(iLastWaypoint);
+        //    vOrigin -= wLast.vOrigin;
+        //    vOrigin.NormalizeInPlace();
+        //    vOrigin *= CWaypoint::iDefaultDistance;
+        //    vOrigin += wLast.vOrigin;
+        //}
 
-        // Add paths from previous to current.
-        if ( CWaypoint::IsValid(iLastWaypoint) )
-        {
-            float fHeight = GetPlayerInfo()->GetPlayerMaxs().z - GetPlayerInfo()->GetPlayerMins().z + 1;
-            bool bIsCrouched = (fHeight < CMod::iPlayerHeight);
+        //// Add new waypoint.
+        //iCurrentWaypoint = CWaypoints::Add(vOrigin);
 
-            CWaypoints::CreatePathsWithAutoFlags(iLastWaypoint, iCurrentWaypoint, bIsCrouched);
-            iDestinationWaypoint = iLastWaypoint;
-        }
+        //// Add paths from previous to current.
+        //if ( CWaypoint::IsValid(iLastWaypoint) )
+        //{
+        //    float fHeight = GetPlayerInfo()->GetPlayerMaxs().z - GetPlayerInfo()->GetPlayerMins().z + 1;
+        //    bool bIsCrouched = (fHeight < CMod::iPlayerHeight);
+
+        //    CWaypoints::CreatePathsWithAutoFlags(iLastWaypoint, iCurrentWaypoint, bIsCrouched);
+        //    iDestinationWaypoint = iLastWaypoint;
+        //}
     }
 
     // Calculate destination waypoint according to angles. Path's should be drawn.
@@ -96,7 +103,7 @@ void CClient::PreThink()
     }
 
     // Draw waypoints.
-    CWaypoints::Draw(this); // TODO: should not draw for several admins...
+    CWaypoints::Draw(this); // TODO: should not draw for admins without rights.
 
     // Draw entities.
     CItems::Draw(this);

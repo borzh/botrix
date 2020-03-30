@@ -186,7 +186,7 @@ public:
     static void MapUnloaded();
 
     /// Load entities from current map.
-    static void MapLoaded();
+	static void MapLoaded(bool bLog = true);
 
     /// Update items. Called when player is connected or picks up weapon (new one will be created to respawn later).
     static void Update();
@@ -202,14 +202,14 @@ protected:
     static TItemType GetEntityType( const char* szClassName, CItemClass* & pEntityClass,
                                       TItemType iFrom, TItemType iTo, bool bFastCmp = false );
 
-    static void CheckNewEntity( edict_t* pEdict );
+    static void CheckNewEntity( edict_t* pEdict, bool bLog = true );
     static TItemIndex InsertEntity( int iEntityType, const CItem& cEntity );
     static void AutoWaypointPathFlagsForEntity( TItemType iEntityType, TItemIndex iIndex, CItem& cEntity );
     static TItemIndex AddItem( TItemType iEntityType, edict_t* pEdict, CItemClass* pItemClass, IServerEntity* pServerEntity );
     static void AddObject( edict_t* pEdict, const CItemClass* pObjectClass, IServerEntity* pServerEntity );
 
-    friend class CWaypoints; // Give access to WaypointDeleted().
-    static void WaypointDeleted( TWaypointId id );
+    //friend class CWaypoints; // Give access to WaypointDeleted().
+    //static void WaypointDeleted( TWaypointId id );
 
     static good::vector<CItem> m_aItems[EItemTypeTotal];            // Array of items.
     static good::list<CItemClass> m_aItemClasses[EItemTypeTotal];   // List of item classes. Pointer are used so it should not be reallocated.

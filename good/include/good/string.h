@@ -156,7 +156,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         Char& operator[] ( int iIndex )
         {
-            GoodAssert( (0 <= iIndex) && (iIndex < m_iSize) );
+            GoodAssert( (0 <= iIndex) && (iIndex <= m_iSize) );
             return m_pBuffer[iIndex];
         }
 

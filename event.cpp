@@ -75,7 +75,7 @@ void CPlayerHurtEvent::FireGameEvent( IGameEvent* pEvent )
 
     CPlayer *pPlayer = CPlayers::Get(iActivator);
     CPlayer *pPlayerAttacker = iAttacker >= 0 ? CPlayers::Get(iAttacker) : NULL;
-    if ( pPlayer && pPlayer->IsBot() )
+	if (pPlayer && pPlayerAttacker && pPlayer->IsBot())
         ((CBot*)pPlayer)->HurtBy( iAttacker, pPlayerAttacker, pEvent->GetInt("health") );
 }
 

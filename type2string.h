@@ -5,6 +5,15 @@
 #include "types.h"
 
 
+typedef enum {
+	BoolStringTrueFalse = 0,
+	BoolStringYesNo,
+	BoolStringOnOff,
+	BoolStringEnableDisable,
+};
+typedef int TBoolString;
+
+
 //****************************************************************************************************************
 /// Useful class to get type from string and viceversa.
 //****************************************************************************************************************
@@ -24,7 +33,7 @@ public:
     static int BoolFromString( const good::string& sBool );
 
     /// Get string from bool.
-    static const good::string& BoolToString( bool b );
+	static const good::string& BoolToString( bool b, int which = BoolStringTrueFalse );
 
 
     //------------------------------------------------------------------------------------------------------------

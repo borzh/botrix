@@ -30,11 +30,11 @@ struct waypoint_header
 };
 #pragma pack(pop)
 
-static const char* WAYPOINT_FILE_HEADER_ID = "BtxW";   // Botrix's Waypoints.
+static const char* WAYPOINT_FILE_HEADER_ID     = "BtxW";   // Botrix's Waypoints.
 
-static const int WAYPOINT_VERSION = 1;                 // Waypoints file version.
-static const int WAYPOINT_FILE_FLAG_VISIBILITY = 1<<0; // Flag for waypoint visibility table.
-static const int WAYPOINT_FILE_FLAG_AREAS      = 1<<1; // Flag for area names.
+static const int WAYPOINT_VERSION              = 1;        // Waypoints file version.
+static const int WAYPOINT_FILE_FLAG_VISIBILITY = 1<<0;     // Flag for waypoint visibility table.
+static const int WAYPOINT_FILE_FLAG_AREAS      = 1<<1;     // Flag for area names.
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -147,11 +147,11 @@ void CWaypoint::Draw( TWaypointId iWaypointId, TWaypointDrawFlags iDrawType, flo
 //********************************************************************************************************************
 bool CWaypoints::Save()
 {
-    if ( Size() == 0 )
-    {
-        BLOG_E( "No waypoints to save." );
-        return false;
-    }
+    //if ( Size() == 0 )
+    //{
+    //    BLOG_E( "No waypoints to save." );
+    //    return false;
+    //}
 
     const good::string& sFileName = CUtil::BuildFileName("waypoints", CBotrixPlugin::instance->sMapName, "way");
 
@@ -334,7 +334,7 @@ bool CWaypoints::Load()
         // Read area names.
         iRead = fread(&iAreaNamesSize, 1, sizeof(int), f);
         BASSERT( iRead == sizeof(int), Clear();fclose(f);return false);
-        BASSERT( (iAreaNamesSize >= 0) && (iAreaNamesSize <= header.iNumWaypoints), Clear();fclose(f);return false );
+        //BASSERT( (0 <= iAreaNamesSize) && (iAreaNamesSize <= header.iNumWaypoints), Clear();fclose(f);return false );
 
         m_cAreas.reserve(iAreaNamesSize);
         m_cAreas.push_back("default"); // New waypoints without area id will be put under this empty area id.
@@ -519,7 +519,7 @@ TWaypointId CWaypoints::Add( const Vector& vOrigin, TWaypointFlags iFlags, int i
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoints::Remove( TWaypointId id )
 {
-    CItems::WaypointDeleted(id);
+    //CItems::WaypointDeleted(id);
     DecrementLocationIds(id);
     m_cGraph.delete_node( m_cGraph.begin() + id );
     bValidVisibilityTable = false;

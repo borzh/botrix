@@ -196,10 +196,11 @@ protected: // Mod dependend protected functions.
     // Return true if given player is enemy. Really it is mod's dependant.
     inline bool IsEnemy( CPlayer* pPlayer ) const
     {
-        int idx = pPlayer->GetTeam();
-        return (idx != CMod::iSpectatorTeam) &&
-               ( (idx != GetTeam()) || (idx == CMod::iUnassignedTeam) ) && // Deathmatch team?
-               !m_aAllies.test( pPlayer->GetIndex() );
+        int team = pPlayer->GetTeam();
+		int index = pPlayer->GetIndex();
+		return (team != CMod::iSpectatorTeam) && (index >= 0) &&
+			   ( (team != GetTeam()) || (team == CMod::iUnassignedTeam) ) && // Deathmatch team?
+			   !m_aAllies.test(index);
     }
 
     // Enemy is dead or got disconnected.

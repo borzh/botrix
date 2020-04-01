@@ -45,9 +45,10 @@ void CBot_HL2DM::Activated()
     const good::string* pModel = ((CModHL2DM*)CMod::pCurrentMod)->GetRandomModel(iTeam);
     if ( pModel )
     {
-        //CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, "cl_playermodel" + pModel->c_str() );
+		//good::string cmd("cl_playermodel "); cmd += *pModel;
+		//CBotrixPlugin::pServerPluginHelpers->ClientCommand(m_pEdict, cmd.c_str());
         CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(m_pEdict, "cl_playermodel", pModel->c_str());
-    }
+	}
 }
 
 

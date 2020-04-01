@@ -640,13 +640,17 @@ bool CBot::DoWaypointAction()
             m_bNeedUse = m_iLastHealthArmor < m_pPlayerInfo->GetMaxHealth();
             m_bUsingHealthMachine = true;
         }
-
         else if ( FLAG_SOME_SET(FWaypointArmorMachine, w.iFlags) )
         {
             m_iLastHealthArmor = m_pPlayerInfo->GetArmorValue();
             m_bNeedUse = m_iLastHealthArmor < CMod::iPlayerMaxArmor;
             m_bUsingHealthMachine = false;
         }
+		else if (FLAG_SOME_SET(FWaypointButton, w.iFlags))
+		{
+			CWaypointPath* pCurrentPath = CWaypoints::GetPath(iCurrentWaypoint, iNextWaypoint);
+			m_bNeedUse = pCurrentPath && FLAG_ALL_SET(FPathDoor, pCurrentPath->iFlags);
+		}
 
         if ( m_bNeedUse )
         {
@@ -713,6 +717,9 @@ void CBot::ApplyPathFlags()
             if ( FLAG_ALL_SET(FPathStop, pCurrentPath->iFlags) )
                 m_bNeedStop = true;
 
+			if (FLAG_ALL_SET(FPathDoor, pCurrentPath->iFlags))
+				m_bNeedUse = true;
+
             if ( FLAG_ALL_SET(FPathSprint, pCurrentPath->iFlags) )
                 m_bNeedSprint = true;
 
@@ -724,7 +731,7 @@ void CBot::ApplyPathFlags()
                 m_bNeedDuck = true; // Crouch only when not jumping.
 
             // Dont use path aim if aim is locked.
-            m_bPathAim = !m_bEnemyAim && FLAG_SOME_SET( FPathJump | FPathBreak | FPathSprint | FPathLadder | FPathStop, pCurrentPath->iFlags);
+			m_bPathAim = !m_bEnemyAim && FLAG_SOME_SET(FPathDoor | FPathJump | FPathBreak | FPathSprint | FPathLadder | FPathStop, pCurrentPath->iFlags);
         }
     }
 
@@ -1125,19 +1132,20 @@ void CBot::UpdateWorld()
         // Update nearest items.
         for ( int i = 0; i < iNearestSize; )
         {
-            const CItem& cItem = aItems[ aNearest[i] ];
-            if ( cItem.IsFree() ) // Remove object if it is removed from game.
+			int index = aNearest[i];
+			const CItem* cItem = index < aItems.size() ? &aItems[index] : NULL;
+            if (cItem == NULL || cItem->IsFree()) // Remove object if it is removed from game.
             {
                 aNearest.erase(aNearest.begin() + i);
                 --iNearestSize;
             }
-            else if ( !cItem.IsOnMap() ) // Was on map before, but disappeared, bot could grab it or break it.
+			else if (!cItem->IsOnMap()) // Was on map before, but disappeared, bot could grab it or break it.
             {
-                PickItem( cItem, iType, aNearest[i] );
+                PickItem( *cItem, iType, aNearest[i] );
                 aNearest.erase(aNearest.begin() + i);
                 --iNearestSize;
             }
-            else if ( vFoot.DistToSqr(cItem.CurrentPosition()) > cItem.fPickupDistanceSqr ) // Item becomes far.
+			else if (vFoot.DistToSqr(cItem->CurrentPosition()) > cItem->fPickupDistanceSqr) // Item becomes far.
             {
                 aNear.push_back(aNearest[i]);
                 aNearest.erase(aNearest.begin() + i);
@@ -1150,15 +1158,16 @@ void CBot::UpdateWorld()
         // Check if bot becomes too close to near items, to pass it to nearest items (and viceversa).
         for ( int i = 0; i < iNearSize; )
         {
-            const CItem& cItem = aItems[ aNear[i] ];
-            if ( cItem.IsFree() || !cItem.IsOnMap() )
+			int index = aNear[i];
+			const CItem* cItem = index < aItems.size() ? &aItems[index] : NULL;
+			if (cItem == NULL || cItem->IsFree() || !cItem->IsOnMap())
             {
                 aNear.erase(aNear.begin() + i);
                 --iNearSize;
             }
             else
             {
-                float fDistSqr = vFoot.DistToSqr( cItem.CurrentPosition() );
+				float fDistSqr = vFoot.DistToSqr(cItem->CurrentPosition());
 
                 if ( CMod::iNearItemMaxDistanceSqr < fDistSqr ) // Item becomes far.
                 {
@@ -1167,7 +1176,7 @@ void CBot::UpdateWorld()
                 }
                 else
                 {
-                    if ( fDistSqr <= cItem.fPickupDistanceSqr ) // Can pick up.
+					if (fDistSqr <= cItem->fPickupDistanceSqr) // Can pick up.
                     {
                         aNearest.push_back(aNear[i]);
                         aNear.erase(aNear.begin() + i);
@@ -1840,28 +1849,26 @@ bool CBot::MoveBetweenWaypoints()
 
     iCurrentWaypoint = iNextWaypoint; // Force current waypoint become the one we just reached.
 
-    bool bDoingAction = DoWaypointAction();
-
     if ( m_bUseNavigatorToMove )
     {
         m_bNeedMove = m_bNeedMove && m_cNavigator.HasMoreCoords();
         if ( m_bNeedMove )
-        {
             m_cNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
-            if ( !bDoingAction ) // If not doing some waypoint action.
-            {
-                ApplyPathFlags();
-                DoPathAction();
-            }
-        }
         else
             m_iAfterNextWaypoint = iNextWaypoint = EWaypointIdInvalid;
     }
     else
     {
-        iNextWaypoint = EWaypointIdInvalid;
+		m_iAfterNextWaypoint = iNextWaypoint = EWaypointIdInvalid;
         m_bNeedMove = false;
     }
+
+	bool bDoingAction = DoWaypointAction();
+	if ( m_bNeedMove && !bDoingAction ) // If not doing some waypoint action.
+	{
+		ApplyPathFlags();
+		DoPathAction();
+	}
 
     return true; // We arrived to next waypoint.
 }
@@ -2043,7 +2050,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
     if ( bMove )
     {
         float fDeltaTime = CBotrixPlugin::fTime - m_fPrevThinkTime;
-        BASSERT( CBotrixPlugin::fTime != m_fPrevThinkTime, fDeltaTime = 0.000001f ); // Should not happend, sometimes happends.
+		BASSERT(fDeltaTime > 0, fDeltaTime = 0.000001f); // Should not happend, sometimes happends.
 
         // Calculate distance from last frame.
         Vector vSpeed(m_vHead);
@@ -2263,8 +2270,10 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
             {
                 m_bNeedUse = false;
                 m_bAlreadyUsed = true;
-                ApplyPathFlags();
-                DoPathAction();
+				if (m_bNeedMove) {
+					ApplyPathFlags();
+					DoPathAction();
+				}
             }
             else
             {

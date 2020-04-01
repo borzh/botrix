@@ -267,10 +267,8 @@ bool CWaypoints::Load()
     }
     if ( CBotrixPlugin::instance->sMapName != header.szMapName )
     {
-        BLOG_E( "Error loading waypoints, map name mismatch:" );
-        BLOG_E( "  File map %s, current map %s.", header.szMapName, CBotrixPlugin::instance->sMapName.c_str() );
-        fclose(f);
-        return false;
+        BLOG_W( "Warning loading waypoints, map name mismatch:" );
+        BLOG_W( "  File map %s, current map %s.", header.szMapName, CBotrixPlugin::instance->sMapName.c_str() );
     }
 
     Vector vOrigin;

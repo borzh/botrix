@@ -3,6 +3,7 @@ Changelog
 1.0.0
 * Fixed crash when respawning bot was killing another bot on the same position (occuring a lot after map change).
 * Auto-complete commands are working again (updated & compiled Source SDK).
+* Bot now can press buttons! Check the waypoints page for details.
 
 0.0.4
 * Fixed crash autocompleting commands on listen server. No command completion for now.

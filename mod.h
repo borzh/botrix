@@ -110,7 +110,9 @@ public: // Methods.
     /// Add frame event.
     static void AddFrameEvent( TPlayerIndex iPlayer, TFrameEvent iEvent )
     {
-        m_aFrameEvents.push_back( good::pair<TFrameEvent, TPlayerIndex>(iEvent, iPlayer) );
+		good::pair<TFrameEvent, TPlayerIndex> pair(iEvent, iPlayer);
+		if ( good::find(m_aFrameEvents, pair) == m_aFrameEvents.end() ) // Avoid firing events twice.
+			m_aFrameEvents.push_back( pair );
     }
 
     /// Return true if map has items or waypoint's of given type.
@@ -139,7 +141,8 @@ public: // Static members.
     static StringVector aClassNames;         ///< Name of player's classes.
 
     static bool bIntelligenceInBotName;      ///< Use bot's intelligence as part of his name.
-    static bool bHeadShotDoesMoreDamage;     ///< HL2DM, CSS have that (true by default).
+	static bool bHeadShotDoesMoreDamage;     ///< HL2DM, CSS have that (true by default).
+	static bool bUseModels;                  ///< HL2DM, CSS have that (true by default).
 
 //    static TDeathmatchFlags iDeathmatchFlags;///< Flags for deathmatch mode.
 

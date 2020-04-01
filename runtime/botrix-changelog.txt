@@ -3,7 +3,8 @@ Changelog
 1.0.0
 * Fixed crash when respawning bot was killing another bot on the same position (occuring a lot after map change).
 * Auto-complete commands are working again (updated & compiled Source SDK).
-* Bot now can press buttons! Check the waypoints page for details.
+* Bot now can press buttons! Mark waypoint as 'button', set it's angles (looking at the button) and mark path to the next waypoint with 'door' type. Works with elevators.
+* Fixed models in deathmatch. But playing in teamplay mode, combines bots are still using only the combine_soldier model, SDK issue.
 
 0.0.4
 * Fixed crash autocompleting commands on listen server. No command completion for now.

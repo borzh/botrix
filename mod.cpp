@@ -31,6 +31,7 @@ StringVector CMod::aClassNames;
 
 bool CMod::bIntelligenceInBotName = true;
 bool CMod::bHeadShotDoesMoreDamage = true;
+bool CMod::bUseModels = true;
 
 //TDeathmatchFlags CMod::iDeathmatchFlags = -1;
 

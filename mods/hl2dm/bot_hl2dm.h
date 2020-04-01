@@ -54,6 +54,7 @@ public:
 
 
 protected:
+	void ChangeModel();
 
     /// Inherited from CBot. Will check if arrived at m_iTaskDestination and invalidates current task.
     virtual bool DoWaypointAction();
@@ -92,7 +93,8 @@ protected:
     /// Mark task as finished.
     void TaskFinished();
 
-    good::bitset m_aWaypoints;                           ///< Waypoints, that bot can't use.
+protected: // Members.
+	good::bitset m_aWaypoints;                           ///< Waypoints, that bot can't use.
 
     TBotTask m_iCurrentTask;                             ///< Current task.
     TWaypointId m_iTaskDestination;                      ///< Waypoint for task destination.

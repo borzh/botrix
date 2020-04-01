@@ -71,7 +71,10 @@ namespace good
 
         /// Copy constructor.
         pair (const pair& other): first(other.first), second(other.second) {}
-    };
+	
+		/// Equal operator.
+		bool operator==(const pair& other) { return first == other.first && second == other.second; }
+	};
 
 
     //************************************************************************************************************

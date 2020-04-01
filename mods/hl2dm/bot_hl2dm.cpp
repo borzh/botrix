@@ -26,6 +26,10 @@ CBot_HL2DM::CBot_HL2DM( edict_t* pEdict, TBotIntelligence iIntelligence ):
     m_cSkipWeapons( CWeapons::Size() ), m_pChasedEnemy(NULL)
 {
     m_bShootAtHead = false;
+
+	CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(m_pEdict, "cl_autowepswitch", "0");
+	CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(m_pEdict, "cl_defaultweapon", "weapon_smg1");
+	ChangeModel();
 }
 
 
@@ -34,23 +38,25 @@ void CBot_HL2DM::Activated()
 {
     CBot::Activated();
     GoodAssert( m_pPlayerInfo && m_pController );
+ }
 
-    CBotrixPlugin::pEngineServer->SetFakeClientConVarValue( m_pEdict, "cl_autowepswitch", "0" );
-    CBotrixPlugin::pEngineServer->SetFakeClientConVarValue( m_pEdict, "cl_defaultweapon", "weapon_smg1" );
 
-    TTeam iTeam = GetTeam();
-    if ( iTeam == CMod::iUnassignedTeam ) // Deathmatch.
-        iTeam = 2 + ( rand()&1 ); // 0 = deathmatch, 1 = spectator, 2 = rebels, 3 = combines.
+void CBot_HL2DM::ChangeModel() {
+	TTeam iTeam = GetTeam();
+	if (iTeam == CMod::iUnassignedTeam) // Deathmatch.
+		iTeam = 2 + (rand() & 1); // 0 = deathmatch, 1 = spectator, 2 = rebels, 3 = combines.
 
-    const good::string* pModel = ((CModHL2DM*)CMod::pCurrentMod)->GetRandomModel(iTeam);
-    if ( pModel )
-    {
-		//good::string cmd("cl_playermodel "); cmd += *pModel;
-		//CBotrixPlugin::pServerPluginHelpers->ClientCommand(m_pEdict, cmd.c_str());
-        CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(m_pEdict, "cl_playermodel", pModel->c_str());
+	if (CMod::bUseModels) {
+		const good::string* pModel = ((CModHL2DM*)CMod::pCurrentMod)->GetRandomModel(iTeam);
+		if (pModel)
+		{
+			BLOG_I("%s -> Using model %s", GetName(), pModel->c_str());
+			//good::string cmd("cl_playermodel "); cmd += *pModel;
+			//CBotrixPlugin::pServerPluginHelpers->ClientCommand(m_pEdict, cmd.c_str());
+			CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(m_pEdict, "cl_playermodel", pModel->c_str());
+		}
 	}
 }
-
 
 //----------------------------------------------------------------------------------------------------------------
 void CBot_HL2DM::Respawned()

@@ -8,6 +8,7 @@
 #include "mods/hl2dm/mod_hl2dm.h"
 
 #include "iplayerinfo.h"
+#include "type2string.h" 
 
 
 extern char* szMainBuffer;
@@ -34,6 +35,13 @@ bool CModHL2DM::ProcessConfig( const good::ini_file& cIni )
     {
         StringVector aModels;
         m_aModels.resize( CMod::aTeamsNames.size() );
+		
+		good::ini_section::const_iterator models = it->find("use models");
+		if (models != it->end())
+		{
+			int value = CTypeToString::BoolFromString(models->value);
+			CMod::bUseModels = value == 0 ? false : true;
+		}
 
         // Get player models.
         for ( int i = 0; i < CMod::aTeamsNames.size(); ++i )

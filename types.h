@@ -506,8 +506,33 @@ enum TBotTaskIds
 typedef int TBotTask;                            ///< Bot task.
 
 
+//****************************************************************************************************************
+/// Enum for console commands auto-complete arguments.
+//****************************************************************************************************************
+enum TConsoleAutoCompleteArgs
+{
+	EConsoleAutoCompleteArgInvalid = -1,         ///< Invalid argument.
+	EConsoleAutoCompleteArgBool = 0,             ///< Boolean: on/off.
+	EConsoleAutoCompleteArgWaypoint,             ///< Argument is waypoint id: current/destination/other.
+	EConsoleAutoCompleteArgWaypointForever,      ///< Same as waypoint, but forever.
+	EConsoleAutoCompleteArgWeapon,               ///< Argument is weapon id.
+	EConsoleAutoCompleteArgBots,                 ///< Argument is bot names once.
+	EConsoleAutoCompleteArgBotsForever,          ///< Argument is bot names forever.
+	EConsoleAutoCompleteArgUsers,                ///< Argument is client names once.
+	EConsoleAutoCompleteArgUsersForever,         ///< Argument is client names once.
+	EConsoleAutoCompleteArgPlayers,              ///< Argument is players names once.
+	EConsoleAutoCompleteArgPlayersForever,       ///< Argument is players names forever.
+	EConsoleAutoCompleteArgIgnore,               ///< Ignore auto-completion, like a number or new bot's name, for instance.
+	EConsoleAutoCompleteArgValues,               ///< Auto-complete with given fixed array of strings in m_cAutoCompleteArguments once.
+	EConsoleAutoCompleteArgValuesForever,        ///< Same as values, but forever. Useful for flags.
+	EConsoleAutoCompleteArgsTotal,               ///< Total arguments.
+};
+typedef int TConsoleAutoCompleteArg;             ///< Console commands auto-complete arguments.
+
+
+/*
 ///< Enum of useful flags for deathmatch mode.
-/*enum TDeathmatchFlagId
+enum TDeathmatchFlagId
 {
     FDeathmatchTeamAllWeapons  = 1<<0,           ///< In deathmatch mode users can grab weapons of "other" teams.
     FDeathmatchClassAllWeapons = 1<<1,           ///< In deathmatch mode users can grab weapons of "other" classes.

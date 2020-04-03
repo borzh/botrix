@@ -42,7 +42,7 @@ CPlayer::CPlayer(edict_t* pEdict, bool bIsBot):
     iCurrentWaypoint(EWaypointIdInvalid), iNextWaypoint(EWaypointIdInvalid), iPrevWaypoint(EWaypointIdInvalid),
     iChatMate(-1), m_pEdict(pEdict), m_iIndex(-1),
     m_pPlayerInfo(CBotrixPlugin::pPlayerInfoManager->GetPlayerInfo(m_pEdict)),
-    m_bBot(bIsBot), m_bAlive(false) {}
+	m_fEndProtectionTime(0), m_bBot(bIsBot), m_bAlive(false), m_bProtected(false) {}
 
 //----------------------------------------------------------------------------------------------------------------
 void CPlayer::Activated()
@@ -65,7 +65,15 @@ void CPlayer::Respawned()
 #endif
     CBotrixPlugin::pServerGameClients->ClientEarPosition(m_pEdict, &m_vHead);
     iCurrentWaypoint = CWaypoints::GetNearestWaypoint( m_vHead );
-    m_bAlive = true;
+	m_bAlive = m_bProtected = true;
+
+	// A value less than 0 means that player is forever protected.
+	if (m_fEndProtectionTime >= 0)
+	{
+		float defaultEndProtectionTime = CBotrixPlugin::fTime + CMod::fSpawnProtectionTime;
+		// Player can be protected for longer time by console command.
+		m_fEndProtectionTime = MAX(m_fEndProtectionTime, defaultEndProtectionTime);
+	}
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -76,6 +84,12 @@ void CPlayer::PreThink()
 
     if ( m_pPlayerInfo->IsDead() ) // CBasePlayer::IsDead() returns true only when player became dead,  but when
         m_bAlive = false;          // player is respawnable (but still dead) it returns false.
+
+	if ( m_bAlive )
+	{
+		if ( m_bProtected && m_fEndProtectionTime >= 0 && CBotrixPlugin::fTime >= m_fEndProtectionTime)
+			m_bProtected = false;
+	}
 
 #if DRAW_PLAYER_HULL
     static const float fDrawTime = 0.1f;
@@ -142,6 +156,13 @@ void CPlayer::PreThink()
 
 
 //********************************************************************************************************************
+void CPlayers::GetNames( StringVector& aNames, bool bGetBots, bool bGetUsers )
+{
+	for ( auto it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it )
+		if ( *it && ( ( bGetBots && ( *it )->IsBot() ) || ( bGetUsers && !( *it )->IsBot() ) ) )
+			aNames.push_back( ( *it )->GetName() );
+}
+
 void CPlayers::CheckBotsCount()
 {
     if ( !CBotrixPlugin::instance->bMapRunning ||

@@ -68,7 +68,7 @@ bool CModHL2DM::ProcessConfig( const good::ini_file& cIni )
 
 
 //----------------------------------------------------------------------------------------------------------------
-CPlayer* CModHL2DM::AddBot( const char* szName, TBotIntelligence iIntelligence, TTeam /*iTeam*/,
+CPlayer* CModHL2DM::AddBot( const char* szName, TBotIntelligence iIntelligence, TTeam iTeam,
                                 TClass /*iClass*/, int iParamsCount, const char **aParams )
 {
     if ( iParamsCount > 0 )
@@ -86,7 +86,9 @@ CPlayer* CModHL2DM::AddBot( const char* szName, TBotIntelligence iIntelligence, 
         return NULL;
     }
 
-    return new CBot_HL2DM(pEdict, iIntelligence);
+	CBot_HL2DM *result = new CBot_HL2DM( pEdict, iIntelligence );
+	result->ChangeModel( iTeam );
+	return result;
 }
 
 

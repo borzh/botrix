@@ -198,7 +198,8 @@ protected: // Mod dependend protected functions.
     {
         int team = pPlayer->GetTeam();
 		int index = pPlayer->GetIndex();
-		return (team != CMod::iSpectatorTeam) && (index >= 0) &&
+		return !pPlayer->IsProtected() && 
+			   (team != CMod::iSpectatorTeam) && (index >= 0) &&
 			   ( (team != GetTeam()) || (team == CMod::iUnassignedTeam) ) && // Deathmatch team?
 			   !m_aAllies.test(index);
     }
@@ -214,10 +215,7 @@ protected: // Mod dependend protected functions.
 
 
 protected: // Methods.
-    static const int SIZE_ACTIONS = 32; // Size of circular buffer of actions.
-
-
-    /// Say current chat.
+    /// Say something in chat.
     void Speak( bool bTeamSay );
 
     // Return true if entity is inside bot's view cone.

@@ -432,7 +432,7 @@ void CConfiguration::LoadItemClasses()
                                 BLOG_E("File \"%s\", section [%s], invalid respawn time for: %s.",  m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str());
                         }
                         else if ( aCurrent.size() > 2 )
-                            BLOG_E("File \"%s\", section [%s], invalid arguments count for: %s.",  m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str());
+                            BLOG_E("File \"%s\", section [%s], invalid parameters count for: %s.",  m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str());
                     }*/
                 }
             }
@@ -480,7 +480,7 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
         StringVector aParams;
         good::split((good::string)sbBuffer, aParams, ',', true);
         good::vector<good::string> aAmmos[2];
-        good::vector<int> aAmmosCount[2];
+        good::vector<int> aAmmoBullets[2];
 
         CWeapon* pWeapon = new CWeapon();
         StringVector aCurrent;
@@ -668,7 +668,7 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
 
                     good::string sAmmo(aCurrent[1], true);
                     aAmmos[iSecondary].push_back(sAmmo);
-                    aAmmosCount[iSecondary].push_back(iValue);
+                    aAmmoBullets[iSecondary].push_back(iValue);
                 }
                 else
                 {
@@ -756,9 +756,9 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
                         pAmmoClass = CItems::AddItemClassFor( EItemTypeAmmo, cAmmoClass );
                     }
                     pWeapon->aAmmos[iSec].push_back( pAmmoClass );
-                    pWeapon->aAmmosCount[iSec].push_back( aAmmosCount[iSec][i] );
+                    pWeapon->aAmmoBullets[iSec].push_back( aAmmoBullets[iSec][i] );
                     BLOG_D( "    ammo %s (%u bullets)",
-                            pWeapon->aAmmos[iSec][i]->sClassName.c_str(), pWeapon->aAmmosCount[iSec][i] );
+                            pWeapon->aAmmos[iSec][i]->sClassName.c_str(), pWeapon->aAmmoBullets[iSec][i] );
                 }
 
             CWeaponWithAmmo cWeapon(pWeapon);

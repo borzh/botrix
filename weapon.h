@@ -28,7 +28,20 @@ public:
         iBotPreference = EBotNormal;
     }
 
-    static bool IsValid( TWeaponId iId ) { return iId != EWeaponIdInvalid; }
+	/// Get ammo index from name.
+	int GetAmmoIndexFromName( const good::string& sName, bool& bIsSecondary ) const
+	{
+		for ( int i = PRIMARY; i <= SECONDARY; ++i )
+		{
+			for ( int j = 0; j <= aAmmos[i].size(); ++j )
+				if ( aAmmos[i][j]->sClassName == sName )
+				{
+					bIsSecondary = i == SECONDARY;
+					return j;
+				}
+		}
+		return -1;
+	}
 
     static const int PRIMARY = 0;                ///< Index for primary ammo.
     static const int SECONDARY = 1;              ///< Index for secondary ammo.
@@ -63,8 +76,8 @@ public:
     TBotIntelligence iBotPreference;             ///< Smart bots will prefer weapons with higher preference.
     bool bForbidden;                             ///< True if weapon is forbidden.
 
-    good::vector<const CItemClass*> aAmmos[2]; ///< Ammo item classes.
-    good::vector<int> aAmmosCount[2];            ///< Ammos count for ammo at same index.
+    good::vector<const CItemClass*> aAmmos[2];   ///< Ammo item classes.
+    good::vector<int> aAmmoBullets[2];           ///< Bullets for ammo at the same index.
 };
 
 
@@ -306,11 +319,14 @@ class CWeapons
 {
 
 public:
+	/// Return true if this weapon id is valid.
+	static bool IsValid(TWeaponId iId) { return 0 <= iId && iId < Size(); }
+
     /// Return weapons count.
-    static int Size() { return m_aWeapons.size(); }
+	static inline int Size() { return m_aWeapons.size(); }
 
     /// Get weapon from weapon id.
-    static const CWeaponWithAmmo& Get( TWeaponId iWeaponId ) { return m_aWeapons[iWeaponId]; }
+    static const CWeaponWithAmmo* Get( TWeaponId iWeaponId ) { return iWeaponId < 0 || iWeaponId >= m_aWeapons.size() ? NULL : &m_aWeapons[iWeaponId]; }
 
     /// Add weapon.
     static TWeaponId Add( CWeaponWithAmmo& cWeapon ) { m_aWeapons.push_back(cWeapon); return m_aWeapons.size()-1; }

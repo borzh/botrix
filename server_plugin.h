@@ -73,7 +73,7 @@
 #include "igameevents.h"
 
 
-#define PLUGIN_VERSION "0.0.4"
+#define PLUGIN_VERSION "1.0.0"
 
 class IVEngineServer;
 class IFileSystem;

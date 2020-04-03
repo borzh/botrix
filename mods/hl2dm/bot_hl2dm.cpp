@@ -23,13 +23,12 @@ extern int iMainBufferSize;
 //----------------------------------------------------------------------------------------------------------------
 CBot_HL2DM::CBot_HL2DM( edict_t* pEdict, TBotIntelligence iIntelligence ):
     CBot(pEdict, iIntelligence, -1), m_aWaypoints(CWaypoints::Size()), m_cItemToSearch(-1, -1),
-    m_cSkipWeapons( CWeapons::Size() ), m_pChasedEnemy(NULL)
+	m_cSkipWeapons(CWeapons::Size()), m_pChasedEnemy(NULL)
 {
     m_bShootAtHead = false;
 
 	CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(m_pEdict, "cl_autowepswitch", "0");
 	CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(m_pEdict, "cl_defaultweapon", "weapon_smg1");
-	ChangeModel();
 }
 
 
@@ -41,18 +40,23 @@ void CBot_HL2DM::Activated()
  }
 
 
-void CBot_HL2DM::ChangeModel() {
-	TTeam iTeam = GetTeam();
-	if (iTeam == CMod::iUnassignedTeam) // Deathmatch.
-		iTeam = 2 + (rand() & 1); // 0 = deathmatch, 1 = spectator, 2 = rebels, 3 = combines.
+void CBot_HL2DM::ChangeModel( TTeam iTeam ) {
+	if ( iTeam == CMod::iUnassignedTeam )
+	{
+		iTeam = 2 + ( rand() & 1 ); // 0 = unassigned, 1 = spectator, 2 = rebels, 3 = combines.
+	}
+	else
+	{
+		char sCmd[16];
+		sprintf( sCmd, "jointeam %d", iTeam );
+		CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, sCmd );
+	}
 
 	if (CMod::bUseModels) {
 		const good::string* pModel = ((CModHL2DM*)CMod::pCurrentMod)->GetRandomModel(iTeam);
 		if (pModel)
 		{
 			BLOG_I("%s -> Using model %s", GetName(), pModel->c_str());
-			//good::string cmd("cl_playermodel "); cmd += *pModel;
-			//CBotrixPlugin::pServerPluginHelpers->ClientCommand(m_pEdict, cmd.c_str());
 			CBotrixPlugin::pEngineServer->SetFakeClientConVarValue(m_pEdict, "cl_playermodel", pModel->c_str());
 		}
 	}
@@ -177,7 +181,7 @@ void CBot_HL2DM::CheckEngagedEnemy()
         if ( m_pCurrentEnemy ) // Seeing new enemy.
         {
             m_pChasedEnemy = m_pCurrentEnemy;
-            m_bChasing = CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsMelee();
+            m_bChasing = CWeapons::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsMelee();
             m_bNeedMove = m_bUseNavigatorToMove = false; // Start moving on next tick.
         }
         else
@@ -211,7 +215,7 @@ void CBot_HL2DM::CheckEngagedEnemy()
         m_bNeedMove = m_bDestinationChanged = true;
         m_bUseNavigatorToMove = m_bChasing = false;
 
-        if ( CWeapon::IsValid(m_iWeapon) )
+        if ( CWeapons::IsValid(m_iWeapon) )
         {
             if ( m_aWeapons[m_iWeapon].IsMelee() ) // Rush toward enemy.
             {
@@ -257,7 +261,7 @@ void CBot_HL2DM::CheckEngagedEnemy()
         BotMessage( "%s -> Moving to random neighbour waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
     }
     else if ( m_pCurrentEnemy && m_bUseNavigatorToMove &&
-              CWeapon::IsValid(m_iWeapon) && !m_aWeapons[m_iWeapon].IsMelee() )
+              CWeapons::IsValid(m_iWeapon) && !m_aWeapons[m_iWeapon].IsMelee() )
         m_bNeedMove = m_bUseNavigatorToMove = false;
     else if ( m_bChasing && (iCurrentWaypoint != m_pChasedEnemy->iCurrentWaypoint ) &&
               (CBotrixPlugin::fTime >= m_fChaseEnemyTime) )
@@ -271,7 +275,7 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
     TBotTask iNewTask = EBotTaskInvalid;
     bool bForce = bForceTaskChange || (m_iCurrentTask == EBotTaskInvalid);
 
-    const CWeapon* pWeapon = ( m_bFeatureWeaponCheck && CWeapon::IsValid(m_iBestWeapon) )
+    const CWeapon* pWeapon = ( m_bFeatureWeaponCheck && CWeapons::IsValid(m_iBestWeapon) )
         ? m_aWeapons[m_iBestWeapon].GetBaseWeapon()
         : NULL;
     TBotIntelligence iWeaponPreference = m_iIntelligence;
@@ -362,7 +366,7 @@ restart_find_task: // TODO: remove gotos.
             iWeapon = CWeapons::GetRandomWeapon(iPreference, m_cSkipWeapons);
             if ( iWeapon != EWeaponIdInvalid )
             {
-                pEntityClass = CWeapons::Get(iWeapon).GetBaseWeapon()->pWeaponClass;
+                pEntityClass = CWeapons::Get(iWeapon)->GetBaseWeapon()->pWeaponClass;
                 break;
             }
         }
@@ -374,7 +378,7 @@ restart_find_task: // TODO: remove gotos.
                 iWeapon = CWeapons::GetRandomWeapon(iPreference, m_cSkipWeapons);
                 if ( iWeapon != EWeaponIdInvalid )
                 {
-                    pEntityClass = CWeapons::Get(iWeapon).GetBaseWeapon()->pWeaponClass;
+                    pEntityClass = CWeapons::Get(iWeapon)->GetBaseWeapon()->pWeaponClass;
                     break;
                 }
             }

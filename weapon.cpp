@@ -325,12 +325,12 @@ bool CWeapons::AddAmmo( const CItemClass* pAmmoClass, good::vector<CWeaponWithAm
     for ( int i=0; i < aWeapons.size(); ++i )
     {
         const good::vector<const CItemClass*>* aAmmos = aWeapons[i].GetBaseWeapon()->aAmmos;
-        const good::vector<int>* aAmmosCount = aWeapons[i].GetBaseWeapon()->aAmmosCount;
+        const good::vector<int>* aAmmoBullets = aWeapons[i].GetBaseWeapon()->aAmmoBullets;
         for ( int iSec=CWeapon::PRIMARY; iSec <= CWeapon::SECONDARY; ++iSec )
             for ( int j=0; j < aAmmos[iSec].size(); ++j )
                 if ( aAmmos[iSec][j] == pAmmoClass )
                 {
-                    int iAmmoCount = aAmmosCount[iSec][j];
+                    int iAmmoCount = aAmmoBullets[iSec][j];
                     aWeapons[i].AddBullets(iAmmoCount, iSec);
                     bResult = true;
                 }

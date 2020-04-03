@@ -21,6 +21,10 @@ public:
     /// Constructor.
     CBot_HL2DM( edict_t* pEdict, TBotIntelligence iIntelligence );
 
+	/// Looks like change model is the only way to change the team in HL2DM.
+	void ChangeModel(TTeam iTeam);
+
+
     //------------------------------------------------------------------------------------------------------------
     // Next functions are mod dependent.
     //------------------------------------------------------------------------------------------------------------
@@ -54,8 +58,6 @@ public:
 
 
 protected:
-	void ChangeModel();
-
     /// Inherited from CBot. Will check if arrived at m_iTaskDestination and invalidates current task.
     virtual bool DoWaypointAction();
 

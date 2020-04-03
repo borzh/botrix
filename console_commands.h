@@ -33,7 +33,8 @@ public:
         return FLAG_ALL_SET(m_iAccessLevel, access);
     }
 
-    virtual TCommandResult Execute( CClient* pClient, int argc, const char** argv ) = 0;
+	virtual TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+
     virtual void PrintCommand( edict_t* pPrintTo, int indent = 0);
 
 #if defined(BOTRIX_NO_COMMAND_COMPLETION)
@@ -42,19 +43,20 @@ public:
                               char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ],
                               int strIndex, int charIndex );
 #else
-    virtual int AutoComplete( char* partial, int partialLength, CUtlVector<CUtlString>& cCommands, int charIndex );
+    virtual int AutoComplete( good::string& partial, CUtlVector<CUtlString>& cCommands, int charIndex );
 #endif
 
 protected:
-    CConsoleCommand() : m_iAccessLevel(0), m_bAutoCompleteOnlyOneArgument(false) {}
+    CConsoleCommand() : m_iAccessLevel(FCommandAccessNone) {}
 
     good::string m_sCommand;
     int m_iAccessLevel;
 
     good::string m_sHelp;
     good::string m_sDescription;
-    StringVector m_cAutoCompleteArguments;
-    bool m_bAutoCompleteOnlyOneArgument;
+
+	good::vector<TConsoleAutoCompleteArg> m_cAutoCompleteArguments;
+	good::vector<StringVector> m_cAutoCompleteValues;
 };
 
 
@@ -75,7 +77,7 @@ public:
                               char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ],
                               int strIndex, int charIndex );
 #else
-    virtual int AutoComplete( char* partial, int partialLength, CUtlVector< CUtlString > &commands, int charIndex );
+    virtual int AutoComplete( good::string& partial, CUtlVector< CUtlString > &commands, int charIndex );
 #endif
 
 protected:
@@ -122,17 +124,7 @@ public:
 class CWaypointRemoveCommand: public CConsoleCommand
 {
 public:
-    CWaypointRemoveCommand()
-    {
-        m_sCommand = "remove";
-        m_sHelp = "delete current, destination or given waypoint";
-        m_iAccessLevel = FCommandAccessWaypoint;
-
-		m_bAutoCompleteOnlyOneArgument = true;
-		m_cAutoCompleteArguments.push_back("current");
-		m_cAutoCompleteArguments.push_back("destination");
-	}
-
+	CWaypointRemoveCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
@@ -142,8 +134,12 @@ public:
     CWaypointMoveCommand()
     {
         m_sCommand = "move";
-        m_sHelp = "moves destination or given waypoint to current player's position";
+        m_sHelp = "moves current or given waypoint to player's position";
+		m_sDescription = "Parameter: (waypoint), current waypoint is used if omitted";
         m_iAccessLevel = FCommandAccessWaypoint;
+
+		m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgWaypoint);
+		m_cAutoCompleteValues.push_back(StringVector());
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -158,9 +154,9 @@ public:
         m_sHelp = "automatically create new waypoints ('off' - disable, 'on' - enable)";
         m_sDescription = "Waypoint will be added when player goes too far from current one.";
         m_iAccessLevel = FCommandAccessWaypoint;
-		m_bAutoCompleteOnlyOneArgument = true;
-		m_cAutoCompleteArguments.push_back(CTypeToString::BoolToString(true, BoolStringOnOff).duplicate());
-		m_cAutoCompleteArguments.push_back(CTypeToString::BoolToString(false, BoolStringOnOff).duplicate());
+		
+		m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgBool);
+		m_cAutoCompleteValues.push_back(StringVector());
 	}
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -172,7 +168,10 @@ public:
     CWaypointInfoCommand()
     {
         m_sCommand = "info";
-        m_sHelp = "display info of current waypoint at console";
+        m_sHelp = "display information for the needed waypoint";
+
+		m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgWaypointForever);
+		m_cAutoCompleteValues.push_back(StringVector());
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -181,13 +180,7 @@ public:
 class CWaypointDestinationCommand: public CConsoleCommand
 {
 public:
-    CWaypointDestinationCommand()
-    {
-        m_sCommand = "destination";
-        m_sHelp = "lock given or current waypoint as path 'destination'";
-        m_sDescription = "Set to -1 to unlock.";
-    }
-
+	CWaypointDestinationCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
@@ -240,8 +233,12 @@ public:
         m_sDescription = good::string("Can be mix of: ") + CTypeToString::WaypointFlagsToString(FWaypointAll);
         m_iAccessLevel = FCommandAccessWaypoint;
 
+		StringVector args;
         for ( int i=0; i < EWaypointFlagTotal; ++i )
-            m_cAutoCompleteArguments.push_back( CTypeToString::WaypointFlagsToString(1<<i).duplicate() );
+			args.push_back( CTypeToString::WaypointFlagsToString(1 << i).duplicate() );
+
+		m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValuesForever);
+		m_cAutoCompleteValues.push_back(args);
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -253,8 +250,11 @@ public:
     CWaypointRemoveTypeCommand()
     {
         m_sCommand = "removetype";
-        m_sHelp = "remove all waypoint types";
+        m_sHelp = "remove all types from current or given waypoint";
         m_iAccessLevel = FCommandAccessWaypoint;
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgWaypoint );
+		m_cAutoCompleteValues.push_back( StringVector() );
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -358,7 +358,7 @@ public:
     CPathCreateCommand()
     {
         m_sCommand = "create";
-        m_sHelp = "create path (from current waypoint to 'destination')";
+        m_sHelp = "create path (from 'current' waypoint to 'destination')";
         m_iAccessLevel = FCommandAccessWaypoint;
     }
 
@@ -371,7 +371,7 @@ public:
     CPathRemoveCommand()
     {
         m_sCommand = "remove";
-        m_sHelp = "remove path (from current waypoint to 'destination')";
+        m_sHelp = "remove given path (or from 'current' waypoint to 'destination')";
         m_iAccessLevel = FCommandAccessWaypoint;
     }
 
@@ -387,9 +387,9 @@ public:
         m_sHelp = "enable auto path creation for new waypoints ('off' - disable, 'on' - enable)";
         m_sDescription = "If disabled, only path from 'destination' to new waypoint will be added";
         m_iAccessLevel = FCommandAccessWaypoint;
-		m_bAutoCompleteOnlyOneArgument = true;
-		m_cAutoCompleteArguments.push_back(CTypeToString::BoolToString(true, BoolStringOnOff).duplicate());
-		m_cAutoCompleteArguments.push_back(CTypeToString::BoolToString(false, BoolStringOnOff).duplicate());
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
+		m_cAutoCompleteValues.push_back( StringVector() );
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -417,12 +417,16 @@ public:
     CPathAddTypeCommand()
     {
         m_sCommand = "addtype";
-        m_sHelp = "add path type (from current waypoint to 'destination').";
+        m_sHelp = "add path type (from 'current' waypoint to 'destination').";
         m_sDescription = good::string("Can be mix of: ") + CTypeToString::PathFlagsToString(FPathAll);
         m_iAccessLevel = FCommandAccessWaypoint;
 
+		StringVector args;
         for ( int i=0; i < EPathFlagTotal; ++i )
-            m_cAutoCompleteArguments.push_back( CTypeToString::PathFlagsToString(1<<i).duplicate() );
+            args.push_back( CTypeToString::PathFlagsToString(1<<i).duplicate() );
+
+		m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValuesForever);
+		m_cAutoCompleteValues.push_back(args);
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -434,7 +438,7 @@ public:
     CPathRemoveTypeCommand()
     {
         m_sCommand = "removetype";
-        m_sHelp = "remove path type (from current waypoint to 'destination')";
+        m_sHelp = "remove path type (from 'current' waypoint to 'destination')";
         m_iAccessLevel = FCommandAccessWaypoint;
     }
 
@@ -461,7 +465,7 @@ public:
     CPathInfoCommand()
     {
         m_sCommand = "info";
-        m_sHelp = "display path info on console (from current waypoint to 'destination')";
+        m_sHelp = "display path info on console (from 'current' waypoint to 'destination')";
         m_iAccessLevel = FCommandAccessWaypoint;
     }
 
@@ -545,17 +549,7 @@ public:
 class CBotAddCommand: public CConsoleCommand
 {
 public:
-    CBotAddCommand()
-    {
-        m_sCommand = "add";
-        m_sHelp = "add bot";
-        if ( CMod::aClassNames.size() )
-            m_sDescription = "Optional parameters: <bot-name> <intelligence> <team> <class>. ";
-        else
-            m_sDescription = "Optional parameters: <bot-name> <intelligence> <team>. ";
-        m_iAccessLevel = FCommandAccessBot;
-    }
-
+	CBotAddCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
@@ -566,8 +560,14 @@ public:
     {
         m_sCommand = "command";
         m_sHelp = "execute console command by bot";
-        m_sDescription = "Parameters: <bot-name> <command>. Example: 'botrix bot command all kill'.";
+        m_sDescription = "Parameters: <command> <bot-name(s)> ... Example: 'botrix bot command \"jointeam 2\" all'.";
         m_iAccessLevel = FCommandAccessBot;
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgIgnore );
+		m_cAutoCompleteValues.push_back( StringVector() );
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBotsForever );
+		m_cAutoCompleteValues.push_back( StringVector() );
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -580,8 +580,11 @@ public:
     {
         m_sCommand = "kick";
         m_sHelp = "kick bot";
-        m_sDescription = "Parameters: <empty/bot-name/all> will kick random/selected/all bots.";
+        m_sDescription = "Parameters: (bot-name) will kick random / given bot(s).";
         m_iAccessLevel = FCommandAccessBot;
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBotsForever );
+		m_cAutoCompleteValues.push_back( StringVector() );
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -594,8 +597,14 @@ public:
     {
         m_sCommand = "debug";
         m_sHelp = "show bot debug messages on server";
-        m_sDescription = "Parameters: <bot-name> <on/off>.";
+        m_sDescription = "Parameters: <on/off> <bot-name(s)> ...";
         m_iAccessLevel = FCommandAccessBot;
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
+		m_cAutoCompleteValues.push_back( StringVector() );
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBotsForever );
+		m_cAutoCompleteValues.push_back( StringVector() );
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -621,15 +630,17 @@ public:
     CBotConfigIntelligenceCommand()
     {
         m_sCommand = "intelligence";
-        m_sHelp = "set min/max bot intelligence";
-        m_sDescription = "Arguments: <min> <max>. Can be one of: random fool stupied normal smart pro";// TODO: intelligence flags to string.
+		m_sHelp = "set min/max bot intelligence";
+		m_sDescription = "Arguments: <min> (max). Can be one of: random fool stupied normal smart pro";// TODO: intelligence flags to string.
         m_iAccessLevel = FCommandAccessBot;
+        
+		StringVector args;
+		for ( int i = 0; i < EBotIntelligenceTotal; ++i )
+			args.push_back( CTypeToString::IntelligenceToString(i).duplicate() );
 
-		m_bAutoCompleteOnlyOneArgument = true;
-        m_cAutoCompleteArguments.push_back("random");
-        for ( int i=0; i < EBotIntelligenceTotal; ++i )
-            m_cAutoCompleteArguments.push_back( CTypeToString::IntelligenceToString(i).duplicate() );
-    }
+		m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValuesForever);
+		m_cAutoCompleteValues.push_back(args);
+	}
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
@@ -644,10 +655,14 @@ public:
         m_sDescription = good::string("Can be one of: ") + CTypeToString::TeamFlagsToString(-1);
         m_iAccessLevel = FCommandAccessBot;
 
-        m_cAutoCompleteArguments.push_back("random");
-        for ( int i=0; i < CMod::aTeamsNames.size(); ++i )
-            m_cAutoCompleteArguments.push_back( CTypeToString::TeamToString(i).duplicate() );
-    }
+		StringVector args;
+		args.push_back("random");
+		for ( int i = 0; i < CMod::aTeamsNames.size(); ++i )
+			args.push_back( CTypeToString::TeamToString(i).duplicate() );
+
+		m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValues);
+		m_cAutoCompleteValues.push_back(args);
+	}
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
@@ -662,9 +677,13 @@ public:
         m_sDescription = good::string("Can be one of: random ") + CTypeToString::ClassFlagsToString(-1);
         m_iAccessLevel = FCommandAccessBot;
 
-        m_cAutoCompleteArguments.push_back("random");
-        for ( int i=0; i < CMod::aClassNames.size(); ++i )
-            m_cAutoCompleteArguments.push_back( CTypeToString::ClassToString(i).duplicate() );
+		StringVector args;
+		args.push_back("random");
+		for ( int i = 0; i < CMod::aClassNames.size(); ++i )
+			args.push_back( CTypeToString::ClassToString(i).duplicate() );
+
+		m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValues);
+		m_cAutoCompleteValues.push_back(args);
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -708,8 +727,12 @@ public:
         m_sDescription = good::string("Can be mix of: ") + CTypeToString::StrategyFlagsToString(FFightStrategyAll);
         m_iAccessLevel = FCommandAccessBot;
 
-        for ( int i=0; i < EFightStrategyFlagTotal; ++i )
-            m_cAutoCompleteArguments.push_back( CTypeToString::StrategyFlagsToString(1<<i).duplicate() );
+		StringVector args;
+		for ( int i = 0; i < EFightStrategyFlagTotal; ++i )
+			args.push_back( CTypeToString::StrategyFlagsToString(1 << i).duplicate() );
+
+		m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValuesForever);
+		m_cAutoCompleteValues.push_back(args);
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -722,12 +745,15 @@ public:
     {
         m_sCommand = "set";
         m_sHelp = "set bot fight strategy argument";
-        m_sDescription = good::string("Can be one of: ") + CTypeToString::StrategyArgs();
+        m_sDescription = "Parameters: <near-distance/far-distance> <distance>.";
         m_iAccessLevel = FCommandAccessBot;
 
-		m_bAutoCompleteOnlyOneArgument = true;
-        for ( int i=0; i < EFightStrategyArgTotal; ++i )
-            m_cAutoCompleteArguments.push_back( CTypeToString::StrategyArgToString(i).duplicate() );
+		StringVector args;
+		for ( int i = 0; i < EFightStrategyArgTotal; ++i )
+			args.push_back( CTypeToString::StrategyArgToString(i).duplicate() );
+
+		m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValues);
+		m_cAutoCompleteValues.push_back(args);	
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -769,10 +795,19 @@ public:
     CBotAllyCommand()
     {
         m_sCommand = "ally";
-        m_sHelp = "will not attack another user/bot";
-        m_sDescription = "";
+        m_sHelp = "given bot won't attack another given player";
+        m_sDescription = "Parameters: <player-name> <on/off> <bot-name(s)> ...";
         m_iAccessLevel = FCommandAccessBot;
-    }
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgPlayers );
+		m_cAutoCompleteValues.push_back( StringVector() );
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
+		m_cAutoCompleteValues.push_back( StringVector() );
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBotsForever );
+		m_cAutoCompleteValues.push_back( StringVector() );
+	}
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
@@ -784,7 +819,14 @@ public:
     {
         m_sCommand = "attack";
         m_sHelp = "forces bot to start/stop attacking";
-        m_iAccessLevel = FCommandAccessBot;
+		m_sDescription = "Parameters: <on/off> <bot-name(s)> ...";
+		m_iAccessLevel = FCommandAccessBot;
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
+		m_cAutoCompleteValues.push_back( StringVector() );
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBotsForever );
+		m_cAutoCompleteValues.push_back( StringVector() );
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -797,8 +839,15 @@ public:
     {
         m_sCommand = "move";
         m_sHelp = "forces bot to start/stop moving";
+		m_sDescription = "Parameters: <on/off> <bot-name(s)> ...";
         m_iAccessLevel = FCommandAccessBot;
-    }
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
+		m_cAutoCompleteValues.push_back( StringVector() );
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBotsForever );
+		m_cAutoCompleteValues.push_back( StringVector() );
+	}
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
@@ -809,11 +858,26 @@ public:
     CBotPauseCommand()
     {
         m_sCommand = "pause";
-        m_sHelp = "pause/resume given or all bots";
+        m_sHelp = "pause/resume given bots";
+		m_sDescription = "Parameters: <on/off> <bot-name(s)> ...";
         m_iAccessLevel = FCommandAccessBot;
-    }
+	
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
+		m_cAutoCompleteValues.push_back( StringVector() );
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBotsForever );
+		m_cAutoCompleteValues.push_back( StringVector() );
+	}
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+
+class CBotProtectCommand : public CConsoleCommand
+{
+public:
+	CBotProtectCommand();
+	TCommandResult Execute(CClient* pClient, int argc, const char** argv);
 };
 
 class CBotWeaponCommand: public CConsoleCommandContainer
@@ -843,8 +907,15 @@ public:
     CBotTestPathCommand()
     {
         m_sCommand = "test";
-        m_sHelp = "create bot to test path from given (or current) to given (or destination) waypoints";
+        m_sHelp = "create bot to test a path";
+		m_sDescription = "Parameters: (waypoint-from) (waypoint-to). Default waypoint-from is 'current', waypoint-to is 'destination'";
         m_iAccessLevel = FCommandAccessBot;
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgWaypoint );
+		m_cAutoCompleteValues.push_back( StringVector() );
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgWaypoint );
+		m_cAutoCompleteValues.push_back( StringVector() );
     }
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -880,9 +951,12 @@ public:
         m_iAccessLevel = FCommandAccessWaypoint;
     }
 
-    TCommandResult Execute( CClient* pClient, int /*argc*/, const char** /*argv*/ )
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv )
     {
-        if ( pClient == NULL )
+		if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+			return ECommandPerformed;
+
+		if ( pClient == NULL )
             return ECommandError;
 
         CItems::MapUnloaded();
@@ -900,7 +974,6 @@ class CConfigAdminsSetAccessCommand: public CConsoleCommand
 public:
 	CConfigAdminsSetAccessCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
-
 };
 
 class CConfigAdminsShowCommand: public CConsoleCommand
@@ -925,9 +998,9 @@ public:
         m_sCommand = "event";
         m_sHelp = "display events on console ('off' - disable, 'on' - enable)";
         m_iAccessLevel = FCommandAccessConfig;
-		m_bAutoCompleteOnlyOneArgument = true;
-		m_cAutoCompleteArguments.push_back(CTypeToString::BoolToString(false, BoolStringOnOff));
-		m_cAutoCompleteArguments.push_back(CTypeToString::BoolToString(true, BoolStringOnOff));
+
+		m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgBool);
+		m_cAutoCompleteValues.push_back(StringVector());
 	}
 
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -1059,8 +1132,9 @@ public:
         Add(new CBotDrawPathCommand);
         Add(new CBotKickCommand);
         Add(new CBotMoveCommand);
-        Add(new CBotPauseCommand);
-        if ( CMod::GetModId() != EModId_TF2 ) // TF2 bots can't be spawned after round has started.
+		Add(new CBotPauseCommand);
+		Add(new CBotProtectCommand);
+		if (CMod::GetModId() != EModId_TF2) // TF2 bots can't be spawned after round has started.
             Add(new CBotTestPathCommand);
         Add(new CBotWeaponCommand);
     }
@@ -1096,12 +1170,18 @@ public:
         m_iAccessLevel = FCommandAccessConfig;
     }
 
-    TCommandResult Execute( CClient* pClient, int argc, const char** /*argv*/ )
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv )
     {
-        edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
+		if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+			return ECommandPerformed;
+
+		if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+			return ECommandPerformed;
+
+		edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
         if ( argc )
         {
-            BULOG_W( pEdict, "Error, invalid arguments count." );
+            BULOG_W( pEdict, "Error, invalid parameters count." );
             return ECommandError;
         }
         else
@@ -1125,12 +1205,15 @@ public:
         m_iAccessLevel = FCommandAccessConfig;
     }
 
-    TCommandResult Execute( CClient* pClient, int argc, const char** /*argv*/ )
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv )
     {
-        edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
+		if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+			return ECommandPerformed;
+
+		edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
         if ( argc )
         {
-            BULOG_W( pEdict, "Error, invalid arguments count." );
+            BULOG_W( pEdict, "Error, invalid parameters count." );
             return ECommandError;
         }
         else
@@ -1149,16 +1232,19 @@ public:
 class CVersionCommand: public CConsoleCommand
 {
 public:
-    CVersionCommand()
+	CVersionCommand(): CConsoleCommand()
     {
         m_sCommand = "version";
         m_sHelp = "display plugin version";
         m_iAccessLevel = FCommandAccessConfig;
     }
 
-    TCommandResult Execute( CClient* pClient, int /*argc*/, const char** /*argv*/ )
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv )
     {
-        edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
+		if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+			return ECommandPerformed;
+
+		edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
         BULOG_I( pEdict, "Version " PLUGIN_VERSION );
         return ECommandPerformed;
     }
@@ -1188,7 +1274,7 @@ public:
     virtual int CommandCompletionCallback( const char *pPartial, CUtlVector< CUtlString > &commands )
     {
         good::string sPartial(pPartial, true, true);
-        return AutoComplete((char*)sPartial.c_str(), sPartial.size(), commands, 0);
+        return AutoComplete(sPartial, commands, 0);
     }
 #endif
 

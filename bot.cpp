@@ -48,7 +48,8 @@ CBot::CBot( edict_t* pEdict, TBotIntelligence iIntelligence, TClass iClass ):
     m_iIntelligence(iIntelligence), m_iClass(iClass), m_iClassChange(0),
     r( rand()&0xFF ), g( rand()&0xFF ), b( rand()&0xFF ),
     m_aNearPlayers(CPlayers::Size()), m_aSeenEnemies(CPlayers::Size()),
-    m_aEnemies(CPlayers::Size()), m_aAllies(CPlayers::Size()),
+	m_aEnemies(CPlayers::Size()), m_aAllies(CPlayers::Size()), 
+	m_iNextCheckPlayer(0), m_pCurrentEnemy(NULL),
     m_cAttackDuckRangeSqr(0, SQR(400)),
     m_bTest(false), m_bCommandAttack(true), m_bCommandPaused(false), m_bCommandStopped(false),
 #if defined(DEBUG) || defined(_DEBUG)
@@ -165,7 +166,7 @@ void CBot::AddWeapon( const char* szWeaponName )
 {
     m_pController->SetActiveWeapon(szWeaponName);
     TWeaponId iId = WeaponSearch(szWeaponName);
-    if ( CWeapon::IsValid(iId) ) // As if grabbed a weapon: add default bullets and weapon.
+    if ( CWeapons::IsValid(iId) ) // As if grabbed a weapon: add default bullets and weapon.
         m_aWeapons[iId].AddWeapon();
     else
         WeaponCheckCurrent(true);
@@ -185,7 +186,9 @@ void CBot::Respawned()
     CPlayer::Respawned();
     BotMessage( "%s -> Respawned.", GetName() );
 
-    if ( iChangeClassRound && m_iClassChange )
+	m_bProtected = true;
+	
+	if ( iChangeClassRound && m_iClassChange )
         m_iClassChange--;
 
 #ifdef BOTRIX_CHAT
@@ -276,7 +279,7 @@ void CBot::Respawned()
     {
         CWeapons::GetRespawnWeapons( m_aWeapons, m_pPlayerInfo->GetTeamIndex(), m_iClass );
         WeaponsScan();
-        if ( !CWeapon::IsValid(m_iWeapon) )
+        if ( !CWeapons::IsValid(m_iWeapon) )
             WeaponCheckCurrent(true);
     }
     else
@@ -474,6 +477,9 @@ void CBot::PreThink()
 
     if ( m_bCommandPaused )
         return;
+
+	if ( m_pCurrentEnemy && m_pCurrentEnemy->IsProtected() )
+		EraseCurrentEnemy();
 
     if ( CWaypoints::Size() <= 3 )
     {
@@ -710,7 +716,7 @@ void CBot::ApplyPathFlags()
             m_vForward = wNext.vOrigin;
 
             CWaypointPath* pCurrentPath = CWaypoints::GetPath(iCurrentWaypoint, iNextWaypoint);
-            BASSERT( pCurrentPath, return );
+            BASSERT( pCurrentPath, return ); // TODO: check why it is happening sometimes?
 
             m_bLadderMove = FLAG_ALL_SET(FPathLadder, pCurrentPath->iFlags);
 
@@ -792,7 +798,7 @@ void CBot::PickItem( const CItem& cItem, TItemType iEntityType, TItemIndex iInde
         if ( m_bFeatureWeaponCheck )
         {
             TWeaponId iWeapon = CWeapons::AddWeapon(cItem.pItemClass, m_aWeapons);
-            if ( CWeapon::IsValid(iWeapon) )
+            if ( CWeapons::IsValid(iWeapon) )
             {
                 CWeaponWithAmmo& cWeapon = m_aWeapons[iWeapon];
                 BotMessage( "%s -> Picked weapon %s (%d/%d, %d/%d).", GetName(), cItem.pItemClass->sClassName.c_str(),
@@ -995,16 +1001,16 @@ void CBot::WeaponCheckCurrent( bool bAddToBotWeapons )
 
     if ( bAddToBotWeapons )
     {
-        const CWeaponWithAmmo& cNewWeapon = CWeapons::Get(iId);
+        const CWeaponWithAmmo& cNewWeapon = *CWeapons::Get(iId);
         m_aWeapons.push_back( cNewWeapon );
         iId = m_aWeapons.size()-1;
         m_aWeapons[iId].AddWeapon();
 
-        if ( !CWeapon::IsValid(m_iMeleeWeapon) && cNewWeapon.IsMelee() )
+        if ( !CWeapons::IsValid(m_iMeleeWeapon) && cNewWeapon.IsMelee() )
             m_iMeleeWeapon = iId;
-        else if ( !CWeapon::IsValid(m_iPhyscannon) && cNewWeapon.IsPhysics() )
+        else if ( !CWeapons::IsValid(m_iPhyscannon) && cNewWeapon.IsPhysics() )
             m_iPhyscannon = iId;
-        else if ( !CWeapon::IsValid(m_iBestWeapon) && cNewWeapon.IsRanged() )
+        else if ( !CWeapons::IsValid(m_iBestWeapon) && cNewWeapon.IsRanged() )
             m_iBestWeapon = iId;
 
         WeaponChange(iId); // As if just switching to this weapon.
@@ -1035,11 +1041,11 @@ void CBot::WeaponsScan()
 
     // Set bot's best weapon.
     m_iWeapon = CWeapons::GetBestWeapon(m_aWeapons);
-    if ( !CWeapon::IsValid(m_iWeapon) )
+    if ( !CWeapons::IsValid(m_iWeapon) )
         m_iWeapon = m_iMeleeWeapon; // Get melee weapon.
 
     m_iBestWeapon = m_iWeapon;
-    if ( CWeapon::IsValid(m_iWeapon) )
+    if ( CWeapons::IsValid(m_iWeapon) )
         WeaponChange( m_iWeapon );
     else
         BLOG_W( "%s -> No weapons available.", GetName() );
@@ -1059,10 +1065,10 @@ void CBot::UpdateWeapon()
         return;
     }
 
-    if ( !CWeapon::IsValid(m_iWeapon) || (m_aWeapons[m_iWeapon].GetName() != szCurrentWeapon) )
+    if ( !CWeapons::IsValid(m_iWeapon) || (m_aWeapons[m_iWeapon].GetName() != szCurrentWeapon) )
     {
         // Happens when out of bullets automatically.
-        if ( CWeapon::IsValid(m_iWeapon) )
+        if ( CWeapons::IsValid(m_iWeapon) )
             BLOG_W( "%s -> Current weapon is %s, should be %s.", GetName(),
                     szCurrentWeapon, m_aWeapons[m_iWeapon].GetName().c_str() );
         else
@@ -1075,7 +1081,7 @@ void CBot::UpdateWeapon()
         }
         else
         {
-            if ( CWeapon::IsValid(m_iWeapon) )
+            if ( CWeapons::IsValid(m_iWeapon) )
             {
                 if ( m_aWeapons[m_iWeapon].IsMelee() || m_aWeapons[m_iWeapon].IsPhysics() )
                     m_aWeapons[m_iWeapon].SetPresent(false);
@@ -1341,7 +1347,7 @@ void CBot::CheckAttackDuck( CPlayer* pPlayer )
     GoodAssert( m_bFeatureAttackDuckEnabled && !m_bDontAttack );
 
     // Don't duck if using melee weapon or too far away.
-    if ( !CWeapon::IsValid(m_iWeapon) || m_aWeapons[m_iWeapon].IsMelee() || !m_aWeapons[m_iWeapon].CanBeUsed(m_fDistanceSqrToEnemy) )
+    if ( !CWeapons::IsValid(m_iWeapon) || m_aWeapons[m_iWeapon].IsMelee() || !m_aWeapons[m_iWeapon].CanBeUsed(m_fDistanceSqrToEnemy) )
     {
         m_bAttackDuck = false;
         return;
@@ -1372,7 +1378,7 @@ void CBot::EnemyAim()
         return;
 
     m_vLook = m_pCurrentEnemy->GetHead();
-    if ( CWeapon::IsValid(m_iWeapon) )
+    if ( CWeapons::IsValid(m_iWeapon) )
     {
         CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
         for ( int i=CWeapon::SECONDARY; i >= CWeapon::PRIMARY; --i ) // Prefer secondary.
@@ -1427,7 +1433,7 @@ void CBot::WeaponChoose()
     if ( m_bStuckBreakObject || m_bStuckUsePhyscannon )
         return;
 
-    GoodAssert( CWeapon::IsValid(m_iWeapon) );
+    GoodAssert( CWeapons::IsValid(m_iWeapon) );
     CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
 
     if ( !cWeapon.CanUse() || ( m_pCurrentEnemy &&
@@ -1471,7 +1477,7 @@ void CBot::WeaponChoose()
     m_iBestWeapon = CWeapons::GetBestWeapon(m_aWeapons);
 
     // Choose melee weapon.
-    if ( !CWeapon::IsValid(m_iBestWeapon) && CWeapon::IsValid(m_iMeleeWeapon) )
+    if ( !CWeapons::IsValid(m_iBestWeapon) && CWeapons::IsValid(m_iMeleeWeapon) )
     {
         if ( m_aWeapons[m_iMeleeWeapon].IsPresent() )
             m_iBestWeapon = m_iMeleeWeapon;
@@ -1484,7 +1490,7 @@ void CBot::WeaponChoose()
         if ( !m_aWeapons[m_iWeapon].HasAmmoInClip(0) )
             m_bStayReloading = true;
     }
-    else if ( CWeapon::IsValid(m_iBestWeapon) )
+    else if ( CWeapons::IsValid(m_iBestWeapon) )
     {
         GoodAssert( m_aWeapons[m_iBestWeapon].IsPresent() );
         BotDebug( "%s -> Set best weapon %s.", GetName(),
@@ -1519,10 +1525,10 @@ bool CBot::WeaponSet( const good::string& sWeapon )
 void CBot::WeaponChange( TWeaponId iIndex )
 {
     //GoodAssert( iIndex != m_iWeapon ); // This can happen when out of bullets, and autoswitch is made to other weapon.
-    GoodAssert( m_bFeatureWeaponCheck && CWeapon::IsValid(iIndex) );
+    GoodAssert( m_bFeatureWeaponCheck && CWeapons::IsValid(iIndex) );
 
     CWeaponWithAmmo* pOld = NULL;
-    if ( CWeapon::IsValid(m_iWeapon) )
+    if ( CWeapons::IsValid(m_iWeapon) )
         pOld = &m_aWeapons[m_iWeapon];
 
     CWeaponWithAmmo& cNew = m_aWeapons[iIndex];
@@ -1565,7 +1571,7 @@ void CBot::WeaponShoot( int iSecondary )
 
     if ( m_bFeatureWeaponCheck )
     {
-        GoodAssert( CWeapon::IsValid(m_iWeapon) );
+        GoodAssert( CWeapons::IsValid(m_iWeapon) );
         CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
         GoodAssert( cWeapon.CanUse() );
 
@@ -1714,7 +1720,7 @@ bool CBot::ResolveStuckMove()
 
     if ( pObject )
     {
-        bool bCanThrow = !m_bDontThrowObjects && CWeapon::IsValid(m_iPhyscannon) && m_aWeapons[m_iPhyscannon].IsPresent() && !pObject->IsHeavy();
+        bool bCanThrow = !m_bDontThrowObjects && CWeapons::IsValid(m_iPhyscannon) && m_aWeapons[m_iPhyscannon].IsPresent() && !pObject->IsHeavy();
         bool bThrowAtEnemy = bCanThrow && m_pCurrentEnemy && !m_bTest && !m_bDontAttack && !m_aWeapons[m_iPhyscannon].GetBaseWeapon()->bForbidden;
 
         if ( !m_bDontBreakObjects && pObject->IsBreakable() && !pObject->IsExplosive() && !bThrowAtEnemy ) // Prefer to throw at enemy.
@@ -2180,7 +2186,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
     //---------------------------------------------------------------
     if ( !m_bDontAttack )
     {
-        CWeaponWithAmmo* pWeapon = CWeapon::IsValid(m_iWeapon) ? &m_aWeapons[m_iWeapon] : NULL;
+        CWeaponWithAmmo* pWeapon = CWeapons::IsValid(m_iWeapon) ? &m_aWeapons[m_iWeapon] : NULL;
         if ( m_pCurrentEnemy )
         {
             GoodAssert( m_pCurrentEnemy != this );
@@ -2309,7 +2315,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
     if ( m_bNeedAttack )
     {
         // Set melee weapon.
-        if ( (m_iWeapon != m_iMeleeWeapon) && CWeapon::IsValid(m_iMeleeWeapon) )
+        if ( (m_iWeapon != m_iMeleeWeapon) && CWeapons::IsValid(m_iMeleeWeapon) )
         {
             if ( m_aWeapons[m_iWeapon].CanChange() )
                 WeaponChange(m_iMeleeWeapon);
@@ -2328,7 +2334,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
             }
             else if ( CBotrixPlugin::fTime < m_fEndActionTime ) // Stop attacking after m_fEndActionTime.
             {
-                if ( CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].CanUse() )
+                if ( CWeapons::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].CanUse() )
                     WeaponShoot();
             }
             else
@@ -2429,7 +2435,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
 
         if ( pObject )
         {
-            if ( m_bFeatureWeaponCheck && CWeapon::IsValid(m_iMeleeWeapon) && (m_iWeapon != m_iMeleeWeapon) && m_aWeapons[m_iWeapon].CanChange() &&
+            if ( m_bFeatureWeaponCheck && CWeapons::IsValid(m_iMeleeWeapon) && (m_iWeapon != m_iMeleeWeapon) && m_aWeapons[m_iWeapon].CanChange() &&
                  ( !m_pCurrentEnemy || (m_iWeapon == m_iPhyscannon) || !m_aWeapons[m_iWeapon].CanBeUsed( pObject->CurrentPosition().DistToSqr(GetHead()) ) ) )
             {
                 WeaponChange(m_iMeleeWeapon);
@@ -2442,7 +2448,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
             {
                 if ( pObject && pObject->IsBreakable() && !pObject->IsExplosive() ) // Object still there.
                 {
-                    if ( CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].CanUse() )
+                    if ( CWeapons::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].CanUse() )
                         WeaponShoot();
 
                     if ( (CBotrixPlugin::fTime >= m_fEndAimTime + 1.0f) ) // Maybe object moved.

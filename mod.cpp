@@ -33,6 +33,8 @@ bool CMod::bIntelligenceInBotName = true;
 bool CMod::bHeadShotDoesMoreDamage = true;
 bool CMod::bUseModels = true;
 
+float CMod::fSpawnProtectionTime = 0;
+
 //TDeathmatchFlags CMod::iDeathmatchFlags = -1;
 
 int CMod::iPlayerHeight = 72;

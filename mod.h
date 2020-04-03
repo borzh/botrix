@@ -144,6 +144,8 @@ public: // Static members.
 	static bool bHeadShotDoesMoreDamage;     ///< HL2DM, CSS have that (true by default).
 	static bool bUseModels;                  ///< HL2DM, CSS have that (true by default).
 
+	static float fSpawnProtectionTime;       ///< Spawn protection time, 0 by default. Can be set by a console command.
+
 //    static TDeathmatchFlags iDeathmatchFlags;///< Flags for deathmatch mode.
 
     // Mod dependant variables that should be set at plugin load.

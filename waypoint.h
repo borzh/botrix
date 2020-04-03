@@ -64,7 +64,7 @@ public: // Methods.
     }
 
 
-    /// Get ammo from waypoint argument.
+    /// Get ammo from waypoint argument. If the ammo is for secondary weapon function (right click), then bIsSecondary is set.
     static int GetAmmo( bool& bIsSecondary, int iArgument )
     {
         int iResult = GET_1ST_BYTE(iArgument);
@@ -77,13 +77,10 @@ public: // Methods.
 
 
     /// Get weapon index from waypoint argument.
-    static int GetWeaponIndex( int iArgument ) { return GET_2ND_BYTE(iArgument) & 0x0F; }
+    static TWeaponId GetWeaponId( int iArgument ) { return GET_2ND_BYTE(iArgument); }
 
-    /// Get weapon subindex from waypoint argument.
-    static int GetWeaponSubIndex( int iArgument ) { return GET_2ND_BYTE(iArgument) >> 4; }
-
-    /// Set weapon index/subindex for waypoint argument.
-    static void SetWeapon( int iIndex, int iSubIndex, int& iArgument ) { SET_2ND_BYTE( iIndex | (iSubIndex<<4), iArgument ); }
+    /// Set weapon for waypoint argument.
+    static void SetWeaponId( TWeaponId iId, int& iArgument ) { SET_2ND_BYTE( iId, iArgument ); }
 
 
     /// Get armor from waypoint argument.

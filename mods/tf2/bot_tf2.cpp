@@ -194,7 +194,7 @@ void CBot_TF2::CheckEngagedEnemy()
         if ( m_pCurrentEnemy ) // Seeing new enemy.
         {
             m_pChasedEnemy = m_pCurrentEnemy;
-            m_bChasing = CWeapon::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsMelee();
+            m_bChasing = CWeapons::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsMelee();
             m_bNeedMove = m_bUseNavigatorToMove = false; // Start moving on next tick.
         }
         else
@@ -228,7 +228,7 @@ void CBot_TF2::CheckEngagedEnemy()
         m_bNeedMove = m_bDestinationChanged = true;
         m_bUseNavigatorToMove = m_bChasing = false;
 
-        if ( CWeapon::IsValid(m_iWeapon) )
+        if ( CWeapons::IsValid(m_iWeapon) )
         {
             if ( m_aWeapons[m_iWeapon].IsMelee() || m_aWeapons[m_iWeapon].NeedsToBeCloser(m_fDistanceSqrToEnemy) ) // Rush toward enemy.
             {
@@ -275,7 +275,7 @@ void CBot_TF2::CheckEngagedEnemy()
     }
     else if ( m_pCurrentEnemy )
     {
-        if ( m_bUseNavigatorToMove && CWeapon::IsValid(m_iWeapon) && 
+        if ( m_bUseNavigatorToMove && CWeapons::IsValid(m_iWeapon) && 
              ( !m_aWeapons[m_iWeapon].IsMelee() && !m_aWeapons[m_iWeapon].NeedsToBeCloser(m_fDistanceSqrToEnemy) ) )
             m_bNeedMove = m_bUseNavigatorToMove = false; // Stop running and start moving randomly.
         else if ( m_bChasing && (iCurrentWaypoint != m_pChasedEnemy->iCurrentWaypoint ) && (CBotrixPlugin::fTime >= m_fChaseEnemyTime) )
@@ -290,7 +290,7 @@ void CBot_TF2::CheckNewTasks( bool bForceTaskChange )
     TBotTask iNewTask = EBotTaskInvalid;
     bool bForce = bForceTaskChange || (m_iCurrentTask == EBotTaskInvalid);
 
-    const CWeapon* pWeapon = ( m_bFeatureWeaponCheck && CWeapon::IsValid(m_iBestWeapon) )
+    const CWeapon* pWeapon = ( m_bFeatureWeaponCheck && CWeapons::IsValid(m_iBestWeapon) )
         ? m_aWeapons[m_iBestWeapon].GetBaseWeapon()
         : NULL;
     TBotIntelligence iWeaponPreference = m_iIntelligence;
@@ -381,7 +381,7 @@ restart_find_task: // TODO: remove gotos.
             iWeapon = CWeapons::GetRandomWeapon(iPreference, m_cSkipWeapons);
             if ( iWeapon != EWeaponIdInvalid )
             {
-                pEntityClass = CWeapons::Get(iWeapon).GetBaseWeapon()->pWeaponClass;
+				pEntityClass = CWeapons::Get(iWeapon)->GetBaseWeapon()->pWeaponClass;
                 break;
             }
         }
@@ -393,7 +393,7 @@ restart_find_task: // TODO: remove gotos.
                 iWeapon = CWeapons::GetRandomWeapon(iPreference, m_cSkipWeapons);
                 if ( iWeapon != EWeaponIdInvalid )
                 {
-                    pEntityClass = CWeapons::Get(iWeapon).GetBaseWeapon()->pWeaponClass;
+					pEntityClass = CWeapons::Get(iWeapon)->GetBaseWeapon()->pWeaponClass;
                     break;
                 }
             }

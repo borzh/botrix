@@ -34,8 +34,11 @@ public:
     /// Return true if player is a bot.
     bool IsBot() const { return m_bBot; }
 
-    /// Return true if player is alive.
-    bool IsAlive() const { return m_bAlive; }
+	/// Return true if player is alive.
+	bool IsAlive() const { return m_bAlive; }
+
+	/// Return true if player is protected.
+	bool IsProtected() const { return m_bProtected; }
 
 
     /// Get entity index of player.
@@ -77,6 +80,12 @@ public:
 //        a = m_pPlayerInfo->GetAbsAngles();
     }
 
+	/// Protect player for certain amount of time. 0 means don't protect, -1 means forever.
+	void Protect( float time ) {
+		m_bProtected = time != 0.0f;
+		m_fEndProtectionTime = time >= 0 ? CBotrixPlugin::fTime + time : -1;
+	}
+
 
     //------------------------------------------------------------------------------------------------------------
     // Virtual functions, client or bot should override these.
@@ -113,12 +122,15 @@ protected:
     float m_fNextDrawHullTime;       // Next time to draw player's hull.
 #endif
 
+	float m_fEndProtectionTime;      // Time when player's protection ends.
+
     good::string m_sName;            // Lowercased name of player.
     Vector m_vHead;                  // Head position of player.
     Vector m_vPrevHead;              // Previous position of player.
 
     bool m_bBot:1;                   // This member will be set to true by bot.
-    bool m_bAlive:1;                 // IPlayerInfo::IsDead() returns true only when player is dead, not when becomes respawnable.
+	bool m_bAlive : 1;               // IPlayerInfo::IsDead() returns true only when player is dead, not when becomes respawnable.
+	bool m_bProtected : 1;           // If this player / bot is protected, then bots shouldn't attack him.
 
 };
 
@@ -161,6 +173,9 @@ public:
         }
         return iCount;
     }
+
+	/// Get players names on this server.
+	static void GetNames( StringVector& aNames, bool bGetBots = true, bool bGetUsers = true );
 
     /// Check amount of bots on server.
     static void CheckBotsCount();

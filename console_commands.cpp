@@ -6,6 +6,7 @@
 #include "clients.h"
 #include "config.h"
 #include "console_commands.h"
+#include "item.h"
 #include "waypoint.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -16,22 +17,32 @@
 
 good::unique_ptr<CBotrixCommand> CBotrixCommand::instance;
 
-const good::string sHelp("help"); // TODO: all commands.
+const good::string sHelp( "help" ); // TODO: all commands.
 
-const good::string sAll("all");
-const good::string sNone("none");
-const good::string sNext("next");
+const good::string sAll( "all" );
+const good::string sNone( "none" );
+const good::string sNext( "next" );
+
+const good::string sRandom( "random" );
 
 const good::string sWeapon = "weapon";
 const good::string sAmmo = "ammo";
 const good::string sHealth = "health";
 const good::string sArmor = "armor";
 const good::string sButton = "button";
-const good::string sFirstAngle = "first";
-const good::string sSecondAngle = "second";
+const good::string sFirstAngle = "angle1";
+const good::string sSecondAngle = "angle2";
+
+const good::string sCurrent = "current";
+const good::string sDestination = "destination";
+
+const good::string sUnlock = "unlock";
 
 extern char* szMainBuffer;
 extern int iMainBufferSize;
+
+StringVector aBoolsCompletion(2);
+StringVector aWaypointCompletion(2);
 
 //----------------------------------------------------------------------------------------------------------------
 // Singleton to access console variables.
@@ -119,36 +130,37 @@ int CConsoleCommand::AutoComplete( const char* partial, int partialLength,
 
 #else // BOTRIX_OLD_COMMAND_COMPLETION
 
-int CConsoleCommand::AutoComplete( char* partial, int partialLength, CUtlVector<CUtlString>& cCommands, int charIndex )
+int CConsoleCommand::AutoComplete( good::string& partial, CUtlVector<CUtlString>& cCommands, int charIndex )
 {
     int result = 0;
 
-    int iLen = partialLength - charIndex;
     const char* szSubPartial = &partial[charIndex];
+	int iLen = partial.size() - charIndex;
 
     if ( iLen <= m_sCommand.size() )
     {
         if ( strncmp( m_sCommand.c_str(), szSubPartial, iLen ) == 0 )
         {
             // Autocomplete only command name.
-            CUtlString sStr( partial, charIndex );
+            CUtlString sStr( partial.c_str(), charIndex );
             sStr.Append( m_sCommand.c_str() );
-			//sStr.Append(" ");
             cCommands.AddToTail( sStr );
             result++;
         }
     }
     else
     {
-		char last = szSubPartial[m_sCommand.size()];
+		BASSERT(m_cAutoCompleteArguments.size() == m_cAutoCompleteValues.size(), return result);
+
+		char last = szSubPartial[m_sCommand.size()]; // Can't be 0, because iLen > command length
         if ( (m_cAutoCompleteArguments.size() > 0) &&
              (strncmp( m_sCommand.c_str(), szSubPartial, m_sCommand.size() ) == 0) &&
-			 (last == ' ' || last == 0))
+			 (last == ' ') )
         {
             szSubPartial += m_sCommand.size() + 1;
             iLen -= m_sCommand.size() + 1;
 
-            while ( *szSubPartial == ' ' )
+			while ( iLen > 0 && *szSubPartial == ' ')
             {
                 ++szSubPartial;
                 --iLen;
@@ -156,24 +168,115 @@ int CConsoleCommand::AutoComplete( char* partial, int partialLength, CUtlVector<
 
             // Autocomplete command name with arguments.
             good::string sArg(szSubPartial, false, false, iLen);
-            int lastSpace = sArg.rfind(' ');
+			int currentArg = 0, lastSpace = 0;
+			bool hadQuote = false;
+			for (int i = 0; i < iLen; ++i) {
+				if ( sArg[i] == '"' )
+					hadQuote = !hadQuote;
+				else if ( (sArg[i] == ' ') && !hadQuote )
+				{
+					while ( sArg[++i] == ' ' ); // Skip spaces.
+					lastSpace = i;
+					i--; // Will increment i again.
+					++currentArg;
+				}
+			}
 
-            if ( !m_bAutoCompleteOnlyOneArgument || (lastSpace == good::string::npos) ) // Several args or this is first arg.
+			// Get current argument type.
+			TConsoleAutoCompleteArg argType = currentArg < m_cAutoCompleteArguments.size() ? m_cAutoCompleteArguments[currentArg] : EConsoleAutoCompleteArgInvalid;
+			if ( argType == EConsoleAutoCompleteArgInvalid )
+			{
+				switch ( m_cAutoCompleteArguments.back() )
+				{
+				case EConsoleAutoCompleteArgValuesForever:
+					argType = EConsoleAutoCompleteArgValues;
+					currentArg = m_cAutoCompleteValues.size() - 1;
+					break;
+
+				case EConsoleAutoCompleteArgPlayersForever:
+					argType = EConsoleAutoCompleteArgPlayers;
+					break;
+
+				case EConsoleAutoCompleteArgUsersForever:
+					argType = EConsoleAutoCompleteArgUsers;
+					break;
+
+				case EConsoleAutoCompleteArgBotsForever:
+					argType = EConsoleAutoCompleteArgBots;
+					break;
+
+				case EConsoleAutoCompleteArgWaypointForever:
+					argType = EConsoleAutoCompleteArgWaypoint;
+					break;
+
+				default:
+					return result;
+				}
+			}
+
+			// Get completion values.
+			StringVector completionValues;
+			StringVector* completion = NULL;
+			switch (argType) {
+			case EConsoleAutoCompleteArgBool:
+				completion = &aBoolsCompletion;
+				break;
+
+			case EConsoleAutoCompleteArgValues:
+			case EConsoleAutoCompleteArgValuesForever:
+				completion = &m_cAutoCompleteValues[currentArg];
+				break;
+
+			case EConsoleAutoCompleteArgWaypoint:
+			case EConsoleAutoCompleteArgWaypointForever:
+				completion = &aWaypointCompletion;
+				break;
+
+			case EConsoleAutoCompleteArgBots:
+			case EConsoleAutoCompleteArgBotsForever:
+			case EConsoleAutoCompleteArgUsers:
+			case EConsoleAutoCompleteArgUsersForever:
+			case EConsoleAutoCompleteArgPlayers:
+			case EConsoleAutoCompleteArgPlayersForever:
+				completionValues.push_back( sAll );
+				CPlayers::GetNames( 
+					completionValues, 
+					argType != EConsoleAutoCompleteArgUsers && argType != EConsoleAutoCompleteArgUsersForever,
+					argType != EConsoleAutoCompleteArgBots && argType != EConsoleAutoCompleteArgBotsForever
+				);
+				completion = &completionValues;
+				for ( int i = 1; i < completionValues.size(); ++i )
+				{
+					if ( completionValues[i].find(' ') != good::string::npos )
+					{
+						good::string_buffer sBuff( completionValues[i].size() + 2 );
+						sBuff.append('"');
+						sBuff.append(completionValues[i]);
+						sBuff.append('"');
+						completionValues[i] = sBuff;
+					}
+				}
+				break;
+
+			default:
+				return result;
+			}
+			
+			if ( completion->empty() )
+				return result;
+            
+			good::string sPartArg(&sArg[lastSpace], true, true, iLen - lastSpace);
+			good::string sCmd(partial.c_str(), true, true, partial.size() - sPartArg.size());
+
+			for ( int i = 0; i < completion->size(); ++i )
             {
-				int pos = lastSpace == good::string::npos ? 0 : lastSpace + 1; // Include last space.
-				good::string sPartArg(&sArg[pos], true, true, iLen - pos);
-				good::string sCmd(partial, true, true, partialLength - sPartArg.size());
-
-                for ( int i = 0; i < m_cAutoCompleteArguments.size(); ++i )
+				const good::string& arg = (*completion)[i];
+                if ( good::starts_with(arg, sPartArg) )
                 {
-                    const good::string& arg = m_cAutoCompleteArguments[i];
-                    if ( good::starts_with(arg, sPartArg) )
-                    {
-                        CUtlString sStr( sCmd.c_str() );
-                        sStr.Append( arg.c_str() );
-                        cCommands.AddToTail( sStr );
-                        result++;
-                    }
+                    CUtlString sStr( sCmd.c_str() );
+                    sStr.Append( arg.c_str() );
+                    cCommands.AddToTail( sStr );
+                    result++;
                 }
             }
         }
@@ -182,6 +285,16 @@ int CConsoleCommand::AutoComplete( char* partial, int partialLength, CUtlVector<
 }
 
 #endif // BOTRIX_OLD_COMMAND_COMPLETION
+
+TCommandResult CConsoleCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+	if ( argc == 1 && sHelp == argv[0] )
+	{
+		PrintCommand( pClient ? pClient->GetEdict() : NULL, 0 );
+		return ECommandPerformed;
+	}
+	return ECommandNotFound;
+}
 
 void CConsoleCommand::PrintCommand( edict_t* pPrintTo, int indent )
 {
@@ -205,7 +318,6 @@ void CConsoleCommand::PrintCommand( edict_t* pPrintTo, int indent )
     if ( m_sDescription.length() > 0 )
         BULOG_I( pPrintTo, "%s  %s", szMainBuffer, m_sDescription.c_str() );
 }
-
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -260,21 +372,18 @@ int CConsoleCommandContainer::AutoComplete( const char* partial, int partialLeng
 
 #else // BOTRIX_OLD_COMMAND_COMPLETION
 
-int CConsoleCommandContainer::AutoComplete( char* partial, int partialLength, CUtlVector< CUtlString > &cCommands, int charIndex )
+int CConsoleCommandContainer::AutoComplete( good::string& partial, CUtlVector< CUtlString > &cCommands, int charIndex )
 {
     int result = 0;
     int command_size = m_sCommand.size();
 
-    if ( command_size >= partialLength - charIndex ) // Only add command to commands array.
+    if ( command_size >= partial.size() - charIndex ) // Only add this command to commands array.
     {
-        if ( strncmp(m_sCommand.c_str(), &partial[charIndex], partialLength - charIndex) == 0 )
+        if ( strncmp(m_sCommand.c_str(), &partial[charIndex], partial.size() - charIndex) == 0 )
         {
             // Autocomplete only command name.
-            partial[charIndex] = 0;
-
-            CUtlString sStr( partial );
+            CUtlString sStr( partial.c_str(), charIndex );
             sStr.Append( m_sCommand.c_str() );
-			//sStr.Append(" ");
             cCommands.AddToTail( sStr );
             result++;
         }
@@ -283,8 +392,9 @@ int CConsoleCommandContainer::AutoComplete( char* partial, int partialLength, CU
     {
 		if (strncmp(m_sCommand.c_str(), &partial[charIndex], command_size) == 0)
         {
+			int partialLength = partial.size();
             int iLen = partialLength - charIndex - command_size - 1;
-            const char* szSubPartial = &partial[partialLength-iLen];
+            const char* szSubPartial = &partial[partialLength - iLen];
             while ( *szSubPartial == ' ' )
             {
                 szSubPartial++;
@@ -292,7 +402,7 @@ int CConsoleCommandContainer::AutoComplete( char* partial, int partialLength, CU
             }
 
             for ( int i = 0; i < m_aCommands.size(); i++ )
-                result += m_aCommands[i]->AutoComplete(partial, partialLength, cCommands, partialLength-iLen);
+                result += m_aCommands[i]->AutoComplete(partial, cCommands, partialLength - iLen);
         }
     }
 
@@ -303,6 +413,9 @@ int CConsoleCommandContainer::AutoComplete( char* partial, int partialLength, CU
 
 TCommandResult CConsoleCommandContainer::Execute( CClient* pClient, int argc, const char** argv )
 {
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
     if ( argc > 0 )
     {
         for ( int i = 0; i < m_aCommands.size(); i ++ )
@@ -338,6 +451,27 @@ void CConsoleCommandContainer::PrintCommand( edict_t* pPrintTo, int indent )
 
 
 //----------------------------------------------------------------------------------------------------------------
+// Userful functions.
+//----------------------------------------------------------------------------------------------------------------
+TWaypointId GetWaypointId( int iCurrentIndex, int argc, const char **argv, CClient *pClient, int iDefaultId )
+{
+	TWaypointId id = -1;
+	if ( iCurrentIndex == argc )
+		id = iDefaultId;
+	else if ( iCurrentIndex < argc )
+	{
+		if ( sCurrent == argv[iCurrentIndex] )
+			id = pClient->iCurrentWaypoint;
+		else if ( sDestination == argv[iCurrentIndex] )
+			id = pClient->iDestinationWaypoint;
+		else
+			sscanf( argv[iCurrentIndex], "%d", &id );
+	}
+	return id;
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
 // Waypoints commands.
 //----------------------------------------------------------------------------------------------------------------
 CWaypointDrawFlagCommand::CWaypointDrawFlagCommand()
@@ -347,16 +481,23 @@ CWaypointDrawFlagCommand::CWaypointDrawFlagCommand()
     m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::WaypointDrawFlagsToString(FWaypointDrawAll);
     m_iAccessLevel = FCommandAccessWaypoint;
 
-    m_cAutoCompleteArguments.push_back(sNone);
-	m_cAutoCompleteArguments.push_back(sAll);
-	m_cAutoCompleteArguments.push_back(sNext);
+	StringVector args;
+	args.push_back(sNone);
+	args.push_back(sAll);
+	args.push_back(sNext);
 	for (int i = 0; i < EWaypointDrawFlagTotal; ++i)
-        m_cAutoCompleteArguments.push_back( CTypeToString::WaypointDrawFlagsToString(1<<i).duplicate() );
+		args.push_back(CTypeToString::WaypointDrawFlagsToString(1 << i).duplicate());
+
+	m_cAutoCompleteValues.push_back(args);
+	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValuesForever);
 }
 
 TCommandResult CWaypointDrawFlagCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -409,8 +550,11 @@ TCommandResult CWaypointDrawFlagCommand::Execute( CClient* pClient, int argc, co
     return ECommandPerformed;
 }
 
-TCommandResult CWaypointResetCommand::Execute( CClient* pClient, int /*argc*/, const char** /*argv*/ )
+TCommandResult CWaypointResetCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
     if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
@@ -424,9 +568,12 @@ TCommandResult CWaypointResetCommand::Execute( CClient* pClient, int /*argc*/, c
     return ECommandPerformed;
 }
 
-TCommandResult CWaypointCreateCommand::Execute( CClient* pClient, int /*argc*/, const char** /*argv*/ )
+TCommandResult CWaypointCreateCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+	
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -458,21 +605,36 @@ TCommandResult CWaypointCreateCommand::Execute( CClient* pClient, int /*argc*/, 
     return ECommandPerformed;
 }
 
+CWaypointRemoveCommand::CWaypointRemoveCommand()
+{
+	m_sCommand = "remove";
+	m_sHelp = "delete waypoints";
+	m_sDescription = "Arguments can be: current / destination / other waypoint id(s)";
+	m_iAccessLevel = FCommandAccessWaypoint;
+
+	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgWaypoint);
+	m_cAutoCompleteValues.push_back(StringVector());
+}
+
 TCommandResult CWaypointRemoveCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
     }
 
-    TWaypointId id = -1;
-    if (argc == 0)
-        id = pClient->iCurrentWaypoint;
-	else if (argc == 1) {
-		if (strcmp(argv[0], "current") == 0)
+	TWaypointId id = -1;
+	if (argc == 0)
+		id = pClient->iCurrentWaypoint;
+	else if (argc == 1)
+	{
+		if (sCurrent == argv[0])
 			id = pClient->iCurrentWaypoint;
-		if (strcmp(argv[0], "destination") == 0)
+		else if (sDestination == argv[0])
 			id = pClient->iDestinationWaypoint;
 		else
 			sscanf(argv[0], "%d", &id);
@@ -521,38 +683,28 @@ TCommandResult CWaypointRemoveCommand::Execute( CClient* pClient, int argc, cons
 
 TCommandResult CWaypointMoveCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
     }
+	if ( argc > 1 )
+	{
+		BLOG_W( "Invalid parameters count." );
+		return ECommandError;
+	}
 
-    TWaypointId id = -1;
-    if (argc == 0)
-        id = pClient->iDestinationWaypoint;
-    else if ( (argc == 1) || (argc == 4) )
-        sscanf(argv[0], "%d", &id);
-    else if ( argc != 3 )
-    {
-        BULOG_W(pClient->GetEdict(), "Error, invalid arguments count (waypoint id & point x/y/z).");
-        return ECommandError;
-    }
-
-    Vector vOrigin( pClient->GetHead() );
-    if ( argc >= 3 )
-    {
-        int iValue = 0;
-        sscanf(argv[argc - 3], "%d", &iValue); vOrigin.x = iValue;
-        sscanf(argv[argc - 2], "%d", &iValue); vOrigin.y = iValue;
-        sscanf(argv[argc - 1], "%d", &iValue); vOrigin.z = iValue;
-    }
-
+	TWaypointId id = GetWaypointId( 0, argc, argv, pClient, pClient->iCurrentWaypoint );	
     if ( !CWaypoints::IsValid(id) )
     {
-        BULOG_W(pClient->GetEdict(), "Error, invalid given or destination waypoint.");
+        BULOG_W(pClient->GetEdict(), "Error, invalid waypoint %s (move closer to some waypoint).", argc == 0 ? "current" : argv[0]);
         return ECommandError;
     }
 
+	Vector vOrigin( pClient->GetHead() );
     CWaypoints::Move(id, vOrigin);
     BULOG_I(pClient->GetEdict(), "Set new position for waypoint %d (%d, %d, %d).", id, (int)vOrigin.x, (int)vOrigin.y, (int)vOrigin.z);
 
@@ -564,7 +716,10 @@ TCommandResult CWaypointMoveCommand::Execute( CClient* pClient, int argc, const 
 
 TCommandResult CWaypointAutoCreateCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -592,9 +747,12 @@ TCommandResult CWaypointAutoCreateCommand::Execute( CClient* pClient, int argc, 
 }
 
 
-TCommandResult CWaypointClearCommand::Execute( CClient* pClient, int /*argc*/, const char** /*argv*/ )
+TCommandResult CWaypointClearCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -623,7 +781,10 @@ TCommandResult CWaypointClearCommand::Execute( CClient* pClient, int /*argc*/, c
 
 TCommandResult CWaypointAddTypeCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -679,18 +840,16 @@ TCommandResult CWaypointAddTypeCommand::Execute( CClient* pClient, int argc, con
 
 TCommandResult CWaypointRemoveTypeCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
     }
 
-    TWaypointId id = -1;
-    if (argc == 0)
-        id = pClient->iCurrentWaypoint;
-    else if (argc == 1)
-        sscanf(argv[0], "%d", &id);
-
+	TWaypointId id = GetWaypointId( 0, argc, argv, pClient, pClient->iCurrentWaypoint );
     if ( CWaypoints::IsValid(id) )
     {
         CWaypoint& w = CWaypoints::Get(id);
@@ -707,22 +866,51 @@ TCommandResult CWaypointRemoveTypeCommand::Execute( CClient* pClient, int argc, 
 
 CWaypointArgumentCommand::CWaypointArgumentCommand()
 {
-    m_sCommand = "angle";
-    m_sHelp = "set waypoint angles";
-    m_iAccessLevel = FCommandAccessWaypoint;
-    //m_cAutoCompleteArguments.push_back(sWeapon);
-    //m_cAutoCompleteArguments.push_back(sAmmo);
-    //m_cAutoCompleteArguments.push_back(sHealth);
-    //m_cAutoCompleteArguments.push_back(sArmor);
-    //m_cAutoCompleteArguments.push_back(sButton);
-	m_bAutoCompleteOnlyOneArgument = true;
-    m_cAutoCompleteArguments.push_back(sFirstAngle);
-    m_cAutoCompleteArguments.push_back(sSecondAngle);
+    m_sCommand = "argument";
+	m_sHelp = "set waypoint argument";
+	m_sDescription = "Parameters: (waypoint) (key) (value), where key can be angle1 / angle2 / weapon / ammo / health /";
+	m_iAccessLevel = FCommandAccessWaypoint;
+
+	StringVector args0, args1, args2;
+
+	args0.push_back(sFirstAngle);
+	args0.push_back(sSecondAngle);
+	args0.push_back(sButton);
+
+#define NO_ITEMS_AVAILABLE
+#ifdef NO_ITEMS_AVAILABLE
+	args0.push_back(sWeapon);
+	args0.push_back(sAmmo);
+	args0.push_back(sHealth);
+	args0.push_back(sArmor);
+#endif
+
+	for ( TWeaponId weapon = 0; weapon < CWeapons::Size(); ++weapon )
+	{
+		const CWeaponWithAmmo& cWeapon = *CWeapons::Get(weapon);
+		args1.push_back( cWeapon.GetName().duplicate() );
+		
+		auto ammos = cWeapon.GetBaseWeapon()->aAmmos;
+		for (int ammo = 0; ammo < ammos->size(); ++ammo)
+			args2.push_back( ammos->at(ammo)->sClassName );
+	}
+
+	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValues);
+	m_cAutoCompleteValues.push_back(args0);
+
+	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValues);
+	m_cAutoCompleteValues.push_back(args1);
+
+	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValues);
+	m_cAutoCompleteValues.push_back(args2);
 }
 
 TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -750,12 +938,22 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
     if ( argc == 0 )
     {
         if ( bWeapon )
-            BULOG_I(pClient->GetEdict(), "Weapon index %d, subindex %d.", CWaypoint::GetWeaponIndex(w.iArgument), CWaypoint::GetWeaponSubIndex(w.iArgument));
-        if ( FLAG_ALL_SET_OR_0(FWaypointAmmo, w.iFlags) )
-        {
-            bool bIsSecondary; int iAmmo = CWaypoint::GetAmmo(bIsSecondary, w.iArgument);
-            BULOG_I(pClient->GetEdict(), "Weapon ammo %d, secondary %s.", iAmmo, bIsSecondary ? "yes" : "no");
-        }
+		{
+			TWeaponId iWeaponId = CWaypoint::GetWeaponId(w.iArgument);
+			const CWeaponWithAmmo *pWeapon = CWeapons::Get(iWeaponId);
+			BULOG_I( pClient->GetEdict(), "Weapon: %s.", pWeapon == NULL ? "invalid" : pWeapon->GetName() );
+			if ( pWeapon && FLAG_SOME_SET(FWaypointAmmo, w.iFlags) )
+			{
+				bool bIsSecondary; int iAmmo = CWaypoint::GetAmmo(bIsSecondary, w.iArgument);
+				auto aAmmos = pWeapon->GetBaseWeapon()->aAmmos[ bIsSecondary ? CWeapon::SECONDARY : CWeapon::PRIMARY ];
+
+				if ( iAmmo < aAmmos.size() )
+					BULOG_I(pClient->GetEdict(), "Weapon ammo %s, secondary %s.", aAmmos[iAmmo]->szEngineName, bIsSecondary ? "yes" : "no");
+				else
+					BULOG_I(pClient->GetEdict(), "Weapon ammo invalid.");
+			}
+		}
+		
         if ( bHealth )
             BULOG_I(pClient->GetEdict(), "Health %d.", CWaypoint::GetHealth(w.iArgument));
         if ( bArmor )
@@ -778,9 +976,16 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
     if ( sHelp == argv[0] )
     {
         BULOG_I(pClient->GetEdict(), "You can add next arguments:");
-        BULOG_I(pClient->GetEdict(), " - 'first_angle': set your current angles as waypoint first angles (camper, sniper, machines)");
-        BULOG_I(pClient->GetEdict(), " - 'second_angle': set your current angles as second angles (camper, sniper)");
-        return ECommandPerformed;
+        BULOG_I(pClient->GetEdict(), " - 'angle1': set your current angles as waypoint first angles (camper, sniper, machines)");
+		BULOG_I(pClient->GetEdict(), " - 'angle2': set your current angles as second angles (camper, sniper)");
+#ifdef NO_ITEMS_AVAILABLE
+		BULOG_I(pClient->GetEdict(), " - 'weapon': set waypoint's weapon");
+		BULOG_I(pClient->GetEdict(), " - 'ammo': set waypoint's ammo");
+		BULOG_I(pClient->GetEdict(), " - 'health': set waypoint's health amount");
+		BULOG_I(pClient->GetEdict(), " - 'armor': set waypoint's armor amount");
+#endif
+		BULOG_I(pClient->GetEdict(), " - 'button': set waypoint's button");
+		return ECommandPerformed;
     }
 
     int iArgument = w.iArgument;
@@ -790,211 +995,234 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
     CUtil::DeNormalizeAngle(angClient.y);
     BASSERT( -90.0f <= angClient.x && angClient.x <= 90.0f, return ECommandError );
 
-    for ( int i=0; i < argc; ++i )
+	bool bIsWeapon = sWeapon == argv[0];
+	int iWeaponId = EWeaponIdInvalid;
+
+#ifdef NO_ITEMS_AVAILABLE
+	if ( bIsWeapon || sAmmo == argv[0] )
     {
-        if ( sWeapon == argv[i] )
+		if ( argc < 2 )
         {
-            if ( i+2 >= argc )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, you must provide 2 arguments for weapon (index and subindex).");
-                return ECommandError;
-            }
-            if ( bAngle1 )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, you can't mix weapon/ammo with angles.");
-                return ECommandError;
-            }
-            if ( !bWeapon )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (weapon/ammo).");
-                return ECommandError;
-            }
-
-            int i1 = -1, i2 = -1;
-            sscanf(argv[++i], "%d", &i1);
-            sscanf(argv[++i], "%d", &i2);
-
-            if ( (i1 < 0) || (i1 > 15) || (i2 < 0) || (i2 > 15) )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, invalid weapon arguments (must be from 0 to 15).");
-                return ECommandError;
-            }
-            CWaypoint::SetWeapon(i1, i2, iArgument);
-        }
-
-        else if ( sAmmo == argv[i] )
-        {
-            if ( i+2 >= argc )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, you must provide 2 arguments to ammo (ammo amount and 0=primary/1=secondary).");
-                return ECommandError;
-            }
-            if ( bAngle1 )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, you can't mix weapon/ammo with angles.");
-                return ECommandError;
-            }
-            if ( !FLAG_SOME_SET(FWaypointAmmo, w.iFlags) )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (ammo).");
-                return ECommandError;
-            }
-
-            int i1 = -1, i2 = -1;
-            sscanf(argv[++i], "%d", &i1);
-            sscanf(argv[++i], "%d", &i2);
-
-            if ( (i1 < 0) || (i1 > 127) || (i2 < 0) || (i2 > 1) )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, invalid ammo arguments (must be 0 .. 127 / 0 .. 1).");
-                return ECommandError;
-            }
-            CWaypoint::SetAmmo(i1, i2 != 0, iArgument);
-        }
-
-        else if ( sHealth == argv[i] )
-        {
-            if ( i+1 >= argc )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, you must provide 1 argument to health/health_charger (health amount).");
-                return ECommandError;
-            }
-            if ( bAngle2 )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, you can't mix health with 2 angles.");
-                return ECommandError;
-            }
-            if ( !bHealth )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (health/health_charger).");
-                return ECommandError;
-            }
-
-            int i1 = -1;
-            sscanf(argv[++i], "%d", &i1);
-
-            if ( (i1 < 0) || (i1 > 100) )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, invalid health argument (must be from 0 to 100).");
-                return ECommandError;
-            }
-            CWaypoint::SetHealth(i1, iArgument);
-        }
-
-        else if ( sArmor == argv[i] )
-        {
-            if ( i+1 >= argc )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, you must provide 1 argument to armor/armor_charger (armor amount).");
-                return ECommandError;
-            }
-            if ( bAngle2 )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, you can't mix armor with 2 angles.");
-                return ECommandError;
-            }
-            if ( !bArmor )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (armor/armor_charger).");
-                return ECommandError;
-            }
-
-            int i1 = -1;
-            sscanf(argv[++i], "%d", &i1);
-
-            if ( (i1 < 0) || (i1 > 100) )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, invalid armor argument (must be from 0 to 100).");
-                return ECommandError;
-            }
-            CWaypoint::SetArmor(i1, iArgument);
-        }
-
-        else if ( sButton == argv[i] )
-        {
-            if ( i+1 >= argc )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, you must provide 1 argument to button (button index).");
-                return ECommandError;
-            }
-            if ( bAngle2 )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, you can't mix button with 2 angles.");
-                return ECommandError;
-            }
-            if ( !bButton )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (button/see_button).");
-                return ECommandError;
-            }
-
-            int i1 = -1;
-            sscanf(argv[++i], "%d", &i1);
-
-            int iButtonsCount = CItems::GetItems(EItemTypeButton).size();
-            if ( (i1 <= 0) || (i1 > iButtonsCount) )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, invalid button argument (must be from 1 to %d).", iButtonsCount);
-                return ECommandError;
-            }
-            CWaypoint::SetButton(i1, iArgument);
-        }
-
-        else if ( sFirstAngle == argv[i] )
-        {
-            if ( bWeapon )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, you can't mix weapon/ammo with angles.");
-                return ECommandError;
-            }
-            if ( !bAngle1 )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (camper/sniper/armor_charger/health_charger).");
-                return ECommandError;
-            }
-
-            int iPitch = angClient.x;
-            int iYaw = angClient.y;
-            if ( (CWaypoint::MIN_ANGLE_PITCH <= iPitch) && (iPitch <= CWaypoint::MAX_ANGLE_PITCH) &&
-                 (CWaypoint::MIN_ANGLE_PITCH <= iPitch) && (iPitch <= CWaypoint::MAX_ANGLE_PITCH) )
-                 CWaypoint::SetFirstAngle(iPitch, iYaw, iArgument);
-            else
-            {
-                BULOG_W(pClient->GetEdict(), "Error, up/down angle (pitch) must be from -64 to 63.");
-                return ECommandError;
-            }
-        }
-
-        else if ( sSecondAngle == argv[i] )
-        {
-            if ( bWeapon || bArmor || bHealth )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, you can't mix weapon/ammo/health/armor with two angles.");
-                return ECommandError;
-            }
-            if ( !bAngle2 )
-            {
-                BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (camper/sniper).");
-                return ECommandError;
-            }
-
-            int iPitch = angClient.x;
-            int iYaw = angClient.y;
-            if ( (CWaypoint::MIN_ANGLE_PITCH <= iPitch) && (iPitch <= CWaypoint::MAX_ANGLE_PITCH) &&
-                 (CWaypoint::MIN_ANGLE_PITCH <= iPitch) && (iPitch <= CWaypoint::MAX_ANGLE_PITCH) )
-                 CWaypoint::SetSecondAngle(iPitch, iYaw, iArgument);
-            else
-            {
-                BULOG_W(pClient->GetEdict(), "Error, up/down angle (pitch) must be from -64 to 63.");
-                return ECommandError;
-            }
-        }
-
-        else
-        {
-            BULOG_W(pClient->GetEdict(), "Error, invalid argument %s.", argv[i]);
+            BULOG_W(pClient->GetEdict(), "Error, you must provide weapon name.");
             return ECommandError;
         }
+		else if ( bIsWeapon && (argc != 2) )
+		{
+			BULOG_W(pClient->GetEdict(), "Error, invalid parameters count.");
+			return ECommandError;
+		}
+        if ( !bWeapon )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (weapon/ammo).");
+            return ECommandError;
+        }
+
+        if ( bAngle1 || bButton )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, you can't mix weapon/ammo with angles/buttons.");
+            return ECommandError;
+        }
+        iWeaponId = CWeapons::GetIdFromWeaponName(argv[1]);
+        if ( !CWeapons::IsValid(iWeaponId) )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, invalid weapon name.");
+            return ECommandError;
+        }
+		CWaypoint::SetWeaponId(iWeaponId, iArgument);
+
+		if ( !bIsWeapon ) // Is ammo.
+		{
+			if ( argc != 3 )
+			{
+				BULOG_W(pClient->GetEdict(), "Error, you must provide ammo name or invalid parameters count.");
+				return ECommandError;
+			}
+			if ( !FLAG_SOME_SET(FWaypointAmmo, w.iFlags) )
+			{
+				BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (ammo).");
+				return ECommandError;
+			}
+			if ( bAngle1 || bButton )
+			{
+				BULOG_W(pClient->GetEdict(), "Error, you can't mix weapon/ammo with angles/buttons.");
+				return ECommandError;
+			}
+
+			const CWeapon *pWeapon = CWeapons::Get(iWeaponId)->GetBaseWeapon();
+			BASSERT(pWeapon, return ECommandError);
+
+			bool bIsSecondary;
+			int iAmmo = pWeapon->GetAmmoIndexFromName(argv[2], bIsSecondary);
+
+			if ( iAmmo < 0 )
+			{
+				BULOG_W(pClient->GetEdict(), "Error, invalid ammo name.");
+				return ECommandError;
+			}
+			CWaypoint::SetAmmo(iAmmo, bIsSecondary, iArgument);
+		}
+	}
+
+    else if ( sHealth == argv[0] )
+    {
+        if ( argc != 2 )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, you must provide health amount or invalid parameters count.");
+            return ECommandError;
+        }
+		if ( !bHealth )
+		{
+			BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (health/health_charger).");
+			return ECommandError;
+		}
+        if ( bAngle2 )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, you can't mix health with 2 angles.");
+            return ECommandError;
+        }
+
+        int i1 = -1;
+        sscanf(argv[1], "%d", &i1);
+
+        if ( (i1 < 0) || (i1 > 100) )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, invalid health argument (must be from 0 to 100).");
+            return ECommandError;
+        }
+        CWaypoint::SetHealth(i1, iArgument);
+    }
+
+    else if ( sArmor == argv[0] )
+    {
+        if ( argc != 2 )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, you must provide armor amount or invalid parameters count.");
+            return ECommandError;
+        }
+		if ( !bArmor )
+		{
+			BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (armor/armor_charger).");
+			return ECommandError;
+		}
+        if ( bAngle2 )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, you can't mix armor with 2 angles.");
+            return ECommandError;
+        }
+
+        int i1 = -1;
+        sscanf(argv[1], "%d", &i1);
+
+        if ( (i1 < 0) || (i1 > 100) )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, invalid armor argument (must be from 0 to 100).");
+            return ECommandError;
+        }
+        CWaypoint::SetArmor(i1, iArgument);
+    }
+
+    else 
+#endif
+
+	if ( sButton == argv[0] )
+    {
+        if ( argc != 2 )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, you must provide button index  or invalid parameters count.");
+            return ECommandError;
+        }
+        if ( bAngle2 )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, you can't mix button with 2 angles.");
+            return ECommandError;
+        }
+        if ( !bButton )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (button/see_button).");
+            return ECommandError;
+        }
+
+        int i1 = -1;
+        sscanf(argv[1], "%d", &i1);
+
+        int iButtonsCount = CItems::GetItems(EItemTypeButton).size();
+        if ( (i1 < 0) || (i1 >= iButtonsCount) )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, invalid button argument (must be from 0 to %d).", iButtonsCount-1);
+            return ECommandError;
+        }
+        CWaypoint::SetButton(i1, iArgument);
+    }
+
+    else if ( sFirstAngle == argv[0] )
+    {
+		if ( argc != 1 && argc != 3 )
+		{
+			BULOG_W(pClient->GetEdict(), "Error, invalid parameters count.");
+			return ECommandError;
+		}
+        if ( bWeapon )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, you can't mix weapon/ammo with angles.");
+            return ECommandError;
+        }
+        if ( !bAngle1 )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (camper/sniper/armor_charger/health_charger).");
+            return ECommandError;
+        }
+
+        int iPitch = angClient.x;
+		int iYaw = angClient.y;
+
+		if ( (CWaypoint::MIN_ANGLE_PITCH <= iPitch) && (iPitch <= CWaypoint::MAX_ANGLE_PITCH) &&
+			 (CWaypoint::MIN_ANGLE_YAW <= iYaw) && (iYaw <= CWaypoint::MAX_ANGLE_YAW) )
+		{
+			CWaypoint::SetFirstAngle(iPitch, iYaw, iArgument);
+		}
+		else
+        {
+            BULOG_W(pClient->GetEdict(), "Error, up/down angle (pitch/yaw) must be from -64 to 63 / -128 to 128.");
+            return ECommandError;
+        }
+    }
+
+    else if ( sSecondAngle == argv[0] )
+    {
+		if ( argc != 1 && argc != 3 )
+		{
+			BULOG_W(pClient->GetEdict(), "Error, invalid parameters count.");
+			return ECommandError;
+		}
+        if ( bWeapon || bArmor || bHealth )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, you can't mix weapon/ammo/health/armor with two angles.");
+            return ECommandError;
+        }
+        if ( !bAngle2 )
+        {
+            BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (camper/sniper).");
+            return ECommandError;
+        }
+
+        int iPitch = angClient.x;
+        int iYaw = angClient.y;
+        if ( (CWaypoint::MIN_ANGLE_PITCH <= iPitch) && (iPitch <= CWaypoint::MAX_ANGLE_PITCH) &&
+			 (CWaypoint::MIN_ANGLE_YAW <= iYaw) && (iYaw <= CWaypoint::MAX_ANGLE_YAW) )
+		{
+			CWaypoint::SetSecondAngle(iPitch, iYaw, iArgument);
+        }
+		else
+        {
+			BULOG_W(pClient->GetEdict(), "Error, up/down angle (pitch/yaw) must be from -64 to 63 / -128 to 128.");
+			return ECommandError;
+        }
+    }
+	
+    else
+    {
+        BULOG_W(pClient->GetEdict(), "Error, invalid argument %s.", argv[0]);
+        return ECommandError;
     }
 
     w.iArgument = iArgument;
@@ -1003,64 +1231,81 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
 
 TCommandResult CWaypointInfoCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
     }
 
-    TWaypointId id = -1;
-    if (argc == 0)
-        id = pClient->iCurrentWaypoint;
-    else if (argc == 1)
-        sscanf(argv[0], "%d", &id);
+	for ( int arg = 0; arg < ( argc > 0 ? argc : 1 ); ++arg )
+	{
+		TWaypointId id = GetWaypointId( arg, argc, argv, pClient, pClient->iCurrentWaypoint );
+		if ( CWaypoints::IsValid( id ) )
+		{
+			CWaypoint& w = CWaypoints::Get( id );
+			const good::string& sFlags = CTypeToString::WaypointFlagsToString( w.iFlags );
+			BULOG_I( pClient->GetEdict(), "Waypoint id %d: flags %s", id, ( sFlags.size() > 0 ) ? sFlags.c_str() : sNone.c_str() );
+			BULOG_I( pClient->GetEdict(), "Origin: %.0f %.0f %.0f", w.vOrigin.x, w.vOrigin.y, w.vOrigin.z );
+		}
+		else
+		{
+			BULOG_W( pClient->GetEdict(), "Error, invalid waypoint (try to move closer to some waypoint)." );
+			return ECommandError;
+		}
+	}
+	return ECommandPerformed;
+}
 
-    if ( CWaypoints::IsValid(id) )
-    {
-        CWaypoint& w = CWaypoints::Get(id);
-        const good::string& sFlags = CTypeToString::WaypointFlagsToString(w.iFlags);
-        BULOG_I(pClient->GetEdict(), "Waypoint id %d: flags %s", id, (sFlags.size() > 0) ? sFlags.c_str() : sNone.c_str());
-        BULOG_I(pClient->GetEdict(), "Origin: %.0f %.0f %.0f", w.vOrigin.x, w.vOrigin.y, w.vOrigin.z);
-        return ECommandPerformed;
-    }
-    else
-    {
-        BULOG_W(pClient->GetEdict(), "Error, no waypoint nearby (move closer to waypoint).");
-        return ECommandError;
-    }
+CWaypointDestinationCommand::CWaypointDestinationCommand()
+{
+	m_sCommand = "destination";
+	m_sHelp = "lock / unlock path 'destination'";
+	m_sDescription = "Parameter: (waypoint / unlock). Current waypoint locked as 'destination' if omitted.";
+
+	StringVector args;
+	args.push_back( sUnlock );
+	args.push_back( sCurrent );
+	args.push_back( sDestination );
+
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+	m_cAutoCompleteValues.push_back( args );
 }
 
 TCommandResult CWaypointDestinationCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
     }
 
-    TWaypointId id = -1;
-    if (argc == 0)
-        id = pClient->iCurrentWaypoint;
-    else if (argc == 1)
-        sscanf(argv[0], "%d", &id);
-
+	TWaypointId id = GetWaypointId( 0, argc, argv, pClient, pClient->iCurrentWaypoint );
     if ( CWaypoint::IsValid(id) )
     {
         pClient->bLockDestinationWaypoint = true;
         pClient->iDestinationWaypoint = id;
-        BULOG_I(pClient->GetEdict(), "Path 'destination' is waypoint %d, locked.", id );
+        BULOG_I(pClient->GetEdict(), "Lock path 'destination': waypoint %d.", id );
     }
     else
     {
         pClient->bLockDestinationWaypoint = false;
-        BULOG_I(pClient->GetEdict(), "Aim at waypoint to select path 'destination'.");
+        BULOG_I(pClient->GetEdict(), "Path 'destination' is unlocked, aim at waypoint to change it.");
     }
     return ECommandPerformed;
 }
 
-TCommandResult CWaypointSaveCommand::Execute( CClient* pClient, int /*argc*/, const char** /*argv*/ )
+TCommandResult CWaypointSaveCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -1068,13 +1313,9 @@ TCommandResult CWaypointSaveCommand::Execute( CClient* pClient, int /*argc*/, co
 
 	bool bResult = CWaypoints::Save();
     if ( bResult )
-    {
         BULOG_I(pClient->GetEdict(), "%d waypoints saved.", CWaypoints::Size());
-    }
     else
-    {
         BULOG_W(pClient->GetEdict(), "Error, could not save waypoints.");
-    }
 
 	CItems::MapUnloaded();
 	CItems::MapLoaded(true);
@@ -1082,9 +1323,12 @@ TCommandResult CWaypointSaveCommand::Execute( CClient* pClient, int /*argc*/, co
 	return bResult ? ECommandPerformed : ECommandError;
 }
 
-TCommandResult CWaypointLoadCommand::Execute( CClient* pClient, int /*argc*/, const char** /*argv*/ )
+TCommandResult CWaypointLoadCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -1092,13 +1336,9 @@ TCommandResult CWaypointLoadCommand::Execute( CClient* pClient, int /*argc*/, co
 
 	bool result = CWaypoints::Load();
 	if (result)
-    {
         BULOG_I(pClient->GetEdict(), "%d waypoints loaded for map %s.", CWaypoints::Size(), CBotrixPlugin::instance->sMapName.c_str() );
-    }
     else
-    {
         BULOG_E( pClient->GetEdict(), "Error, could not load waypoints for %s.", CBotrixPlugin::instance->sMapName.c_str() );
-    }
 
 	CItems::MapUnloaded();
 	CItems::MapLoaded(true);
@@ -1114,16 +1354,23 @@ CWaypointVisibilityCommand::CWaypointVisibilityCommand()
     m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::PathDrawFlagsToString(FPathDrawAll);
     m_iAccessLevel = FCommandAccessWaypoint;
 
-    m_cAutoCompleteArguments.push_back(sNone);
-    for (int i=0; i < EPathDrawFlagTotal; ++i)
-        m_cAutoCompleteArguments.push_back( CTypeToString::PathDrawFlagsToString(1<<i).duplicate() );
-    m_cAutoCompleteArguments.push_back(sAll);
-    m_cAutoCompleteArguments.push_back(sNext);
+	StringVector args;
+	args.push_back(sNone);
+	args.push_back(sAll);
+	args.push_back(sNext);
+	for ( int i = 0; i < EPathDrawFlagTotal; ++i )
+		args.push_back( CTypeToString::PathDrawFlagsToString( 1 << i ).duplicate() );
+
+	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValuesForever);
+	m_cAutoCompleteValues.push_back(args);
 }
 
 TCommandResult CWaypointVisibilityCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -1187,7 +1434,10 @@ TCommandResult CWaypointVisibilityCommand::Execute( CClient* pClient, int argc, 
 //----------------------------------------------------------------------------------------------------------------
 TCommandResult CWaypointAreaRemoveCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -1195,20 +1445,17 @@ TCommandResult CWaypointAreaRemoveCommand::Execute( CClient* pClient, int argc, 
 
     good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false); // Don't deallocate after use.
 
-    if ( argc < 1 )
+    if ( argc != 1 )
     {
-        BULOG_W(pClient->GetEdict(), "Error, 1 argument needed.");
+        BULOG_W(pClient->GetEdict(), "Error, 1 argument for area's name needed.");
         return ECommandError;
     }
-
-    for ( int i=0; i < argc; ++i )
-        sbBuffer << argv[i] << ' ';
-    sbBuffer.erase( sbBuffer.size()-1, 1 ); // Erase last space.
-
+	
+	good::string sArea(argv[0]);
     StringVector& cAreas = CWaypoints::GetAreas();
     for ( TAreaId iArea = 1; iArea < cAreas.size(); ++iArea ) // Do not take default area in account.
     {
-        if ( sbBuffer == cAreas[iArea] )
+        if ( cAreas[iArea] != sArea )
         {
             for ( TWaypointId iWaypoint = 0; iWaypoint < CWaypoints::Size(); ++iWaypoint )
             {
@@ -1231,7 +1478,10 @@ TCommandResult CWaypointAreaRemoveCommand::Execute( CClient* pClient, int argc, 
 
 TCommandResult CWaypointAreaRenameCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -1277,7 +1527,10 @@ TCommandResult CWaypointAreaRenameCommand::Execute( CClient* pClient, int argc, 
 
 TCommandResult CWaypointAreaSetCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -1324,9 +1577,12 @@ TCommandResult CWaypointAreaSetCommand::Execute( CClient* pClient, int argc, con
     return ECommandPerformed;
 }
 
-TCommandResult CWaypointAreaShowCommand::Execute( CClient* pClient, int /*argc*/, const char** /*argv*/ )
+TCommandResult CWaypointAreaShowCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false); // Don't deallocate after use.
 
@@ -1344,7 +1600,10 @@ TCommandResult CWaypointAreaShowCommand::Execute( CClient* pClient, int /*argc*/
 /*
 TCommandResult CPathSwapCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -1389,7 +1648,10 @@ TCommandResult CPathSwapCommand::Execute( CClient* pClient, int argc, const char
 
 TCommandResult CPathDistanceCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
 
     if ( argc == 0 )
         BULOG_I( pEdict, "Default path distance: %d.", CWaypoint::iDefaultDistance );
@@ -1411,7 +1673,7 @@ TCommandResult CPathDistanceCommand::Execute( CClient* pClient, int argc, const 
     }
     else
     {
-        BULOG_W( pEdict, "Error, invalid arguments count." );
+        BULOG_W( pEdict, "Error, invalid parameters count." );
         return ECommandError;
     }
 
@@ -1425,16 +1687,23 @@ CPathDrawCommand::CPathDrawCommand()
     m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::PathDrawFlagsToString(FPathDrawAll);
     m_iAccessLevel = FCommandAccessWaypoint;
 
-    m_cAutoCompleteArguments.push_back(sNone);
-    for (int i=0; i < EPathDrawFlagTotal; ++i)
-        m_cAutoCompleteArguments.push_back( CTypeToString::PathDrawFlagsToString(1<<i).duplicate() );
-    m_cAutoCompleteArguments.push_back(sAll);
-    m_cAutoCompleteArguments.push_back(sNext);
+	StringVector args;
+	args.push_back(sNone);
+	args.push_back(sAll);
+	args.push_back(sNext);
+	for (int i = 0; i < EPathDrawFlagTotal; ++i)
+		args.push_back(CTypeToString::PathDrawFlagsToString(1 << i).duplicate());
+
+	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValuesForever);
+	m_cAutoCompleteValues.push_back(args);
 }
 
 TCommandResult CPathDrawCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -1494,7 +1763,10 @@ TCommandResult CPathDrawCommand::Execute( CClient* pClient, int argc, const char
 
 TCommandResult CPathCreateCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -1509,17 +1781,17 @@ TCommandResult CPathCreateCommand::Execute( CClient* pClient, int argc, const ch
     else if (argc == 1)
     {
         iPathFrom = pClient->iCurrentWaypoint;
-        sscanf(argv[0], "%d", &iPathTo);
-    }
+		iPathTo = GetWaypointId( 0, argc, argv, pClient, pClient->iCurrentWaypoint );
+	}
     else if (argc == 2)
     {
-        sscanf(argv[0], "%d", &iPathFrom);
-        sscanf(argv[1], "%d", &iPathTo);
+		iPathTo = GetWaypointId( 0, argc, argv, pClient, EWaypointIdInvalid );
+		iPathTo = GetWaypointId( 1, argc, argv, pClient, EWaypointIdInvalid );
     }
 
     if ( !CWaypoints::IsValid(iPathFrom) || !CWaypoints::IsValid(iPathTo) )
     {
-        BULOG_W(pClient->GetEdict(), "Error, invalid parameters, current or 'destination' waypoints.");
+        BULOG_W(pClient->GetEdict(), "Error, invalid parameters, 'current' or 'destination' waypoints.");
         return ECommandError;
     }
 
@@ -1545,32 +1817,35 @@ TCommandResult CPathCreateCommand::Execute( CClient* pClient, int argc, const ch
 
 TCommandResult CPathRemoveCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
     }
 
-    TWaypointId iPathFrom = -1, iPathTo = -1;
-    if (argc == 0)
-    {
-        iPathFrom = pClient->iCurrentWaypoint;
-        iPathTo = pClient->iDestinationWaypoint;
-    }
-    else if (argc == 1)
-    {
-        iPathFrom = pClient->iCurrentWaypoint;
-        sscanf(argv[0], "%d", &iPathTo);
-    }
-    else if (argc == 2)
-    {
-        sscanf(argv[0], "%d", &iPathFrom);
-        sscanf(argv[1], "%d", &iPathTo);
-    }
+	TWaypointId iPathFrom = -1, iPathTo = -1;
+	if ( argc == 0 )
+	{
+		iPathFrom = pClient->iCurrentWaypoint;
+		iPathTo = pClient->iDestinationWaypoint;
+	}
+	else if ( argc == 1 )
+	{
+		iPathFrom = pClient->iCurrentWaypoint;
+		iPathTo = GetWaypointId( 0, argc, argv, pClient, pClient->iCurrentWaypoint );
+	}
+	else if ( argc == 2 )
+	{
+		iPathTo = GetWaypointId( 0, argc, argv, pClient, EWaypointIdInvalid );
+		iPathTo = GetWaypointId( 1, argc, argv, pClient, EWaypointIdInvalid );
+	}
 
     if ( !CWaypoints::IsValid(iPathFrom) || !CWaypoints::IsValid(iPathTo) )
     {
-        BULOG_W(pClient->GetEdict(), "Error, invalid parameters, current or 'destination' waypoints.");
+        BULOG_W(pClient->GetEdict(), "Error, invalid parameters, 'current' or 'destination' waypoints.");
         return ECommandError;
     }
 
@@ -1588,7 +1863,10 @@ TCommandResult CPathRemoveCommand::Execute( CClient* pClient, int argc, const ch
 
 TCommandResult CPathAutoCreateCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -1617,7 +1895,10 @@ TCommandResult CPathAutoCreateCommand::Execute( CClient* pClient, int argc, cons
 
 TCommandResult CPathAddTypeCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -1673,32 +1954,35 @@ TCommandResult CPathAddTypeCommand::Execute( CClient* pClient, int argc, const c
 
 TCommandResult CPathRemoveTypeCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
     }
 
-    TWaypointId iPathFrom = -1, iPathTo = -1;
-    if (argc == 0)
-    {
-        iPathFrom = pClient->iCurrentWaypoint;
-        iPathTo = pClient->iDestinationWaypoint;
-    }
-    else if (argc == 1)
-    {
-        iPathFrom = pClient->iCurrentWaypoint;
-        sscanf(argv[0], "%d", &iPathTo);
-    }
-    else if (argc == 2)
-    {
-        sscanf(argv[0], "%d", &iPathFrom);
-        sscanf(argv[1], "%d", &iPathTo);
-    }
+	TWaypointId iPathFrom = -1, iPathTo = -1;
+	if ( argc == 0 )
+	{
+		iPathFrom = pClient->iCurrentWaypoint;
+		iPathTo = pClient->iDestinationWaypoint;
+	}
+	else if ( argc == 1 )
+	{
+		iPathFrom = pClient->iCurrentWaypoint;
+		iPathTo = GetWaypointId( 0, argc, argv, pClient, pClient->iCurrentWaypoint );
+	}
+	else if ( argc == 2 )
+	{
+		iPathTo = GetWaypointId( 0, argc, argv, pClient, EWaypointIdInvalid );
+		iPathTo = GetWaypointId( 1, argc, argv, pClient, EWaypointIdInvalid );
+	}
 
     if ( !CWaypoints::IsValid(iPathFrom) || !CWaypoints::IsValid(iPathTo) )
     {
-        BULOG_W(pClient->GetEdict(), "Error, invalid parameters, current or 'destination' waypoints.");
+        BULOG_W(pClient->GetEdict(), "Error, invalid parameters, 'current' or 'destination' waypoints.");
         return ECommandError;
     }
 
@@ -1718,7 +2002,10 @@ TCommandResult CPathRemoveTypeCommand::Execute( CClient* pClient, int argc, cons
 
 TCommandResult CPathArgumentCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -1726,7 +2013,7 @@ TCommandResult CPathArgumentCommand::Execute( CClient* pClient, int argc, const 
 
     if ( !CWaypoints::IsValid(pClient->iCurrentWaypoint) || !CWaypoints::IsValid(pClient->iDestinationWaypoint) )
     {
-        BULOG_W(pClient->GetEdict(), "Error, invalid current or 'destination' waypoints.");
+        BULOG_W(pClient->GetEdict(), "Error, invalid 'current' or 'destination' waypoints.");
         return ECommandError;
     }
 
@@ -1767,7 +2054,10 @@ TCommandResult CPathArgumentCommand::Execute( CClient* pClient, int argc, const 
 
 TCommandResult CPathInfoCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -1792,7 +2082,7 @@ TCommandResult CPathInfoCommand::Execute( CClient* pClient, int argc, const char
 
     if ( !CWaypoints::IsValid(iPathFrom) || !CWaypoints::IsValid(iPathTo) )
     {
-        BULOG_W(pClient->GetEdict(), "Error, invalid parameters, current or 'destination' waypoints.");
+        BULOG_W(pClient->GetEdict(), "Error, invalid parameters, 'current' or 'destination' waypoints.");
         return ECommandError;
     }
 
@@ -1838,7 +2128,7 @@ TCommandResult AllowOrForbid( bool bForbid, CClient* pClient, int argc, const ch
     {
         for ( TWeaponId i=0; i < CWeapons::Size(); ++i )
         {
-            const CWeapon* pWeapon = CWeapons::Get(i).GetBaseWeapon();
+            const CWeapon* pWeapon = CWeapons::Get(i)->GetBaseWeapon();
             BULOG_I(pEdict, "%s is %s.", pWeapon->pWeaponClass->sClassName.c_str(), pWeapon->bForbidden ? "forbidden" : "allowed" );
         }
     }
@@ -1846,7 +2136,7 @@ TCommandResult AllowOrForbid( bool bForbid, CClient* pClient, int argc, const ch
     {
         for ( TWeaponId i=0; i < CWeapons::Size(); ++i )
         {
-            const CWeapon* pWeapon = CWeapons::Get(i).GetBaseWeapon();
+            const CWeapon* pWeapon = CWeapons::Get(i)->GetBaseWeapon();
             ((CWeapon*)pWeapon)->bForbidden = bForbid;
             BULOG_I(pEdict, "%s is %s.", pWeapon->pWeaponClass->sClassName.c_str(), pWeapon->bForbidden ? "forbidden" : "allowed" );
         }
@@ -1856,9 +2146,9 @@ TCommandResult AllowOrForbid( bool bForbid, CClient* pClient, int argc, const ch
         for ( int i=0; i < argc; ++i )
         {
             TWeaponId iWeaponId = CWeapons::GetIdFromWeaponName( argv[i] );
-            if ( CWeapon::IsValid(iWeaponId) )
+            if ( CWeapons::IsValid(iWeaponId) )
             {
-                const CWeapon* pWeapon = CWeapons::Get(iWeaponId).GetBaseWeapon();
+                const CWeapon* pWeapon = CWeapons::Get(iWeaponId)->GetBaseWeapon();
                 ((CWeapon*)pWeapon)->bForbidden = bForbid;
                 BULOG_I(pEdict, "%s is %s.", argv[i], bForbid ? "forbidden" : "allowed" );
             }
@@ -1871,7 +2161,10 @@ TCommandResult AllowOrForbid( bool bForbid, CClient* pClient, int argc, const ch
 
 TCommandResult CBotWeaponAddCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     if ( argc < 2 )
     {
@@ -1899,7 +2192,10 @@ TCommandResult CBotWeaponAddCommand::Execute( CClient* pClient, int argc, const 
 
 TCommandResult CBotWeaponAllowCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    return AllowOrForbid(false, pClient, argc, argv);
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	return AllowOrForbid( false, pClient, argc, argv );
 }
 
 TCommandResult CBotWeaponForbidCommand::Execute( CClient* pClient, int argc, const char** argv )
@@ -1909,7 +2205,10 @@ TCommandResult CBotWeaponForbidCommand::Execute( CClient* pClient, int argc, con
 
 TCommandResult CBotWeaponRemoveCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     if ( argc != 1 )
     {
@@ -1936,7 +2235,10 @@ TCommandResult CBotWeaponRemoveCommand::Execute( CClient* pClient, int argc, con
 
 TCommandResult CBotWeaponUnknownCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     bool bAssume;
 
@@ -1963,30 +2265,69 @@ TCommandResult CBotWeaponUnknownCommand::Execute( CClient* pClient, int argc, co
     return ECommandPerformed;
 }
 
+CBotAddCommand::CBotAddCommand()
+{
+	m_sCommand = "add";
+	m_sHelp = "add bot";
+	if (CMod::aClassNames.size())
+		m_sDescription = "Optional parameters: (intelligence) (team) (class) (bot-name).";
+	else
+		m_sDescription = "Optional parameters: (intelligence) (team) (bot-name).";
+	m_iAccessLevel = FCommandAccessBot;
+
+	StringVector args1;
+	args1.push_back( sRandom );
+	for ( TBotIntelligence i = 0; i < EBotIntelligenceTotal; ++i )
+		args1.push_back( CTypeToString::IntelligenceToString( i ).duplicate() );
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+	m_cAutoCompleteValues.push_back( args1 );
+
+	StringVector args2;
+	for ( TBotIntelligence i = 0; i < CMod::aTeamsNames.size(); ++i )
+		args2.push_back( CMod::aTeamsNames[ i ].duplicate() );
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+	m_cAutoCompleteValues.push_back( args2 );
+
+	if ( CMod::aClassNames.size() > 0 )
+	{
+		StringVector args3;
+		for ( TBotIntelligence i = 0; i < CMod::aClassNames.size(); ++i )
+			args3.push_back( CMod::aClassNames[i].duplicate() );
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+		m_cAutoCompleteValues.push_back( args3 );
+	}
+
+	StringVector args0;
+	args0.push_back( "bot-name" );
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+	m_cAutoCompleteValues.push_back( args0 );
+}
+
 TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
 
-    // 1st argument: name.
-    int iArg = 0;
-    const char* szName = ( argc > iArg ) ? argv[iArg++] : NULL;
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-    // 2nd argument: intelligence.
+	int iArg = 0;
+	
+    // 1st argument: intelligence.
     TBotIntelligence iIntelligence = -1;
     if ( argc > iArg )
     {
         good::string sIntelligence( argv[iArg++] );
         iIntelligence = CTypeToString::IntelligenceFromString(sIntelligence);
-        if ( (iIntelligence == -1) && (sIntelligence != "random") )
+        if ( (iIntelligence == -1) && (sIntelligence != sRandom) )
         {
-            BULOG_W(pEdict, "Invalid bot intelligence: %s.", argv[1] );
+			BULOG_W( pEdict, "Invalid bot intelligence: %s.", sIntelligence.c_str() );
             BULOG_W( pEdict, "  Must be one of: fool stupied normal smart pro." );
             // TODO: CTypeToString::AllIntelligences()
             return ECommandError;
         }
     }
 
-    // 3rd argument: team
+    // 2nd argument: team.
     TTeam iTeam = CBot::iDefaultTeam;
     if ( argc > iArg )
     {
@@ -2000,7 +2341,7 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
         iArg++;
     }
 
-    // Mod can have no classes.
+    // 3rd argument: class, but mod can have no classes.
     TClass iClass = CBot::iDefaultClass;
     if ( CMod::aClassNames.size() && (argc > iArg) )
     {
@@ -2014,6 +2355,9 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
         }
         iArg++;
     }
+
+	// 4th argument: name.
+	const char* szName = ( argc > iArg ) ? argv[iArg++] : NULL;
 
     CPlayer* pBot = CPlayers::AddBot(szName, iTeam, iClass, iIntelligence, argc-iArg, &argv[iArg]);
     if ( pBot )
@@ -2032,85 +2376,98 @@ TCommandResult CBotAddCommand::Execute( CClient* pClient, int argc, const char**
 
 TCommandResult CBotCommandCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
 
-    if ( argc != 2 )
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( argc < 2 )
     {
-        BULOG_W( pEdict,"Error, invalid arguments count." );
+        BULOG_W( pEdict,"Error, invalid parameters count." );
         return ECommandError;
     }
-    else
-    {
-        good::string sName = argv[0];
-        bool bAll = (sName == sAll);
+    
+	const char *szCmd = argv[0];
+	for ( int iArg = 1; iArg < argc; ++iArg )
+	{
+		good::string sName = argv[iArg];
+		bool bAll = ( sName == sAll );
 
-        for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
-        {
-            CPlayer* pPlayer = CPlayers::Get(i);
-            if ( pPlayer && pPlayer->IsBot() )
-            {
-                if ( bAll || good::starts_with( good::string(pPlayer->GetName()), sName ) )
-                {
-                    CBot* pBot = (CBot*)pPlayer;
-                    pBot->ConsoleCommand(argv[1]);
-                }
-            }
-        }
+		for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
+		{
+			CPlayer* pPlayer = CPlayers::Get( i );
+			if ( pPlayer && pPlayer->IsBot() && 
+				( bAll || good::starts_with( good::string( pPlayer->GetName() ), sName ) ) )
+			{
+				CBot* pBot = (CBot*)pPlayer;
+				pBot->ConsoleCommand( szCmd );
+			}
+		}
+
+		if ( bAll )
+			break;
     }
     return ECommandPerformed;
 }
 
 TCommandResult CBotKickCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     if ( argc == 0 )
     {
         if ( !CPlayers::KickRandomBot() )
             BULOG_W(pEdict,"Error, no bots to kick.");
     }
-    else if ( argc == 1)
-    {
-        good::string sName(argv[0]);
-        bool bAll = (sName == sAll);
-        for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
-        {
-            CPlayer* pPlayer = CPlayers::Get(i);
-            if ( pPlayer && pPlayer->IsBot() &&
-                 (bAll || good::starts_with(good::string(pPlayer->GetName()), sName)) )
-                CPlayers::KickBot(pPlayer);
-        }
-    }
     else
     {
-        BULOG_W( pEdict, "Error, invalid arguments count.");
-        return ECommandError;
+		for ( int iArg = 0; iArg < argc; ++iArg )
+		{
+			good::string sName( argv[iArg] );
+			bool bAll = ( sName == sAll );
+
+			for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
+			{
+				CPlayer* pPlayer = CPlayers::Get( i );
+				if ( pPlayer && pPlayer->IsBot() &&
+					( bAll || good::starts_with( good::string( pPlayer->GetName() ), sName ) ) )
+					CPlayers::KickBot( pPlayer );
+			}
+			if ( bAll )
+				break;
+		}
     }
     return ECommandPerformed;
 }
 
 TCommandResult CBotDebugCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
 
-    bool bSomeone = false;
-    if ( argc <= 2 )
-    {
-        good::string sName(sAll);
-        if ( argc )
-            sName = argv[0];
-        bool bAll = !argc || (sAll == sName);
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-        int bDebug = -1;
-        if ( argc == 2 )
-        {
-            bDebug = CTypeToString::BoolFromString(argv[1]);
-            if ( bDebug == -1 )
-            {
-                BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[1] );
-                return ECommandError;
-            }
-        }
+	if ( argc < 2 )
+	{
+		BULOG_W( pEdict, "Error, invalid parameters count." );
+		return ECommandError;
+	}
+
+	int bDebug = CTypeToString::BoolFromString( argv[0] );
+	if ( bDebug == -1 )
+	{
+		BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[0] );
+		return ECommandError;
+	}
+
+	bool bSomeone = false;
+	for ( int iArg = 1; iArg < argc; ++iArg )
+	{
+		good::string sName = argv[iArg];
+		bool bAll = ( sName == sAll );
 
         for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
         {
@@ -2125,11 +2482,6 @@ TCommandResult CBotDebugCommand::Execute( CClient* pClient, int argc, const char
             }
         }
     }
-    else
-    {
-        BULOG_W( pEdict, "Error, invalid arguments count." );
-        return ECommandError;
-    }
     if ( !bSomeone )
     {
         BULOG_W( pEdict, "Error, no matched bots." );
@@ -2140,7 +2492,10 @@ TCommandResult CBotDebugCommand::Execute( CClient* pClient, int argc, const char
 
 TCommandResult CBotConfigQuotaCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     if ( argc == 0 )
     {
@@ -2185,7 +2540,7 @@ TCommandResult CBotConfigQuotaCommand::Execute( CClient* pClient, int argc, cons
     }
     else
     {
-        BULOG_W( pEdict, "Error, invalid arguments count." );
+        BULOG_W( pEdict, "Error, invalid parameters count." );
         return ECommandError;
     }
     return ECommandPerformed;
@@ -2193,7 +2548,10 @@ TCommandResult CBotConfigQuotaCommand::Execute( CClient* pClient, int argc, cons
 
 TCommandResult CBotConfigIntelligenceCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     TCommandResult iResult = ECommandPerformed;
     if ( argc == 0 )
@@ -2211,7 +2569,7 @@ TCommandResult CBotConfigIntelligenceCommand::Execute( CClient* pClient, int arg
         }
         else if ( iIntelligenceMin > iIntelligenceMax )
         {
-            BULOG_W( pEdict, "Error, min bot intelligence should be less than max bot intelligence." );
+            BULOG_W( pEdict, "Error, min should be <= max." );
             return ECommandError;
         }
         else 
@@ -2222,7 +2580,7 @@ TCommandResult CBotConfigIntelligenceCommand::Execute( CClient* pClient, int arg
     }
     else
     {
-        BULOG_W( pEdict, "Error, invalid arguments count." );
+        BULOG_W( pEdict, "Error, invalid parameters count." );
         return ECommandError;
     }
     BULOG_I( pEdict, "Bot's intelligence: min %s, max %s.", CTypeToString::IntelligenceToString(CBot::iMinIntelligence).c_str(),
@@ -2232,15 +2590,15 @@ TCommandResult CBotConfigIntelligenceCommand::Execute( CClient* pClient, int arg
 
 TCommandResult CBotConfigTeamCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
 
-    if ( argc == 0 )
-    {
-    }
-    else if ( argc == 1 )
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( argc == 1 )
     {
         TTeam iTeam = CTypeToString::TeamFromString(argv[0]);
-        if ( iTeam == -1 )
+        if ( iTeam == -1 && sRandom != argv[0] )
         {
             BULOG_W( pEdict, "Error, invalid team: %s.", argv[0] );
             BULOG_W( pEdict, "Can be one of: %s", CTypeToString::TeamFlagsToString(-1).c_str() );
@@ -2251,7 +2609,7 @@ TCommandResult CBotConfigTeamCommand::Execute( CClient* pClient, int argc, const
     }
     else
     {
-        BULOG_W( pEdict, "Error, invalid arguments count." );
+        BULOG_W( pEdict, "Error, invalid parameters count." );
         return ECommandError;
     }
 
@@ -2261,7 +2619,10 @@ TCommandResult CBotConfigTeamCommand::Execute( CClient* pClient, int argc, const
 
 TCommandResult CBotConfigChangeClassCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     TCommandResult iResult = ECommandPerformed;
     if ( argc == 0 )
@@ -2279,7 +2640,7 @@ TCommandResult CBotConfigChangeClassCommand::Execute( CClient* pClient, int argc
     }
     else
     {
-        BULOG_W( pEdict, "Error, invalid arguments count." );
+        BULOG_W( pEdict, "Error, invalid parameters count." );
         iResult = ECommandError;
     }
 
@@ -2292,7 +2653,10 @@ TCommandResult CBotConfigChangeClassCommand::Execute( CClient* pClient, int argc
 
 TCommandResult CBotConfigClassCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     TCommandResult iResult = ECommandPerformed;
     if ( argc == 0 )
@@ -2320,7 +2684,7 @@ TCommandResult CBotConfigClassCommand::Execute( CClient* pClient, int argc, cons
     }
     else
     {
-        BULOG_W( pEdict, "Error, invalid arguments count." );
+        BULOG_W( pEdict, "Error, invalid parameters count." );
         iResult = ECommandError;
     }
     return iResult;
@@ -2328,7 +2692,10 @@ TCommandResult CBotConfigClassCommand::Execute( CClient* pClient, int argc, cons
 
 TCommandResult CBotConfigSuicideCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     if ( argc == 0 )
     {
@@ -2346,7 +2713,7 @@ TCommandResult CBotConfigSuicideCommand::Execute( CClient* pClient, int argc, co
     }
     else
     {
-        BULOG_W( pEdict, "Error, invalid arguments count." );
+        BULOG_W( pEdict, "Error, invalid parameters count." );
         return ECommandError;
     }
 
@@ -2359,7 +2726,10 @@ TCommandResult CBotConfigSuicideCommand::Execute( CClient* pClient, int argc, co
 
 TCommandResult CBotConfigStrategyFlagsCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     if ( argc != 0 )
     {
@@ -2386,7 +2756,10 @@ TCommandResult CBotConfigStrategyFlagsCommand::Execute( CClient* pClient, int ar
 
 TCommandResult CBotConfigStrategySetCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     if ( argc == 0 )
     {
@@ -2423,7 +2796,7 @@ TCommandResult CBotConfigStrategySetCommand::Execute( CClient* pClient, int argc
     }
     else
     {
-        BULOG_W( pEdict, "Error, invalid arguments count." );
+        BULOG_W( pEdict, "Error, invalid parameters count." );
         return ECommandError;
     }
 
@@ -2442,16 +2815,22 @@ CBotDrawPathCommand::CBotDrawPathCommand()
 	m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::PathDrawFlagsToString(FPathDrawAll);
 	m_iAccessLevel = FCommandAccessBot;
 
-	m_cAutoCompleteArguments.push_back(sNone);
-	m_cAutoCompleteArguments.push_back(sAll);
-	m_cAutoCompleteArguments.push_back(sNext);
+	StringVector args;
+	args.push_back(sNone);
+	args.push_back(sAll);
+	args.push_back(sNext);
 	for (int i = 0; i < EPathDrawFlagTotal; ++i)
-		m_cAutoCompleteArguments.push_back(CTypeToString::PathDrawFlagsToString(1 << i).duplicate());
+		args.push_back(CTypeToString::PathDrawFlagsToString(1 << i).duplicate());
+	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValuesForever);
+	m_cAutoCompleteValues.push_back(args);
 }
 
 TCommandResult CBotDrawPathCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     if ( argc == 0 )
     {
@@ -2507,95 +2886,100 @@ TCommandResult CBotDrawPathCommand::Execute( CClient* pClient, int argc, const c
 
 TCommandResult CBotAllyCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
 
-    if ( (argc == 2) || (argc == 3) )
-    {
-        good::string sBot(argv[0]);
-        good::string sPlayer(argv[1]);
-        bool bAllBots = (sBot == sAll);
-        bool bAllPlayers = (sPlayer == sAll);
-        int iAllyOnOff = -1;
-        if ( argc == 3 )
-        {
-            iAllyOnOff = CTypeToString::BoolFromString(argv[2]);
-            if ( iAllyOnOff == -1 )
-            {
-                BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[1] );
-                return ECommandError;
-            }
-        }
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-        for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
-        {
-            CPlayer* pBot = CPlayers::Get(i);
-            if ( pBot && pBot->IsBot() &&
-                 (bAllBots || good::starts_with(good::string(pBot->GetName()), sBot)) )
-            {
-                for ( TPlayerIndex j = 0; j < CPlayers::Size(); ++j )
-                {
-                    CPlayer* pPlayer = CPlayers::Get(j);
-                    if ( pPlayer && (i != j) &&
-                         (bAllPlayers || good::starts_with(good::string(pPlayer->GetName()), sPlayer)) )
-                    {
-                        bool bAlly = (iAllyOnOff == -1) ? !((CBot*)pBot)->IsAlly(j) : (iAllyOnOff != 0);
-                        ((CBot*)pBot)->SetAlly( j, bAlly );
-                        BULOG_I( pEdict, "%s is thinking that %s is its %s.",
-                                 pBot->GetName(), pPlayer->GetName(), bAlly ? "ally" : "enemy" );
-                    }
-                }
-            }
-        }
-    }
-    else
+	if ( argc < 3 )
+	{
+		BULOG_W( pEdict, "Error, invalid parameter count." );
+		return ECommandError;
+	}
+    good::string sPlayer(argv[0]);
+    bool bAllPlayers = (sPlayer == sAll);
+    int iAllyOnOff = CTypeToString::BoolFromString(argv[1]);
+    if ( iAllyOnOff == -1 )
     {
-        BULOG_W( pEdict, "Error, invalid arguments count." );
+        BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[1] );
         return ECommandError;
     }
+
+	for ( int arg = 2; arg < argc; ++arg )
+	{
+		good::string sBot( argv[arg] );
+		bool bAllBots = ( sBot == sAll );
+
+		for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
+		{
+			CPlayer* pBot = CPlayers::Get( i );
+			if ( pBot && pBot->IsBot() &&
+				( bAllBots || good::starts_with( good::string( pBot->GetName() ), sBot ) ) )
+			{
+				for ( TPlayerIndex j = 0; j < CPlayers::Size(); ++j )
+				{
+					CPlayer* pPlayer = CPlayers::Get( j );
+					if ( pPlayer && ( i != j ) &&
+						( bAllPlayers || good::starts_with( good::string( pPlayer->GetName() ), sPlayer ) ) )
+					{
+						bool bAlly = ( iAllyOnOff == -1 ) ? !( (CBot*)pBot )->IsAlly( j ) : ( iAllyOnOff != 0 );
+						( (CBot*)pBot )->SetAlly( j, bAlly );
+						BULOG_I( pEdict, "%s is thinking that %s is its %s.",
+							pBot->GetName(), pPlayer->GetName(), bAlly ? "ally" : "enemy" );
+					}
+				}
+			}
+
+			if ( bAllBots )
+				break;
+		}
+	}
+    
     return ECommandPerformed;
 }
 
 TCommandResult CBotAttackCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
 
-    bool bSomeone = false;
-    if ( argc <= 2 )
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( argc < 2 )
+	{
+		BULOG_W( pEdict, "Error, invalid parameters count." );
+		return ECommandError;
+	}
+	int bAttack = CTypeToString::BoolFromString(argv[0]);
+    if ( bAttack == -1 )
     {
-        good::string sName(sAll);
-        if ( argc )
-            sName = argv[0];
-        bool bAll = !argc || (sAll == sName);
-
-        int bAttack = -1;
-        if ( argc == 2 )
-        {
-            bAttack = CTypeToString::BoolFromString(argv[1]);
-            if ( bAttack == -1 )
-            {
-                BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[1] );
-                return ECommandError;
-            }
-        }
-
-        for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
-        {
-            CPlayer* pPlayer = CPlayers::Get(i);
-            if ( pPlayer && pPlayer->IsBot() &&
-                 (bAll || good::starts_with(good::string(pPlayer->GetName()), sName)) )
-            {
-                bSomeone = true;
-                bool bAttacking = (bAttack == -1) ? !((CBot*)pPlayer)->IsAttacking() : (bAttack != 0);
-                ((CBot*)pPlayer)->SetAttack( bAttacking );
-                BULOG_I( pEdict, "Bot %s %s.", pPlayer->GetName(), bAttacking ? "attacks" : "doesn't attack" );
-            }
-        }
-    }
-    else
-    {
-        BULOG_W( pEdict, "Error, invalid arguments count." );
+        BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[0] );
         return ECommandError;
     }
+
+	bool bSomeone = false;
+	for ( int arg = 1; arg < argc; ++arg )
+	{
+		good::string sName( argv[arg] );
+		bool bAll = sName == sAll;
+
+		for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
+		{
+			CPlayer* pPlayer = CPlayers::Get( i );
+			if ( pPlayer && pPlayer->IsBot() &&
+				( bAll || good::starts_with( good::string( pPlayer->GetName() ), sName ) ) )
+			{
+				bSomeone = true;
+				bool bAttacking = ( bAttack == -1 ) ? !( (CBot*)pPlayer )->IsAttacking() : ( bAttack != 0 );
+				( (CBot*)pPlayer )->SetAttack( bAttacking );
+				BULOG_I( pEdict, "Bot %s %s.", pPlayer->GetName(), bAttacking ? "attacks" : "doesn't attack" );
+			}
+		}
+
+		if ( bAll )
+			break;
+	}
+    
     if ( !bSomeone )
     {
         BULOG_W( pEdict, "Error, no matched bots." );
@@ -2606,45 +2990,42 @@ TCommandResult CBotAttackCommand::Execute( CClient* pClient, int argc, const cha
 
 TCommandResult CBotMoveCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
 
-    bool bSomeone = false;
-    if ( argc <= 2 )
-    {
-        good::string sName(sAll);
-        if ( argc )
-            sName = argv[0];
-        bool bAll = !argc || (sAll == sName);
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-        int bMove = -1;
-        if ( argc == 2 )
-        {
-            bMove = CTypeToString::BoolFromString(argv[1]);
-            if ( bMove == -1 )
-            {
-                BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[1] );
-                return ECommandError;
-            }
-        }
+	if ( argc < 2 )
+	{
+		BULOG_W( pEdict, "Error, invalid parameters count." );
+		return ECommandError;
+	}
+	int bMove = CTypeToString::BoolFromString( argv[0] );
+	if ( bMove == -1 )
+	{
+		BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[0] );
+		return ECommandError;
+	}
 
-        for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
-        {
-            CPlayer* pPlayer = CPlayers::Get(i);
-            if ( pPlayer && pPlayer->IsBot() &&
-                 (bAll || good::starts_with(good::string(pPlayer->GetName()), sName)) )
-            {
-                bSomeone = true;
-                bool bStop = (bMove == -1) ? !((CBot*)pPlayer)->IsStopped() : (bMove == 0);
-                ((CBot*)pPlayer)->SetStopped( bStop );
-                BULOG_I( pEdict, "Bot %s %s move.", pPlayer->GetName(), bStop ? "can't" : "can" );
-            }
-        }
-    }
-    else
-    {
-        BULOG_W( pEdict, "Error, invalid arguments count." );
-        return ECommandError;
-    }
+	bool bSomeone = false;
+	for ( int arg = 1; arg < argc; ++arg )
+	{
+		good::string sName( argv[arg] );
+		bool bAll = sName == sAll;
+
+		for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
+		{
+			CPlayer* pPlayer = CPlayers::Get( i );
+			if ( pPlayer && pPlayer->IsBot() &&
+				( bAll || good::starts_with( good::string( pPlayer->GetName() ), sName ) ) )
+			{
+				bSomeone = true;
+				bool bStop = ( bMove == -1 ) ? !( (CBot*)pPlayer )->IsStopped() : ( bMove == 0 );
+				( (CBot*)pPlayer )->SetStopped( bStop );
+				BULOG_I( pEdict, "Bot %s %s move.", pPlayer->GetName(), bStop ? "can't" : "can" );
+			}
+		}
+	}
 
     if ( !bSomeone )
     {
@@ -2656,26 +3037,28 @@ TCommandResult CBotMoveCommand::Execute( CClient* pClient, int argc, const char*
 
 TCommandResult CBotPauseCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
 
-    bool bSomeone = false;
-    if ( argc <= 2 )
-    {
-        good::string sName(sAll);
-        if ( argc )
-            sName = argv[0];
-        bool bAll = !argc || (sAll == sName);
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-        int bPaused = -1;
-        if ( argc == 2 )
-        {
-            bPaused = CTypeToString::BoolFromString(argv[1]);
-            if ( bPaused == -1 )
-            {
-                BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[1] );
-                return ECommandError;
-            }
-        }
+	if ( argc < 2 )
+	{
+		BULOG_W( pEdict, "Error, invalid parameters count." );
+		return ECommandError;
+	}
+	int bPaused = CTypeToString::BoolFromString( argv[0] );
+	if ( bPaused == -1 )
+	{
+		BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[0] );
+		return ECommandError;
+	}
+
+	bool bSomeone = false;
+	for ( int arg = 1; arg < argc; ++arg )
+	{
+		good::string sName( argv[arg] );
+		bool bAll = sName == sAll;
 
         for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
         {
@@ -2690,11 +3073,7 @@ TCommandResult CBotPauseCommand::Execute( CClient* pClient, int argc, const char
             }
         }
     }
-    else
-    {
-        BULOG_W( pEdict, "Error, invalid arguments count." );
-        return ECommandError;
-    }
+
     if ( !bSomeone )
     {
         BULOG_W( pEdict, "Error, no matched bots." );
@@ -2703,9 +3082,86 @@ TCommandResult CBotPauseCommand::Execute( CClient* pClient, int argc, const char
     return ECommandPerformed;
 }
 
+good::string sForever("forever");
+good::string sOff("off");
+
+CBotProtectCommand::CBotProtectCommand()
+{
+	m_sCommand = "protect";
+	m_sHelp = "protect given players";
+	m_sDescription = "Parameters: <forever/off/time-in-seconds> <player-name> ...";
+	m_iAccessLevel = FCommandAccessBot;
+
+	StringVector args;
+	args.push_back(sForever);
+	args.push_back(sOff);
+
+	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValues);
+	m_cAutoCompleteValues.push_back(args);
+
+	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgPlayersForever);
+	m_cAutoCompleteValues.push_back(StringVector());
+}
+
+TCommandResult CBotProtectCommand::Execute(CClient* pClient, int argc, const char** argv)
+{
+	if (pClient == NULL)
+	{
+		BLOG_W("Please login to server to execute this command.");
+		return ECommandError;
+	}
+
+	if (argc < 2)
+	{
+		BLOG_W("Invalid parameters count.");
+		return ECommandError;
+	}
+	
+	float time = -2;
+	if ( sForever == argv[0] )
+		time = -1;
+	else if ( sOff == argv[0] )
+		time = 0;
+	else
+		sscanf( argv[0], "%f", &time );
+
+	if ( time < 0.0 && time != -1.0 )
+	{
+		BULOG_W( pClient->GetEdict(), "Error, invalid parameter %s, should be 'forever' / 'off' / time-in-seconds.", argv[0] );
+		return ECommandError;
+	}
+
+	bool bSomeone = false;
+	for ( int i = 1; i < argc;  ++i )
+	{
+		good::string sName(argv[i]);
+		bool bAll = sAll == sName;
+
+		for (TPlayerIndex i = 0; i < CPlayers::Size(); ++i)
+		{
+			CPlayer* pPlayer = CPlayers::Get(i);
+			if ( pPlayer && (bAll || sName == pPlayer->GetName()) )
+			{
+				bSomeone = true;
+				pPlayer->Protect(time);
+				BULOG_I(pClient->GetEdict(), "Player %s is now %s.", pPlayer->GetName(), time == 0.0 ? "unprotected" : "protected");
+			}
+		}
+	}
+	if (!bSomeone)
+	{
+		BULOG_W(pClient->GetEdict(), "Error, no matched players.");
+		return ECommandError;
+	}
+	return ECommandPerformed;
+}
+
 TCommandResult CBotTestPathCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -2720,7 +3176,10 @@ TCommandResult CBotTestPathCommand::Execute( CClient* pClient, int argc, const c
     else if (argc == 1)
     {
         iPathFrom = pClient->iCurrentWaypoint;
-        sscanf(argv[0], "%d", &iPathTo);
+		if ( sDestination == argv[0] )
+			iPathTo = pClient->iDestinationWaypoint;
+		else
+			sscanf(argv[0], "%d", &iPathTo);
     }
     else if (argc == 2)
     {
@@ -2730,7 +3189,7 @@ TCommandResult CBotTestPathCommand::Execute( CClient* pClient, int argc, const c
 
     if ( !CWaypoints::IsValid(iPathFrom) || !CWaypoints::IsValid(iPathTo) || (iPathFrom == iPathTo) )
     {
-        BULOG_W(pClient->GetEdict(), "Error, invalid parameters, current or 'destination' waypoints.");
+        BULOG_W(pClient->GetEdict(), "Error, invalid parameters, 'current' or 'destination' waypoints.");
         return ECommandError;
     }
 
@@ -2759,16 +3218,23 @@ CItemDrawCommand::CItemDrawCommand()
 	m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::EntityTypeFlagsToString(EItemTypeAll);
 	m_iAccessLevel = FCommandAccessWaypoint; // User doesn't have control over items, he only can draw them.
 
-	m_cAutoCompleteArguments.push_back(sNone);
-	m_cAutoCompleteArguments.push_back(sAll);
-	m_cAutoCompleteArguments.push_back(sNext);
+	StringVector args;
+	args.push_back(sNone);
+	args.push_back(sAll);
+	args.push_back(sNext);
 	for (int i = 0; i < EItemTypeOther + 1; ++i)
-		m_cAutoCompleteArguments.push_back(CTypeToString::EntityTypeFlagsToString(1 << i).duplicate());
+		args.push_back(CTypeToString::EntityTypeFlagsToString(1 << i).duplicate());
+
+	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValuesForever);
+	m_cAutoCompleteValues.push_back(args);
 }
 
 TCommandResult CItemDrawCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -2834,16 +3300,23 @@ CItemDrawTypeCommand::CItemDrawTypeCommand()
 	m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::ItemDrawFlagsToString(FItemDrawAll);
 	m_iAccessLevel = FCommandAccessWaypoint;
 
-	m_cAutoCompleteArguments.push_back(sNone);
-	m_cAutoCompleteArguments.push_back(sAll);
-	m_cAutoCompleteArguments.push_back(sNext);
+	StringVector args;
+	args.push_back(sNone);
+	args.push_back(sAll);
+	args.push_back(sNext);
 	for (int i = 0; i < EItemDrawFlagTotal; ++i)
-		m_cAutoCompleteArguments.push_back(CTypeToString::ItemDrawFlagsToString(1 << i).duplicate());
+		args.push_back(CTypeToString::ItemDrawFlagsToString(1 << i).duplicate());
+
+	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValuesForever);
+	m_cAutoCompleteValues.push_back(args);
 }
 
 TCommandResult CItemDrawTypeCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -2906,7 +3379,10 @@ TCommandResult CItemDrawTypeCommand::Execute( CClient* pClient, int argc, const 
 //----------------------------------------------------------------------------------------------------------------
 TCommandResult CConfigEventsCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    if ( pClient == NULL )
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -2940,16 +3416,21 @@ CConfigLogCommand::CConfigLogCommand()
 	m_sHelp = "set console log level (none, trace, debug, info, warning, error).";
 	m_iAccessLevel = FCommandAccessConfig;
 
-	m_bAutoCompleteOnlyOneArgument = true;
-	m_cAutoCompleteArguments.push_back(sNone);
+	StringVector args;
+	args.push_back(sNone);
 	for (int i = 0; i < good::ELogLevelTotal; ++i)
-		m_cAutoCompleteArguments.push_back(CTypeToString::LogLevelToString(i).duplicate());
+		args.push_back(CTypeToString::LogLevelToString(i).duplicate());
 
+	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValues);
+	m_cAutoCompleteValues.push_back(args);
 }
 
 TCommandResult CConfigLogCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
     if ( argc == 0 )
     {
         BULOG_I( pEdict, "Console log level: %s.", CTypeToString::LogLevelToString(CUtil::iLogLevel).c_str() );
@@ -2975,19 +3456,32 @@ CConfigAdminsSetAccessCommand::CConfigAdminsSetAccessCommand()
 {
 	m_sCommand = "access";
 	m_sHelp = "set access flags for given admin";
-	m_sDescription = good::string("Arguments: <steam id> <access flags>. Can be none / all / mix of: ") +
+	m_sDescription = good::string("Arguments: <steam-id> <access-flags>. Can be none / all / mix of: ") +
 		CTypeToString::AccessFlagsToString(FCommandAccessAll);
 	m_iAccessLevel = FCommandAccessConfig;
 
-	m_cAutoCompleteArguments.push_back(sNone);
-	m_cAutoCompleteArguments.push_back(sAll);
+	StringVector args0;
+	args0.push_back("steam-id");
+
+	StringVector args;
+	args.push_back(sNone);
+	args.push_back(sAll);
 	for (int i = 0; i < ECommandAccessFlagTotal; ++i)
-		m_cAutoCompleteArguments.push_back(CTypeToString::AccessFlagsToString(1 << i).duplicate());
+		args.push_back(CTypeToString::AccessFlagsToString(1 << i).duplicate());
+
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+	m_cAutoCompleteValues.push_back( args0 );
+
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValuesForever );
+	m_cAutoCompleteValues.push_back( args );
 }
 
 TCommandResult CConfigAdminsSetAccessCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     if ( argc < 2 )
     {
@@ -3033,9 +3527,12 @@ TCommandResult CConfigAdminsSetAccessCommand::Execute( CClient* pClient, int arg
     return ECommandPerformed;
 }
 
-TCommandResult CConfigAdminsShowCommand::Execute( CClient* pClient, int /*argc*/, const char** /*argv*/ )
+TCommandResult CConfigAdminsShowCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     for (int i = 0; i < CPlayers::Size(); ++i)
     {
@@ -3104,7 +3601,6 @@ void CBotrixCommand::CommandCallback( const CCommand &command )
 
 #endif // BOTRIX_OLD_COMMAND_COMPLETION
 
-
 //----------------------------------------------------------------------------------------------------------------
 // Main "botrix" command.
 //----------------------------------------------------------------------------------------------------------------
@@ -3138,6 +3634,12 @@ CBotrixCommand::CBotrixCommand():
     CBotrixPlugin::pCVar->RegisterConCommand( &m_cServerCommand );
   #endif
 #endif
+
+	aBoolsCompletion.push_back("on");
+	aBoolsCompletion.push_back("off");
+
+	aWaypointCompletion.push_back("current");
+	aWaypointCompletion.push_back("destination");
 }
 
 CBotrixCommand::~CBotrixCommand()
@@ -3145,4 +3647,7 @@ CBotrixCommand::~CBotrixCommand()
 #if !defined(BOTRIX_SOURCE_ENGINE_2006) && !defined(DONT_USE_VALVE_FUNCTIONS)
     CBotrixPlugin::pCVar->UnregisterConCommand( &m_cServerCommand );
 #endif
+
+	aBoolsCompletion.clear();
+	aWaypointCompletion.clear();
 }

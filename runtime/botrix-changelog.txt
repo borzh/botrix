@@ -2,9 +2,16 @@ Changelog
 =========
 1.0.0
 * Fixed crash when respawning bot was killing another bot on the same position (occuring a lot after map change).
-* Auto-complete commands are working again (updated & compiled Source SDK).
-* Bot now can press buttons! Mark waypoint as 'button', set it's angles (looking at the button) and mark path to the next waypoint with 'door' type. Works with elevators.
-* Fixed models in deathmatch. But playing in teamplay mode, combines bots are still using only the combine_soldier model, SDK issue.
+* Auto-completion for commands is working again (updated & compiled Source SDK 2013). Better auto-completion, also with player's names!
+* Bot now can press buttons! Mark waypoint as 'button', execute "botrix waypoint argument angle1" (looking at the button) and mark path to the next waypoint with 'door' type. Works just with elevators.
+* Fixed models in deathmatch. But playing in teamplay mode, combines bots are still using only the combine_soldier model, it is an SDK issue.
+* Fixed "bot add command" for teamplay that wasn't changing bot's team. Now bots are joining the right team, no more auto-balancing.
+* New features:
+    - All commands now accept "help" argument, printing how to use them. Example: botrix bot add help
+    - Added new commands ():
+        + botrix bot protect <player-name> <forever/off/time-amount-in-seconds> <bot-name(s)>
+        + botrix config bot protect-time <time-amount-in-seconds>
+        
 
 0.0.4
 * Fixed crash autocompleting commands on listen server. No command completion for now.

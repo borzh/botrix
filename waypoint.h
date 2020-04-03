@@ -19,10 +19,6 @@ class CWaypoint
 {
 
 public: // Methods.
-    /// Return true if waypoint id can be valid. Use CWaypoints::IsValid() to actualy verify waypoint range.
-    static inline bool IsValid(TWaypointId id) { return (id >= 0); }
-
-public: // Methods.
     /// Default constructor.
     CWaypoint(): vOrigin(), iFlags(0), iArgument(0), iAreaId(0) {}
 
@@ -30,7 +26,10 @@ public: // Methods.
     CWaypoint( const Vector& vOrigin, int iFlags = FWaypointNone, int iArgument = 0, TAreaId iAreaId = 0 ):
         vOrigin(vOrigin), iFlags(iFlags), iArgument(iArgument), iAreaId(iAreaId) {}
 
-    /// Get waypoint flags for needed entity type (health, armor, weapon, ammo).
+	/// Return true if waypoint id can be valid. Use CWaypoints::IsValid() to actualy verify waypoint range.
+	static inline bool IsValid( TWaypointId id ) { return ( id >= 0 ); }
+
+	/// Get waypoint flags for needed entity type (health, armor, weapon, ammo).
     static TWaypointFlags GetFlagsFor( TItemType iEntityType ) { return m_aFlagsForEntityType[iEntityType]; }
 
     /// Get first angle from waypoint argument.

@@ -27,6 +27,9 @@ StringVector CMod::aTeamsNames;
 int CMod::iUnassignedTeam = 0;
 int CMod::iSpectatorTeam = 1;
 
+good::vector<TWeaponId> CMod::aDefaultWeapons;
+bool CMod::bRemoveWeapons = false;
+
 StringVector CMod::aClassNames;
 
 bool CMod::bIntelligenceInBotName = true;
@@ -34,6 +37,7 @@ bool CMod::bHeadShotDoesMoreDamage = true;
 bool CMod::bUseModels = true;
 
 float CMod::fSpawnProtectionTime = 0;
+int CMod::iSpawnProtectionHealth = 0;
 
 //TDeathmatchFlags CMod::iDeathmatchFlags = -1;
 

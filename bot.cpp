@@ -162,12 +162,13 @@ void CBot::TestWaypoints( TWaypointId iFrom, TWaypointId iTo )
 }
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot::AddWeapon( const char* szWeaponName )
+void CBot::AddWeapon( TWeaponId iWeaponId )
 {
-    m_pController->SetActiveWeapon(szWeaponName);
-    TWeaponId iId = WeaponSearch(szWeaponName);
-    if ( CWeapons::IsValid(iId) ) // As if grabbed a weapon: add default bullets and weapon.
-        m_aWeapons[iId].AddWeapon();
+	if ( CWeapons::IsValid( iWeaponId ) ) // As if grabbed a weapon: add default bullets and weapon.
+	{
+		m_pController->SetActiveWeapon( CWeapons::Get(iWeaponId)->GetBaseWeapon()->pWeaponClass->sClassName.c_str() );
+		m_aWeapons[iWeaponId].AddWeapon();
+	}
     else
         WeaponCheckCurrent(true);
 }
@@ -274,16 +275,33 @@ void CBot::Respawned()
         }
     }
 
-    // Get default weapons.
-    if ( m_bFeatureWeaponCheck )
-    {
-        CWeapons::GetRespawnWeapons( m_aWeapons, m_pPlayerInfo->GetTeamIndex(), m_iClass );
-        WeaponsScan();
-        if ( !CWeapons::IsValid(m_iWeapon) )
-            WeaponCheckCurrent(true);
-    }
-    else
-        m_iMeleeWeapon = m_iPhyscannon = m_iBestWeapon = m_iWeapon = EWeaponIdInvalid;
+	ConfigureRespawnWeapons();
+}
+
+//----------------------------------------------------------------------------------------------------------------
+void CBot::ConfigureRespawnWeapons()
+{
+	if ( CMod::bRemoveWeapons )
+		WeaponsRemove();
+
+	if ( m_bFeatureWeaponCheck )
+	{
+		CWeapons::GetRespawnWeapons( m_aWeapons, m_pPlayerInfo->GetTeamIndex(), m_iClass );
+		WeaponsScan();
+		if ( !CWeapons::IsValid( m_iWeapon ) )
+			WeaponCheckCurrent( true );
+	}
+	else
+		m_iMeleeWeapon = m_iPhyscannon = m_iBestWeapon = m_iWeapon = EWeaponIdInvalid;
+
+	for ( int i = 0; i < CMod::aDefaultWeapons.size(); ++i )
+	{
+		TWeaponId iWeapon = CMod::aDefaultWeapons[i];
+		if ( m_aWeapons[iWeapon].IsPresent() ) // First check if bot has that weapon.
+			ChangeWeapon( iWeapon );
+		else
+			AddWeapon( iWeapon );
+	}
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -478,8 +496,12 @@ void CBot::PreThink()
     if ( m_bCommandPaused )
         return;
 
-	if ( m_pCurrentEnemy && m_pCurrentEnemy->IsProtected() )
-		EraseCurrentEnemy();
+	if ( m_pCurrentEnemy )
+	{
+		if ( ( m_pCurrentEnemy->IsProtected() || 
+			 ( CMod::iSpawnProtectionHealth > 0 && m_pCurrentEnemy->GetHealth() >= CMod::iSpawnProtectionHealth ) ) )
+			EraseCurrentEnemy();
+	}
 
     if ( CWaypoints::Size() <= 3 )
     {
@@ -1013,7 +1035,7 @@ void CBot::WeaponCheckCurrent( bool bAddToBotWeapons )
         else if ( !CWeapons::IsValid(m_iBestWeapon) && cNewWeapon.IsRanged() )
             m_iBestWeapon = iId;
 
-        WeaponChange(iId); // As if just switching to this weapon.
+        ChangeWeapon(iId); // As if just switching to this weapon.
     }
 }
 
@@ -1046,7 +1068,7 @@ void CBot::WeaponsScan()
 
     m_iBestWeapon = m_iWeapon;
     if ( CWeapons::IsValid(m_iWeapon) )
-        WeaponChange( m_iWeapon );
+        ChangeWeapon( m_iWeapon );
     else
         BLOG_W( "%s -> No weapons available.", GetName() );
 }
@@ -1088,7 +1110,7 @@ void CBot::UpdateWeapon()
                 else
                     m_aWeapons[m_iWeapon].SetEmpty();
             }
-            WeaponChange(iCurrentWeapon); // As if just switching to this weapon.
+            ChangeWeapon(iCurrentWeapon); // As if just switching to this weapon.
         }
     }
     else
@@ -1468,7 +1490,7 @@ void CBot::WeaponChoose()
             GoodAssert( iIdx != m_iWeapon );
             BotDebug( "%s -> Change weapon to reload %s.", GetName(),
                       m_aWeapons[iIdx].GetName().c_str() );
-            WeaponChange(iIdx);
+            ChangeWeapon(iIdx);
             return;
         }
     }
@@ -1495,7 +1517,7 @@ void CBot::WeaponChoose()
         GoodAssert( m_aWeapons[m_iBestWeapon].IsPresent() );
         BotDebug( "%s -> Set best weapon %s.", GetName(),
                   m_aWeapons[m_iBestWeapon].GetName().c_str() );
-        WeaponChange(m_iBestWeapon);
+        ChangeWeapon(m_iBestWeapon);
     }
     else
         m_iBestWeapon = m_iWeapon;
@@ -1522,7 +1544,7 @@ bool CBot::WeaponSet( const good::string& sWeapon )
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CBot::WeaponChange( TWeaponId iIndex )
+void CBot::ChangeWeapon( TWeaponId iIndex )
 {
     //GoodAssert( iIndex != m_iWeapon ); // This can happen when out of bullets, and autoswitch is made to other weapon.
     GoodAssert( m_bFeatureWeaponCheck && CWeapons::IsValid(iIndex) );
@@ -2318,7 +2340,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
         if ( (m_iWeapon != m_iMeleeWeapon) && CWeapons::IsValid(m_iMeleeWeapon) )
         {
             if ( m_aWeapons[m_iWeapon].CanChange() )
-                WeaponChange(m_iMeleeWeapon);
+                ChangeWeapon(m_iMeleeWeapon);
         }
         else
         {
@@ -2361,7 +2383,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
                 {
                     if ( m_aWeapons[m_iWeapon].CanChange() )
                     {
-                        WeaponChange(m_iPhyscannon);
+                        ChangeWeapon(m_iPhyscannon);
                         float fPhyscannonUseTime = m_aWeapons[m_iPhyscannon].GetEndTime();
                         if ( fPhyscannonUseTime > m_fEndAimTime + 0.1f )
                             m_fEndAimTime = fPhyscannonUseTime - 0.1f;
@@ -2438,7 +2460,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
             if ( m_bFeatureWeaponCheck && CWeapons::IsValid(m_iMeleeWeapon) && (m_iWeapon != m_iMeleeWeapon) && m_aWeapons[m_iWeapon].CanChange() &&
                  ( !m_pCurrentEnemy || (m_iWeapon == m_iPhyscannon) || !m_aWeapons[m_iWeapon].CanBeUsed( pObject->CurrentPosition().DistToSqr(GetHead()) ) ) )
             {
-                WeaponChange(m_iMeleeWeapon);
+                ChangeWeapon(m_iMeleeWeapon);
                 float fEndChange = m_aWeapons[m_iWeapon].GetEndTime();
                 if ( m_fStartActionTime < fEndChange )
                     m_fStartActionTime = fEndChange;

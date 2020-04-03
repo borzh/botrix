@@ -451,7 +451,7 @@ public:
     CPathArgumentCommand()
     {
         m_sCommand = "argument";
-        m_sHelp = "set path arguments.";
+        m_sHelp = "set path arguments";
         m_sDescription = "First parameter is time to wait before action, and second is action duration.";
         m_iAccessLevel = FCommandAccessWaypoint;
     }
@@ -476,43 +476,32 @@ public:
 //****************************************************************************************************************
 // Weapon commands.
 //****************************************************************************************************************
-class CBotWeaponAddCommand: public CConsoleCommand
+class CBotWeaponCommand: public CConsoleCommand
 {
 public:
-    CBotWeaponAddCommand()
-    {
-        m_sCommand = "add";
-        m_sHelp = "add a weapon to bot";
-        m_iAccessLevel = FCommandAccessBot;
-    }
-
+	CBotWeaponCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotWeaponAllowCommand: public CConsoleCommand
+class CConfigBotWeaponAllowCommand: public CConsoleCommand
 {
 public:
-    CBotWeaponAllowCommand()
-    {
-        m_sCommand = "allow";
-        m_sHelp = "allow bots to use given weapons";
-        m_iAccessLevel = FCommandAccessBot;
-    }
-
+	CConfigBotWeaponAllowCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotWeaponForbidCommand: public CConsoleCommand
+class CConfigBotWeaponDefaultCommand: public CConsoleCommand
 {
 public:
-    CBotWeaponForbidCommand()
-    {
-        m_sCommand = "forbid";
-        m_sHelp = "forbid bots to use given weapons";
-        m_iAccessLevel = FCommandAccessBot;
-    }
+	CConfigBotWeaponDefaultCommand();
+	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
 
-    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+class CConfigBotWeaponRemoveCommand: public CConsoleCommand
+{
+public:
+	CConfigBotWeaponRemoveCommand();
+	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
 class CBotWeaponRemoveCommand: public CConsoleCommand
@@ -528,17 +517,10 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotWeaponUnknownCommand: public CConsoleCommand
+class CConfigBotWeaponUnknownCommand: public CConsoleCommand
 {
 public:
-    CBotWeaponUnknownCommand()
-    {
-        m_sCommand = "unknown";
-        m_sHelp = "bot assumption about unknown weapons ('melee' or 'ranged')";
-        m_sDescription = "If bot grabs or respawns with unknown weapon, choose it to be marked as melee or ranged";
-        m_iAccessLevel = FCommandAccessBot;
-    }
-
+	CConfigBotWeaponUnknownCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
@@ -560,7 +542,7 @@ public:
     {
         m_sCommand = "command";
         m_sHelp = "execute console command by bot";
-        m_sDescription = "Parameters: <command> <bot-name(s)> ... Example: 'botrix bot command \"jointeam 2\" all'.";
+        m_sDescription = "Parameters: <command> <bot-name(s)>. Example: 'botrix bot command \"jointeam 2\" all'.";
         m_iAccessLevel = FCommandAccessBot;
 
 		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgIgnore );
@@ -597,7 +579,7 @@ public:
     {
         m_sCommand = "debug";
         m_sHelp = "show bot debug messages on server";
-        m_sDescription = "Parameters: <on/off> <bot-name(s)> ...";
+        m_sDescription = "Parameters: <on/off> <bot-name(s)>.";
         m_iAccessLevel = FCommandAccessBot;
 
 		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
@@ -610,10 +592,10 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotConfigQuotaCommand: public CConsoleCommand
+class CConfigBotQuotaCommand: public CConsoleCommand
 {
 public:
-    CBotConfigQuotaCommand()
+    CConfigBotQuotaCommand()
     {
         m_sCommand = "quota";
         m_sHelp = "set bots+players quota.";
@@ -624,14 +606,14 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotConfigIntelligenceCommand: public CConsoleCommand
+class CConfigBotIntelligenceCommand: public CConsoleCommand
 {
 public:
-    CBotConfigIntelligenceCommand()
+    CConfigBotIntelligenceCommand()
     {
         m_sCommand = "intelligence";
 		m_sHelp = "set min/max bot intelligence";
-		m_sDescription = "Arguments: <min> (max). Can be one of: random fool stupied normal smart pro";// TODO: intelligence flags to string.
+		m_sDescription = "Parameters: <min> (max). Can be one of: random fool stupied normal smart pro";// TODO: intelligence flags to string.
         m_iAccessLevel = FCommandAccessBot;
         
 		StringVector args;
@@ -645,10 +627,10 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotConfigTeamCommand: public CConsoleCommand
+class CConfigBotTeamCommand: public CConsoleCommand
 {
 public:
-    CBotConfigTeamCommand()
+    CConfigBotTeamCommand()
     {
         m_sCommand = "team";
         m_sHelp = "set default bot team";
@@ -667,10 +649,37 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotConfigClassCommand: public CConsoleCommand
+
+class CConfigBotProtectionHealthCommand: public CConsoleCommand
 {
 public:
-    CBotConfigClassCommand()
+	CConfigBotProtectionHealthCommand();
+	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+
+class CConfigBotProtectionSpawnTimeCommand: public CConsoleCommand
+{
+public:
+	CConfigBotProtectionSpawnTimeCommand();
+	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CConfigBotProtectionCommand: public CConsoleCommandContainer
+{
+public:
+	CConfigBotProtectionCommand()
+	{
+		m_sCommand = "protection";
+		Add( new CConfigBotProtectionHealthCommand );
+		Add( new CConfigBotProtectionSpawnTimeCommand );
+	}
+};
+
+class CConfigBotClassCommand: public CConsoleCommand
+{
+public:
+    CConfigBotClassCommand()
     {
         m_sCommand = "class";
         m_sHelp = "set default bot class";
@@ -689,10 +698,10 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotConfigChangeClassCommand: public CConsoleCommand
+class CConfigBotChangeClassCommand: public CConsoleCommand
 {
 public:
-    CBotConfigChangeClassCommand()
+    CConfigBotChangeClassCommand()
     {
         m_sCommand = "change-class";
         m_sHelp = "change bot class to another random class after x rounds.";
@@ -703,10 +712,10 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotConfigSuicideCommand: public CConsoleCommand
+class CConfigBotSuicideCommand: public CConsoleCommand
 {
 public:
-    CBotConfigSuicideCommand()
+    CConfigBotSuicideCommand()
     {
         m_sCommand = "suicide";
         m_sHelp = "when staying far from waypoints for this time (in seconds), suicide";
@@ -717,10 +726,10 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotConfigStrategyFlagsCommand: public CConsoleCommand
+class CConfigBotStrategyFlagsCommand: public CConsoleCommand
 {
 public:
-    CBotConfigStrategyFlagsCommand()
+    CConfigBotStrategyFlagsCommand()
     {
         m_sCommand = "flags";
         m_sHelp = "set bot fight strategy flags";
@@ -738,10 +747,10 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotConfigStrategySetCommand: public CConsoleCommand
+class CConfigBotStrategySetCommand: public CConsoleCommand
 {
 public:
-    CBotConfigStrategySetCommand()
+    CConfigBotStrategySetCommand()
     {
         m_sCommand = "set";
         m_sHelp = "set bot fight strategy argument";
@@ -759,34 +768,49 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CBotConfigStrategyCommand: public CConsoleCommandContainer
+class CConfigBotStrategyCommand: public CConsoleCommandContainer
 {
 public:
-    CBotConfigStrategyCommand()
+    CConfigBotStrategyCommand()
     {
         m_sCommand = "strategy";
-        Add(new CBotConfigStrategyFlagsCommand);
-        Add(new CBotConfigStrategySetCommand);
+        Add(new CConfigBotStrategyFlagsCommand);
+        Add(new CConfigBotStrategySetCommand);
     }
 };
 
-class CBotConfigCommand: public CConsoleCommandContainer
+class CConfigBotWeaponCommand: public CConsoleCommandContainer
 {
 public:
-    CBotConfigCommand()
+	CConfigBotWeaponCommand()
+	{
+		m_sCommand = "weapon";
+		Add( new CConfigBotWeaponAllowCommand );
+		Add( new CConfigBotWeaponDefaultCommand );
+		Add( new CConfigBotWeaponRemoveCommand );
+		Add( new CConfigBotWeaponUnknownCommand );
+	}
+};
+
+class CConfigBotCommand: public CConsoleCommandContainer
+{
+public:
+    CConfigBotCommand()
     {
-        m_sCommand = "config";
-        Add(new CBotConfigQuotaCommand);
-        Add(new CBotConfigIntelligenceCommand);
-        Add(new CBotConfigTeamCommand);
-        if ( CMod::aClassNames.size() )
-        {
-            Add(new CBotConfigClassCommand);
-            Add(new CBotConfigChangeClassCommand);
-        }
-        Add(new CBotConfigSuicideCommand);
-        Add(new CBotConfigStrategyCommand);
-    }
+        m_sCommand = "bot";
+		if ( CMod::aClassNames.size() )
+		{
+			Add( new CConfigBotClassCommand );
+			Add( new CConfigBotChangeClassCommand );
+		}
+		Add( new CConfigBotIntelligenceCommand );
+		Add( new CConfigBotProtectionCommand );
+		Add( new CConfigBotQuotaCommand );
+		Add( new CConfigBotStrategyCommand );
+		Add( new CConfigBotSuicideCommand );
+		Add( new CConfigBotTeamCommand );
+		Add( new CConfigBotWeaponCommand );
+	}
 };
 
 class CBotAllyCommand: public CConsoleCommand
@@ -796,7 +820,7 @@ public:
     {
         m_sCommand = "ally";
         m_sHelp = "given bot won't attack another given player";
-        m_sDescription = "Parameters: <player-name> <on/off> <bot-name(s)> ...";
+        m_sDescription = "Parameters: <player-name> <on/off> <bot-name(s)>.";
         m_iAccessLevel = FCommandAccessBot;
 
 		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgPlayers );
@@ -819,7 +843,7 @@ public:
     {
         m_sCommand = "attack";
         m_sHelp = "forces bot to start/stop attacking";
-		m_sDescription = "Parameters: <on/off> <bot-name(s)> ...";
+		m_sDescription = "Parameters: <on/off> <bot-name(s)>.";
 		m_iAccessLevel = FCommandAccessBot;
 
 		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
@@ -839,7 +863,7 @@ public:
     {
         m_sCommand = "move";
         m_sHelp = "forces bot to start/stop moving";
-		m_sDescription = "Parameters: <on/off> <bot-name(s)> ...";
+		m_sDescription = "Parameters: <on/off> <bot-name(s)>.";
         m_iAccessLevel = FCommandAccessBot;
 
 		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
@@ -859,7 +883,7 @@ public:
     {
         m_sCommand = "pause";
         m_sHelp = "pause/resume given bots";
-		m_sDescription = "Parameters: <on/off> <bot-name(s)> ...";
+		m_sDescription = "Parameters: <on/off> <bot-name(s)>.";
         m_iAccessLevel = FCommandAccessBot;
 	
 		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
@@ -878,20 +902,6 @@ class CBotProtectCommand : public CConsoleCommand
 public:
 	CBotProtectCommand();
 	TCommandResult Execute(CClient* pClient, int argc, const char** argv);
-};
-
-class CBotWeaponCommand: public CConsoleCommandContainer
-{
-public:
-    CBotWeaponCommand()
-    {
-        m_sCommand = "weapon";
-        Add(new CBotWeaponAddCommand);
-        Add(new CBotWeaponAllowCommand);
-        Add(new CBotWeaponForbidCommand);
-        //Add(new CBotWeaponRemoveCommand);
-        Add(new CBotWeaponUnknownCommand);
-    }
 };
 
 class CBotDrawPathCommand: public CConsoleCommand
@@ -1127,7 +1137,6 @@ public:
         Add(new CBotAllyCommand);
         Add(new CBotAttackCommand);
         Add(new CBotCommandCommand);
-        Add(new CBotConfigCommand);
         Add(new CBotDebugCommand);
         Add(new CBotDrawPathCommand);
         Add(new CBotKickCommand);
@@ -1136,8 +1145,9 @@ public:
 		Add(new CBotProtectCommand);
 		if (CMod::GetModId() != EModId_TF2) // TF2 bots can't be spawned after round has started.
             Add(new CBotTestPathCommand);
-        Add(new CBotWeaponCommand);
-    }
+		Add( new CBotWeaponCommand );
+		//Add(new CBotWeaponRemoveCommand);
+	}
 };
 
 
@@ -1151,6 +1161,7 @@ public:
     {
         m_sCommand = "config";
         Add(new CConfigAdminsCommand);
+		Add(new CConfigBotCommand);
         Add(new CConfigEventsCommand);
         Add(new CConfigLogCommand);
     }

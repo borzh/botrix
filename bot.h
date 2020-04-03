@@ -107,10 +107,11 @@ public: // Methods.
     virtual void TestWaypoints( TWaypointId iFrom, TWaypointId iTo );
 
     /// Add weapon to bot.
-    virtual void AddWeapon( const char* szWeaponName );
+    virtual void AddWeapon( TWeaponId iWeaponId );
 
     /// Remove all weapons from bot.
-    virtual void RemoveWeapons() {
+    virtual void WeaponsRemove()
+	{
         m_pController->RemoveAllItems(false);
         m_aWeapons.clear();
         m_iWeapon = m_iBestWeapon = m_iMeleeWeapon = m_iPhyscannon = EWeaponIdInvalid;
@@ -127,6 +128,9 @@ public: // Methods.
 
     /// Called when player's team changed.
     virtual void ChangeTeam( TTeam iTeam ) = 0;
+
+	/// Called after respawn to configure weapons.
+	virtual void ConfigureRespawnWeapons();
 
     /// Called when player becomes dead. Will kick it if bot was created for testing purposes.
     virtual void Dead();
@@ -198,10 +202,11 @@ protected: // Mod dependend protected functions.
     {
         int team = pPlayer->GetTeam();
 		int index = pPlayer->GetIndex();
-		return !pPlayer->IsProtected() && 
-			   (team != CMod::iSpectatorTeam) && (index >= 0) &&
-			   ( (team != GetTeam()) || (team == CMod::iUnassignedTeam) ) && // Deathmatch team?
-			   !m_aAllies.test(index);
+		return ( !pPlayer->IsProtected() ) &&
+		       ( CMod::iSpawnProtectionHealth == 0 || pPlayer->GetHealth() < CMod::iSpawnProtectionHealth ) &&
+			   ( team != CMod::iSpectatorTeam ) &&
+			   ( team != GetTeam() || team == CMod::iUnassignedTeam ) && // Different teams or deathmatch.
+			   ( index >= 0 ) && !m_aAllies.test( index );
     }
 
     // Enemy is dead or got disconnected.
@@ -295,7 +300,7 @@ protected: // Methods.
     virtual bool WeaponSet( const good::string& sWeapon );
 
     // Try to swith to other weapon.
-    void WeaponChange( TWeaponId iIndex );
+    void ChangeWeapon( TWeaponId iIndex );
 
     // Shoot current weapon.
     void WeaponShoot( int iSecondary = CWeapon::PRIMARY );

@@ -38,6 +38,12 @@ const good::string sDestination = "destination";
 
 const good::string sUnlock = "unlock";
 
+const good::string sForever( "forever" );
+const good::string sOff( "off" );
+
+const good::string sMelee = "melee";
+const good::string sRanged = "ranged";
+
 extern char* szMainBuffer;
 extern int iMainBufferSize;
 
@@ -609,7 +615,7 @@ CWaypointRemoveCommand::CWaypointRemoveCommand()
 {
 	m_sCommand = "remove";
 	m_sHelp = "delete waypoints";
-	m_sDescription = "Arguments can be: current / destination / other waypoint id(s)";
+	m_sDescription = "Parameters can be: current / destination / other waypoint id(s)";
 	m_iAccessLevel = FCommandAccessWaypoint;
 
 	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgWaypoint);
@@ -1443,8 +1449,6 @@ TCommandResult CWaypointAreaRemoveCommand::Execute( CClient* pClient, int argc, 
         return ECommandError;
     }
 
-    good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false); // Don't deallocate after use.
-
     if ( argc != 1 )
     {
         BULOG_W(pClient->GetEdict(), "Error, 1 argument for area's name needed.");
@@ -1467,7 +1471,7 @@ TCommandResult CWaypointAreaRemoveCommand::Execute( CClient* pClient, int argc, 
             }
 
             cAreas.erase(cAreas.begin() + iArea);
-            BULOG_I( pClient->GetEdict(), "Deleted area '%s'.", sbBuffer.c_str() );
+            BULOG_I( pClient->GetEdict(), "Deleted area '%s'.", sArea.c_str() );
             return ECommandPerformed;
         }
     }
@@ -1487,37 +1491,23 @@ TCommandResult CWaypointAreaRenameCommand::Execute( CClient* pClient, int argc, 
         return ECommandError;
     }
 
-    good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false); // Don't deallocate after use.
-
-    if ( argc < 2 )
+    if ( argc != 2 )
     {
-        BULOG_W(pClient->GetEdict(), "Error, 2 arguments needed.");
+        BULOG_W(pClient->GetEdict(), "Error, 2 parameters needed.");
         return ECommandError;
     }
-
-    for ( int i=0; i < argc; ++i )
-        sbBuffer << argv[i] << ' ';
-    sbBuffer.erase( sbBuffer.size()-1, 1 ); // Erase last space.
+	
+	good::string sFrom( argv[0] ), sTo( argv[1] );
 
     StringVector& cAreas = CWaypoints::GetAreas();
     for ( int i=1; i < cAreas.size(); ++i ) // Do not take default area in account.
     {
         StringVector::value_type& sArea = cAreas[i];
-        if ( good::starts_with((good::string)sbBuffer, sArea) )
+		if ( sFrom == sArea )
         {
-            sbBuffer.erase(0, sArea.size());
-            good::trim(sbBuffer);
-            if ( sbBuffer.size() > 0 )
-            {
-                BULOG_I( pClient->GetEdict(), "Renamed '%s' to '%s'.", sArea.c_str(), sbBuffer.c_str() );
-                sArea = sbBuffer.duplicate();
-                return ECommandPerformed;
-            }
-            else
-            {
-                BULOG_W( pClient->GetEdict(), "Error, can't rename '%s' to '%s'.", cAreas[i].c_str(), sbBuffer.c_str() );
-                return ECommandError;
-            }
+			BULOG_I( pClient->GetEdict(), "Renamed '%s' to '%s'.", sFrom.c_str(), sTo.c_str() );
+			sArea = sTo.duplicate();
+            return ECommandPerformed;
         }
     }
 
@@ -2118,48 +2108,27 @@ TCommandResult CPathInfoCommand::Execute( CClient* pClient, int argc, const char
 
 
 //----------------------------------------------------------------------------------------------------------------
-// Bots commands.
+// Config bots commands.
 //----------------------------------------------------------------------------------------------------------------
-TCommandResult AllowOrForbid( bool bForbid, CClient* pClient, int argc, const char** argv )
+CBotWeaponCommand::CBotWeaponCommand()
 {
-    edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
+	m_sCommand = "weapon";
+	m_sHelp = "change bot's weapon";
+	m_sDescription = "Parameters: <weapon> <bot-name(s)>. This command will actually add a weapon to the bot, so use carefully.";
+	m_iAccessLevel = FCommandAccessBot;
 
-    if ( argc == 0 ) // Print all weapons.
-    {
-        for ( TWeaponId i=0; i < CWeapons::Size(); ++i )
-        {
-            const CWeapon* pWeapon = CWeapons::Get(i)->GetBaseWeapon();
-            BULOG_I(pEdict, "%s is %s.", pWeapon->pWeaponClass->sClassName.c_str(), pWeapon->bForbidden ? "forbidden" : "allowed" );
-        }
-    }
-    else if ( (argc == 1) && (sAll == argv[0]) ) // Apply to all weapons.
-    {
-        for ( TWeaponId i=0; i < CWeapons::Size(); ++i )
-        {
-            const CWeapon* pWeapon = CWeapons::Get(i)->GetBaseWeapon();
-            ((CWeapon*)pWeapon)->bForbidden = bForbid;
-            BULOG_I(pEdict, "%s is %s.", pWeapon->pWeaponClass->sClassName.c_str(), pWeapon->bForbidden ? "forbidden" : "allowed" );
-        }
-    }
-    else
-    {
-        for ( int i=0; i < argc; ++i )
-        {
-            TWeaponId iWeaponId = CWeapons::GetIdFromWeaponName( argv[i] );
-            if ( CWeapons::IsValid(iWeaponId) )
-            {
-                const CWeapon* pWeapon = CWeapons::Get(iWeaponId)->GetBaseWeapon();
-                ((CWeapon*)pWeapon)->bForbidden = bForbid;
-                BULOG_I(pEdict, "%s is %s.", argv[i], bForbid ? "forbidden" : "allowed" );
-            }
-            else
-                BULOG_W(pEdict, "Warning, no such weapon: %s, skipping.", argv[i]);
-        }
-    }
-    return ECommandPerformed;
+	StringVector args;
+	for ( TWeaponId weapon = 0; weapon < CWeapons::Size(); ++weapon )
+		args.push_back( CWeapons::Get( weapon )->GetName().duplicate() );
+
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+	m_cAutoCompleteValues.push_back( args );
+
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBotsForever );
+	m_cAutoCompleteValues.push_back( StringVector() );
 }
 
-TCommandResult CBotWeaponAddCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CBotWeaponCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
 		return ECommandPerformed;
@@ -2172,35 +2141,207 @@ TCommandResult CBotWeaponAddCommand::Execute( CClient* pClient, int argc, const 
         return ECommandError;
     }
 
-    good::string sName( argv[0] );
-    bool bAll = ( sName == "all" );
+	TWeaponId iWeaponId = CWeapons::GetIdFromWeaponName(argv[0]);
+	if ( !CWeapons::IsValid(iWeaponId) )
+	{
+		BULOG_W( pEdict, "Invalid weapon: %s.", argv[0] );
+		return ECommandError;
+	}
 
-    for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
-    {
-        CPlayer* pPlayer = CPlayers::Get(i);
-        if ( pPlayer && pPlayer->IsBot() )
-        {
-            good::string sBotName = pPlayer->GetName();
-            if ( bAll || good::starts_with(sBotName, sName) )
-                for ( int iWeapon = 1; iWeapon < argc; ++iWeapon )
-                    ((CBot*)pPlayer)->AddWeapon(argv[iWeapon]);
-        }
-    }
+	for ( int iArg = 1; iArg < argc; ++iArg )
+	{
+		good::string sName( argv[iArg] );
+		bool bAll = ( sName == "all" );
+
+		for ( TPlayerIndex i = 0; i < CPlayers::Size(); ++i )
+		{
+			CPlayer* pPlayer = CPlayers::Get( i );
+			if ( pPlayer && pPlayer->IsBot() && ( bAll || sName == pPlayer->GetName() ) )
+					( (CBot*)pPlayer )->AddWeapon( iWeaponId );
+		}
+
+		if ( bAll )
+			break;
+	}
 
     return ECommandPerformed;
 }
 
-TCommandResult CBotWeaponAllowCommand::Execute( CClient* pClient, int argc, const char** argv )
+CConfigBotWeaponAllowCommand::CConfigBotWeaponAllowCommand()
+{
+	m_sCommand = "allow";
+	m_sHelp = "allow bots to use given weapons";
+	m_sDescription = "Parameters: (on/off) (weapon(s)).";
+	m_iAccessLevel = FCommandAccessConfig;
+
+	StringVector args;
+	args.push_back( sAll );
+	for ( TWeaponId weapon = 0; weapon < CWeapons::Size(); ++weapon )
+		args.push_back( CWeapons::Get( weapon )->GetName().duplicate() );
+
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
+	m_cAutoCompleteValues.push_back( StringVector() );
+
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValuesForever );
+	m_cAutoCompleteValues.push_back( args );
+}
+
+void AllowWeapon( edict_t* pEdict, const good::string& sWeapon, bool bAllow )
+{
+	TWeaponId iWeaponId = CWeapons::GetIdFromWeaponName( sWeapon );
+	if ( CWeapons::IsValid( iWeaponId ) )
+	{
+		const CWeapon* pWeapon = CWeapons::Get( iWeaponId )->GetBaseWeapon();
+		( (CWeapon*)pWeapon )->bForbidden = !bAllow;
+		BULOG_I( pEdict, "%s is %s.", sWeapon.c_str(), bAllow ? "allowed" : "forbidden" );
+	}
+	else
+		BULOG_W( pEdict, "Warning, no such weapon: %s.", sWeapon.c_str() );
+}
+
+TCommandResult CConfigBotWeaponAllowCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
 		return ECommandPerformed;
 
-	return AllowOrForbid( false, pClient, argc, argv );
+	edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
+
+	if ( argc == 0 ) // Print all weapons.
+	{
+		for ( TWeaponId i = 0; i < CWeapons::Size(); ++i )
+		{
+			const CWeapon* pWeapon = CWeapons::Get( i )->GetBaseWeapon();
+			BULOG_I( pEdict, "%s is %s.", pWeapon->pWeaponClass->sClassName.c_str(), pWeapon->bForbidden ? "forbidden" : "allowed" );
+		}
+		return ECommandPerformed;
+	}
+	else if ( argc == 1 )
+	{
+		BULOG_W( pEdict, "Invalid parameters count." );
+		return ECommandError;
+	}
+
+	int iAllow = CTypeToString::BoolFromString( argv[0] );
+	if ( iAllow == -1 )
+	{
+		BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[0] );
+		return ECommandError;
+	}
+
+	for ( int i = 1; i < argc; ++i )
+	{
+		good::string sWeapon( argv[i] );
+
+		if ( sWeapon == sAll )
+		{
+			for ( TWeaponId iWeapon = 0; iWeapon <= CWeapons::Size(); ++i )
+			{
+				const CWeapon* pWeapon = CWeapons::Get( i )->GetBaseWeapon();
+				AllowWeapon( pEdict, pWeapon->pWeaponClass->sClassName, (iAllow != 0) );
+			}
+		}
+		
+		AllowWeapon( pEdict, sWeapon, ( iAllow != 0 ) );
+	}
+	
+	return ECommandPerformed;
 }
 
-TCommandResult CBotWeaponForbidCommand::Execute( CClient* pClient, int argc, const char** argv )
+CConfigBotWeaponDefaultCommand::CConfigBotWeaponDefaultCommand()
 {
-    return AllowOrForbid(true, pClient, argc, argv);
+	m_sCommand = "default";
+	m_sHelp = "configurate bot weapon after respawn.";
+	m_sDescription = "Parameters: <none/weapon(s)>";
+	m_iAccessLevel = FCommandAccessConfig;
+
+	StringVector args;
+	args.push_back( sNone );
+	for ( TWeaponId weapon = 0; weapon < CWeapons::Size(); ++weapon )
+		args.push_back( CWeapons::Get( weapon )->GetName().duplicate() );
+
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValuesForever );
+	m_cAutoCompleteValues.push_back( args );
+}
+
+TCommandResult CConfigBotWeaponDefaultCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+	if ( argc > 0 )
+	{
+		good::vector<TWeaponId> result( argc );
+		if ( argc == 1 && sNone == argv[0] )
+		{
+			// Remove all.
+		}
+		else
+		{
+			for ( int i = 0; i < argc; ++i )
+			{
+				good::string sWeapon( argv[i] );
+				TWeaponId iWeaponId = CWeapons::GetIdFromWeaponName( sWeapon );
+				if ( !CWeapons::IsValid( iWeaponId ) )
+				{
+					BULOG_W( pEdict, "Invalid weapon: %s.", argv[0] );
+					return ECommandError;
+				}
+				if ( good::find(result, iWeaponId) == result.end() )
+					result.push_back( iWeaponId );
+			}
+			CMod::aDefaultWeapons = result;
+		}
+	}
+	if ( CMod::aDefaultWeapons.empty() )
+		BULOG_I( pEdict, "Default weapons: none." );
+	else
+	{
+		BULOG_I( pEdict, "Default weapons:" );
+		for ( int i = 0; i < CMod::aDefaultWeapons.size(); ++i )
+			BULOG_I( pEdict, "  %s", CWeapons::Get( CMod::aDefaultWeapons[i] )->GetName().c_str() );
+	}
+	return ECommandPerformed;
+}
+
+CConfigBotWeaponRemoveCommand::CConfigBotWeaponRemoveCommand()
+{
+	m_sCommand = "remove";
+	m_sHelp = "remove all bot weapons on respawn.";
+	m_sDescription = "Parameters: (on/off). You can use it in combination with 'default' command.";
+	m_iAccessLevel = FCommandAccessConfig;
+
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
+	m_cAutoCompleteValues.push_back( StringVector() );
+}
+
+TCommandResult CConfigBotWeaponRemoveCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( argc > 1 )
+	{
+		BULOG_W( pEdict, "Invalid parameters count." );
+		return ECommandError;
+	}
+
+	if ( argc == 1 )
+	{
+		int iRemove = CTypeToString::BoolFromString( argv[0] );
+		if ( iRemove == -1 )
+		{
+			BULOG_W( pEdict, "Error, invalid parameter %s, should be 'on' or 'off'.", argv[0] );
+			return ECommandError;
+		}
+
+		CMod::bRemoveWeapons = ( iRemove != 0 );
+	}
+	BULOG_I( pEdict, "Remove bot weapons on respawn: %s.", CMod::bRemoveWeapons ? "on" : "off" );
+
+	return ECommandPerformed;
 }
 
 TCommandResult CBotWeaponRemoveCommand::Execute( CClient* pClient, int argc, const char** argv )
@@ -2226,42 +2367,56 @@ TCommandResult CBotWeaponRemoveCommand::Execute( CClient* pClient, int argc, con
         {
             good::string sBotName = pPlayer->GetName();
             if ( bAll || good::starts_with(sBotName, sName) )
-                ((CBot*)pPlayer)->RemoveWeapons();
+                ((CBot*)pPlayer)->WeaponsRemove();
         }
     }
 
     return ECommandPerformed;
 }
 
-TCommandResult CBotWeaponUnknownCommand::Execute( CClient* pClient, int argc, const char** argv )
+CConfigBotWeaponUnknownCommand::CConfigBotWeaponUnknownCommand()
+{
+	m_sCommand = "unknown";
+	m_sHelp = "bot assumption about unknown weapons ('melee' or 'ranged')";
+	m_sDescription = "If bot grabs or respawns with unknown weapon, choose it to be marked as melee or ranged";
+	m_iAccessLevel = FCommandAccessConfig;
+
+	StringVector args;
+	args.push_back( sMelee );
+	args.push_back( sRanged );
+
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+	m_cAutoCompleteValues.push_back( args );
+}
+
+TCommandResult CConfigBotWeaponUnknownCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
 		return ECommandPerformed;
 
 	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-    bool bAssume;
-
     if ( argc == 1 )
     {
         good::string sArg( argv[0] );
-        if ( sArg == "melee" )
-            bAssume = true;
-        else if ( sArg == "ranged" )
-            bAssume = false;
-        else
+        if ( sArg == sMelee )
+			CBot::bAssumeUnknownWeaponManual = true;
+		else if ( sArg == sRanged )
+			CBot::bAssumeUnknownWeaponManual = false;
+		else
         {
             BULOG_W( pEdict, "Invalid parameter: %s. Should be 'melee' or 'ranged'", argv[0] );
             return ECommandError;
         }
     }
-    else
+	else if (argc > 1)
     {
         BULOG_W( pEdict, "Invalid parameters count." );
         return ECommandError;
     }
 
-    CBot::bAssumeUnknownWeaponManual = bAssume;
+	BULOG_I( pEdict, "Unknown weapons are %s by default.", CBot::bAssumeUnknownWeaponManual ? "manuals" : "ranged" );
+
     return ECommandPerformed;
 }
 
@@ -2490,7 +2645,7 @@ TCommandResult CBotDebugCommand::Execute( CClient* pClient, int argc, const char
     return ECommandPerformed;
 }
 
-TCommandResult CBotConfigQuotaCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CConfigBotQuotaCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
 		return ECommandPerformed;
@@ -2546,7 +2701,7 @@ TCommandResult CBotConfigQuotaCommand::Execute( CClient* pClient, int argc, cons
     return ECommandPerformed;
 }
 
-TCommandResult CBotConfigIntelligenceCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CConfigBotIntelligenceCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
 		return ECommandPerformed;
@@ -2588,7 +2743,7 @@ TCommandResult CBotConfigIntelligenceCommand::Execute( CClient* pClient, int arg
     return iResult;
 }
 
-TCommandResult CBotConfigTeamCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CConfigBotTeamCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
 		return ECommandPerformed;
@@ -2617,7 +2772,106 @@ TCommandResult CBotConfigTeamCommand::Execute( CClient* pClient, int argc, const
     return ECommandPerformed;
 }
 
-TCommandResult CBotConfigChangeClassCommand::Execute( CClient* pClient, int argc, const char** argv )
+CConfigBotProtectionHealthCommand::CConfigBotProtectionHealthCommand()
+{
+	m_sCommand = "health";
+	m_sHelp = "when the player has at least protection health amount, bots won't attack him";
+	m_sDescription = "Parameters: <off/health-amount>. Off or 0 to disable.";
+	m_iAccessLevel = FCommandAccessConfig;
+
+	StringVector args;
+	args.push_back( sOff );
+
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+	m_cAutoCompleteValues.push_back( args );
+}
+
+TCommandResult CConfigBotProtectionHealthCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( argc > 1 )
+	{
+		BULOG_W( pEdict, "Error, invalid parameters count." );
+		return ECommandError;
+	}
+	else if ( argc == 1 )
+	{
+		int amount = -1;
+		if ( sOff == argv[0] )
+			amount = 0;
+		else if ( sscanf( argv[0], "%d", &amount ) != 1 )
+			amount = -1;
+
+		if ( amount < 0 )
+		{
+			BULOG_W( pEdict, "Error, invalid health amount: %s.", argv[0] );
+			return ECommandError;
+		}
+		
+		CMod::iSpawnProtectionHealth = amount;
+	}
+	
+	if ( CMod::iSpawnProtectionHealth == 0 )
+		BULOG_I( pEdict, "Protection health: off." );
+	else
+		BULOG_I( pEdict, "Protection health: %d.", CMod::iSpawnProtectionHealth );
+
+	return ECommandPerformed;
+}
+
+CConfigBotProtectionSpawnTimeCommand::CConfigBotProtectionSpawnTimeCommand()
+{
+	m_sCommand = "spawn-time";
+	m_sHelp = "when the player has at least protection health amount, bots won't attack him";
+	m_sDescription = "Parameters: <off/time-in-seconds>. Off or 0 to disable.";
+	m_iAccessLevel = FCommandAccessConfig;
+
+	StringVector args;
+	args.push_back( sOff );
+
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+	m_cAutoCompleteValues.push_back( args );
+}
+
+TCommandResult CConfigBotProtectionSpawnTimeCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	if ( argc > 1 )
+	{
+		BULOG_W( pEdict, "Error, invalid parameters count." );
+		return ECommandError;
+	}
+	else if ( argc == 1 )
+	{
+		float amount = -1.0;
+		if ( sOff == argv[0] )
+			amount = 0.0;
+		else if ( sscanf( argv[0], "%f", &amount ) != 1 )
+			amount = -1.0;
+
+		if ( amount < 0.0 )
+		{
+			BULOG_W( pEdict, "Error, invalid time interval: %s.", argv[0] );
+			return ECommandError;
+		}
+
+		CMod::fSpawnProtectionTime = amount;
+	}
+
+	if ( CMod::fSpawnProtectionTime == 0 )
+		BULOG_I( pEdict, "Spawn protection time: off." );
+	else
+		BULOG_I( pEdict, "Spawn protection time: %.2f.", CMod::fSpawnProtectionTime );
+
+	return ECommandPerformed;
+}
+TCommandResult CConfigBotChangeClassCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
 		return ECommandPerformed;
@@ -2651,7 +2905,7 @@ TCommandResult CBotConfigChangeClassCommand::Execute( CClient* pClient, int argc
     return iResult;
 }
 
-TCommandResult CBotConfigClassCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CConfigBotClassCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
 		return ECommandPerformed;
@@ -2690,7 +2944,7 @@ TCommandResult CBotConfigClassCommand::Execute( CClient* pClient, int argc, cons
     return iResult;
 }
 
-TCommandResult CBotConfigSuicideCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CConfigBotSuicideCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
 		return ECommandPerformed;
@@ -2724,7 +2978,7 @@ TCommandResult CBotConfigSuicideCommand::Execute( CClient* pClient, int argc, co
     return ECommandPerformed;
 }
 
-TCommandResult CBotConfigStrategyFlagsCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CConfigBotStrategyFlagsCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
 		return ECommandPerformed;
@@ -2754,7 +3008,7 @@ TCommandResult CBotConfigStrategyFlagsCommand::Execute( CClient* pClient, int ar
     return ECommandPerformed;
 }
 
-TCommandResult CBotConfigStrategySetCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CConfigBotStrategySetCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
 		return ECommandPerformed;
@@ -2896,8 +3150,10 @@ TCommandResult CBotAllyCommand::Execute( CClient* pClient, int argc, const char*
 		BULOG_W( pEdict, "Error, invalid parameter count." );
 		return ECommandError;
 	}
-    good::string sPlayer(argv[0]);
+    
+	good::string sPlayer(argv[0]);
     bool bAllPlayers = (sPlayer == sAll);
+
     int iAllyOnOff = CTypeToString::BoolFromString(argv[1]);
     if ( iAllyOnOff == -1 )
     {
@@ -3082,13 +3338,10 @@ TCommandResult CBotPauseCommand::Execute( CClient* pClient, int argc, const char
     return ECommandPerformed;
 }
 
-good::string sForever("forever");
-good::string sOff("off");
-
 CBotProtectCommand::CBotProtectCommand()
 {
 	m_sCommand = "protect";
-	m_sHelp = "protect given players";
+	m_sHelp = "protect given players from bot's attack";
 	m_sDescription = "Parameters: <forever/off/time-in-seconds> <player-name> ...";
 	m_iAccessLevel = FCommandAccessBot;
 
@@ -3456,7 +3709,7 @@ CConfigAdminsSetAccessCommand::CConfigAdminsSetAccessCommand()
 {
 	m_sCommand = "access";
 	m_sHelp = "set access flags for given admin";
-	m_sDescription = good::string("Arguments: <steam-id> <access-flags>. Can be none / all / mix of: ") +
+	m_sDescription = good::string("Parameters: <steam-id> <access-flags>. Can be none / all / mix of: ") +
 		CTypeToString::AccessFlagsToString(FCommandAccessAll);
 	m_iAccessLevel = FCommandAccessConfig;
 

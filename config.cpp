@@ -75,7 +75,6 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
     else
         LoadWeapons(it);
 
-
 #ifdef BOTRIX_CHAT
     // Load chat: synonims.
     BLOG_D("Loading chat synonims:");
@@ -712,10 +711,8 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
             delete pWeapon;
         else
         {
-            BLOG_D( "  %s", itemIt->key.c_str() );
-
-            pWeapon->iId = CWeapons::Size();
-            BLOG_D( "    id %d", pWeapon->iId );
+			pWeapon->iId = CWeapons::Size();
+			BLOG_D( "  %s, id %d", itemIt->key.c_str(), pWeapon->iId );
 
             if ( pWeapon->iTeam )
             {
@@ -738,14 +735,14 @@ void CConfiguration::LoadWeapons( good::ini_file::const_iterator it )
 
             // Add weapon class.
             CItemClass cEntityClass;
-            cEntityClass.sClassName.assign(itemIt->key, true);
+            cEntityClass.sClassName = itemIt->key;
             pWeapon->pWeaponClass = CItems::AddItemClassFor( EItemTypeWeapon, cEntityClass );
 
             // Add ammo classes.
             pWeapon->aAmmos[0].reserve(aAmmos[0].size());
             pWeapon->aAmmos[1].reserve(aAmmos[1].size());
-            for ( int iSec=0; iSec < 2; ++iSec )
-                for ( int i=0; i < aAmmos[iSec].size(); ++i )
+            for ( int iSec = CWeapon::PRIMARY; iSec <= CWeapon::SECONDARY; ++iSec )
+                for ( int i = 0; i < aAmmos[iSec].size(); ++i )
                 {
                     const good::string& sAmmo = aAmmos[iSec][i];
                     const CItemClass* pAmmoClass = CItems::GetItemClass( EItemTypeAmmo, sAmmo );

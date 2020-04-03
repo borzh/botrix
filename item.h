@@ -128,6 +128,12 @@ class CItems
 {
 
 public:
+
+	static void PrintClasses();
+
+	/// Get item classes.
+	static const good::list<CItemClass>* GetClasses() { return m_aItemClasses; }
+
     /// Get random item clas for given entity type.
     static const CItemClass* GetRandomItemClass( TItemType iEntityType )
     {
@@ -199,8 +205,7 @@ public:
 
 protected:
     /// Get entity type and class given entity name.
-    static TItemType GetEntityType( const char* szClassName, CItemClass* & pEntityClass,
-                                      TItemType iFrom, TItemType iTo, bool bFastCmp = false );
+    static TItemType GetEntityType( const char* szClassName, CItemClass* & pEntityClass, TItemType iFrom, TItemType iTo );
 
     static void CheckNewEntity( edict_t* pEdict, bool bLog = true );
     static TItemIndex InsertEntity( int iEntityType, const CItem& cEntity );

@@ -49,7 +49,7 @@ void CClient::Activated()
 //----------------------------------------------------------------------------------------------------------------
 void CClient::PreThink()
 {
-    int iLastWaypoint = iCurrentWaypoint;
+    //int iLastWaypoint = iCurrentWaypoint;
     CPlayer::PreThink();
 
     // Client don't have access to waypoint modification.

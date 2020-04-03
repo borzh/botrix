@@ -892,7 +892,7 @@ CWaypointArgumentCommand::CWaypointArgumentCommand()
 		
 		auto ammos = cWeapon.GetBaseWeapon()->aAmmos;
 		for (int ammo = 0; ammo < ammos->size(); ++ammo)
-			args2.push_back( ammos->at(ammo)->sClassName );
+			args2.push_back( ammos->at(ammo)->sClassName.duplicate() );
 	}
 
 	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValues);

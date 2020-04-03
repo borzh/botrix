@@ -1175,9 +1175,6 @@ public:
 		if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
 			return ECommandPerformed;
 
-		if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
-			return ECommandPerformed;
-
 		edict_t* pEdict = pClient ? pClient->GetEdict() : NULL;
         if ( argc )
         {

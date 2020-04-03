@@ -95,11 +95,11 @@ bool CItem::IsBreakable() const
 
 //================================================================================================================
 good::vector<CItem> CItems::m_aItems[EItemTypeTotal];            // Array of items.
-good::list<CItemClass> CItems::m_aItemClasses[EItemTypeTotal]; // Array of item classes.
+good::list<CItemClass> CItems::m_aItemClasses[EItemTypeTotal];   // Array of item classes.
 TItemIndex CItems::m_iFreeIndex[EItemTypeTotal];                 // First free weapon index.
-int CItems::m_iFreeEntityCount[EItemTypeTotal];                    // Count of unused entities.
+int CItems::m_iFreeEntityCount[EItemTypeTotal];                  // Count of unused entities.
 
-good::vector<edict_t*> CItems::m_aOthers(1024);                      // Array of other entities.
+good::vector<edict_t*> CItems::m_aOthers(1024);                  // Array of other entities.
 
 #ifndef BOTRIX_SOURCE_ENGINE_2006
 good::vector<edict_t*> CItems::m_aNewEntities(16);
@@ -112,6 +112,18 @@ bool CItems::m_bMapLoaded = false;
 
 
 //----------------------------------------------------------------------------------------------------------------
+void CItems::PrintClasses()
+{
+	for ( TItemType iEntityType = 0; iEntityType < EItemTypeTotal; ++iEntityType )
+	{
+		BLOG_D( "Item type %s:", CTypeToString::EntityTypeToString( iEntityType ).c_str() );
+		const good::list<CItemClass>& aItemClasses = m_aItemClasses[iEntityType];
+
+		for ( good::list<CItemClass>::const_iterator it = aItemClasses.begin(); it != aItemClasses.end(); ++it )
+			BLOG_D( "  Item class %s", it->sClassName.c_str() );
+	}
+}
+
 TItemIndex CItems::GetNearestItem( TItemType iEntityType, const Vector& vOrigin, const good::vector<CPickedItem>& aSkip, const CItemClass* pClass )
 {
     good::vector<CItem>& aItems = m_aItems[iEntityType];
@@ -205,7 +217,6 @@ void CItems::MapUnloaded()
 //----------------------------------------------------------------------------------------------------------------
 void CItems::MapLoaded(bool bLog)
 {
-
     m_iCurrentEntity = CPlayers::Size()+1;
 
     // 0 is world, 1..max players are players. Other entities are from indexes above max players.
@@ -297,30 +308,28 @@ void CItems::Update()
 
 
 //----------------------------------------------------------------------------------------------------------------
-TItemType CItems::GetEntityType( const char* szClassName, CItemClass* & pEntityClass, TItemType iFrom, TItemType iTo, bool bFastCmp )
+TItemType CItems::GetEntityType( const char* szClassName, CItemClass* & pEntityClass, TItemType iFrom, TItemType iTo )
 {
     for ( TItemType iEntityType = iFrom; iEntityType < iTo; ++iEntityType )
     {
-        good::list<CItemClass>& aItemClasses = m_aItemClasses[iEntityType];
+        const good::list<CItemClass>& aItemClasses = m_aItemClasses[iEntityType];
 
         for ( good::list<CItemClass>::iterator it = aItemClasses.begin(); it != aItemClasses.end(); ++it )
         {
             CItemClass& cEntityClass = *it;
+			GoodAssert( cEntityClass.sClassName.size() > 0 );
 
-            if ( cEntityClass.szEngineName ) // Fast compare?
-            {
-                if ( cEntityClass.szEngineName == szClassName ) // Compare by pointer, faster.
-                {
-                    pEntityClass = &cEntityClass;
-                    return iEntityType;
-                }
-            }
-            else if ( !bFastCmp && (cEntityClass.sClassName == szClassName) ) // Full string content comparison.
-            {
-                cEntityClass.szEngineName = szClassName; // Save engine string.
-                pEntityClass = &cEntityClass;
-                return iEntityType;
-            }
+			if ( cEntityClass.szEngineName && (cEntityClass.szEngineName == szClassName) ) // Compare by pointer, faster.
+			{
+				pEntityClass = &cEntityClass;
+				return iEntityType;
+			}
+			else if ( cEntityClass.sClassName == szClassName ) // Full string content comparison.
+			{
+				cEntityClass.szEngineName = szClassName; // Save engine string.
+				pEntityClass = &cEntityClass;
+				return iEntityType;
+			}
         }
     }
 

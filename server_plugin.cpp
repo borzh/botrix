@@ -284,7 +284,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
         iModId = CConfiguration::Load(sGameFolder, sModFolder);
         GoodAssert(iModId != EModId_Invalid);
     }
-
+	
     if ( iModId == EModId_Invalid )
     {
         BLOG_E("Configuration file not founded.");
@@ -318,7 +318,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 
     // Create console command instance.
     CBotrixCommand::instance = new CBotrixCommand();
-
+	
     // Load mod configuration.
     CMod::Load(iModId);
     if ( CMod::pCurrentMod )
@@ -337,10 +337,12 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
 #endif
     srand( time(NULL) );
 
+	CItems::PrintClasses();
+
     const char* szMod = CMod::sModName.c_str();
     if ( CMod::sModName.size() == 0 )
         szMod = "unknown";
-
+	
     BLOG_I("Botrix loaded. Current mod: %s.", szMod);
 
     return true;

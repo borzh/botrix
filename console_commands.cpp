@@ -633,19 +633,13 @@ TCommandResult CWaypointRemoveCommand::Execute( CClient* pClient, int argc, cons
         return ECommandError;
     }
 
-	TWaypointId id = -1;
-	if (argc == 0)
-		id = pClient->iCurrentWaypoint;
-	else if (argc == 1)
+	if ( argc > 1 )
 	{
-		if (sCurrent == argv[0])
-			id = pClient->iCurrentWaypoint;
-		else if (sDestination == argv[0])
-			id = pClient->iDestinationWaypoint;
-		else
-			sscanf(argv[0], "%d", &id);
+		BLOG_W( "Invalid parameters count." );
+		return ECommandError;
 	}
 
+	TWaypointId id = GetWaypointId( 0, argc, argv, pClient, pClient->iCurrentWaypoint );
     if ( !CWaypoints::IsValid(id) )
     {
         BULOG_W(pClient->GetEdict(), "Error, invalid given or current waypoint (move closer to some waypoint).");
@@ -1356,7 +1350,7 @@ TCommandResult CWaypointLoadCommand::Execute( CClient* pClient, int argc, const 
 CWaypointVisibilityCommand::CWaypointVisibilityCommand()
 {
     m_sCommand = "visibility";
-    m_sHelp = "defines how to draw visible waypoints";
+    m_sHelp = "draw lines to waypoints, that are visible from the 'current' one";
     m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::PathDrawFlagsToString(FPathDrawAll);
     m_iAccessLevel = FCommandAccessWaypoint;
 
@@ -2250,7 +2244,7 @@ TCommandResult CConfigBotWeaponAllowCommand::Execute( CClient* pClient, int argc
 CConfigBotWeaponDefaultCommand::CConfigBotWeaponDefaultCommand()
 {
 	m_sCommand = "default";
-	m_sHelp = "configurate bot weapon after respawn.";
+	m_sHelp = "configurate bot weapons after respawn.";
 	m_sDescription = "Parameters: <none/weapon(s)>";
 	m_iAccessLevel = FCommandAccessConfig;
 

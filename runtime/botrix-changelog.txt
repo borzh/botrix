@@ -2,14 +2,18 @@ Changelog
 =========
 1.0.0
 * Fixed crash when respawning bot was killing another bot on the same position (occuring a lot after map change).
-* Auto-completion for commands is working again (updated & compiled Source SDK 2013). Better auto-completion, also with player's names!
-* Bot now can press buttons! Mark waypoint as 'button', execute "botrix waypoint argument angle1" (looking at the button) and mark path to the next waypoint with 'door' type. Works just with elevators.
-* Different player models are working now, but teamplay combines are always using combine_soldier. SDK issue.
+* Fixed crash while flying on the map & getting far away.
+* Auto-completion for commands is working again (updated & compiled Source SDK 2013). Better auto-completion, also with players / weapons / items names! Obviously it's not for the dedicated server.
+* Bot now can press buttons (works with elevators):
+    - mark waypoint as 'button' ("botrix waypoint addtype button")
+    - set waypoint angles (look at button and "botrix waypoint argument angle1")
+    - mark path from 'button' waypoint to the next waypoint as 'door' ("botrix path addtype door").
+* Different player models are working now, but teamplay combines are always using combine_soldier (SDK issue).
 * Fixed "bot add command" for teamplay that wasn't changing bot's team. Now bots are joining the right team, no more auto-balancing.
 * New features:
     - All commands now accept "help" argument, printing how to use them. Example: botrix bot add help.
     - Moved commands "bot config" to "config bot", as those are really configuration commands.
-    - Reordered/changed many commands parameters for better usability, check out how to use command using "help" parameter.
+    - Reordered / changed many commands parameters for better usability / auto-completion.
     - Added new commands:
         + botrix bot protect <player-name> <forever/off/time-amount-in-seconds> <bot-name(s)>
         + botrix config bot protect health <off/health-amount>
@@ -22,9 +26,9 @@ Changelog
 * Fixed crash autocompleting commands on listen server. No command completion for now.
 * New features:
     - Added new commands:
-        + botrix bot ally <bot-name> <player-name> <yes/no>
-        + botrix bot attack <bot-name> <yes/no>
-        + botrix bot move <bot-name> <yes/no>
+        + botrix bot ally <bot-name> <player-name> <on/off>
+        + botrix bot attack <bot-name> <on/off>
+        + botrix bot move <bot-name> <on/off>
 
 0.0.3
 * Plugin is working with Team Fortress 2 (arena maps + VSH plugin).

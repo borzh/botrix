@@ -452,7 +452,7 @@ public:
     {
         m_sCommand = "argument";
         m_sHelp = "set path arguments";
-        m_sDescription = "First parameter is time to wait before action, and second is action duration.";
+        m_sDescription = "Parameters: <wait-time-before-action> <action-duration> (in deciseconds, i.e. 5 = half second).";
         m_iAccessLevel = FCommandAccessWaypoint;
     }
 

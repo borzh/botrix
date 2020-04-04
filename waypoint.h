@@ -316,11 +316,11 @@ protected:
     static const int BUCKETS_SIZE_Y = 96;
     static const int BUCKETS_SIZE_Z = 96;
 
-    static const int BUCKETS_SPACE_X = CUtil::iMaxMapSize/BUCKETS_SIZE_X;
+    static const int BUCKETS_SPACE_X = CUtil::iMaxMapSize/BUCKETS_SIZE_X; // 341.33 = 341
     static const int BUCKETS_SPACE_Y = CUtil::iMaxMapSize/BUCKETS_SIZE_Y;
     static const int BUCKETS_SPACE_Z = CUtil::iMaxMapSize/BUCKETS_SIZE_Z;
 
-    // Get bucket indexes in array of buckets.
+    // Get bucket indexes in array of buckets. Normalize position first to be 0..32768 instead of -16384..16384 (iHalfMaxMapSize).
     static int GetBucketX( float fPositionX ) { return (int)(fPositionX + CUtil::iHalfMaxMapSize) / BUCKETS_SPACE_X; }
     static int GetBucketY( float fPositionY ) { return (int)(fPositionY + CUtil::iHalfMaxMapSize) / BUCKETS_SPACE_Y; }
     static int GetBucketZ( float fPositionZ ) { return (int)(fPositionZ + CUtil::iHalfMaxMapSize) / BUCKETS_SPACE_Z; }
@@ -328,13 +328,16 @@ protected:
     // Get adjacent buckets.
     static void GetBuckets( int x, int y, int z, int& minX, int& minY, int& minZ, int& maxX, int& maxY, int& maxZ )
     {
-        minX = (x>0) ? x-1 : x;
-        minY = (y>0) ? y-1 : y;
-        minZ = (z>0) ? z-1 : z;
+		// Note that maxX = 32768 / 341 = 96.09 = 96, so x or y or z can be 96! We treat it like 95!
+		// minX = x-1
+		minX = ( x <= 1 ) ? 0 : x - 1;
+		minY = ( y <= 1 ) ? 0 : y - 1;
+		minZ = ( z <= 1 ) ? 0 : z - 1;
 
-        maxX = (x == BUCKETS_SIZE_X-1) ? BUCKETS_SIZE_X-1 : x+1;
-        maxY = (y == BUCKETS_SIZE_Y-1) ? BUCKETS_SIZE_Y-1 : y+1;
-        maxZ = (z == BUCKETS_SIZE_Z-1) ? BUCKETS_SIZE_Z-1 : z+1;
+		// maxX = x+1
+		maxX = ( x < BUCKETS_SIZE_X - 1 ) ? x + 1 : BUCKETS_SIZE_X - 1;
+		maxY = ( y < BUCKETS_SIZE_Y - 1 ) ? y + 1 : BUCKETS_SIZE_Y - 1;
+		maxZ = ( z < BUCKETS_SIZE_Z - 1 ) ? z + 1 : BUCKETS_SIZE_Z - 1;
     }
 
     // Add location for waypoint.
@@ -368,9 +371,9 @@ protected:
     typedef good::vector<TWaypointId> Bucket;
     static Bucket m_cBuckets[BUCKETS_SIZE_X][BUCKETS_SIZE_Y][BUCKETS_SIZE_Z]; // 3D hash table of arrays of waypoint IDs.
 
-    static StringVector m_cAreas;      // Areas names.
+    static StringVector m_cAreas;  // Areas names.
 
-    static WaypointGraph m_cGraph;         // Waypoints graph.
+    static WaypointGraph m_cGraph; // Waypoints graph.
 
     static good::vector< good::bitset > m_aVisTable;
 };

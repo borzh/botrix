@@ -644,7 +644,7 @@ void CWaypoints::DecrementLocationIds( TWaypointId id )
 TWaypointId CWaypoints::GetNearestWaypoint(const Vector& vOrigin, const good::bitset* aOmit,
                                            bool bNeedVisible, float fMaxDistance, TWaypointFlags iFlags)
 {
-    TWaypointId result = -1;
+	TWaypointId result = EWaypointIdInvalid;
 
     float sqDist = SQR(fMaxDistance);
     float sqMinDistance = sqDist;
@@ -653,6 +653,7 @@ TWaypointId CWaypoints::GetNearestWaypoint(const Vector& vOrigin, const good::bi
     int x = GetBucketX(vOrigin.x);
     int y = GetBucketY(vOrigin.y);
     int z = GetBucketZ(vOrigin.z);
+
     GetBuckets(x, y, z, minX, minY, minZ, maxX, maxY, maxZ);
 
     for (x = minX; x <= maxX; ++x)

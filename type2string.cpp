@@ -196,10 +196,12 @@ good::string aWaypointFlags[EWaypointFlagTotal] =
     "ammo",
     "health",
     "armor",
-    "health_charger",
-    "armor_charger",
+    "health-charger",
+    "armor-charger",
     "button",
-    "see_button",
+	"see-button",
+    "use",
+    "elevator",
 };
 
 int CTypeToString::WaypointFlagsFromString( const good::string& sFlags )
@@ -227,7 +229,8 @@ good::string aPathFlags[EPathFlagTotal] =
     "damage",
     "flashlight",
     "door",
-    "totem",
+	"elevator",
+	"totem",
 };
 
 
@@ -284,8 +287,8 @@ good::string aItemTypes[EItemTypeTotal+1] =
     "weapon",
     "ammo",
     "button",
-    "door",
-    "object",
+	"door",
+	"object",
     "other",
 };
 

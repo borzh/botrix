@@ -216,7 +216,7 @@ enum TWaypointFlag
     FWaypointNone              = 0,              ///< Just reachable position.
 
     // First byte.
-    FWaypointStop              = 1<<0,           ///< You need to stop totally to use waypoint
+    FWaypointStop              = 1<<0,           ///< You need to stop totally to use waypoint.
     FWaypointCamper            = 1<<1,           ///< Camp at spot and wait for enemy. Argument are 2 angles to aim (low and high words).
     FWaypointSniper            = 1<<2,           ///< Sniper spot. Argument are 2 angles to aim (low and high words).
     FWaypointWeapon            = 1<<3,           ///< Weapon is there. Arguments are weapon index/subindex (2nd byte).
@@ -229,9 +229,11 @@ enum TWaypointFlag
     FWaypointArmorMachine      = 1<<8,           ///< Armor machine is there. Arguments are 1 angle (low word) and health amount (3rd byte).
     FWaypointButton            = 1<<9,           ///< A button is there. Arguments are angle (low word)  button index+1 (3rd byte), door index+1 (4th byte).
     FWaypointSeeButton         = 1<<10,          ///< Button is visible. Arguments are angle (low word), button index+1 (3rd byte), door index+1 (4th byte).
+    FWaypointUse               = 1<<11,          ///< Always need to USE (along with first angle).
+    FWaypointElevator          = 1<<12,          ///< Waypoint should be marked as button. Instead of door's index it has elevator's index.
 
-    EWaypointFlagTotal         = 11,             ///< Amount of waypoint flags.
-    FWaypointAll               = (1<<11) - 1     ///< All flags set.
+    EWaypointFlagTotal         = 13,             ///< Amount of waypoint flags.
+    FWaypointAll               = (1<<13) - 1     ///< All flags set.
 };
 typedef unsigned short TWaypointFlags;           ///< Set of waypoint flags.
 
@@ -252,13 +254,14 @@ enum TPathFlag
     FPathDamage                = 1<<6,           ///< Need to take damage to get to adjacent waypoint. Argument is damage count.
     FPathFlashlight            = 1<<7,           ///< Need to turn on flashlight.
 
-    FPathDoor                  = 1<<8,           ///< There is a door on the way. Argument is door number (start from 1, 0 - invalid).
-    FPathTotem                 = 1<<9,           ///< Need to make ladder of living corpses. Argument is count of players needed (1..).
+    FPathDoor                  = 1<<8,           ///< There is a door on the way. Argument has door number / button number.
+    FPathElevator              = 1<<9,           ///< Stand still until reach next waypoint. Argument has elevator number / button number.
+    FPathTotem                 = 1<<10,          ///< Need to make ladder of living corpses. Argument is count of players needed (1..).
 
-    EPathFlagTotal             = 10,             ///< Amount of path flags. Note that FPathDemo not counts.
-    FPathAll                   = (1<<10)-1,      ///< All path flags.
+    EPathFlagTotal             = 11,             ///< Amount of path flags. Note that FPathDemo not counts.
+    FPathAll                   = (1<<11)-1,      ///< All path flags.
 
-    FPathDemo                  = 0x8000,         ///< Flag for use demo to reach adjacent waypoints. Demo number is at lower bits.
+    FPathDemo                  = 0x8000,         ///< Flag for use demo to reach adjacent waypoints. Demo number is at lower bits. Not implemented yet.
 };
 typedef short TPathFlags;                        ///< Set of waypoint path flags.
 
@@ -310,12 +313,11 @@ typedef int TPathDrawFlags;                      ///< Set of draw types for path
 //****************************************************************************************************************
 /// Event types.
 //****************************************************************************************************************
-enum TEventType
+typedef enum TEventType
 {
     EEventTypeKeyValues,                         ///< Event is of type KeyValues for receiver IGameEventListener.
     EEventTypeIGameEvent                         ///< Event is of type IGameEvent for receiver IGameEventListener2.
-};
-typedef enum TEventType TEventType;
+} TEventType;
 
 
 //****************************************************************************************************************
@@ -330,12 +332,13 @@ enum TItemTypes
     EItemTypeAmmo,                             ///< Ammo for weapon.
     EItemTypeButton,                           ///< Button.
     EItemTypeDoor,                             ///< Door.
+    EItemTypeElevator = EItemTypeDoor,         ///< Elevators are treated like doors.
 
     EItemTypeObject,                           ///< Object that can stuck player (or optionally be moved).
     EItemTypeTotal,                            ///< Amount of item types. Object and other doens't count as bot can't pick them up.
 
-    EItemTypeNotObject = EItemTypeTotal-1,   ///< All that is not object nor other.
-    EItemTypeOther = EItemTypeTotal,         ///< All other type of entities.
+    EItemTypeNotObject = EItemTypeTotal-1,     ///< All that is not object nor other.
+    EItemTypeOther = EItemTypeTotal,           ///< All other type of entities.
 };
 typedef int TItemType;                         ///<  Items types / object / other entities.
 
@@ -386,12 +389,12 @@ enum TItemFlag
     FObjectHeavy               = 1<<3,           ///< Can't use physcannon on this object.
     FObjectBox                 = 1<<4,           ///< Can use this entity to jump on.
 
-    EItemFlagTotal           = 5,              ///< Amount of entity flags.
+    EItemFlagTotal             = 5,              ///< Amount of entity flags.
     FEntityAll                 = (1<<5)-1,       ///< All entity flags (that are configurable at config.ini).
 
     FTaken                     = 1<<4,           ///< This flag is set for all weapons that belong to some player.
 };
-typedef int TItemFlags;                        ///< Entity flags.
+typedef int TItemFlags;                          ///< Entity flags.
 
 
 //****************************************************************************************************************

@@ -13,6 +13,9 @@
     <Filter Include="mods\tf2">
       <UniqueIdentifier>{7a53e568-a48c-4603-872c-24ce40b8809e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="runtime">
+      <UniqueIdentifier>{4aab51e5-0546-4ff7-bdff-2e9630952fde}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="good\include\good\aatree.h">
@@ -177,5 +180,25 @@
     <None Include="mods\tf2\readme.txt">
       <Filter>mods\tf2</Filter>
     </None>
+    <None Include="runtime\addons\botrix\config.ini">
+      <Filter>runtime</Filter>
+    </None>
+    <None Include="runtime\cfg\botrix.cfg">
+      <Filter>runtime</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="runtime\botrix-changelog.txt">
+      <Filter>runtime</Filter>
+    </Text>
+    <Text Include="runtime\botrix-commands.txt">
+      <Filter>runtime</Filter>
+    </Text>
+    <Text Include="runtime\botrix-credits.txt">
+      <Filter>runtime</Filter>
+    </Text>
+    <Text Include="runtime\botrix-readme.txt">
+      <Filter>runtime</Filter>
+    </Text>
   </ItemGroup>
 </Project>

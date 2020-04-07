@@ -417,7 +417,7 @@ protected: // Members.
 
 protected: // Bot flags.
     bool m_bTest:1;                                                // Bot was created only for testing purposes, it will be eliminated after reaching needed waypoint.
-    bool m_bCommandAttack:1;                                   // Bot can't attack by console command.
+    bool m_bCommandAttack:1;                                       // Bot can't attack by console command.
     bool m_bCommandPaused:1;                                       // Bot is paused by console command.
     bool m_bCommandStopped:1;                                      // Bot is stopped (can't move) by console command.
     bool m_bDebugging:1;                                           // Currently debugging this bot.
@@ -465,7 +465,9 @@ protected: // Bot flags.
 
     bool m_bNeedUse:1;                                             // Will starts using USE button at m_fStartActionTime until m_fEndActionTime.
     bool m_bAlreadyUsed:1;                                         // This var will be set when bot ends performing USE action. This will allow bot to not to do USE action again.
-    bool m_bUsingHealthMachine:1;                                  // if m_bNeedUse and this variable is true then we are at health machine (else it is armor machine).
+	bool m_bUsingHealthMachine: 1;                                 // if m_bNeedUse and this variable is true then we are at health charger.
+    bool m_bUsingArmorMachine: 1;                                  // if m_bNeedUse and this variable is true then we are at armor charger.
+    bool m_bUsingButton: 1;                                        // if m_bNeedUse and this variable is true then we are at some button.
 
     bool m_bNeedAttack:1;                                          // Will press attack button at m_fStartActionTime until m_fEndActionTime.
     bool m_bNeedAttack2:1;                                         // Will press attack button 2 at m_fStartActionTime until m_fEndActionTime.

@@ -113,7 +113,7 @@ typedef char TChar;
 
 
 /// Set first byte of a number.
-#define SET_1ST_BYTE(b, number)              number = (number & 0xFFFFFF00)  |  ( (b)&0xFF )
+#define SET_1ST_BYTE(b, number)              number = (number & 0xFFFFFF00)  |  ( ((b)&0xFF) )
 
 /// Set second byte of a number.
 #define SET_2ND_BYTE(b, number)              number = (number & 0xFFFF00FF)  |  ( ((b)&0xFF) << 8 )
@@ -122,7 +122,7 @@ typedef char TChar;
 #define SET_3RD_BYTE(b, number)              number = (number & 0xFF00FFFF)  |  ( ((b)&0xFF) << 16 )
 
 /// Set fourth byte of a number.
-#define SET_4TH_BYTE(b, number)              number = (number & 0x00FFFFFF)  |  ( (b) << 24 )
+#define SET_4TH_BYTE(b, number)              number = (number & 0x00FFFFFF)  |  ( ((b)&0xFF) << 24 )
 
 
 

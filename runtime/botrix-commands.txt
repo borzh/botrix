@@ -96,7 +96,7 @@ Here is the help you get typing "botrix" command:
   [waypoint]
     [addtype]: add type to waypoint
       Can be mix of: stop camper sniper weapon ammo health armor
-      health_charger armor_charger button see_button
+      health-charger armor-charger button see-button
     [area]
       [remove]: delete waypoint area
       [rename]: rename waypoint area

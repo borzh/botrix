@@ -132,14 +132,23 @@ void CWaypoint::Draw( TWaypointId iWaypointId, TWaypointDrawFlags iDrawType, flo
 
     if ( FLAG_ALL_SET_OR_0(FWaypointDrawText, iDrawType) )
     {
-        static char szId[16];
-        sprintf(szId, "%d", iWaypointId);
+        sprintf(szMainBuffer, "%d", iWaypointId);
         Vector v = vOrigin;
         v.z -= 20.0f;
         int i = 0;
-        CUtil::DrawText(v, i++, fDrawTime, 0xFF, 0xFF, 0xFF, szId);
+		CUtil::DrawText( v, i++, fDrawTime, 0xFF, 0xFF, 0xFF, szMainBuffer );
         CUtil::DrawText(v, i++, fDrawTime, 0xFF, 0xFF, 0xFF, CWaypoints::GetAreas()[iAreaId].c_str());
-        CUtil::DrawText(v, i++, fDrawTime, 0xFF, 0xFF, 0xFF, CTypeToString::WaypointFlagsToString(iFlags).c_str());
+		if ( FLAG_SOME_SET( FWaypointButton | FWaypointSeeButton, iFlags ) )
+		{
+			sprintf( szMainBuffer, FLAG_SOME_SET( FWaypointSeeButton, iFlags ) ? "see button %d" : "button %d", 
+			         CWaypoint::GetButton( iArgument ) );
+			CUtil::DrawText( v, i++, fDrawTime, 0xFF, 0xFF, 0xFF, szMainBuffer );
+			sprintf( szMainBuffer, FLAG_SOME_SET( FWaypointElevator, iFlags ) ? "for elevator %d" : "for door %d",
+			         CWaypoint::GetDoor( iArgument ) );
+			CUtil::DrawText( v, i++, fDrawTime, 0xFF, 0xFF, 0xFF, szMainBuffer );
+		}
+		else
+			CUtil::DrawText( v, i++, fDrawTime, 0xFF, 0xFF, 0xFF, CTypeToString::WaypointFlagsToString( iFlags ).c_str() );
     }
 }
 
@@ -189,7 +198,7 @@ bool CWaypoints::Save()
         for ( WaypointArcIt arcIt = it->neighbours.begin(); arcIt != it->neighbours.end(); ++arcIt)
         {
             fwrite(&arcIt->target, sizeof(TWaypointId), 1, f);             // Save waypoint id.
-            fwrite(&arcIt->edge.iFlags, sizeof(TPathFlags), 1, f); // Save path flags.
+            fwrite(&arcIt->edge.iFlags, sizeof(TPathFlags), 1, f);         // Save path flags.
             fwrite(&arcIt->edge.iArgument, sizeof(unsigned short), 1, f);  // Save path arguments.
         }
     }

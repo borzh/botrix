@@ -340,12 +340,14 @@ TItemType CItems::GetEntityType( const char* szClassName, CItemClass* & pEntityC
 //----------------------------------------------------------------------------------------------------------------
 void CItems::CheckNewEntity(edict_t* pEdict, bool bLog)
 {
+    const char* szClassName = pEdict->GetClassName();
+    BLOG_T( "New entity: %s", szClassName ? szClassName : "" );
+
     // Check only server entities.
     IServerEntity* pServerEntity = pEdict->GetIServerEntity();
     if ( pServerEntity == NULL )
         return;
 
-    const char* szClassName = pEdict->GetClassName();
     CItemClass* pItemClass;
     TItemType iEntityType = GetEntityType(szClassName, pItemClass, 0, EItemTypeTotal);
     if ( iEntityType == EItemTypeOther )
@@ -431,7 +433,7 @@ void CItems::AutoWaypointPathFlagsForEntity( TItemType iEntityType, TItemIndex i
         // Set waypoint argument to button.
         CWaypoint& cWaypoint = CWaypoints::Get(iWaypoint);
         FLAG_SET(FWaypointButton, cWaypoint.iFlags);
-        CWaypoint::SetButton( iIndex+1, cWaypoint.iArgument );
+        CWaypoint::SetButton( iIndex, cWaypoint.iArgument );
     }
 
     // Check 2nd nearest waypoint for door.
@@ -452,15 +454,15 @@ void CItems::AutoWaypointPathFlagsForEntity( TItemType iEntityType, TItemIndex i
             if ( pPath )
             {
                 FLAG_SET(FPathDoor, pPath->iFlags);
-                pPath->iArgument = iIndex+1;
+				pPath->SetDoorNumber( iIndex );
             }
 
             pPath = CWaypoints::GetPath(cEntity.iWaypoint, iWaypoint); // To -> From.
             if ( pPath )
             {
                 FLAG_SET(FPathDoor, pPath->iFlags);
-                pPath->iArgument = iIndex+1;
-            }
+				pPath->SetDoorNumber( iIndex );
+			}
         }
     }
 }
@@ -493,7 +495,7 @@ TItemIndex CItems::AddItem( TItemType iEntityType, edict_t* pEdict, CItemClass* 
     if ( !IsEntityOnMap(pServerEntity) || IsEntityTaken(pServerEntity) )
         FLAG_SET(FTaken, iFlags);
     else
-        iWaypoint = CWaypoints::GetNearestWaypoint( vItemOrigin, NULL, true, CItem::iMaxDistToWaypoint );
+		iWaypoint = CWaypoints::GetNearestWaypoint( vItemOrigin, NULL, true, CItem::iMaxDistToWaypoint );
 
     CItem cNewEntity(pEdict, iFlags, fPickupDistanceSqr, pItemClass, vItemOrigin, iWaypoint);
     TItemIndex iIndex = InsertEntity( iEntityType, cNewEntity );
@@ -555,16 +557,18 @@ void CItems::AddObject( edict_t* pEdict, const CItemClass* pObjectClass, IServer
 }
 
 //----------------------------------------------------------------------------------------------------------------
-bool CItems::IsDoorOpened( TItemIndex iDoor )
+int CItems::IsDoorClosed( TItemIndex iDoor )
 {
-    const CItem& cDoor = m_aItems[EItemTypeDoor][iDoor];
-    TWaypointId w1 = cDoor.iWaypoint, w2 = (TWaypointId)cDoor.pArguments;
+    BASSERT( 0 <= iDoor && iDoor < m_aItems[EItemTypeDoor].size(), return false );
+	const CItem& cDoor = m_aItems[EItemTypeDoor][iDoor];
+	TWaypointId w1 = cDoor.iWaypoint, w2 = (TWaypointId)cDoor.pArguments;
 
-    BASSERT( CWaypoints::IsValid(w1) && CWaypoints::IsValid(w2), return false); // Door should have two waypoints from each side.
+	if ( !CWaypoints::IsValid( w1 ) || !CWaypoints::IsValid( w2 ) ) // Door should have two waypoints from each side.
+		return -1;
 
     const Vector& v1 = CWaypoints::Get(w1).vOrigin;
     const Vector& v2 = CWaypoints::Get(w2).vOrigin;
-    return !CUtil::IsRayHitsEntity(cDoor.pEdict, v1, v2);
+    return CUtil::IsRayHitsEntity(cDoor.pEdict, v1, v2) ? 1 : 0;
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -613,13 +617,16 @@ void CItems::Draw( CClient* pClient )
                     int pos = 0;
 
                     // Draw entity class name name with index.
-                    sprintf( szMainBuffer, "%s %d", CTypeToString::EntityTypeToString(iEntityType).c_str(), i+1 );
+                    sprintf( szMainBuffer, "%s %d", CTypeToString::EntityTypeToString(iEntityType).c_str(), i );
                     CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, szMainBuffer );
 
                     CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, pEdict->GetClassName() );
-                    if ( iEntityType == EItemTypeDoor )
-                        CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsDoorOpened(i) ? "opened" : "closed" );
-                    else if ( iEntityType == EItemTypeObject )
+					if ( iEntityType == EItemTypeDoor )
+					{
+						int iClosed = IsDoorClosed( i );
+						CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, iClosed == -1 ? "no near waypoints" : iClosed == 0 ? "opened" : "closed" );
+					}
+					else if ( iEntityType == EItemTypeObject )
                     {
                         sprintf( szMainBuffer, "%s %d", CTypeToString::EntityTypeToString(iEntityType).c_str(), i );
                         CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityOnMap(pServerEntity) ? "alive" : "dead" );

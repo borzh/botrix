@@ -90,7 +90,7 @@ public:
     bool operator== ( const CItem& other ) const { return pEdict == other.pEdict; }
 
     /// Maximum distance from item to waypoint, to consider that to grab item you need to go to that waypoint.
-    static const int iMaxDistToWaypoint = 100;
+	static const int iMaxDistToWaypoint = 100;
 
     edict_t* pEdict;                    ///< Entity's edict.
     TItemFlags iFlags;                  ///< Entity's flags.
@@ -197,8 +197,11 @@ public:
     /// Update items. Called when player is connected or picks up weapon (new one will be created to respawn later).
     static void Update();
 
-    /// Check if given door is opened.
-    static bool IsDoorOpened( TItemIndex iDoor );
+    /// Check if given door is closed (a ray hits it).
+    static int IsDoorClosed( TItemIndex iDoor );
+
+    /// Check if given elevator is on the high floor (a ray hits it).
+    static int IsElevatorHigh( TItemIndex iElevator ) { return IsDoorClosed( iElevator ); }
 
     /// Draw items for a given client.
     static void Draw( CClient* pClient );

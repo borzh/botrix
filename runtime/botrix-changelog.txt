@@ -16,8 +16,8 @@ Changelog
     - Reordered / changed many commands parameters for better usability / auto-completion.
     - Added new commands:
         + botrix bot protect <player-name> <forever/off/time-amount-in-seconds> <bot-name(s)>
-        + botrix config bot protect health <off/health-amount>
-        + botrix config bot protect spawn-time <off/time-amount-in-seconds>
+        + botrix config bot protection health <off/health-amount>
+        + botrix config bot protection spawn-time <off/time-amount-in-seconds>
         + botrix config bot weapon remove <on/off>
         + botrix config bot weapon default <none/weapon(s)>
         

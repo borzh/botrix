@@ -17,7 +17,7 @@
 
 good::unique_ptr<CBotrixCommand> CBotrixCommand::instance;
 
-const good::string sHelp( "help" ); // TODO: all commands.
+const good::string sHelp( "help" );
 
 const good::string sAll( "all" );
 const good::string sNone( "none" );
@@ -25,16 +25,22 @@ const good::string sNext( "next" );
 
 const good::string sRandom( "random" );
 
-const good::string sWeapon = "weapon";
+const good::string sFirstAngle = "angle1";
+const good::string sSecondAngle = "angle2";
+const good::string sButton = "button";
+const good::string sDoor = "door";
+const good::string sElevator = "elevator";
+
+const good::string sWeapon = "weapon"; // Next 4 are only for unknown mods
 const good::string sAmmo = "ammo";
 const good::string sHealth = "health";
 const good::string sArmor = "armor";
-const good::string sButton = "button";
-const good::string sFirstAngle = "angle1";
-const good::string sSecondAngle = "angle2";
 
 const good::string sCurrent = "current";
 const good::string sDestination = "destination";
+
+const good::string sActionTime = "action-time";
+const good::string sActionDuration = "action-duration";
 
 const good::string sUnlock = "unlock";
 
@@ -635,7 +641,7 @@ TCommandResult CWaypointRemoveCommand::Execute( CClient* pClient, int argc, cons
 
 	if ( argc > 1 )
 	{
-		BLOG_W( "Invalid parameters count." );
+		BLOG_W( "Error, invalid parameters count." );
 		return ECommandError;
 	}
 
@@ -693,7 +699,7 @@ TCommandResult CWaypointMoveCommand::Execute( CClient* pClient, int argc, const 
     }
 	if ( argc > 1 )
 	{
-		BLOG_W( "Invalid parameters count." );
+		BLOG_W( "Error, invalid parameters count." );
 		return ECommandError;
 	}
 
@@ -818,7 +824,7 @@ TCommandResult CWaypointAddTypeCommand::Execute( CClient* pClient, int argc, con
     {
         CWaypoint& w = CWaypoints::Get(pClient->iCurrentWaypoint);
 
-        bool bAngle1 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper | FWaypointArmorMachine | FWaypointHealthMachine | FWaypointButton, w.iFlags);
+        bool bAngle1 = FLAG_SOME_SET( FWaypointCamper | FWaypointSniper | FWaypointArmorMachine | FWaypointHealthMachine | FWaypointButton | FWaypointUse, w.iFlags );
         bool bAngle2 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper, w.iFlags);
 
         bool bWeapon = FLAG_SOME_SET(FWaypointAmmo | FWaypointWeapon, w.iFlags);
@@ -868,48 +874,74 @@ CWaypointArgumentCommand::CWaypointArgumentCommand()
 {
     m_sCommand = "argument";
 	m_sHelp = "set waypoint argument";
-	m_sDescription = "Parameters: (waypoint) (key) (value), where key can be angle1 / angle2 / weapon / ammo / health /";
+
+	if (CMod::GetModId() == EModId_Invalid)
+		m_sDescription = "Parameters: (waypoint) (key) (value), where key can be: angle1 / angle2 / button / door / elevator / weapon / ammo / health / armor.";
+	else
+		m_sDescription = "Parameters: (waypoint) (key) (value), where key can be: angle1 / angle2 / button / door / elevator.";
 	m_iAccessLevel = FCommandAccessWaypoint;
 
 	StringVector args0, args1, args2;
 
-	args0.push_back(sFirstAngle);
-	args0.push_back(sSecondAngle);
-	args0.push_back(sButton);
+    args0.push_back( sFirstAngle );
+    args0.push_back( sSecondAngle );
+	args0.push_back( sButton );
+	args0.push_back( sDoor );
+	args0.push_back( sElevator );
 
-#define NO_ITEMS_AVAILABLE
-#ifdef NO_ITEMS_AVAILABLE
-	args0.push_back(sWeapon);
-	args0.push_back(sAmmo);
-	args0.push_back(sHealth);
-	args0.push_back(sArmor);
-#endif
-
-	for ( TWeaponId weapon = 0; weapon < CWeapons::Size(); ++weapon )
+	if ( CMod::GetModId() == EModId_Invalid )
 	{
-		const CWeaponWithAmmo& cWeapon = *CWeapons::Get(weapon);
-		args1.push_back( cWeapon.GetName().duplicate() );
-		
-		auto ammos = cWeapon.GetBaseWeapon()->aAmmos;
-		for (int ammo = 0; ammo < ammos->size(); ++ammo)
-			args2.push_back( ammos->at(ammo)->sClassName.duplicate() );
+		args0.push_back( sWeapon );
+		args0.push_back( sAmmo );
+		args0.push_back( sHealth );
+		args0.push_back( sArmor );
 	}
 
-	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValues);
-	m_cAutoCompleteValues.push_back(args0);
+	m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+	m_cAutoCompleteValues.push_back( args0 );
 
-	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValues);
-	m_cAutoCompleteValues.push_back(args1);
+	if ( CMod::GetModId() == EModId_Invalid )
+	{
+		for ( TWeaponId weapon = 0; weapon < CWeapons::Size(); ++weapon )
+		{
+			const CWeaponWithAmmo& cWeapon = *CWeapons::Get( weapon );
+			args1.push_back( cWeapon.GetName().duplicate() );
 
-	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValues);
-	m_cAutoCompleteValues.push_back(args2);
+			auto ammos = cWeapon.GetBaseWeapon()->aAmmos;
+			for ( int ammo = 0; ammo < ammos->size(); ++ammo )
+				args2.push_back( ammos->at( ammo )->sClassName.duplicate() );
+		}
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+		m_cAutoCompleteValues.push_back( args1 );
+
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+		m_cAutoCompleteValues.push_back( args2 );
+	}
 }
 
 TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+	{
+		// sHelp == argv[0]
+		BULOG_I( pClient->GetEdict(), "You can add next arguments:" );
+		BULOG_I( pClient->GetEdict(), " - 'angle1': set your current angles as waypoint first angles (use, button, chargers, camper, sniper)." );
+		BULOG_I( pClient->GetEdict(), " - 'angle2': set your current angles as second angles (camper, sniper)." );
+		if ( CMod::GetModId() == EModId_Invalid )
+		{
+			BULOG_I( pClient->GetEdict(), " - 'weapon': set waypoint's weapon" );
+			BULOG_I( pClient->GetEdict(), " - 'ammo': set waypoint's ammo" );
+			BULOG_I( pClient->GetEdict(), " - 'health': set waypoint's health amount" );
+			BULOG_I( pClient->GetEdict(), " - 'armor': set waypoint's armor amount" );
+		}
+		BULOG_I( pClient->GetEdict(), " - 'button': set waypoint's button" );
+		BULOG_I( pClient->GetEdict(), " - 'door': set button's door (only to be used with button)" );
+		BULOG_I( pClient->GetEdict(), " - 'elevator': set button's elevator (only to be used with button)" );
 		return ECommandPerformed;
 
+		return ECommandPerformed;
+	}
 	if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
@@ -925,7 +957,7 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
 
     CWaypoint& w = CWaypoints::Get(pClient->iCurrentWaypoint);
 
-    bool bAngle1 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper | FWaypointArmorMachine | FWaypointHealthMachine | FWaypointButton | FWaypointSeeButton, w.iFlags);
+    bool bAngle1 = FLAG_SOME_SET( FWaypointCamper | FWaypointSniper | FWaypointArmorMachine | FWaypointHealthMachine | FWaypointUse | FWaypointButton | FWaypointSeeButton, w.iFlags );
     bool bAngle2 = FLAG_SOME_SET(FWaypointCamper | FWaypointSniper, w.iFlags);
 
     bool bWeapon = FLAG_SOME_SET(FWaypointAmmo | FWaypointWeapon, w.iFlags);
@@ -933,7 +965,7 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
     bool bArmor = FLAG_SOME_SET(FWaypointArmor, w.iFlags);
     bool bHealth = FLAG_SOME_SET(FWaypointHealth, w.iFlags);
 
-    bool bButton = FLAG_SOME_SET(FWaypointButton | FWaypointSeeButton, w.iFlags);
+    bool bButton = FLAG_SOME_SET(FWaypointButton, w.iFlags);
 
     if ( argc == 0 )
     {
@@ -954,38 +986,30 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
 			}
 		}
 		
-        if ( bHealth )
-            BULOG_I(pClient->GetEdict(), "Health %d.", CWaypoint::GetHealth(w.iArgument));
-        if ( bArmor )
-            BULOG_I(pClient->GetEdict(), "Armor %d.", CWaypoint::GetArmor(w.iArgument));
-        if ( bButton )
-            BULOG_I(pClient->GetEdict(), "Button %d.", CWaypoint::GetButton(w.iArgument));
-        if ( bAngle1 )
-        {
-            QAngle a1; CWaypoint::GetFirstAngle(a1, w.iArgument);
-            BULOG_I(pClient->GetEdict(), "Angle 1 (pitch, yaw): (%.0f, %.0f).", a1.x, a1.y);
-        }
-        if ( bAngle2 )
-        {
-            QAngle a2; CWaypoint::GetSecondAngle(a2, w.iArgument);
-            BULOG_I(pClient->GetEdict(), "Angle 2 (pitch, yaw): (%.0f, %.0f).", a2.x, a2.y);
-        }
-        return ECommandPerformed;
-    }
+		if ( bHealth )
+			BULOG_I( pClient->GetEdict(), "Health %d.", CWaypoint::GetHealth( w.iArgument ) );
+		if ( bArmor )
+			BULOG_I( pClient->GetEdict(), "Armor %d.", CWaypoint::GetArmor( w.iArgument ) );
+		if ( bButton )
+		{
+			if ( FLAG_SOME_SET( FWaypointElevator, w.iFlags ) )
+				sprintf( szMainBuffer, "elevator %d (-1 invalid).", CWaypoint::GetElevator( w.iArgument ) );
+			else
+				sprintf( szMainBuffer, "door %d (-1 invalid).", CWaypoint::GetDoor( w.iArgument ) );
 
-    if ( sHelp == argv[0] )
-    {
-        BULOG_I(pClient->GetEdict(), "You can add next arguments:");
-        BULOG_I(pClient->GetEdict(), " - 'angle1': set your current angles as waypoint first angles (camper, sniper, machines)");
-		BULOG_I(pClient->GetEdict(), " - 'angle2': set your current angles as second angles (camper, sniper)");
-#ifdef NO_ITEMS_AVAILABLE
-		BULOG_I(pClient->GetEdict(), " - 'weapon': set waypoint's weapon");
-		BULOG_I(pClient->GetEdict(), " - 'ammo': set waypoint's ammo");
-		BULOG_I(pClient->GetEdict(), " - 'health': set waypoint's health amount");
-		BULOG_I(pClient->GetEdict(), " - 'armor': set waypoint's armor amount");
-#endif
-		BULOG_I(pClient->GetEdict(), " - 'button': set waypoint's button");
-		return ECommandPerformed;
+			BULOG_I( pClient->GetEdict(), "Button %d, %s", CWaypoint::GetButton( w.iArgument ), szMainBuffer );
+		}
+		if ( bAngle1 )
+		{
+			QAngle a1; CWaypoint::GetFirstAngle( a1, w.iArgument );
+			BULOG_I( pClient->GetEdict(), "Angle 1 (pitch, yaw): (%.0f, %.0f).", a1.x, a1.y );
+		}
+		if ( bAngle2 )
+		{
+			QAngle a2; CWaypoint::GetSecondAngle( a2, w.iArgument );
+			BULOG_I( pClient->GetEdict(), "Angle 2 (pitch, yaw): (%.0f, %.0f).", a2.x, a2.y );
+		}
+        return ECommandPerformed;
     }
 
     int iArgument = w.iArgument;
@@ -995,164 +1019,234 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
     CUtil::DeNormalizeAngle(angClient.y);
     BASSERT( -90.0f <= angClient.x && angClient.x <= 90.0f, return ECommandError );
 
-	bool bIsWeapon = sWeapon == argv[0];
-	int iWeaponId = EWeaponIdInvalid;
+	bool bDone = false;
+	if ( CMod::GetModId() == EModId_Invalid )
+	{
+		// Weapon / ammo / health / ammo.
+		bool bIsWeapon = sWeapon == argv[0];
+		int iWeaponId = EWeaponIdInvalid;
 
-#ifdef NO_ITEMS_AVAILABLE
-	if ( bIsWeapon || sAmmo == argv[0] )
-    {
-		if ( argc < 2 )
-        {
-            BULOG_W(pClient->GetEdict(), "Error, you must provide weapon name.");
-            return ECommandError;
-        }
-		else if ( bIsWeapon && (argc != 2) )
+		if ( bIsWeapon || sAmmo == argv[0] )
 		{
-			BULOG_W(pClient->GetEdict(), "Error, invalid parameters count.");
-			return ECommandError;
-		}
-        if ( !bWeapon )
-        {
-            BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (weapon/ammo).");
-            return ECommandError;
-        }
-
-        if ( bAngle1 || bButton )
-        {
-            BULOG_W(pClient->GetEdict(), "Error, you can't mix weapon/ammo with angles/buttons.");
-            return ECommandError;
-        }
-        iWeaponId = CWeapons::GetIdFromWeaponName(argv[1]);
-        if ( !CWeapons::IsValid(iWeaponId) )
-        {
-            BULOG_W(pClient->GetEdict(), "Error, invalid weapon name.");
-            return ECommandError;
-        }
-		CWaypoint::SetWeaponId(iWeaponId, iArgument);
-
-		if ( !bIsWeapon ) // Is ammo.
-		{
-			if ( argc != 3 )
+			if ( argc < 2 )
 			{
-				BULOG_W(pClient->GetEdict(), "Error, you must provide ammo name or invalid parameters count.");
+				BULOG_W( pClient->GetEdict(), "Error, you must provide weapon name." );
 				return ECommandError;
 			}
-			if ( !FLAG_SOME_SET(FWaypointAmmo, w.iFlags) )
+			else if ( bIsWeapon && ( argc != 2 ) )
 			{
-				BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (ammo).");
+				BULOG_W( pClient->GetEdict(), "Error, invalid parameters count." );
 				return ECommandError;
 			}
+			if ( !bWeapon )
+			{
+				BULOG_W( pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (weapon/ammo)." );
+				return ECommandError;
+			}
+
 			if ( bAngle1 || bButton )
 			{
-				BULOG_W(pClient->GetEdict(), "Error, you can't mix weapon/ammo with angles/buttons.");
+				BULOG_W( pClient->GetEdict(), "Error, you can't mix weapon/ammo with angles/buttons." );
 				return ECommandError;
 			}
-
-			const CWeapon *pWeapon = CWeapons::Get(iWeaponId)->GetBaseWeapon();
-			BASSERT(pWeapon, return ECommandError);
-
-			bool bIsSecondary;
-			int iAmmo = pWeapon->GetAmmoIndexFromName(argv[2], bIsSecondary);
-
-			if ( iAmmo < 0 )
+			iWeaponId = CWeapons::GetIdFromWeaponName( argv[1] );
+			if ( !CWeapons::IsValid( iWeaponId ) )
 			{
-				BULOG_W(pClient->GetEdict(), "Error, invalid ammo name.");
+				BULOG_W( pClient->GetEdict(), "Error, invalid weapon name." );
 				return ECommandError;
 			}
-			CWaypoint::SetAmmo(iAmmo, bIsSecondary, iArgument);
+			CWaypoint::SetWeaponId( iWeaponId, iArgument );
+
+			if ( !bIsWeapon ) // Is ammo.
+			{
+				if ( argc != 3 )
+				{
+					BULOG_W( pClient->GetEdict(), "Error, you must provide ammo name or Error, invalid parameters count." );
+					return ECommandError;
+				}
+				if ( !FLAG_SOME_SET( FWaypointAmmo, w.iFlags ) )
+				{
+					BULOG_W( pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (ammo)." );
+					return ECommandError;
+				}
+				if ( bAngle1 || bButton )
+				{
+					BULOG_W( pClient->GetEdict(), "Error, you can't mix weapon/ammo with angles/buttons." );
+					return ECommandError;
+				}
+
+				const CWeapon *pWeapon = CWeapons::Get( iWeaponId )->GetBaseWeapon();
+				BASSERT( pWeapon, return ECommandError );
+
+				bool bIsSecondary;
+				int iAmmo = pWeapon->GetAmmoIndexFromName( argv[2], bIsSecondary );
+
+				if ( iAmmo < 0 )
+				{
+					BULOG_W( pClient->GetEdict(), "Error, invalid ammo name." );
+					return ECommandError;
+				}
+				CWaypoint::SetAmmo( iAmmo, bIsSecondary, iArgument );
+			}
+			bDone = true;
+		}
+
+		else if ( sHealth == argv[0] )
+		{
+			if ( argc != 2 )
+			{
+				BULOG_W( pClient->GetEdict(), "Error, you must provide health amount or Error, invalid parameters count." );
+				return ECommandError;
+			}
+			if ( !bHealth )
+			{
+				BULOG_W( pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (health/health-charger)." );
+				return ECommandError;
+			}
+			if ( bAngle2 )
+			{
+				BULOG_W( pClient->GetEdict(), "Error, you can't mix health with 2 angles." );
+				return ECommandError;
+			}
+
+			int i1 = -1;
+			sscanf( argv[1], "%d", &i1 );
+
+			if ( ( i1 < 0 ) || ( i1 > 100 ) )
+			{
+				BULOG_W( pClient->GetEdict(), "Error, invalid health argument (must be from 0 to 100)." );
+				return ECommandError;
+			}
+			CWaypoint::SetHealth( i1, iArgument );
+			bDone = true;
+		}
+
+		else if ( sArmor == argv[0] )
+		{
+			if ( argc != 2 )
+			{
+				BULOG_W( pClient->GetEdict(), "Error, you must provide armor amount or Error, invalid parameters count." );
+				return ECommandError;
+			}
+			if ( !bArmor )
+			{
+				BULOG_W( pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (armor/armor-charger)." );
+				return ECommandError;
+			}
+			if ( bAngle2 )
+			{
+				BULOG_W( pClient->GetEdict(), "Error, you can't mix armor with 2 angles." );
+				return ECommandError;
+			}
+
+			int i1 = -1;
+			sscanf( argv[1], "%d", &i1 );
+
+			if ( ( i1 < 0 ) || ( i1 > 100 ) )
+			{
+				BULOG_W( pClient->GetEdict(), "Error, invalid armor argument (must be from 0 to 100)." );
+				return ECommandError;
+			}
+			CWaypoint::SetArmor( i1, iArgument );
+			bDone = true;
 		}
 	}
 
-    else if ( sHealth == argv[0] )
-    {
-        if ( argc != 2 )
-        {
-            BULOG_W(pClient->GetEdict(), "Error, you must provide health amount or invalid parameters count.");
-            return ECommandError;
-        }
-		if ( !bHealth )
+	if ( bDone )
+	{
+		// Enter here to not compare other if's.
+	}
+	else if ( sButton == argv[0] )
+	{
+		if ( argc != 2 )
 		{
-			BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (health/health_charger).");
+			BULOG_W( pClient->GetEdict(), "Error, you must provide button index or invalid parameters count." );
 			return ECommandError;
 		}
-        if ( bAngle2 )
-        {
-            BULOG_W(pClient->GetEdict(), "Error, you can't mix health with 2 angles.");
-            return ECommandError;
-        }
-
-        int i1 = -1;
-        sscanf(argv[1], "%d", &i1);
-
-        if ( (i1 < 0) || (i1 > 100) )
-        {
-            BULOG_W(pClient->GetEdict(), "Error, invalid health argument (must be from 0 to 100).");
-            return ECommandError;
-        }
-        CWaypoint::SetHealth(i1, iArgument);
-    }
-
-    else if ( sArmor == argv[0] )
-    {
-        if ( argc != 2 )
-        {
-            BULOG_W(pClient->GetEdict(), "Error, you must provide armor amount or invalid parameters count.");
-            return ECommandError;
-        }
-		if ( !bArmor )
+		if ( !bButton )
 		{
-			BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (armor/armor_charger).");
+			BULOG_W( pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (button/see-button)." );
 			return ECommandError;
 		}
-        if ( bAngle2 )
-        {
-            BULOG_W(pClient->GetEdict(), "Error, you can't mix armor with 2 angles.");
-            return ECommandError;
-        }
+		if ( bAngle2 )
+		{
+			BULOG_W( pClient->GetEdict(), "Error, you can't mix button with 2 angles." );
+			return ECommandError;
+		}
 
-        int i1 = -1;
-        sscanf(argv[1], "%d", &i1);
+		int i1 = -1;
+		sscanf( argv[1], "%d", &i1 );
 
-        if ( (i1 < 0) || (i1 > 100) )
-        {
-            BULOG_W(pClient->GetEdict(), "Error, invalid armor argument (must be from 0 to 100).");
-            return ECommandError;
-        }
-        CWaypoint::SetArmor(i1, iArgument);
-    }
+		int iButtonsCount = CItems::GetItems( EItemTypeButton ).size();
+		if ( ( i1 < 0 ) || ( i1 >= iButtonsCount ) )
+		{
+			BULOG_W( pClient->GetEdict(), "Error, invalid button argument (must be from 0 to %d).", iButtonsCount - 1 );
+			return ECommandError;
+		}
+		CWaypoint::SetButton( i1, iArgument );
+	}
 
-    else 
-#endif
+	else if ( sDoor == argv[0] )
+	{
+		if ( argc != 2 )
+		{
+			BULOG_W( pClient->GetEdict(), "Error, you must provide button index or invalid parameters count." );
+			return ECommandError;
+		}
+		if ( !bButton )
+		{
+			BULOG_W( pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (button/see-button)." );
+			return ECommandError;
+		}
+		if ( bAngle2 )
+		{
+			BULOG_W( pClient->GetEdict(), "Error, you can't mix button with 2 angles." );
+			return ECommandError;
+		}
 
-	if ( sButton == argv[0] )
-    {
-        if ( argc != 2 )
-        {
-            BULOG_W(pClient->GetEdict(), "Error, you must provide button index  or invalid parameters count.");
-            return ECommandError;
-        }
-        if ( bAngle2 )
-        {
-            BULOG_W(pClient->GetEdict(), "Error, you can't mix button with 2 angles.");
-            return ECommandError;
-        }
-        if ( !bButton )
-        {
-            BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (button/see_button).");
-            return ECommandError;
-        }
+		int i1 = -1;
+		sscanf( argv[1], "%d", &i1 );
 
-        int i1 = -1;
-        sscanf(argv[1], "%d", &i1);
+		int iDoorsCount = CItems::GetItems( EItemTypeDoor ).size();
+		if ( ( i1 < 0 ) || ( i1 >= iDoorsCount ) )
+		{
+			BULOG_W( pClient->GetEdict(), "Error, invalid door argument (must be from 0 to %d).", iDoorsCount - 1 );
+			return ECommandError;
+		}
+		FLAG_CLEAR( FWaypointElevator, w.iFlags );
+		CWaypoint::SetDoor( i1, iArgument );
+	}
 
-        int iButtonsCount = CItems::GetItems(EItemTypeButton).size();
-        if ( (i1 < 0) || (i1 >= iButtonsCount) )
-        {
-            BULOG_W(pClient->GetEdict(), "Error, invalid button argument (must be from 0 to %d).", iButtonsCount-1);
-            return ECommandError;
-        }
-        CWaypoint::SetButton(i1, iArgument);
-    }
+	else if ( sElevator == argv[0] )
+	{
+		if ( argc != 2 )
+		{
+			BULOG_W( pClient->GetEdict(), "Error, you must provide button index or invalid parameters count." );
+			return ECommandError;
+		}
+		if ( !bButton )
+		{
+			BULOG_W( pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (elevator)." );
+			return ECommandError;
+		}
+		if ( bAngle2 )
+		{
+			BULOG_W( pClient->GetEdict(), "Error, you can't mix elevator with 2 angles." );
+			return ECommandError;
+		}
+
+		int i1 = -1;
+		sscanf( argv[1], "%d", &i1 );
+
+		int iElevatorsCount = CItems::GetItems( EItemTypeElevator ).size();
+		if ( ( i1 < 0 ) || ( i1 > iElevatorsCount ) )
+		{
+			BULOG_W( pClient->GetEdict(), "Error, invalid elevator argument (must be from 0 to %d).", iElevatorsCount );
+			return ECommandError;
+		}
+		FLAG_SET( FWaypointElevator, w.iFlags );
+		CWaypoint::SetElevator( i1, iArgument );
+	}
 
     else if ( sFirstAngle == argv[0] )
     {
@@ -1168,7 +1262,7 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
         }
         if ( !bAngle1 )
         {
-            BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (camper/sniper/armor_charger/health_charger).");
+            BULOG_W(pClient->GetEdict(), "Error, first you need to set waypoint type accordingly (camper/sniper/armor-charger/health-charger/use/button/see-button).");
             return ECommandError;
         }
 
@@ -1984,16 +2078,25 @@ TCommandResult CPathRemoveTypeCommand::Execute( CClient* pClient, int argc, cons
     }
 }
 
+CPathArgumentCommand::CPathArgumentCommand()
+{
+	m_sCommand = "argument";
+	m_sHelp = "set path arguments";
+	m_sDescription = "For door/elevator path the parameters are: <door/elevator> <button> (-1 = invalid). "
+	                 "Otherwise: <action-time> <action-duration> in deciseconds, i.e. 5 = half second.";
+	m_iAccessLevel = FCommandAccessWaypoint;
+}
+
 TCommandResult CPathArgumentCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
 		return ECommandPerformed;
 
-	if ( pClient == NULL )
-    {
-        BLOG_W( "Please login to server to execute this command." );
-        return ECommandError;
-    }
+	if ( argc != 0 && argc != 2 )
+	{
+		BULOG_W( pClient->GetEdict(), "Error, invalid parameters count." );
+		return ECommandError;
+	}
 
     if ( !CWaypoints::IsValid(pClient->iCurrentWaypoint) || !CWaypoints::IsValid(pClient->iDestinationWaypoint) )
     {
@@ -2008,32 +2111,46 @@ TCommandResult CPathArgumentCommand::Execute( CClient* pClient, int argc, const 
         return ECommandError;
     }
 
-    if ( argc == 0 )
-    {
-        BULOG_I( pClient->GetEdict(), "Path (from %d to %d) action time %d, action duration %d. Time in deciseconds.",
-                        pClient->iCurrentWaypoint, pClient->iDestinationWaypoint, GET_1ST_BYTE(pPath->iArgument), GET_2ND_BYTE(pPath->iArgument) );
-        return ECommandPerformed;
-    }
-    else
+	if ( argc == 2 )
     {
         TWaypointId iFirst = -1, iSecond = -1;
-        if ( argc == 2 )
-        {
-            sscanf(argv[0], "%d", &iFirst);
-            sscanf(argv[1], "%d", &iSecond);
-        }
+		if ( sscanf( argv[0], "%d", &iFirst ) != 1 )
+			iFirst = -2;
+		if ( sscanf( argv[1], "%d", &iSecond ) != 1 )
+			iSecond = -2;
 
-        if ( iFirst < 0 || iSecond < 0 || (iFirst & ~0xFF) || (iSecond & ~0xFF) )
-        {
-            BULOG_W(pClient->GetEdict(), "Error, invalid parameters, time must be from 0 to 256.");
-            return ECommandError;
-        }
+		if ( FLAG_SOME_SET( FPathDoor, pPath->iFlags ) )
+		{
+			if ( iFirst < -1 || iSecond < -1 || ( iFirst >= 0xFF ) || ( iSecond >= 0xFF ) )
+			{
+				BULOG_W( pClient->GetEdict(), "Error, invalid parameters, should be valid door & button number or -1 to reset." );
+				return ECommandError;
+			}
 
-        pPath->iArgument = iFirst | (iSecond << 8);
-        BULOG_I( pClient->GetEdict(), "Set path (from %d to %d) action time %d, action duration %d. Time in deciseconds.",
-                        pClient->iCurrentWaypoint, pClient->iDestinationWaypoint, GET_1ST_BYTE(pPath->iArgument), GET_2ND_BYTE(pPath->iArgument) );
-        return ECommandPerformed;
+			pPath->SetDoorNumber( iFirst );
+			pPath->SetButtonNumber( iSecond );
+		}
+		else
+		{
+			if ( iFirst < 0 || iSecond < 0 || ( iFirst & ~0xFF ) || ( iSecond & ~0xFF ) )
+			{
+				BULOG_W( pClient->GetEdict(), "Error, invalid parameters, time must be from 0 to 255." );
+				return ECommandError;
+			}
+
+			pPath->SetActionTime( iFirst );
+			pPath->SetActionDuration( iSecond );
+		}
     }
+	if ( FLAG_SOME_SET( FPathDoor | FPathElevator, pPath->iFlags ) )
+		BULOG_I( pClient->GetEdict(), "Path from %d to %d: %s %d, button %d (-1 = invalid).",
+		         pClient->iCurrentWaypoint, pClient->iDestinationWaypoint,
+				 FLAG_SOME_SET( FPathDoor, pPath->iFlags ) ? "door" : "elevator",
+				 pPath->GetDoorNumber(), pPath->GetButtonNumber() );
+	else
+		BULOG_I( pClient->GetEdict(), "Path from %d to %d: action time %d, action duration %d. Time in deciseconds.",
+		         pClient->iCurrentWaypoint, pClient->iDestinationWaypoint, pPath->ActionTime(), pPath->ActionDuration() );
+	return ECommandPerformed;
 }
 
 TCommandResult CPathInfoCommand::Execute( CClient* pClient, int argc, const char** argv )
@@ -2074,18 +2191,33 @@ TCommandResult CPathInfoCommand::Execute( CClient* pClient, int argc, const char
     if ( pPath )
     {
         if ( pPath->HasDemo() )
-            BULOG_I(pClient->GetEdict(), "Path (from %d to %d) has demo: id %d.", iPathFrom, iPathTo, pPath->DemoNumber());
+            BULOG_I(pClient->GetEdict(), "Path (from %d to %d) has demo: id %d.", iPathFrom, iPathTo, pPath->GetDemoNumber());
         else
         {
             const good::string& sFlags = CTypeToString::PathFlagsToString(pPath->iFlags);
             BULOG_I( pClient->GetEdict(), "Path (from %d to %d) has flags: %s.", iPathFrom, iPathTo,
                             (sFlags.size() > 0) ? sFlags.c_str() : sNone.c_str() );
-            if ( FLAG_SOME_SET(FPathDoor, pPath->iFlags) )
-            {
-                if ( pPath->iArgument )
-                    BULOG_I( pClient->GetEdict(), "Door %d.", pPath->iArgument );
-                else
-                    BULOG_I( pClient->GetEdict(), "Door not set." );
+            if ( pPath->IsDoor() || pPath->IsElevator() )
+			{
+				if ( pPath->HasButtonNumber() )
+					sprintf( szMainBuffer, "triggering button %d.", pPath->GetButtonNumber() );
+				else
+					sprintf( szMainBuffer, "triggering button not set." );
+
+				if ( pPath->IsDoor() )
+				{
+					if ( pPath->HasDoorNumber() )
+						BULOG_I( pClient->GetEdict(), "Door %d, %s", pPath->GetDoorNumber(), szMainBuffer );
+					else
+						BULOG_I( pClient->GetEdict(), "Door not set, %s", szMainBuffer );
+				}
+				else
+				{
+					if ( pPath->HasElevatorNumber() )
+						BULOG_I( pClient->GetEdict(), "Elevator %d, %s", pPath->GetElevatorNumber(), szMainBuffer );
+					else
+						BULOG_I( pClient->GetEdict(), "Elevator not set, %s", szMainBuffer );
+				}
             }
             else if ( FLAG_SOME_SET(FPathJump | FPathCrouch | FPathBreak, pPath->iFlags) )
                 BULOG_I( pClient->GetEdict(), "Path action time %d, action duration %d. Time in deciseconds.", GET_1ST_BYTE(pPath->iArgument), GET_2ND_BYTE(pPath->iArgument) );
@@ -2131,7 +2263,7 @@ TCommandResult CBotWeaponCommand::Execute( CClient* pClient, int argc, const cha
 
     if ( argc < 2 )
     {
-        BULOG_W( pEdict, "Invalid parameters count." );
+        BULOG_W( pEdict, "Error, invalid parameters count." );
         return ECommandError;
     }
 
@@ -2211,7 +2343,7 @@ TCommandResult CConfigBotWeaponAllowCommand::Execute( CClient* pClient, int argc
 	}
 	else if ( argc == 1 )
 	{
-		BULOG_W( pEdict, "Invalid parameters count." );
+		BULOG_W( pEdict, "Error, invalid parameters count." );
 		return ECommandError;
 	}
 
@@ -2318,7 +2450,7 @@ TCommandResult CConfigBotWeaponRemoveCommand::Execute( CClient* pClient, int arg
 	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 	if ( argc > 1 )
 	{
-		BULOG_W( pEdict, "Invalid parameters count." );
+		BULOG_W( pEdict, "Error, invalid parameters count." );
 		return ECommandError;
 	}
 
@@ -2347,7 +2479,7 @@ TCommandResult CBotWeaponRemoveCommand::Execute( CClient* pClient, int argc, con
 
     if ( argc != 1 )
     {
-        BULOG_W( pEdict, "Invalid parameters count." );
+        BULOG_W( pEdict, "Error, invalid parameters count." );
         return ECommandError;
     }
 
@@ -2405,7 +2537,7 @@ TCommandResult CConfigBotWeaponUnknownCommand::Execute( CClient* pClient, int ar
     }
 	else if (argc > 1)
     {
-        BULOG_W( pEdict, "Invalid parameters count." );
+        BULOG_W( pEdict, "Error, invalid parameters count." );
         return ECommandError;
     }
 
@@ -3360,7 +3492,7 @@ TCommandResult CBotProtectCommand::Execute(CClient* pClient, int argc, const cha
 
 	if (argc < 2)
 	{
-		BLOG_W("Invalid parameters count.");
+		BLOG_W("Error, invalid parameters count.");
 		return ECommandError;
 	}
 	

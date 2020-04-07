@@ -241,7 +241,7 @@ void CBot::Respawned()
 
     m_bLadderMove = m_bNeedStop = m_bNeedDuck = m_bNeedWalk = m_bNeedSprint = false;
     m_bNeedFlashlight = m_bUsingFlashlight = false;
-    m_bNeedUse = m_bAlreadyUsed = m_bUsingHealthMachine = false;
+	m_bNeedUse = m_bAlreadyUsed = m_bUsingHealthMachine = m_bUsingArmorMachine = false;
     m_bNeedAttack = m_bNeedAttack2 = m_bNeedJumpDuck = m_bNeedJump = false;
 
     m_bInvalidWaypointStart = false;
@@ -591,7 +591,7 @@ void CBot::PreThink()
     m_fPrevThinkTime = CBotrixPlugin::fTime;
 
     // Bot created for testing and couldn't find path or reached destination and finished using health/armor machine.
-    if ( m_bTest && ( /*m_bMoveFailure || */(!m_bNeedMove && !m_bNeedUse) ) )
+    if ( m_bTest && ( /*m_bMoveFailure || */( !m_bNeedMove && !m_bUsingButton  && !m_bUsingHealthMachine  && !m_bUsingArmorMachine ) ) )
         CPlayers::KickBot(this);
 }
 
@@ -648,36 +648,55 @@ void CBot::CurrentWaypointJustChanged()
 //----------------------------------------------------------------------------------------------------------------
 bool CBot::DoWaypointAction()
 {
-    if ( m_bEnemyAim || !m_bNeedMove || !m_bUseNavigatorToMove )
+    if ( m_bEnemyAim /*|| !m_bNeedMove || !m_bUseNavigatorToMove - bot test fails */ )
         return false;
 
     BASSERT( CWaypoint::IsValid(iCurrentWaypoint), return false );
     CWaypoint& w = CWaypoints::Get(iCurrentWaypoint);
 
+    // Check if needs to USE.
     if ( m_bAlreadyUsed )
     {
         // When coming back to current waypoint (if stucked) don't use it again, but make this variable false at next waypoint.
-        m_bAlreadyUsed = FLAG_SOME_SET(FWaypointHealthMachine | FWaypointArmorMachine, w.iFlags) != 0;
+		m_bAlreadyUsed = FLAG_SOME_SET( FWaypointButton | FWaypointHealthMachine | FWaypointArmorMachine, w.iFlags );
     }
     else
     {
         // Check if need health/armor.
         if ( FLAG_SOME_SET(FWaypointHealthMachine, w.iFlags) )
         {
-            m_iLastHealthArmor = m_pPlayerInfo->GetHealth();
-            m_bNeedUse = m_iLastHealthArmor < m_pPlayerInfo->GetMaxHealth();
-            m_bUsingHealthMachine = true;
-        }
+            m_iLastHealthArmor = -1;
+            m_bNeedUse = m_pPlayerInfo->GetHealth() < m_pPlayerInfo->GetMaxHealth();
+            m_bUsingHealthMachine = m_bNeedUse;
+			m_bUsingArmorMachine = false;
+            m_bUsingButton = false;
+		}
         else if ( FLAG_SOME_SET(FWaypointArmorMachine, w.iFlags) )
         {
-            m_iLastHealthArmor = m_pPlayerInfo->GetArmorValue();
-            m_bNeedUse = m_iLastHealthArmor < CMod::iPlayerMaxArmor;
+            m_iLastHealthArmor = -1;
+            m_bNeedUse = m_pPlayerInfo->GetArmorValue() < CMod::iPlayerMaxArmor;
             m_bUsingHealthMachine = false;
+            m_bUsingArmorMachine = m_bNeedUse;
+            m_bUsingButton = false;
         }
-		else if (FLAG_SOME_SET(FWaypointButton, w.iFlags))
+        else if ( FLAG_SOME_SET( FWaypointUse | FWaypointButton, w.iFlags ) )
 		{
-			CWaypointPath* pCurrentPath = CWaypoints::GetPath(iCurrentWaypoint, iNextWaypoint);
-			m_bNeedUse = pCurrentPath && FLAG_ALL_SET(FPathDoor, pCurrentPath->iFlags);
+            m_bNeedUse = FLAG_SOME_SET( FWaypointUse, w.iFlags );
+            if ( !m_bNeedUse )
+            {
+                // FWaypointUse not set. FWaypointButton is set.
+                CWaypointPath* pCurrentPath = CWaypoints::GetPath( iCurrentWaypoint, iNextWaypoint );
+                TItemIndex iDoor = pCurrentPath->GetDoorNumber();
+                m_bNeedUse = pCurrentPath && FLAG_SOME_SET( FPathDoor | FPathElevator, pCurrentPath->iFlags ) &&
+                    iDoor == CWaypoint::GetDoor( w.iArgument ); // Both are for same door or both are not set.
+                if ( m_bNeedUse && pCurrentPath->IsDoor() && iDoor != EItemIndexInvalid )
+                {
+                    m_bNeedUse = CItems::IsDoorClosed( iDoor ) != 0; // Only use the button if the door is closed.
+                }
+            }
+			m_bUsingHealthMachine = false;
+			m_bUsingArmorMachine = false;
+            m_bUsingButton = m_bNeedUse;
 		}
 
         if ( m_bNeedUse )
@@ -693,7 +712,7 @@ bool CBot::DoWaypointAction()
             m_vLook = m_vForward;
 
             m_fStartActionTime = m_fEndAimTime = CBotrixPlugin::fTime + GetEndLookTime();
-            m_fEndActionTime = m_fStartActionTime + m_fTimeIntervalCheckUsingMachines;
+            m_fEndActionTime = m_fStartActionTime + m_bUsingHealthMachine || m_bUsingArmorMachine ? m_fTimeIntervalCheckUsingMachines : 0.0f;
 
             m_bLockNavigatorMove = m_bPathAim = m_bNeedAim = true;
         }
@@ -704,7 +723,7 @@ bool CBot::DoWaypointAction()
     //     FLAG_SOME_SET(FWaypointStop, CWaypoints::Get(iCurrentWaypoint).iFlags) )
     //    m_bNeedStop = true;
 
-    m_bNeedStop = FLAG_SOME_SET(FWaypointStop, CWaypoints::Get(iCurrentWaypoint).iFlags);
+    m_bNeedStop = FLAG_SOME_SET(FWaypointStop, w.iFlags);
 
     return m_bNeedUse;
 }
@@ -712,12 +731,13 @@ bool CBot::DoWaypointAction()
 //----------------------------------------------------------------------------------------------------------------
 void CBot::ApplyPathFlags()
 {
-    GoodAssert( m_bNeedMove );
+    BASSERT( m_bNeedMove && m_bUseNavigatorToMove, return );
     //BotMessage("%s -> Waypoint %d", m_pPlayerInfo->GetName(), iCurrentWaypoint);
 
     // Release buttons and locks.
-    m_bNeedFlashlight = m_bAlreadyUsed = m_bNeedUse = false;
-    m_bNeedJumpDuck = m_bNeedJump = m_bNeedAttack = m_bNeedAttack2 = m_bNeedSprint = m_bNeedDuck = m_bNeedWalk = false;
+    m_bNeedUse = m_bAlreadyUsed = false;
+	m_bNeedAttack = m_bNeedAttack2 = false;
+	m_bNeedJumpDuck = m_bNeedJump = m_bNeedSprint = m_bNeedDuck = m_bNeedWalk = m_bNeedFlashlight = false;
     m_bLockNavigatorMove = m_bPathAim = false;
 
     m_bPathAim = false;
@@ -745,10 +765,14 @@ void CBot::ApplyPathFlags()
             if ( FLAG_ALL_SET(FPathStop, pCurrentPath->iFlags) )
                 m_bNeedStop = true;
 
-			if (FLAG_ALL_SET(FPathDoor, pCurrentPath->iFlags))
-				m_bNeedUse = true;
+			// Door in the middle that is not locked, may need to USE to open it.
+            if ( pCurrentPath->IsDoor() && !pCurrentPath->HasButtonNumber() )
+            {
+                TItemIndex iDoor = pCurrentPath->GetDoorNumber();
+                m_bNeedUse = iDoor != EItemIndexInvalid && CItems::IsDoorClosed( iDoor );
+            }
 
-            if ( FLAG_ALL_SET(FPathSprint, pCurrentPath->iFlags) )
+			if ( FLAG_ALL_SET(FPathSprint, pCurrentPath->iFlags) )
                 m_bNeedSprint = true;
 
             if ( FLAG_ALL_SET(FPathFlashlight, pCurrentPath->iFlags) )
@@ -774,7 +798,8 @@ void CBot::ApplyPathFlags()
 //----------------------------------------------------------------------------------------------------------------
 void CBot::DoPathAction()
 {
-    BASSERT( CWaypoint::IsValid(iCurrentWaypoint), return );
+    BASSERT( m_bNeedMove && m_bUseNavigatorToMove, return );
+    BASSERT( CWaypoint::IsValid( iCurrentWaypoint ), return );
 
     if ( CWaypoint::IsValid(iNextWaypoint) && (iCurrentWaypoint != iNextWaypoint) )
     {
@@ -792,13 +817,13 @@ void CBot::DoPathAction()
 
         if ( m_bNeedAttack || m_bNeedJump || m_bNeedJumpDuck )
         {
-            int iStartTime = GET_1ST_BYTE(pCurrentPath->iArgument); // Action (jump/ jump with duck / attack) start time in deciseconds at first byte.
-            int iDuration = GET_2ND_BYTE(pCurrentPath->iArgument);  // Action duration (duck for jump / attack for break) in deciseconds at second byte.
-            if (iDuration == 0)
-                iDuration = 10; // Duration 1 second by default. Good for either duck while jumping or attack (to break something).
+            int iStartTime = pCurrentPath->ActionTime(); // Action (jump/ jump with duck / attack) start time in deciseconds.
+			int iDuration = pCurrentPath->ActionDuration();  // Action duration (duck for jump / attack for break) in deciseconds.
+			if ( iDuration == 0 )
+				iDuration = 10; // Duration 1 second by default. Good for either duck while jumping or attack (to break something).
 
-            m_fStartActionTime = CBotrixPlugin::fTime + (iStartTime / 10.0f);
-            m_fEndActionTime = CBotrixPlugin::fTime + ( (iStartTime + iDuration) / 10.0f);
+			m_fStartActionTime = CBotrixPlugin::fTime + ( iStartTime / 10.0f );
+			m_fEndActionTime = m_fStartActionTime + iDuration / 10.0f;
         }
     }
 
@@ -1588,7 +1613,7 @@ void CBot::ChangeWeapon( TWeaponId iIndex )
 //----------------------------------------------------------------------------------------------------------------
 void CBot::WeaponShoot( int iSecondary )
 {
-    if ( m_bDontAttack || !m_bCommandAttack )
+    if ( !m_bStuckBreakObject && !m_bNeedAttack && (m_bDontAttack || !m_bCommandAttack) )
         return;
 
     if ( m_bFeatureWeaponCheck )
@@ -2287,29 +2312,49 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
     // Aim finished and need start to use IN_USE button.
     if ( m_bNeedUse && !m_pCurrentEnemy && !m_bNeedAim )
     {
-        FLAG_SET(IN_USE, m_cCmd.buttons);
-        if ( CBotrixPlugin::fTime >= m_fEndActionTime )
+        if ( !m_bAlreadyUsed )
         {
-            BotDebug( "%s -> End use.", GetName() );
-
-            // Ended using machine, check if need to use again.
-            int iHealthArmor = m_bUsingHealthMachine ? m_pPlayerInfo->GetHealth() : m_pPlayerInfo->GetArmorValue();
-            if ( iHealthArmor == m_iLastHealthArmor )
+            FLAG_SET( IN_USE, m_cCmd.buttons ); // For button we just press USE for one frame.
+            if ( m_bUsingHealthMachine || m_bUsingArmorMachine )
             {
-                m_bNeedUse = false;
-                m_bAlreadyUsed = true;
-				if (m_bNeedMove) {
-					ApplyPathFlags();
-					DoPathAction();
-				}
+                if ( CBotrixPlugin::fTime >= m_fEndActionTime )
+                {
+                    BotDebug( "%s -> End using health/armor charger.", GetName() );
+
+                    // Ended using machine, check if need to use again.
+                    int iHealthArmor = m_bUsingHealthMachine ? m_pPlayerInfo->GetHealth() : m_pPlayerInfo->GetArmorValue();
+                    if ( iHealthArmor == m_iLastHealthArmor )
+                    {
+                        m_bAlreadyUsed = true;
+                    }
+                    else
+                    {
+                        //BLOG_T("Incremented %d of %s, now %d.", iHealthArmor - m_iLastHealthArmor, m_bUsingHealthMachine ? "health" : "armor", iHealthArmor);
+                        m_iLastHealthArmor = iHealthArmor;
+                        m_fEndActionTime = CBotrixPlugin::fTime + m_fTimeIntervalCheckUsingMachines;
+                    }
+                }
             }
             else
             {
-                //BotMessage("Incremented %d of %s, now %d.", iHealthArmor - m_iLastHealthArmor, m_bUsingHealthMachine ? "health" : "armor", iHealthArmor);
-                m_iLastHealthArmor = iHealthArmor;
-                m_fEndActionTime = CBotrixPlugin::fTime + m_fTimeIntervalCheckUsingMachines;
+                m_bAlreadyUsed = true;
             }
         }
+
+        if ( m_bAlreadyUsed )
+        {
+            m_bNeedUse = false;
+            // Only apply path flags if we needed to USE, otherwise they are already applied.
+            if ( m_bUsingHealthMachine || m_bUsingArmorMachine || m_bUsingButton )
+            {
+                m_bUsingHealthMachine = m_bUsingArmorMachine = m_bUsingButton = false;
+                if ( CWaypoint::IsValid( iNextWaypoint ) )
+                {
+                    ApplyPathFlags();
+                    DoPathAction();
+                }
+            }
+		}
     }
 
     // If bot is on ladder forwardmove and sidemove are not used, but IN_FORWARD & IN_BACK used instead.
@@ -2344,6 +2389,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
         }
         else
         {
+
             // Check if some object is near.
             const CItem* pObject = NULL;
             if ( m_aNearestItems[EItemTypeObject].size() )

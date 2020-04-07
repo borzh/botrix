@@ -548,6 +548,14 @@ if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
   <ItemGroup>
     <None Include="mods\hl2dm\readme.txt" />
     <None Include="mods\tf2\readme.txt" />
+    <None Include="runtime\addons\botrix\config.ini" />
+    <None Include="runtime\cfg\botrix.cfg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="runtime\botrix-changelog.txt" />
+    <Text Include="runtime\botrix-commands.txt" />
+    <Text Include="runtime\botrix-credits.txt" />
+    <Text Include="runtime\botrix-readme.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -96,14 +96,28 @@ public: // Methods.
     static void SetHealth( int iHealth, int& iArgument ) { SET_4TH_BYTE(iHealth, iArgument); }
 
 
-    /// Get button index from waypoint argument.
-    static TItemIndex GetButton( int iArgument ) { return GET_3RD_BYTE(iArgument); }
+	/// Get button index from waypoint argument.
+	static TItemIndex GetButton( int iArgument ) { return GET_3RD_BYTE( iArgument ) - 1; }
 
-    /// Set button index for waypoint argument.
-    static void SetButton( TItemIndex iButton, int& iArgument ) { SET_3RD_BYTE(iButton, iArgument); }
+	/// Set button index for waypoint argument.
+	static void SetButton( TItemIndex iButton, int& iArgument ) { SET_3RD_BYTE( iButton + 1, iArgument ); }
 
 
-    /// Return true if point v 'touches' this waypoint.
+	/// Get button's door index from waypoint argument.
+	static TItemIndex GetDoor( int iArgument ) { return GET_4TH_BYTE( iArgument ) - 1; }
+
+	/// Set button's door index for waypoint argument.
+	static void SetDoor( TItemIndex iDoor, int& iArgument ) { SET_4TH_BYTE( iDoor + 1, iArgument ); }
+
+
+	/// Get button's elevator index from waypoint argument.
+	static TItemIndex GetElevator( int iArgument ) { return GetDoor(iArgument); }
+
+	/// Set button's elevator index for waypoint argument.
+	static void SetElevator( TItemIndex iElevator, int& iArgument ) { SetDoor( iElevator, iArgument ); }
+
+
+	/// Return true if point v 'touches' this waypoint.
     inline bool IsTouching( const Vector& v, bool bOnLadder ) const
     {
         return CUtil::IsPointTouch3d(vOrigin, v, bOnLadder ? CMod::iPointTouchLadderSquaredZ : CMod::iPointTouchSquaredZ, CMod::iPointTouchSquaredXY);
@@ -128,15 +142,13 @@ public: // Members and constants.
 
     static const int MAX_RANGE = 256;        ///< Max waypoint range to invalidate current waypoint.
 
-    static int iWaypointTexture;             ///< Texture of waypoint. Precached at CWaypoints::Load().
+    static int iWaypointTexture;             ///< Texture of waypoint for beam. Precached at CWaypoints::Load().
     static int iDefaultDistance;             ///< Max waypoint distance to automatically add path to nearby waypoints.
 
     Vector vOrigin;                          ///< Coordinates of waypoint (x, y, z).
     TWaypointFlags iFlags;                   ///< Waypoint flags.
-    int iArgument;                           ///< Waypoint argument.
+    int iArgument;                           ///< Waypoint argument (button number).
     TAreaId iAreaId;                         ///< Area id where waypoint belongs to (like "Bombsite A" / "Base CT" in counter-strike).
-
-    //unsigned char iPlayersCount;             ///< Count of players that reached this waypoint.
 
 protected:
     static const TWaypointFlags m_aFlagsForEntityType[EItemTypeNotObject];
@@ -152,10 +164,35 @@ public:
     CWaypointPath( float fLength, TPathFlags iFlags = FPathNone, unsigned short iArgument = 0 ):
         fLength(fLength), iFlags(iFlags), iArgument(iArgument) {}
 
+	static const int INVALID_BYTE_ARGUMENT = 0;
+
     bool IsActionPath() { return iFlags != 0; }
 
+	bool IsDoor() { return FLAG_SOME_SET( FPathDoor, iFlags ); }
+    bool HasDoorNumber() { return IsDoor() && GetDoorNumber() >= 0; }
+	TItemIndex GetDoorNumber() { return GET_1ST_BYTE( iArgument ) - 1; }
+	void SetDoorNumber( TItemIndex iDoor ) { SET_1ST_BYTE( iDoor + 1, iArgument ); }
+
+	bool IsElevator() { return FLAG_SOME_SET( FPathElevator, iFlags ); }
+	bool HasElevatorNumber() { return IsElevator() && GetElevatorNumber() >= 0; }
+	TItemIndex GetElevatorNumber() { return GetDoorNumber(); }
+	void SetElevatorNumber( TItemIndex iElevator ) { SetDoorNumber( iElevator ); }
+
+    bool HasButtonNumber() { 
+        return FLAG_SOME_SET( FPathDoor || FPathElevator, iFlags ) && GET_2ND_BYTE( iArgument ) != INVALID_BYTE_ARGUMENT;
+    }
+	TItemIndex GetButtonNumber() { return GET_2ND_BYTE( iArgument ) - 1; }
+	void SetButtonNumber( TItemIndex iButton ) { SET_2ND_BYTE( iButton + 1, iArgument ); }
+
+	int ActionTime() { return GET_1ST_BYTE( iArgument ); }
+	void SetActionTime( int iTime ) { SET_1ST_BYTE( iTime, iArgument ); }
+
+	int ActionDuration() { return GET_2ND_BYTE( iArgument ); }
+	void SetActionDuration( int iTime ) { SET_2ND_BYTE( iTime, iArgument ); }
+
     bool HasDemo() { return FLAG_SOME_SET(FPathDemo, iFlags); }
-    int DemoNumber() { return iFlags & (FPathDemo-1); }
+	int GetDemoNumber() { return iArgument; }
+	void SetDemoNumber( int iDemo ) { iArgument = iDemo; }
 
     float fLength;                           ///< Path length.
     TPathFlags iFlags;                       ///< Path flags.

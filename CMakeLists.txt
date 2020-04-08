@@ -1,3 +1,6 @@
+set( CMAKE_OSX_DEPLOYMENT_TARGET 10.13 )
+set( CMAKE_OSX_SYSROOT /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk )
+
 project( botrix )
 
 cmake_minimum_required( VERSION 2.6 )
@@ -21,9 +24,9 @@ cmake_minimum_required( VERSION 2.6 )
 
 set( SHARED_COMPILE_FLAGS "-Wall -Wextra -Wno-format-security" ) # -std=c++11
 
-if( UNIX AND NOT APPLE )
+#if( UNIX AND NOT APPLE )
     set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m32 -march=pentium4" ) #  -std=c++11
-endif()
+#endif()
 
 set( SHARED_LINKER_FLAGS  "-fvisibility=hidden -fpermissive" ) #
 

@@ -21,6 +21,21 @@ Steps to compile
         git clone https://github.com/ValveSoftware/source-sdk-2013.git source-sdk-2013
         git clone https://github.com/borzh/botrix botrix
 
+- OSX compilation:
+
+        macOS 10.15 Catalina and later (no need for macOS 10.14 Mojave and earlier):
+            Download MacOSX10.13.sdk.tar.xz from https://github.com/phracker/MacOSX-SDKs/releases
+            Extract it to XCode SDKs: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
+        
+        Install CMake, like: brew install cmake
+
+        git clone https://github.com/ValveSoftware/source-sdk-2013.git source-sdk-2013
+        git clone https://github.com/borzh/botrix botrix
+        mkdir botrix/build
+        cd botrix/build
+        cmake ..
+        make
+
 - Linux compilation:
 
         sudo apt-get install git build-essential gcc-multilib g++-multilib cmake ia32-libs
@@ -30,7 +45,7 @@ Steps to compile
         cd botrix/build
         cmake ..
         make
-
+        
 - After compile:
 
         Download botrix.zip from home page, unzip it to game directory (hl2mp/tf).

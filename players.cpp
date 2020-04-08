@@ -158,7 +158,7 @@ void CPlayer::PreThink()
 //********************************************************************************************************************
 void CPlayers::GetNames( StringVector& aNames, bool bGetBots, bool bGetUsers )
 {
-	for ( auto it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it )
+	for ( good::vector<CPlayerPtr>::const_iterator it = m_aPlayers.begin(); it != m_aPlayers.end(); ++it )
 		if ( *it && ( ( bGetBots && ( *it )->IsBot() ) || ( bGetUsers && !( *it )->IsBot() ) ) )
 			aNames.push_back( ( *it )->GetName() );
 }

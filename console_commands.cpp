@@ -907,9 +907,12 @@ CWaypointArgumentCommand::CWaypointArgumentCommand()
 			const CWeaponWithAmmo& cWeapon = *CWeapons::Get( weapon );
 			args1.push_back( cWeapon.GetName().duplicate() );
 
-			auto ammos = cWeapon.GetBaseWeapon()->aAmmos;
-			for ( int ammo = 0; ammo < ammos->size(); ++ammo )
-				args2.push_back( ammos->at( ammo )->sClassName.duplicate() );
+            for ( int iType = CWeapon::PRIMARY; iType <= CWeapon::SECONDARY; ++iType )
+            {
+                const good::vector<const CItemClass*> &ammos = cWeapon.GetBaseWeapon()->aAmmos[iType];
+                for ( int iAmmo = 0; iAmmo < ammos.size(); ++iAmmo )
+                    args2.push_back( ammos[ iAmmo ]->sClassName.duplicate() );
+            }
 		}
 
 		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
@@ -973,11 +976,11 @@ TCommandResult CWaypointArgumentCommand::Execute( CClient* pClient, int argc, co
 		{
 			TWeaponId iWeaponId = CWaypoint::GetWeaponId(w.iArgument);
 			const CWeaponWithAmmo *pWeapon = CWeapons::Get(iWeaponId);
-			BULOG_I( pClient->GetEdict(), "Weapon: %s.", pWeapon == NULL ? "invalid" : pWeapon->GetName() );
+			BULOG_I( pClient->GetEdict(), "Weapon: %s.", pWeapon == NULL ? "invalid" : pWeapon->GetName().c_str() );
 			if ( pWeapon && FLAG_SOME_SET(FWaypointAmmo, w.iFlags) )
 			{
 				bool bIsSecondary; int iAmmo = CWaypoint::GetAmmo(bIsSecondary, w.iArgument);
-				auto aAmmos = pWeapon->GetBaseWeapon()->aAmmos[ bIsSecondary ? CWeapon::SECONDARY : CWeapon::PRIMARY ];
+				const good::vector<const CItemClass*>& aAmmos = pWeapon->GetBaseWeapon()->aAmmos[ bIsSecondary ? CWeapon::SECONDARY : CWeapon::PRIMARY ];
 
 				if ( iAmmo < aAmmos.size() )
 					BULOG_I(pClient->GetEdict(), "Weapon ammo %s, secondary %s.", aAmmos[iAmmo]->szEngineName, bIsSecondary ? "yes" : "no");

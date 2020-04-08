@@ -179,7 +179,7 @@ public:
 	void SetElevatorNumber( TItemIndex iElevator ) { SetDoorNumber( iElevator ); }
 
     bool HasButtonNumber() { 
-        return FLAG_SOME_SET( FPathDoor || FPathElevator, iFlags ) && GET_2ND_BYTE( iArgument ) != INVALID_BYTE_ARGUMENT;
+        return FLAG_SOME_SET( FPathDoor | FPathElevator, iFlags ) && GET_2ND_BYTE( iArgument ) != INVALID_BYTE_ARGUMENT;
     }
 	TItemIndex GetButtonNumber() { return GET_2ND_BYTE( iArgument ) - 1; }
 	void SetButtonNumber( TItemIndex iButton ) { SET_2ND_BYTE( iButton + 1, iArgument ); }

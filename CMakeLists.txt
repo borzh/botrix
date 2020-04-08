@@ -19,8 +19,13 @@ cmake_minimum_required( VERSION 2.6 )
 # -rdynamic: instructs the linker to add all symbols, not only used ones, to the dynamic symbol table. Needed to debug.
 # -fvisibility=hidden: Default symbols visibility is hidden.
 
-set( SHARED_COMPILE_FLAGS "-Wall -Wextra -m32 -march=pentium4 -Wno-format-security" ) #  -std=c++11
-set( SHARED_LINKER_FLAGS  "-fvisibility=hidden" ) #
+set( SHARED_COMPILE_FLAGS "-Wall -Wextra -Wno-format-security" ) # -std=c++11
+
+if( UNIX AND NOT APPLE )
+    set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m32 -march=pentium4" ) #  -std=c++11
+endif()
+
+set( SHARED_LINKER_FLAGS  "-fvisibility=hidden -fpermissive" ) #
 
 set( SHARED_FLAGS "${SHARED_COMPILE_FLAGS} ${SHARED_LINKER_FLAGS}")
 
@@ -63,7 +68,8 @@ endif()
 # Not used: -DDONT_USE_VALVE_FUNCTIONS -DBOTRIX_SHOW_PERFORMANCE
 # Valve not working: -DNO_MALLOC_OVERRIDE
 add_definitions( ${OS_COMPILE_FLAGS}
-    -DBOTRIX_NO_COMMAND_COMPLETION
+    #-DBOTRIX_NO_COMMAND_COMPLETION
+    -DNO_MALLOC_OVERRIDE
     -DBOTRIX_SOURCE_2013
     -DBOTRIX_TF2
     -DBOTRIX_HL2DM

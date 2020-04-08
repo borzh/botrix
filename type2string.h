@@ -5,7 +5,7 @@
 #include "types.h"
 
 
-typedef enum {
+enum {
 	BoolStringTrueFalse = 0,
 	BoolStringYesNo,
 	BoolStringOnOff,

@@ -23,7 +23,7 @@ Steps to compile
 
 - Linux compilation:
 
-        sudo apt-get install git gcc-multilib ia32-libs cmake
+        sudo apt-get install git build-essential gcc-multilib g++-multilib cmake ia32-libs
         git clone https://github.com/ValveSoftware/source-sdk-2013.git source-sdk-2013
         git clone https://github.com/borzh/botrix botrix
         mkdir botrix/build

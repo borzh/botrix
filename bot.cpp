@@ -498,6 +498,7 @@ void CBot::PreThink()
 
 	if ( m_pCurrentEnemy )
 	{
+		// Erase current enemy if the enemy is protected.
 		if ( ( m_pCurrentEnemy->IsProtected() || 
 			 ( CMod::iSpawnProtectionHealth > 0 && m_pCurrentEnemy->GetHealth() >= CMod::iSpawnProtectionHealth ) ) )
 			EraseCurrentEnemy();
@@ -731,7 +732,7 @@ bool CBot::DoWaypointAction()
 //----------------------------------------------------------------------------------------------------------------
 void CBot::ApplyPathFlags()
 {
-    BASSERT( m_bNeedMove && m_bUseNavigatorToMove, return );
+    BASSERT( m_bNeedMove, return );
     //BotMessage("%s -> Waypoint %d", m_pPlayerInfo->GetName(), iCurrentWaypoint);
 
     // Release buttons and locks.
@@ -798,7 +799,7 @@ void CBot::ApplyPathFlags()
 //----------------------------------------------------------------------------------------------------------------
 void CBot::DoPathAction()
 {
-    BASSERT( m_bNeedMove && m_bUseNavigatorToMove, return );
+    BASSERT( m_bNeedMove, return );
     BASSERT( CWaypoint::IsValid( iCurrentWaypoint ), return );
 
     if ( CWaypoint::IsValid(iNextWaypoint) && (iCurrentWaypoint != iNextWaypoint) )
@@ -2159,7 +2160,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
         }
         else
         {
-            //m_bNeedSprint = true;
+            m_bNeedSprint = true;
             fSpeed = (m_bNeedSprint) ? CMod::fMaxSprintVelocity :
                      (m_bNeedWalk) ? CMod::fMaxWalkVelocity : CMod::fMaxRunVelocity;
 

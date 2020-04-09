@@ -16,6 +16,7 @@
 #define MAIN_COMMAND "botrix"
 
 good::unique_ptr<CBotrixCommand> CBotrixCommand::instance;
+good::unique_ptr<ConCommand> CBotrixCommand::m_pServerCommand;
 
 const good::string sHelp( "help" );
 
@@ -3290,6 +3291,7 @@ TCommandResult CBotAllyCommand::Execute( CClient* pClient, int argc, const char*
         return ECommandError;
     }
 
+	bool bAlly = ( iAllyOnOff != 0 );
 	for ( int arg = 2; arg < argc; ++arg )
 	{
 		good::string sBot( argv[arg] );
@@ -3307,17 +3309,15 @@ TCommandResult CBotAllyCommand::Execute( CClient* pClient, int argc, const char*
 					if ( pPlayer && ( i != j ) &&
 						( bAllPlayers || good::starts_with( good::string( pPlayer->GetName() ), sPlayer ) ) )
 					{
-						bool bAlly = ( iAllyOnOff == -1 ) ? !( (CBot*)pBot )->IsAlly( j ) : ( iAllyOnOff != 0 );
 						( (CBot*)pBot )->SetAlly( j, bAlly );
-						BULOG_I( pEdict, "%s is thinking that %s is its %s.",
-							pBot->GetName(), pPlayer->GetName(), bAlly ? "ally" : "enemy" );
+						BULOG_I( pEdict, "%s is %s for bot %s.",
+							pPlayer->GetName(), bAlly ? "ally" : "enemy", pBot->GetName() );
 					}
 				}
 			}
-
-			if ( bAllBots )
-				break;
 		}
+		if ( bAllBots && ( iAllyOnOff != -1 ) )
+			break;
 	}
     
     return ECommandPerformed;
@@ -3558,15 +3558,12 @@ TCommandResult CBotTestPathCommand::Execute( CClient* pClient, int argc, const c
     else if (argc == 1)
     {
         iPathFrom = pClient->iCurrentWaypoint;
-		if ( sDestination == argv[0] )
-			iPathTo = pClient->iDestinationWaypoint;
-		else
-			sscanf(argv[0], "%d", &iPathTo);
+		iPathTo = GetWaypointId( 0, argc, argv, pClient, -1 );
     }
     else if (argc == 2)
     {
-        sscanf(argv[0], "%d", &iPathFrom);
-        sscanf(argv[1], "%d", &iPathTo);
+		iPathFrom = GetWaypointId( 0, argc, argv, pClient, -1 );
+		iPathTo = GetWaypointId( 1, argc, argv, pClient, -1 );
     }
 
     if ( !CWaypoints::IsValid(iPathFrom) || !CWaypoints::IsValid(iPathTo) || (iPathFrom == iPathTo) )
@@ -3986,16 +3983,9 @@ void CBotrixCommand::CommandCallback( const CCommand &command )
 //----------------------------------------------------------------------------------------------------------------
 // Main "botrix" command.
 //----------------------------------------------------------------------------------------------------------------
-CBotrixCommand::CBotrixCommand():
-#if defined(BOTRIX_NO_COMMAND_COMPLETION)
-    m_cServerCommand(MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, 0)
-#elif defined(BOTRIX_OLD_COMMAND_COMPLETION)
-    m_cServerCommand(MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, bbotCompletion)
-#else
-    m_cServerCommand(MAIN_COMMAND, this, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, this)
-#endif
+CBotrixCommand::CBotrixCommand()
 {
-    m_sCommand = "botrix";
+   m_sCommand = "botrix";
     if ( CBotrixPlugin::instance->IsEnabled() )
     {
         Add(new CBotCommand);
@@ -4009,25 +3999,33 @@ CBotrixCommand::CBotrixCommand():
     else
         Add(new CEnableCommand);
 
-#ifndef DONT_USE_VALVE_FUNCTIONS
-  #ifdef BOTRIX_SOURCE_ENGINE_2006
-    CBotrixPlugin::pCVar->RegisterConCommandBase( &m_cServerCommand );
-  #else
-    CBotrixPlugin::pCVar->RegisterConCommand( &m_cServerCommand );
-  #endif
-#endif
-
 	aBoolsCompletion.push_back("on");
 	aBoolsCompletion.push_back("off");
 
 	aWaypointCompletion.push_back("current");
 	aWaypointCompletion.push_back("destination");
+
+#if defined(BOTRIX_NO_COMMAND_COMPLETION)
+	m_pServerCommand = new ConCommand( MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, 0 );
+#elif defined(BOTRIX_OLD_COMMAND_COMPLETION)
+	m_pServerCommand = new ConCommand( MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, bbotCompletion );
+#else
+	m_pServerCommand = new ConCommand( MAIN_COMMAND, this, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, this );
+#endif
+
+#ifndef DONT_USE_VALVE_FUNCTIONS
+#ifdef BOTRIX_SOURCE_ENGINE_2006
+	CBotrixPlugin::pCVar->RegisterConCommandBase( m_pServerCommand.get() );
+#else
+	CBotrixPlugin::pCVar->RegisterConCommand( m_pServerCommand.get() );
+#endif
+#endif
 }
 
 CBotrixCommand::~CBotrixCommand()
 {
 #if !defined(BOTRIX_SOURCE_ENGINE_2006) && !defined(DONT_USE_VALVE_FUNCTIONS)
-    CBotrixPlugin::pCVar->UnregisterConCommand( &m_cServerCommand );
+    CBotrixPlugin::pCVar->UnregisterConCommand( m_pServerCommand.get() );
 #endif
 
 	aBoolsCompletion.clear();

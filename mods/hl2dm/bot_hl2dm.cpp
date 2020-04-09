@@ -99,8 +99,11 @@ void CBot_HL2DM::Think()
 
     bool bForceNewTask = false;
 
-    // Check for move failure.
-    if ( m_bMoveFailure || m_bStuck )
+	if ( !m_bNeedMove && !m_bResolvingStuck && !m_pCurrentEnemy )
+		m_bMoveFailure = true;
+
+	// Check for move failure.
+    if ( m_bMoveFailure )
     {
         if ( m_bUseNavigatorToMove )
         {
@@ -114,7 +117,7 @@ void CBot_HL2DM::Think()
 
             if ( m_iFailsCount >= 3 )
             {
-                BLOG_W( "%s -> Failed to follow path from %d to %d 3 times, marking task as finished.",
+                BLOG_W( "%s -> Failed to find a path from %d to %d 3 times, marking task as finished.",
                         GetName(), m_iFailWaypoint, m_iDestinationWaypoint );
                 TaskFinished();
                 m_bNeedTaskCheck = bForceNewTask = true;
@@ -131,7 +134,7 @@ void CBot_HL2DM::Think()
         else
             m_bNeedMove = false; // As if we got to the needed destination.
 
-        m_bMoveFailure = m_bStuck = false;
+        m_bMoveFailure = m_bStuck = m_bResolvingStuck = false;
     }
 
     // Check if needs to add new tasks.
@@ -243,7 +246,7 @@ void CBot_HL2DM::CheckEngagedEnemy()
                 {
                     // Try to run away a little.
                     iNextWaypoint = CWaypoints::GetFarestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true );
-                    BotDebug( "%s -> Moving to far waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+                    BotDebug( "%s -> Moving to farest waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
                     return;
                 }
                 else if ( FLAG_SOME_SET(FFightStrategyComeCloserIfFar, CBot::iDefaultFightStrategy) &&
@@ -251,14 +254,14 @@ void CBot_HL2DM::CheckEngagedEnemy()
                 {
                     // Try to come closer a little.
                     iNextWaypoint = CWaypoints::GetNearestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true );
-                    BotDebug( "%s -> Moving to near waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+                    BotDebug( "%s -> Moving to nearest waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
                     return;
                 }
             }
         }
 
         iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true);
-        BotMessage( "%s -> Moving to random neighbour waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+		BotDebug( "%s -> Moving to random neighbour waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
     }
     else if ( m_pCurrentEnemy && m_bUseNavigatorToMove &&
               CWeapons::IsValid(m_iWeapon) && !m_aWeapons[m_iWeapon].IsMelee() )
@@ -469,7 +472,7 @@ find_enemy:
         }
         else
         {
-            BotMessage( "%s -> New task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
+            BotDebug( "%s -> New task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
                         pEntityClass ? pEntityClass->sClassName.c_str() : "", m_iTaskDestination, iCurrentWaypoint );
 
             m_iDestinationWaypoint = m_iTaskDestination;

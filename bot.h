@@ -144,7 +144,7 @@ public: // Methods.
         if ( pPlayer == this )
             BotMessage( "%s -> Suicide.", GetName() );
         else
-            BotMessage( "%s -> Killed %s.", GetName(), pPlayer->GetName() );
+			BotDebug( "%s -> Killed %s.", GetName(), pPlayer->GetName() );
         if ( pPlayer == m_pCurrentEnemy )
             EraseCurrentEnemy();
     }
@@ -275,7 +275,7 @@ protected: // Methods.
         if ( !pEnemy->IsAlive() || !CWaypoint::IsValid(pEnemy->iCurrentWaypoint) )
             return false;
 
-        BotMessage( "%s -> Follow enemy %s.", GetName(), pEnemy->GetName() );
+		BotDebug( "%s -> Follow enemy %s.", GetName(), pEnemy->GetName() );
         m_iDestinationWaypoint = pEnemy->iCurrentWaypoint;
         m_bUseNavigatorToMove = m_bNeedMove = m_bDestinationChanged = true;
         return true;
@@ -311,14 +311,14 @@ protected: // Methods.
         CWeaponWithAmmo& cWeapon = m_aWeapons[m_iWeapon];
         BASSERT( cWeapon.IsSniper() && cWeapon.CanUse(), return );
         cWeapon.ToggleZoom();
-        BotMessage( "%s -> Zoom %s: %s.", GetName(), m_aWeapons[m_iWeapon].GetName().c_str(), cWeapon.IsUsingZoom() ? "true" : "false" );
+		BotDebug( "%s -> Zoom %s: %s.", GetName(), m_aWeapons[m_iWeapon].GetName().c_str(), cWeapon.IsUsingZoom() ? "true" : "false" );
         FLAG_SET(IN_ATTACK2, m_cCmd.buttons);
     }
 
     // Reload current weapon.
     void WeaponReload()
     {
-        BotMessage( "%s -> Reload %s.", GetName(), m_aWeapons[m_iWeapon].GetName().c_str() );
+		BotDebug( "%s -> Reload %s.", GetName(), m_aWeapons[m_iWeapon].GetName().c_str() );
         m_aWeapons[m_iWeapon].Reload(0);
         FLAG_SET(IN_RELOAD, m_cCmd.buttons);
     }
@@ -439,9 +439,12 @@ protected: // Bot flags.
     bool m_bLockNavigatorMove:1;                                   // Don't move while this boolean is true. Used when preparing to jump/sprint/etc to next waypoint.
     bool m_bMoveFailure:1;                                         // Set to true when bot can't reach m_vDestination through navigator. Make sure it is false.
 
-    bool m_bStuck:1;                                               // Will be set to true, if m_bNeedMove is set, but couldn't move for 1 second.
-    bool m_bNeedCheckStuck:1;                                      // If true then check if stucked at m_fStuckCheckTime.
-    bool m_bStuckBreakObject:1;                                    // If true then will try break m_aNearestItems.
+    bool m_bStuck:1;                                               // true, if m_bNeedMove is set, but couldn't move for 1 second.
+	bool m_bResolvingStuck:1;                                      // true, if stucked, but performing some action to unstuck.
+	bool m_bNeedCheckStuck:1;                                      // If true then check if stucked at m_fStuckCheckTime.
+    
+	
+	bool m_bStuckBreakObject:1;                                    // If true then will try break m_aNearestItems.
     bool m_bStuckUsePhyscannon:1;                                  // If true then will try move m_aNearestItems with gravity gun.
     bool m_bStuckPhyscannonEnd:1;                                  // Becomes true when bot is holding object and aimed back/at enemy.
     bool m_bStuckTryingSide:1;                                     // If true then bot is stucked, and going left or right for half second according to m_bStuckTryGoLeft.

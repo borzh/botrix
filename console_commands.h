@@ -1282,7 +1282,7 @@ public:
     static good::unique_ptr<CBotrixCommand> instance; ///< Singleton of this class.
 
 protected:
-    ConCommand m_cServerCommand;
+	static good::unique_ptr<ConCommand> m_pServerCommand;
 };
 
 

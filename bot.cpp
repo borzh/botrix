@@ -178,14 +178,14 @@ void CBot::AddWeapon( TWeaponId iWeaponId )
 void CBot::Activated()
 {
     CPlayer::Activated();
-    BotMessage( "%s -> Activated.", GetName() );
+	BotDebug( "%s -> Activated.", GetName() );
 }
 
 //----------------------------------------------------------------------------------------------------------------
 void CBot::Respawned()
 {
     CPlayer::Respawned();
-    BotMessage( "%s -> Respawned.", GetName() );
+	BotDebug( "%s -> Respawned.", GetName() );
 
 	m_bProtected = true;
 	
@@ -236,7 +236,7 @@ void CBot::Respawned()
     m_bPathAim = m_bLockNavigatorMove = m_bLockMove = false;
     m_bMoveFailure = false;
 
-    m_bStuck = m_bNeedCheckStuck = m_bStuckBreakObject = m_bStuckUsePhyscannon = false;
+    m_bStuck = m_bResolvingStuck = m_bNeedCheckStuck = m_bStuckBreakObject = m_bStuckUsePhyscannon = false;
     m_bStuckTryingSide = m_bStuckTryGoLeft = m_bStuckGotoCurrent = m_bStuckGotoPrevious = m_bRepeatWaypointAction = false;
 
     m_bLadderMove = m_bNeedStop = m_bNeedDuck = m_bNeedWalk = m_bNeedSprint = false;
@@ -493,17 +493,6 @@ void CBot::PreThink()
     }
 #endif
 
-    if ( m_bCommandPaused )
-        return;
-
-	if ( m_pCurrentEnemy )
-	{
-		// Erase current enemy if the enemy is protected.
-		if ( ( m_pCurrentEnemy->IsProtected() || 
-			 ( CMod::iSpawnProtectionHealth > 0 && m_pCurrentEnemy->GetHealth() >= CMod::iSpawnProtectionHealth ) ) )
-			EraseCurrentEnemy();
-	}
-
     if ( CWaypoints::Size() <= 3 )
     {
         BLOG_W( "Please create more waypoints, so I could move. I am paused." );
@@ -515,6 +504,17 @@ void CBot::PreThink()
     int iPrevCurrWaypoint = iCurrentWaypoint;
 
     CPlayer::PreThink(); // Will invalidate current waypoint if away.
+
+	if ( m_bCommandPaused )
+		return;
+
+	if ( m_pCurrentEnemy )
+	{
+		// Erase current enemy if the enemy is protected.
+		if ( ( m_pCurrentEnemy->IsProtected() ||
+			( CMod::iSpawnProtectionHealth > 0 && m_pCurrentEnemy->GetHealth() >= CMod::iSpawnProtectionHealth ) ) )
+			EraseCurrentEnemy();
+	}
 
     if ( CWaypoint::IsValid(iCurrentWaypoint) )
         m_bInvalidWaypointStart = false;
@@ -687,13 +687,16 @@ bool CBot::DoWaypointAction()
             {
                 // FWaypointUse not set. FWaypointButton is set.
                 CWaypointPath* pCurrentPath = CWaypoints::GetPath( iCurrentWaypoint, iNextWaypoint );
-                TItemIndex iDoor = pCurrentPath->GetDoorNumber();
-                m_bNeedUse = pCurrentPath && FLAG_SOME_SET( FPathDoor | FPathElevator, pCurrentPath->iFlags ) &&
-                    iDoor == CWaypoint::GetDoor( w.iArgument ); // Both are for same door or both are not set.
-                if ( m_bNeedUse && pCurrentPath->IsDoor() && iDoor != EItemIndexInvalid )
-                {
-                    m_bNeedUse = CItems::IsDoorClosed( iDoor ) != 0; // Only use the button if the door is closed.
-                }
+				if ( pCurrentPath )
+				{
+					TItemIndex iDoor = pCurrentPath->GetDoorNumber();
+					m_bNeedUse = pCurrentPath && FLAG_SOME_SET( FPathDoor | FPathElevator, pCurrentPath->iFlags ) &&
+						iDoor == CWaypoint::GetDoor( w.iArgument ); // Both are for same door or both are not set.
+					if ( m_bNeedUse && pCurrentPath->IsDoor() && iDoor != EItemIndexInvalid )
+					{
+						m_bNeedUse = CItems::IsDoorClosed( iDoor ) != 0; // Only use the button if the door is closed.
+					}
+				}
             }
 			m_bUsingHealthMachine = false;
 			m_bUsingArmorMachine = false;
@@ -733,7 +736,7 @@ bool CBot::DoWaypointAction()
 void CBot::ApplyPathFlags()
 {
     BASSERT( m_bNeedMove, return );
-    //BotMessage("%s -> Waypoint %d", m_pPlayerInfo->GetName(), iCurrentWaypoint);
+    //BotTrace("%s -> Waypoint %d", m_pPlayerInfo->GetName(), iCurrentWaypoint);
 
     // Release buttons and locks.
     m_bNeedUse = m_bAlreadyUsed = false;
@@ -837,10 +840,10 @@ void CBot::PickItem( const CItem& cItem, TItemType iEntityType, TItemIndex iInde
     switch ( iEntityType )
     {
     case EItemTypeHealth:
-        BotMessage("%s -> Picked %s. Health now %d.", GetName(), cItem.pItemClass->sClassName.c_str(), m_pPlayerInfo->GetHealth());
+		BotDebug("%s -> Picked %s. Health now %d.", GetName(), cItem.pItemClass->sClassName.c_str(), m_pPlayerInfo->GetHealth());
         break;
     case EItemTypeArmor:
-        BotMessage("%s -> Picked %s. Armor now %d.", GetName(), cItem.pItemClass->sClassName.c_str(), m_pPlayerInfo->GetArmorValue());
+		BotDebug("%s -> Picked %s. Armor now %d.", GetName(), cItem.pItemClass->sClassName.c_str(), m_pPlayerInfo->GetArmorValue());
         break;
     case EItemTypeWeapon:
         if ( m_bFeatureWeaponCheck )
@@ -849,7 +852,7 @@ void CBot::PickItem( const CItem& cItem, TItemType iEntityType, TItemIndex iInde
             if ( CWeapons::IsValid(iWeapon) )
             {
                 CWeaponWithAmmo& cWeapon = m_aWeapons[iWeapon];
-                BotMessage( "%s -> Picked weapon %s (%d/%d, %d/%d).", GetName(), cItem.pItemClass->sClassName.c_str(),
+				BotDebug( "%s -> Picked weapon %s (%d/%d, %d/%d).", GetName(), cItem.pItemClass->sClassName.c_str(),
                             cWeapon.Bullets(CWeapon::PRIMARY), cWeapon.ExtraBullets(CWeapon::PRIMARY),
                             cWeapon.Bullets(CWeapon::SECONDARY), cWeapon.ExtraBullets(CWeapon::SECONDARY) );
                 WeaponChoose();
@@ -866,7 +869,7 @@ void CBot::PickItem( const CItem& cItem, TItemType iEntityType, TItemIndex iInde
         {
             if ( CWeapons::AddAmmo(cItem.pItemClass, m_aWeapons) )
             {
-                BotMessage( "%s -> Picked ammo %s.", GetName(), cItem.pItemClass->sClassName.c_str() );
+				BotDebug( "%s -> Picked ammo %s.", GetName(), cItem.pItemClass->sClassName.c_str() );
                 WeaponChoose();
             }
             else
@@ -874,7 +877,7 @@ void CBot::PickItem( const CItem& cItem, TItemType iEntityType, TItemIndex iInde
         }
         break;
     case EItemTypeObject:
-        BotMessage("%s -> Breaked object %s", GetName(), cItem.pItemClass->sClassName.c_str());
+		BotDebug("%s -> Breaked object %s", GetName(), cItem.pItemClass->sClassName.c_str());
         break;
     default:
         BASSERT(false);
@@ -1070,7 +1073,7 @@ void CBot::WeaponCheckCurrent( bool bAddToBotWeapons )
 void CBot::WeaponsScan()
 {
     GoodAssert( m_bFeatureWeaponCheck );
-    BotMessage( "%s -> Scan weapons.", GetName() );
+	BotDebug( "%s -> Scan weapons.", GetName() );
 
     // Check if bot has physcannon / melee weapon.
     m_iPhyscannon = m_iMeleeWeapon = -1;
@@ -1307,6 +1310,7 @@ void CBot::UpdateWorld()
                     if ( (-45.0f < fYaw) && (fYaw < 45.0f) )
                     {
                         // Player stucked with this one (move right for 1/4 seconds).
+						m_bResolvingStuck = true;
                         m_bStuckTryingSide = true;
                         m_bStuckTryGoLeft = false;
                         m_fEndActionTime = CBotrixPlugin::fTime + 0.25f;
@@ -1564,7 +1568,7 @@ bool CBot::WeaponSet( const good::string& sWeapon )
     CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, sb.c_str() );
     const char* szWeapon = m_pPlayerInfo->GetWeaponName();
     bool bOk = ( szWeapon && (sWeapon == szWeapon) );
-    BotMessage( "%s -> Set active weapon %s: %s.", GetName(), sWeapon.c_str(), bOk ? "ok" : "error" );
+	BotDebug( "%s -> Set active weapon %s: %s.", GetName(), sWeapon.c_str(), bOk ? "ok" : "error" );
     return bOk;
 }
 
@@ -1614,7 +1618,7 @@ void CBot::ChangeWeapon( TWeaponId iIndex )
 //----------------------------------------------------------------------------------------------------------------
 void CBot::WeaponShoot( int iSecondary )
 {
-    if ( !m_bStuckBreakObject && !m_bNeedAttack && (m_bDontAttack || !m_bCommandAttack) )
+    if ( !m_bStuckBreakObject && !m_bStuckUsePhyscannon && !m_bNeedAttack && (m_bDontAttack || !m_bCommandAttack) )
         return;
 
     if ( m_bFeatureWeaponCheck )
@@ -1694,10 +1698,10 @@ void CBot::CheckSideLook( bool bIsMoving, bool /*bNewDestination*/ )
                 // TODO: erase me.
                 switch (m_iCurrentSideLook)
                 {
-                case 0: BotMessage("Forward %.1f", m_fRandomSideLookTime); break;
-                case 1: BotMessage("Left %.1f", m_fRandomSideLookTime); break;
-                case 2: BotMessage("Right %.1f", m_fRandomSideLookTime); break;
-                case 3: BotMessage("Back %.1f", m_fRandomSideLookTime); break;
+                case 0: BotDebug("Forward %.1f", m_fRandomSideLookTime); break;
+                case 1: BotDebug("Left %.1f", m_fRandomSideLookTime); break;
+                case 2: BotDebug("Right %.1f", m_fRandomSideLookTime); break;
+                case 3: BotDebug("Back %.1f", m_fRandomSideLookTime); break;
                 }
             }
 
@@ -1743,10 +1747,16 @@ bool CBot::ResolveStuckMove()
         return false;
     }
 
-    const CItem* pObject = NULL;
-    CWaypoint& wCurr = CWaypoints::Get(iCurrentWaypoint);
+	if ( m_aNearestItems[ EItemTypeDoor ].size() )
+	{
+		m_bMoveFailure = true; // Let mod decide what to do.
+		return true;
+	}
 
-    if ( m_aNearestItems[EItemTypeObject].size() )
+	const CItem* pObject = NULL;
+	CWaypoint& wCurr = CWaypoints::Get( iCurrentWaypoint );
+
+	if ( m_aNearestItems[EItemTypeObject].size() )
     {
         pObject = &CItems::GetItems(EItemTypeObject)[ m_aNearestItems[EItemTypeObject][0] ];
         // If object is behind, it doesn't disturb.
@@ -1778,7 +1788,7 @@ bool CBot::ResolveStuckMove()
             // Look at origin of the object.
             m_vLook = pObject->CurrentPosition();
             m_fStartActionTime = m_fEndAimTime = CBotrixPlugin::fTime + GetEndLookTime(); // When start to break object.
-            m_bStuckBreakObject = m_bPathAim = true;
+			m_bResolvingStuck = m_bStuckBreakObject = m_bPathAim = true;
         }
         else if ( bCanThrow )
         {
@@ -1789,7 +1799,7 @@ bool CBot::ResolveStuckMove()
             m_fStartActionTime = m_fEndAimTime = CBotrixPlugin::fTime + GetEndLookTime();
             m_fEndActionTime = m_fStartActionTime + 10.0f; // Give enough time to switch weapon/aim/look back/throw.
 
-            m_bStuckUsePhyscannon = m_bPathAim = true;
+			m_bResolvingStuck = m_bStuckUsePhyscannon = m_bPathAim = true;
             m_bStuckPhyscannonEnd = false;
         }
         else
@@ -1809,7 +1819,7 @@ bool CBot::ResolveStuckMove()
             {
                 BotDebug("%s -> Stucked with object, will go %s.", GetName(), m_bStuckTryGoLeft ? "left" : "right");
 
-                m_bStuckTryingSide = true;
+                m_bResolvingStuck = m_bStuckTryingSide = true;
                 m_bStuckTryGoLeft = !m_bStuckTryGoLeft;
                 m_bNeedJump = m_bNeedJumpDuck = true;
                 m_fStartActionTime = CBotrixPlugin::fTime + 0.75f;
@@ -1835,16 +1845,14 @@ bool CBot::ResolveStuckMove()
                 m_cNavigator.SetPreviousPathPosition();
                 m_cNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
 
-                m_bRepeatWaypointAction = true;
+				m_bResolvingStuck = m_bRepeatWaypointAction = true;
 
                 if ( !bTouch )
                 {
                     ApplyPathFlags();       // Apply path flags from previous waypoint (to go back to current waypoint again).
                     m_bNeedJump = rand()&1; // Jump for just in case sometimes.
                 }
-
-                if ( m_bStuckGotoCurrent )
-                    m_bStuckGotoCurrent = false; // Try to move left right next time.
+				m_bStuckGotoCurrent = false; // Try to move left right next time.
             }
             else
             {
@@ -1869,7 +1877,7 @@ bool CBot::ResolveStuckMove()
                 m_fStartActionTime = CBotrixPlugin::fTime + 0.75f;
                 m_fEndActionTime = CBotrixPlugin::fTime + 1.0f;
 
-                m_bStuckGotoCurrent = true; // Try to go back to current waypoint next time.
+				m_bResolvingStuck = m_bStuckGotoCurrent = true; // Try to go back to current waypoint next time.
             }
             return true;
         }
@@ -2112,8 +2120,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
         vSpeed /= fDeltaTime; // v = (x - x0)/t
 
         // Cancel stuck check if bot needs to stop, or use, or perform action, or it is stucked already.
-        if ( m_bNeedStop || m_bNeedUse || m_bStuck || m_bStuckTryingSide ||
-             (CBotrixPlugin::fTime <= m_fEndActionTime) )
+        if ( m_bNeedStop || m_bNeedUse || m_bStuck || m_bStuckTryingSide || CBotrixPlugin::fTime <= m_fEndActionTime )
         {
             m_bNeedCheckStuck = false;
         }
@@ -2176,7 +2183,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
                     if ( m_bStuckTryGoLeft )
                         vRight.Negate();
                     vNeededVelocity = vRight;
-                    //BotMessage("Stucked, trying side until %.1f, now %.1f", m_fEndActionTime, CBotrixPlugin::fTime);
+                    //BotDebug("Stucked, trying side until %.1f, now %.1f", m_fEndActionTime, CBotrixPlugin::fTime);
                 }
                 else
                 {
@@ -2398,7 +2405,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
 
             if ( pObject && pObject->IsBreakable() && !pObject->IsExplosive() )
             {
-                m_bStuckBreakObject = true; // Try to break the object, instead of just hitting blindly.
+				m_bResolvingStuck = m_bStuckBreakObject = true; // Try to break the object, instead of just hitting blindly.
                 m_bNeedAttack = false;
             }
             else if ( CBotrixPlugin::fTime < m_fEndActionTime ) // Stop attacking after m_fEndActionTime.
@@ -2456,7 +2463,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
                                 // Bot can't pick it up? TODO: Maybe bot is standing on object.
                                 // FLAG_SET(FObjectHeavy, ((CItem*)pObject)->iFlags);
                                 WeaponShoot(CWeapon::PRIMARY);
-                                m_bStuckUsePhyscannon = m_bPathAim = false;
+                                m_bResolvingStuck =m_bStuckUsePhyscannon = m_bPathAim = false;
                                 m_bNeedSetWeapon = true;
                             }
                             else */if ( m_pCurrentEnemy && !m_bTest && !m_bDontAttack ) // Throw it at enemy.
@@ -2490,7 +2497,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
             // Bot should be holding object, throw it away.
             if ( m_iWeapon == m_iPhyscannon )
                 WeaponShoot(CWeapon::PRIMARY);
-            m_bStuckUsePhyscannon = m_bPathAim = false;
+			m_bResolvingStuck = m_bStuckUsePhyscannon = m_bPathAim = false;
             m_bNeedSetWeapon = true;
         }
     }
@@ -2541,7 +2548,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
         else
         {
             BotDebug( "%s -> Object far or broken.", GetName() );
-            m_bStuckBreakObject = false;
+			m_bResolvingStuck = m_bStuckBreakObject = false;
         }
     }
 

@@ -33,7 +33,7 @@ CBot_TF2::CBot_TF2( edict_t* pEdict, TBotIntelligence iIntelligence, int iTeam, 
 //----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::Respawned()
 {
-    BotMessage( "%s -> Current team %s.", GetName(), CMod::aTeamsNames[GetTeam()].c_str() );
+	BotDebug( "%s -> Current team %s.", GetName(), CMod::aTeamsNames[GetTeam()].c_str() );
 
     if ( m_iDesiredTeam == CMod::iUnassignedTeam )
         m_iDesiredTeam = ( CPlayers::GetTeamCount(2) > CPlayers::GetTeamCount(3) ) ? 3 : 2;
@@ -51,14 +51,14 @@ void CBot_TF2::Respawned()
         }
         else
         {
-            BotMessage( "%s -> Will join team %s.", GetName(),
+			BotDebug( "%s -> Will join team %s.", GetName(),
                         CMod::aTeamsNames[m_iDesiredTeam].c_str() );
             m_pPlayerInfo->ChangeTeam(m_iDesiredTeam);
         }
     }
     else
     {
-        BotMessage( "%s -> Will join team %s.", GetName(),
+		BotDebug( "%s -> Will join team %s.", GetName(),
                     CMod::aTeamsNames[CMod::iSpectatorTeam].c_str() );
         m_pPlayerInfo->ChangeTeam(CMod::iSpectatorTeam);
     }
@@ -74,7 +74,7 @@ void CBot_TF2::Respawned()
 void CBot_TF2::ChangeTeam( TTeam iTeam )
 {
     m_iDesiredTeam = iTeam;
-    BotMessage( "%s -> Changed team to %s.", GetName(), CTypeToString::TeamToString(iTeam).c_str() );
+	BotDebug( "%s -> Changed team to %s.", GetName(), CTypeToString::TeamToString(iTeam).c_str() );
     ChangeClass(m_iClass);
 }
 
@@ -86,7 +86,7 @@ void CBot_TF2::ChangeClass( TClass iClass )
     good::string_buffer sb(szMainBuffer, iMainBufferSize, false);
     const good::string& sClass = CTypeToString::ClassToString(m_iClass);
     sb << "joinclass " << sClass;
-    BotMessage( "%s -> Will joinclass %s.", GetName(), sClass.c_str() );
+	BotDebug( "%s -> Will joinclass %s.", GetName(), sClass.c_str() );
     CBotrixPlugin::pServerPluginHelpers->ClientCommand( m_pEdict, sb.c_str() );
 }
 
@@ -113,7 +113,7 @@ void CBot_TF2::Think()
     bool bForceNewTask = false;
 
     // Check for move failure.
-    if ( m_bMoveFailure || m_bStuck )
+    if ( m_bMoveFailure )
     {
         if ( m_bUseNavigatorToMove )
         {
@@ -127,7 +127,7 @@ void CBot_TF2::Think()
 
             if ( m_iFailsCount >= 3 )
             {
-                BLOG_W( "%s -> Failed to follow path from %d to %d 3 times, marking task as finished.",
+                BLOG_W( "%s -> Failed to find a path from %d to %d 3 times, marking task as finished.",
                         GetName(), m_iFailWaypoint, m_iDestinationWaypoint );
                 TaskFinished();
                 m_bNeedTaskCheck = bForceNewTask = true;
@@ -271,7 +271,7 @@ void CBot_TF2::CheckEngagedEnemy()
         }
 
         iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true);
-        BotMessage( "%s -> Moving to random neighbour waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+		BotDebug( "%s -> Moving to random neighbour waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
     }
     else if ( m_pCurrentEnemy )
     {
@@ -484,7 +484,7 @@ find_enemy:
         }
         else
         {
-            BotMessage( "%s -> New task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
+			BotDebug( "%s -> New task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
                         pEntityClass ? pEntityClass->sClassName.c_str() : "", m_iTaskDestination, iCurrentWaypoint );
 
             m_iDestinationWaypoint = m_iTaskDestination;

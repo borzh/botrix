@@ -63,7 +63,7 @@ void CPlayer::Respawned()
 #if DRAW_PLAYER_HULL
     m_fNextDrawHullTime = 0.0f;
 #endif
-    CBotrixPlugin::pServerGameClients->ClientEarPosition(m_pEdict, &m_vHead);
+    CUtil::EntityHead( m_pEdict, m_vHead );
     iCurrentWaypoint = CWaypoints::GetNearestWaypoint( m_vHead );
 	m_bAlive = m_bProtected = true;
 
@@ -104,7 +104,7 @@ void CPlayer::PreThink()
 #endif
 
     m_vPrevHead = m_vHead;
-    CBotrixPlugin::pServerGameClients->ClientEarPosition(m_pEdict, &m_vHead);
+    CUtil::EntityHead( m_pEdict, m_vHead );
 
     // If waypoint is not valid or we are too far, recalculate current waypoint.
     float fDist;

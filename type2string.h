@@ -46,6 +46,15 @@ public:
 
 
     //------------------------------------------------------------------------------------------------------------
+    /// Get mod var from string.
+    //------------------------------------------------------------------------------------------------------------
+    static TModVar ModVarFromString( const good::string& sVar );
+
+    /// Get string from mod var.
+    static const good::string& ModVarToString( TModVar iVar );
+
+
+    //------------------------------------------------------------------------------------------------------------
     /// Get access flags from string.
     //------------------------------------------------------------------------------------------------------------
     static int AccessFlagsFromString( const good::string& sFlags );
@@ -198,13 +207,19 @@ public:
     //------------------------------------------------------------------------------------------------------------
     static const good::string& BotTaskToString( TBotTask iBotTask );
 
-    //------------------------------------------------------------------------------------------------------------
-    /// Get bot command from string.
-    //------------------------------------------------------------------------------------------------------------
-    static int BotCommandFromString( const good::string& sCommand );
+	//------------------------------------------------------------------------------------------------------------
+	/// Get bot command from string.
+	//------------------------------------------------------------------------------------------------------------
+	static int BotCommandFromString( const good::string& sCommand );
 
-    /// Get string from bot command.
-    static const good::string& BotCommandToString( TBotChat iCommand );
+	/// Get string from bot command.
+	static const good::string& BotCommandToString( TBotChat iCommand );
+
+
+	//------------------------------------------------------------------------------------------------------------
+	/// Console command result to string.
+	//------------------------------------------------------------------------------------------------------------
+	static const good::string& ConsoleCommandResultToString( TCommandResult iCmdResult );
 
 
     //------------------------------------------------------------------------------------------------------------

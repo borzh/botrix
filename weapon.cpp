@@ -371,8 +371,8 @@ TWeaponId CWeapons::GetBestWeapon( const good::vector<CWeaponWithAmmo>& aWeapons
 
         float fDamage0 = cWeapon.Damage(0);
         float fDamage1 = cWeapon.Damage(1);
-        bool bOneBullet0 = (fDamage0 >= CMod::iPlayerMaxHealth);
-        bool bOneBullet1 = (fDamage1 >= CMod::iPlayerMaxHealth);
+        bool bOneBullet0 = (fDamage0 >= CMod::GetVar( EModVarPlayerMaxHealth ));
+        bool bOneBullet1 = (fDamage1 >= CMod::GetVar( EModVarPlayerMaxHealth ));
 
         // Check if can kill with one bullet first.
         if ( bOneBullet0 && cWeapon.HasAmmoInClip(0) && (!bOneBullet || (fDamage < fDamage0)) )
@@ -395,7 +395,7 @@ TWeaponId CWeapons::GetBestWeapon( const good::vector<CWeaponWithAmmo>& aWeapons
 
         // Check if weapon has sufficient bullets to kill.
         fDamage0 = cWeapon.TotalDamage();
-        bool bCanKill0 = (fDamage0 >= CMod::iPlayerMaxHealth); // Has enough bullets to kill?
+        bool bCanKill0 = (fDamage0 >= CMod::GetVar( EModVarPlayerMaxHealth )); // Has enough bullets to kill?
         float fDamagePerSec0 = cWeapon.DamagePerSecond(); // How fast this weapon kills.
 
         if ( bCanKill0 && (!bCanKill || (fDamagePerSec < fDamagePerSec0)) )

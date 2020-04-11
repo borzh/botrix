@@ -144,7 +144,7 @@ const good::string& CTypeToString::BoolToString( bool b, int which)
 //----------------------------------------------------------------------------------------------------------------
 // Ordered by TModId.
 //----------------------------------------------------------------------------------------------------------------
-good::string aMods[EModId_Total] =
+good::string aMods[ EModId_Total ] =
 {
     "hl2dm",
     "tf2",
@@ -162,6 +162,38 @@ const good::string& CTypeToString::ModToString( TModId iMod )
     return EnumToString( iMod, EModId_Total, aMods, sUnknown );
 }
 
+//----------------------------------------------------------------------------------------------------------------
+// Ordered by TModId.
+//----------------------------------------------------------------------------------------------------------------
+good::string aModVars[ EModVarTotal ] =
+{
+    "max_health",
+    "max_armor",
+    "player_width",
+    "player_height",
+    "player_height_crouched",
+    "player_eye",
+    "player_eye_crouched",
+    "velocity_crouch",
+    "velocity_walk",
+    "velocity_run",
+    "velocity_sprint",
+    "obstacle_height_no_jump",
+    "jump_height",
+    "jump_height_crouched",
+    "max_height_no_fall_damage",
+    "max_slope_gradient",
+};
+
+TModVar CTypeToString::ModVarFromString( const good::string& sVar )
+{
+    return EnumFromString( sVar, EModVarTotal, aModVars );
+}
+
+const good::string& CTypeToString::ModVarToString( TModVar iVar )
+{
+    return EnumToString( iVar, EModVarTotal, aModVars, sUnknown );
+}
 
 //----------------------------------------------------------------------------------------------------------------
 // Ordered by TCommandAccessFlags.
@@ -231,6 +263,11 @@ good::string aPathFlags[EPathFlagTotal] =
     "door",
 	"elevator",
 	"totem",
+	"unused",
+	"unused",
+	"unused",
+	"untested",
+	"demo",
 };
 
 
@@ -280,37 +317,39 @@ const good::string& CTypeToString::PathDrawFlagsToString( TPathDrawFlags iFlags 
 //----------------------------------------------------------------------------------------------------------------
 // Ordered by TItemType.
 //----------------------------------------------------------------------------------------------------------------
-good::string aItemTypes[EItemTypeTotal+1] =
+good::string aItemTypes[EItemTypeAll] =
 {
     "health",
     "armor",
     "weapon",
     "ammo",
     "button",
-	"door",
-	"object",
+    "door",
+    "ladder",
+    "object",
+    "spawn",
     "other",
 };
 
 
 int CTypeToString::EntityTypeFromString( const good::string& sType )
 {
-    return EnumFromString( sType, EItemTypeTotal+1, aItemTypes );
+    return EnumFromString( sType, EItemTypeKnownTotal+1, aItemTypes );
 }
 
 const good::string& CTypeToString::EntityTypeToString( TItemType iType )
 {
-    return EnumToString( iType, EItemTypeTotal+1, aItemTypes, sUnknown );
+    return EnumToString( iType, EItemTypeKnownTotal+1, aItemTypes, sUnknown );
 }
 
 int CTypeToString::EntityTypeFlagsFromString( const good::string& sFlags )
 {
-    return FlagsFromString( sFlags, EItemTypeTotal+1, aItemTypes );
+    return FlagsFromString( sFlags, EItemTypeKnownTotal+1, aItemTypes );
 }
 
 const good::string& CTypeToString::EntityTypeFlagsToString( TItemTypeFlags iItemTypeFlags )
 {
-    return FlagsToString( iItemTypeFlags, EItemTypeTotal+1, aItemTypes );
+    return FlagsToString( iItemTypeFlags, EItemTypeKnownTotal+1, aItemTypes );
 }
 
 
@@ -637,6 +676,21 @@ const good::string& CTypeToString::BotCommandToString( TBotChat iCommand )
     return EnumToString( iCommand, EBotChatTotal, aBotCommands, sUnknown );
 }
 
+
+
+//----------------------------------------------------------------------------------------------------------------
+good::string aCmdResults[ good::ELogLevelTotal ] =
+{
+	"Command not found.",
+	"Command not implemented",
+	"Sorry, you don't have access to this command.",
+	"Command error.",
+};
+
+const good::string& CTypeToString::ConsoleCommandResultToString( TCommandResult iCmdResult )
+{
+	return EnumToString( iCmdResult-1, ECommandTotal-1, aCmdResults, sUnknown );
+}
 
 //----------------------------------------------------------------------------------------------------------------
 good::string aLogLevels[good::ELogLevelTotal] =

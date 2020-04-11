@@ -38,10 +38,13 @@ TReach CanClimbSlope( const Vector& vSrc, const Vector& vDest )
     QAngle ang;
     VectorAngles(vDiff, ang); // Get pitch to know if gradient is too big.
 
-    if (ang.x < -CMod::iPlayerMaxSlopeGradient) // Destination is higher and slope is more than 45 degrees, can't climb it.
+    float slope = CMod::GetVar( EModVarSlopeGradientToSlideOff );
+    float GetVar( EModVarPlayerJumpHeightCrouched );
+
+    if ( ang.x < -slope ) // Destination is higher and slope is more than 45 degrees, can't climb it.
         return EReachNotReachable;
-    else if ( (ang.x > CMod::iPlayerMaxSlopeGradient) &&       // Slope is more than 45 degrees.
-              (vDiff.z > CMod::iPlayerMaxHeightNoFallDamage) ) // Source is higher.
+    else if ( ( ang.x > slope ) &&       // Slope is more than 45 degrees.
+              ( vDiff.z > CMod::GetVar( EModVarHeightForFallDamage ) ) ) // Source is higher.
         return EReachFallDamage; // Can take damage at fall.
     else
         return EReachReachable; // Slope gradient is less than 45 degrees.
@@ -59,9 +62,10 @@ bool CanPassOrJump( Vector& vStart, Vector& vGround, Vector& vHit, Vector& vDire
     vHit = vGround;
     vHit += vDirectionInc;
 
-    if ( zDist <= CMod::iPlayerMaxObstacleHeight ) // Can walk?
+    float fMaxWalkHeight = CMod::GetVar( EModVarPlayerObstacleToJump );
+    if ( zDist <= fMaxWalkHeight ) // Can walk?
     {
-        vHit.z = vGround.z + CMod::iPlayerMaxObstacleHeight + 1;
+        vHit.z = vGround.z + fMaxWalkHeight + 1;
         CUtil::TraceLine(vStart, vHit, MASK_SOLID_BRUSHONLY, &filter); // Trace again.
         if ( !CUtil::IsTraceHitSomething() ) // We can stand on vHit after jump.
         {
@@ -69,10 +73,10 @@ bool CanPassOrJump( Vector& vStart, Vector& vGround, Vector& vHit, Vector& vDire
             return true;
         }
     }
-
-    if ( zDist <= CMod::iPlayerJumpCrouchHeight ) // Can perform jump?
+    float fJumpCrouched = CMod::GetVar( EModVarPlayerJumpHeightCrouched );
+    if ( zDist <= fJumpCrouched ) // Can perform jump?
     {
-        vHit.z = vGround.z + CMod::iPlayerJumpCrouchHeight + 1;
+        vHit.z = vGround.z + fJumpCrouched + 1;
         CUtil::TraceLine(vStart, vHit, MASK_SOLID_BRUSHONLY, &filter); // Trace again.
         if ( !CUtil::IsTraceHitSomething() ) // We can stand on vHit after jump.
         {

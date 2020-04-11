@@ -60,6 +60,9 @@ protected: // Members.
     /// Process section [<mod-name>.mod] to get available teams/classes.
     static void ProcessModSection( good::ini_file::const_iterator it );
 
+    /// Load MOD dependent variables such as velocity / player's hull, etc.
+    static void LoadModVars();
+
     /// Load classes names for items.
     static void LoadItemClasses();
 

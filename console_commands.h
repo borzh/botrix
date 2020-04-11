@@ -244,6 +244,20 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
+class CWaypointAnalizeCommand: public CConsoleCommand
+{
+public:
+	CWaypointAnalizeCommand()
+	{
+		m_sCommand = "analize";
+		m_sHelp = "analize map waypoints";
+		m_sDescription = "Start analizing waypoints for current map. Time consuming operation, so be patient.";
+		m_iAccessLevel = FCommandAccessWaypoint;
+	}
+
+	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
 class CWaypointRemoveTypeCommand: public CConsoleCommand
 {
 public:
@@ -422,7 +436,7 @@ public:
         m_iAccessLevel = FCommandAccessWaypoint;
 
 		StringVector args;
-        for ( int i=0; i < EPathFlagTotal; ++i )
+        for ( int i=0; i < EPathFlagUserTotal; ++i )
             args.push_back( CTypeToString::PathFlagsToString(1<<i).duplicate() );
 
 		m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValuesForever);
@@ -959,8 +973,11 @@ public:
 		if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
 			return ECommandPerformed;
 
-		if ( pClient == NULL )
-            return ECommandError;
+		if ( !CBotrixPlugin::instance->bMapRunning )
+		{
+			BULOG_W( pClient ? pClient->GetEdict() : NULL, "Error: no map is loaded." );
+			return ECommandError;
+		}
 
         CItems::MapUnloaded();
 		CItems::MapLoaded(true);
@@ -1016,6 +1033,31 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
+class CConfigWaypointAnalize: public CConsoleCommand
+{
+public:
+	CConfigWaypointAnalize() {
+		m_sCommand = "analize";
+		m_sHelp = "analize waypoints on map change";
+		m_sDescription = "Parameter: minimum waypoints count to start analizing the map on map change. 'off' or 0 to disable.";
+		m_iAccessLevel = FCommandAccessConfig;
+
+		StringVector args;
+		args.push_back( "off" );
+		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+		m_cAutoCompleteValues.push_back( args );
+	}
+	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CConfigWaypoint: public CConsoleCommandContainer
+{
+public:
+	CConfigWaypoint() {
+		m_sCommand = "waypoint";
+		m_aCommands.push_back( new CConfigWaypointAnalize );
+	}
+};
 
 //****************************************************************************************************************
 // Admins: show admins and set admin flags.
@@ -1058,8 +1100,9 @@ public:
     CWaypointCommand()
     {
         m_sCommand = "waypoint";
-        Add(new CWaypointAddTypeCommand);
-        Add(new CWaypointAreaCommand);
+		Add( new CWaypointAddTypeCommand );
+		Add( new CWaypointAnalizeCommand );
+		Add(new CWaypointAreaCommand);
         Add(new CWaypointArgumentCommand);
         Add(new CWaypointAutoCreateCommand);
         Add(new CWaypointClearCommand);
@@ -1157,7 +1200,8 @@ public:
 		Add(new CConfigBotCommand);
         Add(new CConfigEventsCommand);
         Add(new CConfigLogCommand);
-    }
+		Add(new CConfigWaypoint);
+	}
 };
 
 

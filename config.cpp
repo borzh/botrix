@@ -35,7 +35,6 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
     }
 
     good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
-    TModId iModId = EModId_Invalid;
 
     // Process general section.
     good::ini_file::const_iterator it = m_iniFile.find("General");
@@ -44,7 +43,8 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
     else
         ProcessGeneralSection(it);
 
-    if ( (iModId = SearchMod(sGameDir, sModDir)) == EModId_Invalid )
+    TModId iModId = SearchMod( sGameDir, sModDir );
+    if ( iModId == EModId_Invalid )
     {
         BLOG_E( "File %s:", m_iniFile.name.c_str() );
         BLOG_E( "  There is no mod that matches current game (%s) & mod (%s) folders.", sGameDir.c_str(), sModDir.c_str() );
@@ -54,6 +54,10 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
     }
     else
         BLOG_D("Current mod: '%s'.", CMod::sModName.c_str());
+
+    // First load default values, and then set mod vars that are present.
+    CMod::LoadDefaults( iModId );
+    LoadModVars();
 
     // Find section "<mod name>.mod".
     sbBuffer = CMod::sModName;
@@ -96,6 +100,8 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
             CChat::AddChat( wordIt->key, wordIt->value );
     }
 #endif // BOTRIX_CHAT
+
+    CMod::Prepare();
 
     return iModId;
 }
@@ -376,13 +382,78 @@ void CConfiguration::ProcessGeneralSection( good::ini_file::const_iterator it )
 
 
 //----------------------------------------------------------------------------------------------------------------
+void CConfiguration::LoadModVars()
+{
+    // Get mod vars section, i.e. [HalfLife2Deathmatch.items.vars].
+    good::string_buffer sbBuffer( szMainBuffer, iMainBufferSize, false );
+    sbBuffer = CMod::sModName;
+    sbBuffer << ".vars";
+
+    good::ini_file::const_iterator it = m_iniFile.find( sbBuffer );
+    if ( it == m_iniFile.end() )
+    {
+        BLOG_W( "File \"%s\", no section [%s], using defaults.", m_iniFile.name.c_str(), sbBuffer.c_str() );
+        return;
+    }
+
+    // Iterate throught section key values.
+    bool aFound[ EModVarTotal ] = { false };
+    good::vector<float> aVars[ EModVarTotal ];
+
+    for ( good::ini_section::const_iterator itemIt = it->begin(); itemIt != it->end(); ++itemIt )
+    {
+        TModVar iVar = CTypeToString::ModVarFromString( itemIt->key );
+        if ( iVar == -1 )
+        {
+            BLOG_W( "File \"%s\", section [%s], no such variable \"%s\".", m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str() );
+            continue;
+        }
+
+        aFound[ iVar ] = true;
+
+        // Get var values (for each class).
+        StringVector aArguments;
+        good::split( itemIt->value, aArguments, ',', true );
+
+        if ( aArguments.size() != 1 && CMod::aClassNames.size() != aArguments.size() )
+        {
+            BLOG_W( "File \"%s\", section [%s], invalid arguments for %s = %s (should have same parameters quantity as classes names).", 
+                    m_iniFile.name.c_str(), it->name.c_str(), itemIt->key.c_str(), itemIt->value.c_str() );
+            continue;
+        }
+
+        for ( int i = 0; i < aArguments.size(); ++i )
+        {
+            float fValue = 0;
+            if ( sscanf( aArguments[ i ].c_str(), "%f", &fValue ) != 1 )
+            {
+                BLOG_W( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+                BLOG_W( "  Invalid argument %s for %s, should be float value.", aArguments[ i ].c_str(), itemIt->key.c_str() );
+            }
+            else
+            {
+                aVars[ iVar ].push_back( fValue );
+            }
+        }
+    }
+
+    for ( int i = 0; i < EModVarTotal; ++i )
+        if ( !aFound[ i ] )
+            BLOG_W( "File \"%s\", section [%s]: missing var %s, using default.", m_iniFile.name.c_str(), it->name.c_str(), 
+                    CTypeToString::ModVarToString( i ).c_str() );
+
+    CMod::SetVars( aVars );
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
 void CConfiguration::LoadItemClasses()
 {
     good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
     sbBuffer = CMod::sModName;
 
     // Load health /armor / object entity classes.
-    for ( TItemType iType = 0; iType < EItemTypeTotal; ++iType )
+    for ( TItemType iType = 0; iType < EItemTypeKnownTotal; ++iType )
     {
         // TODO: shouldn't load weapons/ammo.
         // Get mod item section, i.e. [HalfLife2Deathmatch.items.health].

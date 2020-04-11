@@ -379,9 +379,12 @@ protected: // Members.
     CWaypointNavigator m_cNavigator;                               // Waypoint navigator.
     good::vector<TAreaId> m_aAvoidAreas;                           // Array of areas waypoint navigator must avoid.
 
-    good::vector<TItemIndex> m_aNearestItems[EItemTypeTotal];      // Nearest items from m_aNearItems that are checked every frame (to know if bot picked them up).
-    good::vector<TItemIndex> m_aNearItems[EItemTypeTotal];         // Items in close range.
-    int m_iNextNearItem[EItemTypeTotal];                           // Next item to check if close (index in array CItems::GetItems()).
+    // Nearest items from m_aNearItems that are checked every frame (to know if bot picked them up).
+    good::vector<TItemIndex> m_aNearestItems[EItemTypeCollisionTotal];
+    // Items in close range.
+    good::vector<TItemIndex> m_aNearItems[EItemTypeCollisionTotal];
+    int m_iNextNearItem[EItemTypeCollisionTotal];                  // Next item to check if close (index in array CItems::GetItems()).
+    const CItem* pStuckObject;                                     // Object that player is stucked with.
 
     good::bitset m_aNearPlayers;                                   // Bitset of players near (to know if bot can stuck with them).
     good::bitset m_aSeenEnemies;                                   // Bitset of enemies that bot can see right now.

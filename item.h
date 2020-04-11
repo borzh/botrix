@@ -183,7 +183,7 @@ public:
     static void Unload()
     {
         MapUnloaded();
-        for ( int iType = 0; iType < EItemTypeTotal; ++iType )
+        for ( int iType = 0; iType < EItemTypeKnownTotal; ++iType )
             m_aItemClasses[iType].clear();
         m_aObjectFlagsForModels.clear();
     }
@@ -219,14 +219,14 @@ protected:
     //friend class CWaypoints; // Give access to WaypointDeleted().
     //static void WaypointDeleted( TWaypointId id );
 
-    static good::vector<CItem> m_aItems[EItemTypeTotal];            // Array of items.
-    static good::list<CItemClass> m_aItemClasses[EItemTypeTotal];   // List of item classes. Pointer are used so it should not be reallocated.
-    static TItemIndex m_iFreeIndex[EItemTypeTotal];                 // First free entity index.
-    static int m_iFreeEntityCount[EItemTypeTotal];                  // Free entities count. TODO:
+    static good::vector<CItem> m_aItems[EItemTypeKnownTotal];            // Array of items.
+    static good::list<CItemClass> m_aItemClasses[EItemTypeKnownTotal];   // List of item classes. Pointer are used so it should not be reallocated.
+    static TItemIndex m_iFreeIndex[EItemTypeKnownTotal];                 // First free entity index.
+    static int m_iFreeEntityCount[EItemTypeKnownTotal];                  // Free entities count. TODO:
 
-    static good::vector<edict_t*> m_aOthers;                        // Array of other entities.
+    static good::vector<edict_t*> m_aOthers;                             // Array of other entities.
 
-    static TItemIndex m_iCurrentEntity;                             // Current entity index to check.
+    static TItemIndex m_iCurrentEntity;                                  // Current entity index to check.
     static const int m_iCheckEntitiesPerFrame = 32;
 
     // This one is to have models specific flags (for example car model with 'heavy' flag, or barrel model with 'explosive' flag).

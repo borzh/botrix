@@ -1,13 +1,11 @@
 Changelog
 =========
 1.0.0
-* Fixed crash when respawning bot was killing another bot on the same position (occuring a lot after map change).
-* Fixed crash while flying on the map & getting far away.
+* Fixed crashes:
+    - when respawning bot was killing another bot on the same position (occuring a lot after map change).
+    - while flying on the map & getting far away.
 * Auto-completion for commands is working again (updated & compiled Source SDK 2013). Better auto-completion, also with players / weapons / items names! Obviously it's not for the dedicated server.
-* Bot now can press buttons (works with elevators):
-    - mark waypoint as 'button' ("botrix waypoint addtype button")
-    - set waypoint angles (look at button and "botrix waypoint argument angle1")
-    - mark path from 'button' waypoint to the next waypoint as 'door' ("botrix path addtype door").
+* Bot now can open doors (should be unlocked) and press elevators buttons. Check out waypoints section in my home page.
 * Different player models are working now, but teamplay combines are always using combine_soldier (SDK issue).
 * Fixed "bot add command" for teamplay that wasn't changing bot's team. Now bots are joining the right team, no more auto-balancing.
 * New features:
@@ -19,8 +17,7 @@ Changelog
         + botrix config bot protection health <off/health-amount>
         + botrix config bot protection spawn-time <off/time-amount-in-seconds>
         + botrix config bot weapon remove <on/off>
-        + botrix config bot weapon default <none/weapon(s)>
-        
+        + botrix config bot weapon default <none/weapon(s)>        
 
 0.0.4
 * Fixed crash autocompleting commands on listen server. No command completion for now.

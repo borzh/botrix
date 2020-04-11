@@ -82,7 +82,10 @@ public: // Methods.
     static TModId GetModId() { return m_iModId; }
 
     /// Load all needed staff for mod.
-    static bool Load( TModId iModId );
+    static bool LoadDefaults( TModId iModId );
+
+    /// Prepare for use, called after all needed vars are set.
+    static void Prepare();
 
     // Add event and start listening to it.
     static void AddEvent( CEvent* pEvent ) { m_aEvents.push_back( CEventPtr(pEvent) ); }
@@ -130,6 +133,20 @@ public: // Methods.
     /// Get random bot name from [General] section, key bot_names.
     static const good::string& GetRandomBotName( TBotIntelligence iIntelligence );
 
+    /// Get var value for needed class.
+    static float GetVar( TModVar iVar, TClass iClass = 0 )
+    {
+        GoodAssert( 0 <= iVar && iVar < EModVarTotal );
+        int iIndex = iClass < m_aVars[ iVar ].size() ? iClass : 0;
+        return m_aVars[ iVar ][ iIndex ];
+    }
+
+    static void SetVars( good::vector<float> *aVars )
+    {
+        for ( int iVar = 0; iVar < EModVarTotal; ++iVar )
+            if ( aVars[ iVar ].size() > 0 )
+                m_aVars[ iVar ] = aVars[ iVar ];
+    }
 
 public: // Static members.
     static good::string sModName;                   ///< Mod name.
@@ -139,7 +156,9 @@ public: // Static members.
 
 	static good::vector<TWeaponId> aDefaultWeapons; ///< Default respawn weapons. Can be set by a console command.
 	static bool bRemoveWeapons;                     ///< If true, will remove all weapons from the bot on respawn. Can be set by a console command.
-	
+	static int iAnalizeWaypoints;                   ///< Waypoints count to start analizing a map.
+	static int iAnalizeWaypointsPerFrame;           ///< Positions per frame to analize.
+
     static StringVector aBotNames;                  ///< Available bot names.
     static StringVector aClassNames;                ///< Name of player's classes.
 
@@ -152,38 +171,15 @@ public: // Static members.
 
 //    static TDeathmatchFlags iDeathmatchFlags;       ///< Flags for deathmatch mode.
 
-    // Mod dependant variables that should be set at plugin load.
-    // https://developer.valvesoftware.com/wiki/Dimensions
-    static int iPlayerHeight;                       ///< Player's height. 72 by default (HL2DM defines).
-    static int iPlayerHeightCrouched;               ///< Player's height while crouching. 36 by default.
-    static int iPlayerWidth;                        ///< Player's width & length. 32 by default.
     static Vector vPlayerCollisionHull;             ///< Maxs of player collision box with origin in (0, 0, 0).
+    static Vector vPlayerCollisionHullCrouched;     ///< Maxs of crouched player collision box with origin in (0, 0, 0).
 
-    static int iPlayerEyeLevel;                     ///< Player's eye position. 64 by default.
-    static int iPlayerEyeLevelCrouched;             ///< Player's eye position crouched. 28 by default.
-
-    static int iPlayerMaxObstacleHeight;            ///< Max obstacle height that a player can walk over (18).
-    static int iPlayerNormalJumpHeight;             ///< Z distance that a player can jump without crouching (20).
-    static int iPlayerJumpCrouchHeight;             ///< Z distance that a player can jump with crouching (56).
-
-	static int iPlayerMaxHeightNoFallDamage;        ///< Max height to not take any damage if fall (185).
+    static float fMinNonStuckSpeed;                 ///< Minimum velocity to consider that bot is moving and non stucked.
 
     static int iPlayerRadius;                       ///< Player's radius (used to check if bot is stucked).
     static int iNearItemMaxDistanceSqr;             ///< Max distance to consider item to be near to player.
     static int iItemPickUpDistance;                 ///< Additional distance from player to item to consider it taken.
                                                     // Item is picked, if distance-to-player < player's-radius + item's-radius + this-distance.
-
-    /// This is the maximum slope angle, in degrees from the horizontal, that the player can scale (45 degrees).
-    static int iPlayerMaxSlopeGradient;
-
-    static int iPlayerMaxArmor;                     ///< Maximum amount of armor, that player can have (100 by default).
-    static int iPlayerMaxHealth;                    ///< Maximum amount of health, that player can have (100 by default).
-
-    static float fMinNonStuckSpeed;                 ///< Minimum velocity to consider that bot is moving and non stucked.
-    static float fMaxCrouchVelocity;                ///< Maximum velocity while crouching.
-    static float fMaxWalkVelocity;                  ///< Maximum velocity while walking.
-    static float fMaxRunVelocity;                   ///< Maximum velocity while running.
-    static float fMaxSprintVelocity;                ///< Maximum velocity while sprinting.
 
     static int iPointTouchSquaredXY;                ///< Squared distance to consider that we are touching waypoint.
     static int iPointTouchSquaredZ;                 ///< Z distance to consider that we are touching waypoint. Should be no more than player can jump.
@@ -200,8 +196,12 @@ protected: // Methods.
 protected: // Members.
 
     static TModId m_iModId;                         // Mod id.
+    
+    // Mod vars.
+    static good::vector<float> m_aVars[ EModVarTotal ];
+
     static good::vector<CEventPtr> m_aEvents;       // Events this mod handles.
-    static bool m_bMapHas[EItemTypeNotObject];      // To check if map has items or waypoints of types: health, armor, weapon, ammo.
+    static bool m_bMapHas[EItemTypeCanPickTotal];   // To check if map has items or waypoints of types: health, armor, weapon, ammo.
 
     // Events that happend on this frame.
     static good::vector< good::pair<TFrameEvent, TPlayerIndex> > m_aFrameEvents;

@@ -61,7 +61,7 @@ CBot::CBot( edict_t* pEdict, TBotIntelligence iIntelligence, TClass iClass ):
     m_bFeatureAttackDuckEnabled(iIntelligence < EBotNormal), m_bFeatureWeaponCheck(true)
 {
     m_aPickedItems.reserve(16);
-    for ( TItemType i=0; i < EItemTypeTotal; ++i )
+    for ( TItemType i=0; i < EItemTypeCollisionTotal; ++i )
     {
         int iSize = CItems::GetItems(i).size() >> 4;
         if ( iSize == 0 )
@@ -151,7 +151,7 @@ void CBot::TestWaypoints( TWaypointId iFrom, TWaypointId iTo )
     CWaypoint& wFrom = CWaypoints::Get(iFrom);
 
     Vector vSetOrigin = wFrom.vOrigin;
-    vSetOrigin.z -= CMod::iPlayerEyeLevel; // Make bot appear on the ground (waypoints are at eye level).
+    vSetOrigin.z -= CMod::GetVar( EModVarPlayerEye ); // Make bot appear on the ground (waypoints are at eye level).
 
     m_pController->SetAbsOrigin(vSetOrigin);
 
@@ -211,7 +211,7 @@ void CBot::Respawned()
 
     m_fPrevThinkTime = m_fStuckCheckTime = 0.0f;
 
-    for ( TItemType i=0; i < EItemTypeTotal; ++i )
+    for ( TItemType i=0; i < EItemTypeCollisionTotal; ++i )
     {
         m_iNextNearItem[i] = 0;
         m_aNearItems[i].clear();
@@ -250,7 +250,7 @@ void CBot::Respawned()
 
     // Check near items (skip objects).
     Vector vFoot = m_pController->GetLocalOrigin();
-    for ( TItemType iType = 0; iType < EItemTypeObject; ++iType )
+    for ( TItemType iType = 0; iType < EItemTypeCollisionTotal; ++iType )
     {
         good::vector<TItemIndex>& aNear = m_aNearItems[iType];
         good::vector<TItemIndex>& aNearest = m_aNearestItems[iType];
@@ -563,7 +563,7 @@ void CBot::PreThink()
             if ( CBotrixPlugin::fTime > m_fNextDrawNearObjectsTime )
             {
                 m_fNextDrawNearObjectsTime = CBotrixPlugin::fTime + fDrawNearObjectsTime;
-                for ( TItemType iType=0; iType < EItemTypeTotal; ++iType)
+                for ( TItemType iType=0; iType < EItemTypeCollisionTotal; ++iType)
                 {
                     const good::vector<CItem>& aItems = CItems::GetItems(iType);
                     for ( int i=0; i < m_aNearItems[iType].size(); ++i) // Draw near items with white color.
@@ -675,7 +675,7 @@ bool CBot::DoWaypointAction()
         else if ( FLAG_SOME_SET(FWaypointArmorMachine, w.iFlags) )
         {
             m_iLastHealthArmor = -1;
-            m_bNeedUse = m_pPlayerInfo->GetArmorValue() < CMod::iPlayerMaxArmor;
+            m_bNeedUse = m_pPlayerInfo->GetArmorValue() < CMod::GetVar( EModVarPlayerMaxArmor );
             m_bUsingHealthMachine = false;
             m_bUsingArmorMachine = m_bNeedUse;
             m_bUsingButton = false;
@@ -1174,7 +1174,7 @@ void CBot::UpdateWorld()
 
     // Get near items.
     Vector vFoot = m_pController->GetLocalOrigin();
-    for ( TItemType iType=0; iType < EItemTypeTotal; ++iType )
+    for ( TItemType iType=0; iType < EItemTypeCollisionTotal; ++iType )
     {
         const good::vector<CItem>& aItems = CItems::GetItems(iType);
         if ( aItems.size() == 0)
@@ -1411,7 +1411,7 @@ void CBot::CheckAttackDuck( CPlayer* pPlayer )
         if ( !m_bNeedDuck && !m_bAttackDuck & bInRangeDuck ) // Duck only if not ducking already.
         {
             Vector vSrc(m_vHead);
-            vSrc.z -= CMod::iPlayerEyeLevel - CMod::iPlayerEyeLevelCrouched;
+            vSrc.z -= CMod::GetVar( EModVarPlayerEye ) - CMod::GetVar( EModVarPlayerEyeCrouched );
             m_bAttackDuck = CUtil::IsVisible( vSrc, m_pCurrentEnemy->GetHead() ); // Duck, if enemy is visible while ducking.
         }
         else
@@ -1743,24 +1743,24 @@ bool CBot::ResolveStuckMove()
     {
         m_bMoveFailure = true;
         m_cNavigator.Stop();
-        BotDebug( "%s -> Current waypoint invalid.", GetName() );
+        BotMessage( "%s -> Current waypoint invalid.", GetName() );
         return false;
     }
 
-	if ( m_aNearestItems[ EItemTypeDoor ].size() )
-	{
-		m_bMoveFailure = true; // Let mod decide what to do.
-		return true;
-	}
+    // Check if bot is touching some door/elevator.
+    if ( !m_bTest && m_aNearestItems[ EItemTypeDoor ].size() )
+    {
+        m_bMoveFailure = true; // Let mod decide what to do.
+    }
 
-	const CItem* pObject = NULL;
+    pStuckObject = NULL;
 	CWaypoint& wCurr = CWaypoints::Get( iCurrentWaypoint );
 
-	if ( m_aNearestItems[EItemTypeObject].size() )
+	for ( int iIndexStuckObject = 0; iIndexStuckObject < m_aNearestItems[EItemTypeObject].size(); ++iIndexStuckObject )
     {
-        pObject = &CItems::GetItems(EItemTypeObject)[ m_aNearestItems[EItemTypeObject][0] ];
+        pStuckObject = &CItems::GetItems(EItemTypeObject)[ m_aNearestItems[EItemTypeObject][iIndexStuckObject] ];
         // If object is behind, it doesn't disturb.
-        Vector vObject = pObject->CurrentPosition();
+        Vector vObject = pStuckObject->CurrentPosition();
         vObject -= m_vHead;
 
         Vector vGoing( m_vDestination );
@@ -1773,29 +1773,31 @@ bool CBot::ResolveStuckMove()
         CUtil::GetAngleDifference(angGoing, angObject, angGoing);
 
         if ( angGoing.y <= -90.0f || angGoing.y >= 90.0f )
-            pObject = NULL;
+            pStuckObject = NULL;
+        else
+            break;
     }
 
-    if ( pObject )
+    if ( pStuckObject )
     {
-        bool bCanThrow = !m_bDontThrowObjects && CWeapons::IsValid(m_iPhyscannon) && m_aWeapons[m_iPhyscannon].IsPresent() && !pObject->IsHeavy();
+        bool bCanThrow = !m_bDontThrowObjects && CWeapons::IsValid(m_iPhyscannon) && m_aWeapons[m_iPhyscannon].IsPresent() && !pStuckObject->IsHeavy();
         bool bThrowAtEnemy = bCanThrow && m_pCurrentEnemy && !m_bTest && !m_bDontAttack && !m_aWeapons[m_iPhyscannon].GetBaseWeapon()->bForbidden;
 
-        if ( !m_bDontBreakObjects && pObject->IsBreakable() && !pObject->IsExplosive() && !bThrowAtEnemy ) // Prefer to throw at enemy.
+        if ( !m_bDontBreakObjects && pStuckObject->IsBreakable() && !pStuckObject->IsExplosive() && !bThrowAtEnemy ) // Prefer to throw at enemy.
         {
-            BotDebug( "%s -> Stucked, will break object %s.", GetName(), pObject->pItemClass->sClassName.c_str() );
+            BotDebug( "%s -> Stucked, will break object %s.", GetName(), pStuckObject->pItemClass->sClassName.c_str() );
 
             // Look at origin of the object.
-            m_vLook = pObject->CurrentPosition();
+            m_vLook = pStuckObject->CurrentPosition();
             m_fStartActionTime = m_fEndAimTime = CBotrixPlugin::fTime + GetEndLookTime(); // When start to break object.
 			m_bResolvingStuck = m_bStuckBreakObject = m_bPathAim = true;
         }
         else if ( bCanThrow )
         {
-            BotDebug( "%s -> Stucked, will throw object %s.", GetName(), pObject->pItemClass->sClassName.c_str() );
+            BotDebug( "%s -> Stucked, will throw object %s.", GetName(), pStuckObject->pItemClass->sClassName.c_str() );
 
             // Look at origin of the object.
-            m_vLook = m_vDisturbingObjectPosition = pObject->CurrentPosition();
+            m_vLook = m_vDisturbingObjectPosition = pStuckObject->CurrentPosition();
             m_fStartActionTime = m_fEndAimTime = CBotrixPlugin::fTime + GetEndLookTime();
             m_fEndActionTime = m_fStartActionTime + 10.0f; // Give enough time to switch weapon/aim/look back/throw.
 
@@ -1805,11 +1807,11 @@ bool CBot::ResolveStuckMove()
         else
         {
             Vector vMins, vMaxs;
-            pObject->pEdict->GetCollideable()->WorldSpaceSurroundingBounds(&vMins, &vMaxs);
+            pStuckObject->pEdict->GetCollideable()->WorldSpaceSurroundingBounds(&vMins, &vMaxs);
             float zDistance = vMaxs.z - vMins.z;
-            if ( zDistance <= CMod::iPlayerJumpCrouchHeight ) // Can jump on it.
+            if ( zDistance <= CMod::GetVar( EModVarPlayerJumpHeightCrouched ) ) // Can jump on it.
             {
-                BotDebug( "%s -> Stucked, will jump on object %s.", GetName(), pObject->pItemClass->sClassName.c_str() );
+                BotDebug( "%s -> Stucked, will jump on object %s.", GetName(), pStuckObject->pItemClass->sClassName.c_str() );
 
                 m_bNeedJump = m_bNeedJumpDuck = true;
                 m_fStartActionTime = CBotrixPlugin::fTime;
@@ -2112,7 +2114,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
     if ( bMove )
     {
         float fDeltaTime = CBotrixPlugin::fTime - m_fPrevThinkTime;
-		BASSERT(fDeltaTime > 0, fDeltaTime = 0.000001f); // Should not happend, sometimes happends.
+		if ( fDeltaTime == 0 ) fDeltaTime = 0.000001f; // Should not happend, sometimes happends. TODO: don't think in PreThink()...
 
         // Calculate distance from last frame.
         Vector vSpeed(m_vHead);
@@ -2130,6 +2132,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
             m_bNeedCheckStuck = true;
             m_vStuckCheck = m_vHead;
             m_fStuckCheckTime = CBotrixPlugin::fTime + 1.0f;
+            pStuckObject = NULL;
         }
         else if ( CBotrixPlugin::fTime >= m_fStuckCheckTime )
         {
@@ -2167,9 +2170,8 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
         }
         else
         {
-            m_bNeedSprint = true;
-            fSpeed = (m_bNeedSprint) ? CMod::fMaxSprintVelocity :
-                     (m_bNeedWalk) ? CMod::fMaxWalkVelocity : CMod::fMaxRunVelocity;
+            //m_bNeedSprint = true; // For DEBUG purposes.
+            fSpeed = CMod::GetVar( m_bNeedSprint ? EModVarPlayerVelocitySprint : m_bNeedWalk ? EModVarPlayerVelocityWalk : EModVarPlayerVelocityRun );
 
             vNeededVelocity -= m_vHead; // Destination - head (absolute vector).
 
@@ -2237,6 +2239,23 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
         */
     }
 
+    // Check if stuck object is still near.
+    if ( pStuckObject )
+    {
+        bool bFound = false;
+        for ( int i = 0; i < m_aNearestItems[ EItemTypeObject ].size(); ++i )
+        {
+            TItemIndex iItem = m_aNearestItems[ EItemTypeObject ][ i ];
+            const CItem* pObject = &CItems::GetItems( EItemTypeObject )[ iItem ];
+            if ( pObject == pStuckObject )
+            {
+                bFound = true;
+                break;
+            }
+        }
+        if ( !bFound )
+            pStuckObject = NULL;
+    }
 
     //---------------------------------------------------------------
     if ( !m_bDontAttack )
@@ -2397,13 +2416,8 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
         }
         else
         {
-
             // Check if some object is near.
-            const CItem* pObject = NULL;
-            if ( m_aNearestItems[EItemTypeObject].size() )
-                pObject = &CItems::GetItems(EItemTypeObject)[ m_aNearestItems[EItemTypeObject][0] ];
-
-            if ( pObject && pObject->IsBreakable() && !pObject->IsExplosive() )
+            if ( pStuckObject && pStuckObject->IsBreakable() && !pStuckObject->IsExplosive() )
             {
 				m_bResolvingStuck = m_bStuckBreakObject = true; // Try to break the object, instead of just hitting blindly.
                 m_bNeedAttack = false;
@@ -2424,12 +2438,8 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
     // Aim at object (at m_fStartActionTime), press ATTACK2 (physcannon) for a second, aim back, press ATTACK1 once.
     if ( m_bStuckUsePhyscannon )
     {
-        const CItem* pObject = NULL;
-        if ( m_aNearestItems[EItemTypeObject].size() )
-            pObject = &CItems::GetItems(EItemTypeObject)[ m_aNearestItems[EItemTypeObject][0] ];
-
         // Still not finished throwing object.
-        if ( pObject && (CBotrixPlugin::fTime < m_fEndActionTime) )
+        if ( pStuckObject && (CBotrixPlugin::fTime < m_fEndActionTime) )
         {
             if ( !m_bStuckPhyscannonEnd )
             {
@@ -2505,14 +2515,10 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
     // Start holding attack after m_fStartActionTime until break object or object moves far away.
     else if ( m_bStuckBreakObject )
     {
-        const CItem* pObject = NULL;
-        if ( m_aNearestItems[EItemTypeObject].size() )
-            pObject = &CItems::GetItems(EItemTypeObject)[ m_aNearestItems[EItemTypeObject][0] ];
-
-        if ( pObject )
+        if ( pStuckObject )
         {
             if ( m_bFeatureWeaponCheck && CWeapons::IsValid(m_iMeleeWeapon) && (m_iWeapon != m_iMeleeWeapon) && m_aWeapons[m_iWeapon].CanChange() &&
-                 ( !m_pCurrentEnemy || (m_iWeapon == m_iPhyscannon) || !m_aWeapons[m_iWeapon].CanBeUsed( pObject->CurrentPosition().DistToSqr(GetHead()) ) ) )
+                 ( !m_pCurrentEnemy || (m_iWeapon == m_iPhyscannon) || !m_aWeapons[m_iWeapon].CanBeUsed( pStuckObject->CurrentPosition().DistToSqr(GetHead()) ) ) )
             {
                 ChangeWeapon(m_iMeleeWeapon);
                 float fEndChange = m_aWeapons[m_iWeapon].GetEndTime();
@@ -2522,7 +2528,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
 
             if ( CBotrixPlugin::fTime >= m_fStartActionTime ) // Aimed.
             {
-                if ( pObject && pObject->IsBreakable() && !pObject->IsExplosive() ) // Object still there.
+                if ( pStuckObject && pStuckObject->IsBreakable() && !pStuckObject->IsExplosive() ) // Object still there.
                 {
                     if ( CWeapons::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].CanUse() )
                         WeaponShoot();
@@ -2530,7 +2536,7 @@ void CBot::PerformMove( TWaypointId iPreviousWaypoint, const Vector& vPrevOrigin
                     if ( (CBotrixPlugin::fTime >= m_fEndAimTime + 1.0f) ) // Maybe object moved.
                     {
                         m_bNeedAim = true;
-                        m_vLook = pObject->CurrentPosition();
+                        m_vLook = pStuckObject->CurrentPosition();
                         int r = 4 - (rand() & 0x7); // Maybe object has holes: add random from -3 to 4.
                         m_vLook.x += r;
                         m_vLook.y += -r;

@@ -70,7 +70,7 @@ protected:
         CBot::PickItem( cItem, iEntityType, iIndex );
         if ( m_bFlee && (iEntityType == EItemTypeHealth) )
         {
-            m_bFlee = ( m_pPlayerInfo->GetHealth() < (CMod::iPlayerMaxHealth/8) );
+            m_bFlee = ( m_pPlayerInfo->GetHealth() < (CMod::GetVar( EModVarPlayerMaxHealth )/8) );
             m_bDontAttack = m_bFlee;
         }
     }

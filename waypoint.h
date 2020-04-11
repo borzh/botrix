@@ -151,7 +151,7 @@ public: // Members and constants.
     TAreaId iAreaId;                         ///< Area id where waypoint belongs to (like "Bombsite A" / "Base CT" in counter-strike).
 
 protected:
-    static const TWaypointFlags m_aFlagsForEntityType[EItemTypeNotObject];
+    static const TWaypointFlags m_aFlagsForEntityType[EItemTypeTotalNotObject];
 };
 
 
@@ -335,10 +335,17 @@ public: // Methods.
     /// Draw nearest waypoints around player.
     static void Draw( CClient* pClient );
 
+    /// Analize waypoints.
+    static void Analize();
+
+    /// Stop analizing waypoints.
+    static void StopAnalizing();
 
 protected:
     friend class CWaypointNavigator; // Get access to m_cGraph (for A* search implementation).
 
+    static void AnalizeStep();
+    
     // Get path color.
     static void GetPathColor( TPathFlags iFlags, unsigned char& r, unsigned char& g, unsigned char& b );
 
@@ -411,8 +418,11 @@ protected:
     static StringVector m_cAreas;  // Areas names.
 
     static WaypointGraph m_cGraph; // Waypoints graph.
-
     static good::vector< good::bitset > m_aVisTable;
+
+    static bool m_bIsAnalizing;
+    static good::vector<Vector> m_aAnalizingPositions;
+
 };
 
 

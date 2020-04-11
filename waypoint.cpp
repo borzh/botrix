@@ -43,12 +43,15 @@ static const int WAYPOINT_FILE_FLAG_AREAS      = 1<<1;     // Flag for area name
 int CWaypoint::iWaypointTexture = -1;
 int CWaypoint::iDefaultDistance = 128;
 
-const TWaypointFlags CWaypoint::m_aFlagsForEntityType[EItemTypeNotObject] =
+const TWaypointFlags CWaypoint::m_aFlagsForEntityType[EItemTypeTotalNotObject] =
 {
     FWaypointHealth | FWaypointHealthMachine,
     FWaypointArmor | FWaypointArmorMachine,
     FWaypointWeapon,
-    FWaypointAmmo
+    FWaypointAmmo,
+    FWaypointButton,
+    FWaypointNone, //FWaypointDoor,
+    FWaypointNone, //FWaypointLadder,
 };
 
 
@@ -59,6 +62,9 @@ CWaypoints::Bucket CWaypoints::m_cBuckets[CWaypoints::BUCKETS_SIZE_X][CWaypoints
 
 good::vector< good::bitset > CWaypoints::m_aVisTable;
 bool CWaypoints::bValidVisibilityTable = false;
+
+bool CWaypoints::m_bIsAnalizing;
+good::vector<Vector> CWaypoints::m_aAnalizingPositions;
 
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoint::GetColor(unsigned char& r, unsigned char& g, unsigned char& b) const
@@ -116,7 +122,7 @@ void CWaypoint::Draw( TWaypointId iWaypointId, TWaypointDrawFlags iDrawType, flo
     unsigned char r, g, b; // Red, green, blue.
     GetColor(r, g, b);
 
-    Vector vEnd = Vector(vOrigin.x, vOrigin.y, vOrigin.z - CMod::iPlayerEyeLevel);
+    Vector vEnd = Vector(vOrigin.x, vOrigin.y, vOrigin.z - CMod::GetVar( EModVarPlayerEye ));
 
     if ( FLAG_ALL_SET_OR_0(FWaypointDrawBeam, iDrawType) )
         CUtil::DrawBeam(vOrigin, vEnd, WIDTH, fDrawTime, r, g, b);
@@ -126,7 +132,7 @@ void CWaypoint::Draw( TWaypointId iWaypointId, TWaypointDrawFlags iDrawType, flo
 
     if ( FLAG_ALL_SET_OR_0(FWaypointDrawBox, iDrawType) )
     {
-        Vector vBoxOrigin(vOrigin.x - CMod::iPlayerWidth/2, vOrigin.y - CMod::iPlayerWidth/2, vOrigin.z - CMod::iPlayerEyeLevel);
+        Vector vBoxOrigin(vOrigin.x - CMod::GetVar( EModVarPlayerWidth )/2, vOrigin.y - CMod::GetVar( EModVarPlayerWidth )/2, vOrigin.z - CMod::GetVar( EModVarPlayerEye ));
         CUtil::DrawBox(vBoxOrigin, CUtil::vZero, CMod::vPlayerCollisionHull, fDrawTime, r, g, b);
     }
 
@@ -743,7 +749,7 @@ TWaypointId CWaypoints::GetAimedWaypoint( const Vector& vOrigin, const QAngle& a
                     if ( CUtil::IsVisiblePVS(node.vertex.vOrigin) )
                     {
                         Vector vRelative(node.vertex.vOrigin);
-                        vRelative.z -= CMod::iPlayerEyeLevel>>1; // Consider to look at center of waypoint.
+                        vRelative.z -= CMod::GetVar( EModVarPlayerEye ) / 2; // Consider to look at center of waypoint.
                         vRelative -= vOrigin;
 
                         QAngle angDiff;
@@ -831,25 +837,45 @@ void CWaypoints::Draw( CClient* pClient )
 
 
 //----------------------------------------------------------------------------------------------------------------
+void CWaypoints::Analize()
+{
+    m_bIsAnalizing = true;
+    m_aAnalizingPositions = good::vector<Vector>(10*1024*1024); // 10 Mb.
+
+}
+
+void CWaypoints::StopAnalizing()
+{
+    m_aAnalizingPositions = good::vector<Vector>();
+    m_bIsAnalizing = false;
+}
+
+void CWaypoints::AnalizeStep()
+{
+
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
 void CWaypoints::GetPathColor( TPathFlags iFlags, unsigned char& r, unsigned char& g, unsigned char& b )
 {
-    if ( FLAG_ALL_SET_OR_0(FPathDemo, iFlags) )
+    if (FLAG_SOME_SET(FPathDemo, iFlags) )
     {
         r = 0xFF; g = 0x00; b = 0xFF; // Magenta effect, demo.
     }
-    else if ( FLAG_ALL_SET_OR_0(FPathBreak, iFlags) )
+    else if (FLAG_SOME_SET(FPathBreak, iFlags) )
     {
         r = 0xFF; g = 0x00; b = 0x00; // Red effect, break.
     }
-    else if ( FLAG_ALL_SET_OR_0(FPathSprint, iFlags) )
+    else if (FLAG_SOME_SET(FPathSprint, iFlags) )
     {
         r = 0xFF; g = 0xFF; b = 0x00; // Yellow effect, sprint.
     }
-    else if ( FLAG_ALL_SET_OR_0(FPathStop, iFlags) )
+    else if (FLAG_SOME_SET(FPathStop, iFlags) )
     {
         r = 0x66; g = 0x66; b = 0x00; // Dark yellow effect, stop.
     }
-    else if ( FLAG_ALL_SET_OR_0(FPathLadder, iFlags) )
+    else if ( FLAG_SOME_SET(FPathLadder, iFlags) )
     {
         r = 0xFF; g = 0x33; b = 0x00; // Orange effect, ladder.
     }
@@ -857,19 +883,19 @@ void CWaypoints::GetPathColor( TPathFlags iFlags, unsigned char& r, unsigned cha
     {
         r = 0x00; g = 0x00; b = 0x66; // Dark blue effect, jump + crouch.
     }
-    else if ( FLAG_ALL_SET_OR_0(FPathJump, iFlags) )
+    else if (FLAG_SOME_SET(FPathJump, iFlags) )
     {
         r = 0x00; g = 0x00; b = 0xFF; // Light blue effect, jump.
     }
-    else if ( FLAG_ALL_SET_OR_0(FPathCrouch, iFlags) )
+    else if (FLAG_SOME_SET(FPathCrouch, iFlags) )
     {
         r = 0x00; g = 0xFF; b = 0x00; // Green effect, crouch.
     }
-    else if ( FLAG_ALL_SET_OR_0(FPathDoor, iFlags) )
+    else if ( FLAG_SOME_SET(FPathDoor | FPathElevator, iFlags) )
     {
         r = 0x8A; g = 0x2B; b = 0xE2;  // Violet effect, door.
     }
-    else if ( FLAG_ALL_SET_OR_0(FPathTotem, iFlags) )
+    else if (FLAG_SOME_SET(FPathTotem, iFlags) )
     {
         r = 0x96; g = 0x48; b = 0x00;  // Brown effect, totem.
     }
@@ -888,7 +914,7 @@ void CWaypoints::DrawWaypointPaths( TWaypointId id, TPathDrawFlags iPathDrawFlag
     WaypointNode& w = m_cGraph[id];
 
     unsigned char r, g, b;
-    Vector diff(0, 0, -CMod::iPlayerEyeLevel/4);
+    Vector diff(0, 0, -CMod::GetVar( EModVarPlayerEye )/4);
     float fDrawTime = CWaypoint::DRAW_INTERVAL + (2.0f / CBotrixPlugin::iFPS); // Add two frames to not flick.
 
     for (WaypointArcIt it = w.neighbours.begin(); it != w.neighbours.end(); ++it)
@@ -910,7 +936,7 @@ void CWaypoints::DrawVisiblePaths( TWaypointId id, TPathDrawFlags iPathDrawFlags
     GoodAssert( bValidVisibilityTable && (iPathDrawFlags != FPathDrawNone) );
 
     Vector vOrigin( Get(id).vOrigin );
-    Vector diff(0, 0, -CMod::iPlayerEyeLevel/2);
+    Vector diff(0, 0, -CMod::GetVar( EModVarPlayerEye )/2);
 
     const unsigned char r = 0xFF, g = 0xFF, b = 0xFF;
     float fDrawTime = CWaypoint::DRAW_INTERVAL + (2.0f / CBotrixPlugin::iFPS); // Add two frames to not flick.

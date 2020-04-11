@@ -94,12 +94,12 @@ bool CItem::IsBreakable() const
 
 
 //================================================================================================================
-good::vector<CItem> CItems::m_aItems[EItemTypeTotal];            // Array of items.
-good::list<CItemClass> CItems::m_aItemClasses[EItemTypeTotal];   // Array of item classes.
-TItemIndex CItems::m_iFreeIndex[EItemTypeTotal];                 // First free weapon index.
-int CItems::m_iFreeEntityCount[EItemTypeTotal];                  // Count of unused entities.
+good::vector<CItem> CItems::m_aItems[EItemTypeKnownTotal];            // Array of items.
+good::list<CItemClass> CItems::m_aItemClasses[EItemTypeKnownTotal];   // Array of item classes.
+TItemIndex CItems::m_iFreeIndex[EItemTypeKnownTotal];                 // First free weapon index.
+int CItems::m_iFreeEntityCount[EItemTypeKnownTotal];                  // Count of unused entities.
 
-good::vector<edict_t*> CItems::m_aOthers(1024);                  // Array of other entities.
+good::vector<edict_t*> CItems::m_aOthers(1024);                       // Array of other entities.
 
 #ifndef BOTRIX_SOURCE_ENGINE_2006
 good::vector<edict_t*> CItems::m_aNewEntities(16);
@@ -114,7 +114,7 @@ bool CItems::m_bMapLoaded = false;
 //----------------------------------------------------------------------------------------------------------------
 void CItems::PrintClasses()
 {
-	for ( TItemType iEntityType = 0; iEntityType < EItemTypeTotal; ++iEntityType )
+	for ( TItemType iEntityType = 0; iEntityType < EItemTypeKnownTotal; ++iEntityType )
 	{
 		BLOG_D( "Item type %s:", CTypeToString::EntityTypeToString( iEntityType ).c_str() );
 		const good::list<CItemClass>& aItemClasses = m_aItemClasses[iEntityType];
@@ -193,7 +193,7 @@ void CItems::Freed( const edict_t* pEdict )
 //----------------------------------------------------------------------------------------------------------------
 void CItems::MapUnloaded()
 {
-    for ( TItemType iEntityType = 0; iEntityType < EItemTypeTotal; ++iEntityType )
+    for ( TItemType iEntityType = 0; iEntityType < EItemTypeKnownTotal; ++iEntityType )
     {
         good::list<CItemClass>& aClasses = m_aItemClasses[iEntityType];
         good::vector<CItem>& aItems = m_aItems[iEntityType];
@@ -349,7 +349,7 @@ void CItems::CheckNewEntity(edict_t* pEdict, bool bLog)
         return;
 
     CItemClass* pItemClass;
-    TItemType iEntityType = GetEntityType(szClassName, pItemClass, 0, EItemTypeTotal);
+    TItemType iEntityType = GetEntityType(szClassName, pItemClass, 0, EItemTypeKnownTotal);
     if ( iEntityType == EItemTypeOther )
         m_aOthers.push_back(pEdict);
     else if ( iEntityType == EItemTypeObject )
@@ -470,7 +470,7 @@ void CItems::AutoWaypointPathFlagsForEntity( TItemType iEntityType, TItemIndex i
 //----------------------------------------------------------------------------------------------------------------
 TItemIndex CItems::AddItem( TItemType iEntityType, edict_t* pEdict, CItemClass* pItemClass, IServerEntity* pServerEntity )
 {
-    GoodAssert( (0 <= iEntityType) && (iEntityType < EItemTypeObject) );
+    GoodAssert( (0 <= iEntityType) && (iEntityType < EItemTypeAll) );
 
     ICollideable* pCollidable = pServerEntity->GetCollideable();
     BASSERT( pCollidable, return -1 );
@@ -484,8 +484,13 @@ TItemIndex CItems::AddItem( TItemType iEntityType, edict_t* pEdict, CItemClass* 
         float fMaxsRadiusSqr = pCollidable->OBBMaxs().LengthSqr();
         float fMinsRadiusSqr = pCollidable->OBBMins().LengthSqr();
         fPickupDistanceSqr = FastSqrt( MAX2(fMinsRadiusSqr, fMaxsRadiusSqr) );
-        fPickupDistanceSqr += CMod::iPlayerRadius + CMod::iItemPickUpDistance;
-        fPickupDistanceSqr *= fPickupDistanceSqr*2;
+        if ( iEntityType < EItemTypeCanPickTotal )
+        {
+            fPickupDistanceSqr += CMod::iPlayerRadius + CMod::iItemPickUpDistance;
+            fPickupDistanceSqr *= fPickupDistanceSqr * 2;
+        }
+        else
+            fPickupDistanceSqr = Sqr( fPickupDistanceSqr + CMod::iPlayerRadius );
         pItemClass->fPickupDistanceSqr = fPickupDistanceSqr;
     }
 
@@ -585,7 +590,7 @@ void CItems::Draw( CClient* pClient )
     int iClusterIndex = CBotrixPlugin::pEngineServer->GetClusterForOrigin( pClient->GetHead() );
     CBotrixPlugin::pEngineServer->GetPVSForCluster( iClusterIndex, sizeof(pvs), pvs );
 
-    for ( TItemType iEntityType = 0; iEntityType < EItemTypeTotal+1; ++iEntityType )
+    for ( TItemType iEntityType = 0; iEntityType < EItemTypeAll; ++iEntityType )
     {
         if ( !FLAG_SOME_SET(1<<iEntityType, pClient->iItemTypeFlags) ) // Don't draw items of disabled item type.
             continue;
@@ -634,8 +639,6 @@ void CItems::Draw( CClient* pClient )
                         CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityBreakable(pServerEntity) ? "breakable" : "non breakable" );
                         CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, CTypeToString::EntityClassFlagsToString(pEntity->iFlags).c_str() );
                     }
-                    //if ( iEntityType >= EItemTypeButton ) // Draw entity name. Doesn't work.
-                    //	CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, GetEntityName(pServerEntity).ToCStr() );
 
                     if ( iEntityType >= EItemTypeObject ) // Draw object model.
                         CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, STRING( pEdict->GetIServerEntity()->GetModelName() ) );
@@ -647,11 +650,11 @@ void CItems::Draw( CClient* pClient )
 
                 if ( FLAG_SOME_SET(FItemDrawWaypoint, pClient->iItemDrawFlags) && (iEntityType < EItemTypeObject) )
                 {
-                    // Draw nearest waypoint from item.
+                    // Draw nearest waypoint from item, yellow.
                     if (CWaypoint::IsValid(pEntity->iWaypoint) )
                         CUtil::DrawLine(CWaypoints::Get(pEntity->iWaypoint).vOrigin, vOrigin, 1.0f, 0xFF, 0xFF, 0);
 
-                    // Draw second waypoint for door.
+                    // Draw second waypoint for door, yellow.
                     if ( (iEntityType == EItemTypeDoor) && CWaypoint::IsValid( (TWaypointId)pEntity->pArguments ) )
                         CUtil::DrawLine(CWaypoints::Get((TWaypointId)pEntity->pArguments).vOrigin, vOrigin, 1.0f, 0xFF, 0xFF, 0);
                 }

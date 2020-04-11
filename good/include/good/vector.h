@@ -84,7 +84,7 @@ namespace good
             const_iterator& operator-= ( size_type iOffset ) { GoodAssert(m_pCurrent); m_pCurrent -= iOffset; return *this; }
 
             /// Pre-increment.
-            const_iterator& operator++() {GoodAssert(m_pCurrent);  m_pCurrent++; return *this; }
+            const_iterator& operator++() { GoodAssert(m_pCurrent);  m_pCurrent++; return *this; }
             /// Pre-decrement.
             const_iterator& operator--() { GoodAssert(m_pCurrent); m_pCurrent--; return *this; }
 

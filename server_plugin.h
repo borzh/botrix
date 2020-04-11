@@ -2,61 +2,9 @@
 * @mainpage Botrix plugin.
 * @author Botrix ( botrix.plugin\@gmail.com )
 *
-* @version 0.0.4
+* @version 1.0.1
 *
 * <h2>Bots plugin for Valve Games made with Source SDK.</h2>
-*
-* @section Changelog
-*
-* 0.0.5
-* @li
-*
-* 0.0.4
-* @li Fix crash autocompleting commands on listen server. No command completion for now.
-* @li Added new commands:
-*     -# botrix bot ally <bot-name> <player-name> <yes/no>
-*     -# botrix bot attack <bot-name> <yes/no>
-*     -# botrix bot move <bot-name> <yes/no>
-*     -# botrix path distance
-*
-* 0.0.3
-* @li Plugin is working with Team Fortress 2.
-* @li Added new weapons handling in config.ini for TF2.
-* @li Escaping TF2 steam ids in config.ini, for example \\[U:1:12345678].
-* @li Bug fix: correct handling of plugin_pause/plugin_unpause commands.
-* @li Bug fix: sometimes bot wasn't aware it picked up item.
-* @li Bug fix: sometimes bot was shooting at spectator.
-* @li Bug fix: when bot was trying to use weapon he actually was creating it.
-* @li Bug fix: waypoints wasn't loading for maps with different case (linux).
-* @li Now bots can use melee weapons.
-* @li Now bots can use unknown weapons.
-* @li Added logic for bot to pursue enemy.
-* @li Bots will run randomly near engaged enemy, preferently using visible areas.
-* @li Added new commands:
-*     -# botrix bot config quota <#number/#player-#bot quota>
-*     -# botrix bot config intelligence <bot-intelligence>
-*     -# botrix bot config team <bot-team>
-*     -# botrix bot config class <bot-class>
-*     -# botrix bot config change-class <round-limit>
-*     -# botrix bot config strategy flags
-*     -# botrix bot config strategy set
-*     -# botrix bot config suicide <time>
-*     -# botrix bot command <bot-name> <command>
-*     -# botrix bot weapon add <bot-name> <weapon-name>
-*     -# botrix bot weapon unknown <melee/ranged>.
-*     -# botrix config log <log-level>
-*     -# botrix enable/disable
-* @li Fixed commands:
-*     -# botrix bot kick <bot-name/all>
-* @li Waypoint editing: aim at waypoint to select 'path destination'.
-*
-* 0.0.2
-* @li Default base folder location is <MOD DIRECTORY>/addons/botrix.
-* @li Searching for base folder in 4 different locations.
-* @li Log with levels (none, trace, debug, info, warning, error).
-* @li Added command "version".
-* @li Don't repeat bot names.
-* @li Fixed several crashes.
 *
 * Originated from botman's bot template (aka HPB_bot).
 */
@@ -73,7 +21,7 @@
 #include "igameevents.h"
 
 
-#define PLUGIN_VERSION "1.0.0"
+#define PLUGIN_VERSION "1.0.1"
 
 class IVEngineServer;
 class IFileSystem;

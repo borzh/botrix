@@ -82,7 +82,7 @@ void CBot_HL2DM::HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow )
 {
     if ( !m_bTest && !m_bDontAttack && (pAttacker != this) && IsEnemy(pAttacker) )
         CheckEnemy(iPlayerIndex, pAttacker, false);
-    if ( iHealthNow < (CMod::iPlayerMaxHealth/2) )
+    if ( iHealthNow < (CMod::GetVar( EModVarPlayerMaxHealth )/2) )
         m_bNeedTaskCheck = true; // Check if need search for health.
 }
 
@@ -283,9 +283,9 @@ void CBot_HL2DM::CheckNewTasks( bool bForceTaskChange )
         : NULL;
     TBotIntelligence iWeaponPreference = m_iIntelligence;
 
-    bool bNeedHealth = CMod::HasMapItems(EItemTypeHealth) && ( m_pPlayerInfo->GetHealth() < CMod::iPlayerMaxHealth );
-    bool bNeedHealthBad = bNeedHealth && ( m_pPlayerInfo->GetHealth() < (CMod::iPlayerMaxHealth/2) );
-    bool bAlmostDead = bNeedHealthBad && ( m_pPlayerInfo->GetHealth() < (CMod::iPlayerMaxHealth/5) );
+    bool bNeedHealth = CMod::HasMapItems(EItemTypeHealth) && ( m_pPlayerInfo->GetHealth() < CMod::GetVar( EModVarPlayerMaxHealth ) );
+    bool bNeedHealthBad = bNeedHealth && ( m_pPlayerInfo->GetHealth() < (CMod::GetVar( EModVarPlayerMaxHealth )/2) );
+    bool bAlmostDead = bNeedHealthBad && ( m_pPlayerInfo->GetHealth() < (CMod::GetVar( EModVarPlayerMaxHealth )/5) );
     bool bNeedWeapon = pWeapon && CMod::HasMapItems(EItemTypeWeapon);
     bool bNeedAmmo = pWeapon && CMod::HasMapItems(EItemTypeAmmo);
 
@@ -335,7 +335,7 @@ restart_find_task: // TODO: remove gotos.
         }
         else if ( bNeedHealth ) // Need health (but has more than 50%).
             iNewTask = EBotTaskFindHealth;
-        else if ( CMod::HasMapItems(EItemTypeArmor) && (m_pPlayerInfo->GetArmorValue() < CMod::iPlayerMaxArmor) ) // Need armor.
+        else if ( CMod::HasMapItems(EItemTypeArmor) && (m_pPlayerInfo->GetArmorValue() < CMod::GetVar( EModVarPlayerMaxArmor )) ) // Need armor.
             iNewTask = EBotTaskFindArmor;
         else if ( bNeedWeapon && (pWeapon->iBotPreference < EBotPro) ) // Check if can find a better weapon.
         {

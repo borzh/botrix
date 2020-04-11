@@ -7,6 +7,12 @@ Release-2006
 *.ncb
 Botrix.vcxproj.user
 *sdf
+Botrix.VC.VC.opendb
+Botrix.VC.db
+*.pdb
+*.dll
+*.so
+*.dylib
 
 # linux files
 build

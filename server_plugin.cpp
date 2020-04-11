@@ -320,7 +320,11 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     CBotrixCommand::instance = new CBotrixCommand();
 	
     // Load mod configuration.
-    CMod::Load(iModId);
+    CMod::LoadDefaults(iModId);
+
+    
+
+    // Load mod dependent config. For example, HL2DM will load models.
     if ( CMod::pCurrentMod )
         CMod::pCurrentMod->ProcessConfig( CConfiguration::m_iniFile );
 
@@ -411,7 +415,16 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
 {
     if ( bMapRunning && m_bEnabled )
     {
-        CUtil::PrintMessagesInQueue();
+        try
+        {
+            CUtil::PrintMessagesInQueue();
+        }
+        catch ( ... )
+        {
+            BLOG_E( "FATAL EXCEPTION in CUtil::PrintMessagesInQueue'." );
+            BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
+            GoodAssert( false );
+        }
 
         float fPrevEngineTime = fEngineTime;
         fEngineTime = pEngineServer->Time();
@@ -424,30 +437,63 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
 #endif
             fTime += fDiff;
 
-		// FPS counting. Used in draw waypoints. TODO: define.
-		/*m_iFramesCount++;
+		// FPS counting. Used in draw waypoints.
+#ifdef SHOW_FPS
+		m_iFramesCount++;
 		if (fEngineTime >= m_fFpsEnd)
 		{
 			iFPS = m_iFramesCount;
 			m_iFramesCount = 0;
 			m_fFpsEnd = fEngineTime + 1.0f;
-			//BULOG_T(NULL, "FPS: %d", iFPS);
-		}*/
+			//BLOG_T(NULL, "FPS: %d", iFPS);
+		}
+#endif
 
-        CMod::Think();
+        try
+        {
+            CMod::Think();
+        }
+        catch ( ... )
+        {
+            BLOG_E( "FATAL EXCEPTION in CMod::Think()." );
+            BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
+            GoodAssert( false );
+        }
+        
 
-        // Show fps.
-        //m_iFramesCount++;
-        //if (fTime >= m_fFpsEnd)
-        //{
-        //	iFPS = m_iFramesCount;
-        //	m_iFramesCount = 0;
-        //	m_fFpsEnd = fTime + 1.0f;
-        //	BULOG_T(NULL, "FPS: %d", iFPS);
-        //}
+#ifdef SHOW_FPS
+        m_iFramesCount++;
+        if (fTime >= m_fFpsEnd)
+        {
+        	iFPS = m_iFramesCount;
+        	m_iFramesCount = 0;
+        	m_fFpsEnd = fTime + 1.0f;
+        	BLOG_T("FPS: %d", iFPS);
+        }
+#endif
 
-        CItems::Update();
-        CPlayers::PreThink();
+        try
+        {
+            CItems::Update();
+        }
+        catch ( ... )
+        {
+            BLOG_E( "FATAL EXCEPTION in CItems::Update()." );
+            BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
+            GoodAssert( false );
+        }
+        
+        
+        try
+        {
+            CPlayers::PreThink();
+        }
+        catch ( ... )
+        {
+            BLOG_E( "FATAL EXCEPTION in CPlayers::PreThink()." );
+            BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
+            GoodAssert( false );
+        }
 
 //#define BOTRIX_SHOW_PERFORMANCE
 #ifdef BOTRIX_SHOW_PERFORMANCE
@@ -574,15 +620,8 @@ PLUGIN_RESULT CBotrixPlugin::ClientCommand( edict_t* pEntity, const CCommand &ar
 
     TCommandResult iResult = CBotrixCommand::instance->Execute( pClient, argc-1, &argv[1] );
 
-    if (iResult != ECommandPerformed)
-    {
-        if (iResult == ECommandRequireAccess)
-            BULOG_E(pClient ? pClient->GetEdict() : NULL, "Sorry, you don't have access to this command.");
-        else if (iResult == ECommandNotFound)
-            BULOG_E(pClient ? pClient->GetEdict() : NULL, "Command not found.");
-        else if (iResult == ECommandError)
-            BULOG_E(pClient ? pClient->GetEdict() : NULL, "Command error.");
-    }
+	if ( iResult != ECommandPerformed )
+		BULOG_E( pClient ? pClient->GetEdict() : NULL, "%s", CTypeToString::ConsoleCommandResultToString( iResult ).c_str() );
     return PLUGIN_STOP; // We handled this command.
 }
 

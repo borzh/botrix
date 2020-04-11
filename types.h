@@ -183,9 +183,11 @@ typedef int TBotChat;                            ///< Bot sentence.
 enum TCommandResults
 {
     ECommandPerformed,                            ///< All okay.
-    ECommandNotFound,                             ///< Command not found.
-    ECommandRequireAccess,                        ///< User don't have access to command.
-    ECommandError,		                          ///< Error occurred.
+	ECommandNotFound,                             ///< Command not found.
+	ECommandNotImplemented,                       ///< Command not implemented.
+	ECommandRequireAccess,                        ///< User don't have access to command.
+	ECommandError,                                ///< Error occurred.
+	ECommandTotal,                                ///< Total amount.
 };
 typedef int TCommandResult;
 
@@ -257,11 +259,13 @@ enum TPathFlag
     FPathDoor                  = 1<<8,           ///< There is a door on the way. Argument has door number / button number.
     FPathElevator              = 1<<9,           ///< Stand still until reach next waypoint. Argument has elevator number / button number.
     FPathTotem                 = 1<<10,          ///< Need to make ladder of living corpses. Argument is count of players needed (1..).
+	
+	EPathFlagUserTotal         = 11,             ///< Amount of path flags for the user.
+	FPathAll                   = (1<<11)-1,      ///< All userpath flags.
 
-    EPathFlagTotal             = 11,             ///< Amount of path flags. Note that FPathDemo not counts.
-    FPathAll                   = (1<<11)-1,      ///< All path flags.
-
-    FPathDemo                  = 0x8000,         ///< Flag for use demo to reach adjacent waypoints. Demo number is at lower bits. Not implemented yet.
+	FPathUntested              = 1<<14,          ///< Need to make ladder of living corpses. Argument is count of players needed (1..).
+    FPathDemo                  = 1<<15,          ///< Flag for use demo to reach adjacent waypoints. Demo number is at lower bits. Not implemented yet.
+    EPathFlagTotal             = 16,             ///< Amount of path flags.
 };
 typedef short TPathFlags;                        ///< Set of waypoint path flags.
 
@@ -330,15 +334,23 @@ enum TItemTypes
     EItemTypeArmor,                            ///< Item that restores players armor. Can be armor machine also.
     EItemTypeWeapon,                           ///< Weapon.
     EItemTypeAmmo,                             ///< Ammo for weapon.
-    EItemTypeButton,                           ///< Button.
+    EItemTypeCanPickTotal,                     ///< Items that bot can pick up.
+
+    EItemTypeButton = EItemTypeCanPickTotal,   ///< Button.
     EItemTypeDoor,                             ///< Door.
     EItemTypeElevator = EItemTypeDoor,         ///< Elevators are treated like doors.
-
+    EItemTypeLadder,                           ///< Ladder.
     EItemTypeObject,                           ///< Object that can stuck player (or optionally be moved).
-    EItemTypeTotal,                            ///< Amount of item types. Object and other doens't count as bot can't pick them up.
+    EItemTypeTotalNotObject = EItemTypeObject, ///< All that is not object nor other.
 
-    EItemTypeNotObject = EItemTypeTotal-1,     ///< All that is not object nor other.
-    EItemTypeOther = EItemTypeTotal,           ///< All other type of entities.
+    EItemTypeCollisionTotal,                   ///< Items that bot can collision with.
+
+    /// Entity where player spawns.
+    EItemTypePlayerSpawn = EItemTypeCollisionTotal,                      
+    EItemTypeOther,                            ///< All other type of entities.
+
+    EItemTypeKnownTotal = EItemTypeOther,      ///< Amount of known item types (other doens't count).
+    EItemTypeAll,                              ///< Total for all.
 };
 typedef int TItemType;                         ///<  Items types / object / other entities.
 
@@ -356,9 +368,41 @@ typedef int TItemIndex;                        ///< Index of entity in CItems::G
 
 enum TItemTypeFlag
 {
-    EItemTypeAll = (1<<(EItemTypeOther+1))-1   ///< Flag to draw all items.
+    FItemTypeAll = (1<<(EItemTypeOther+1))-1   ///< Flag to draw all items.
 };
 typedef int TItemTypeFlags;                    ///< Item type flags (used to define which items to draw).
+
+
+//****************************************************************************************************************
+/// Mod variables.
+//****************************************************************************************************************
+enum TModVars
+{
+    // If you change the order, go to mod.cpp and check the order of defaults array.
+    EModVarPlayerMaxHealth = 0,                ///< Player's max health.
+    EModVarPlayerMaxArmor,                     ///< Player's height.
+
+    EModVarPlayerWidth,                        ///< Player's width.
+    EModVarPlayerHeight,                       ///< Player's height.
+    EModVarPlayerHeightCrouched,               ///< Player's height crouched.
+    EModVarPlayerEye,                          ///< Player's eye, for waypoints.
+    EModVarPlayerEyeCrouched,                  ///< Player's eye crouched.
+    
+    EModVarPlayerVelocityCrouch,               ///< Player's velocity while crouched.
+    EModVarPlayerVelocityWalk,                 ///< Player's walk velocity.
+    EModVarPlayerVelocityRun,                  ///< Player's run velocity.
+    EModVarPlayerVelocitySprint,               ///< Player's sprint velocity.
+
+    EModVarPlayerObstacleToJump,               ///< Obstacle height so need to jump.
+    EModVarPlayerJumpHeight,                   ///< Player's jump height.
+    EModVarPlayerJumpHeightCrouched,           ///< Player's jump height crouched.
+    
+    EModVarHeightForFallDamage,                ///< Max height so fall doesn't produce damage.
+    EModVarSlopeGradientToSlideOff,            ///< Player will slide off if gradient is more that this value.
+
+    EModVarTotal                               ///< Mod vars count.
+};
+typedef int TModVar;                           ///< Mod variable.
 
 
 //****************************************************************************************************************

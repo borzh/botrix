@@ -306,7 +306,7 @@ TCommandResult CConsoleCommand::Execute( CClient* pClient, int argc, const char*
 		PrintCommand( pClient ? pClient->GetEdict() : NULL, 0 );
 		return ECommandPerformed;
 	}
-	return ECommandNotFound;
+	return ECommandNotImplemented;
 }
 
 void CConsoleCommand::PrintCommand( edict_t* pPrintTo, int indent )
@@ -603,7 +603,7 @@ TCommandResult CWaypointCreateCommand::Execute( CClient* pClient, int argc, cons
 
     // Check if player is crouched.
     float fHeight = pClient->GetPlayerInfo()->GetPlayerMaxs().z - pClient->GetPlayerInfo()->GetPlayerMins().z + 1;
-    bool bIsCrouched = ( fHeight < CMod::iPlayerHeight );
+    bool bIsCrouched = ( fHeight < CMod::GetVar( EModVarPlayerHeight ) );
 
     if (pClient->bAutoCreatePaths)
         CWaypoints::CreateAutoPaths(id, bIsCrouched);
@@ -843,6 +843,25 @@ TCommandResult CWaypointAddTypeCommand::Execute( CClient* pClient, int argc, con
         BULOG_I(pClient->GetEdict(), "Types %s (%d) added to waypoint %d.", CTypeToString::WaypointFlagsToString(iFlags).c_str(), iFlags, pClient->iCurrentWaypoint);
         return ECommandPerformed;
     }
+}
+
+TCommandResult CWaypointAnalizeCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+	if ( !CBotrixPlugin::instance->bMapRunning )
+	{
+		BULOG_W( pClient ? pClient->GetEdict() : NULL, "Error: no map is loaded." );
+		return ECommandError;
+	}
+
+    CWaypoints::Analize();
+    BULOG_W( pEdict, "Started to analize waypoints.");
+
+    return ECommandPerformed;
 }
 
 TCommandResult CWaypointRemoveTypeCommand::Execute( CClient* pClient, int argc, const char** argv )
@@ -1881,7 +1900,7 @@ TCommandResult CPathCreateCommand::Execute( CClient* pClient, int argc, const ch
     if ( pClient->IsAlive() )
     {
         float fHeight = pClient->GetPlayerInfo()->GetPlayerMaxs().z - pClient->GetPlayerInfo()->GetPlayerMins().z + 1;
-        if (fHeight < CMod::iPlayerHeight)
+        if (fHeight < CMod::GetVar( EModVarPlayerHeight ))
             iFlags = FPathCrouch;
     }
 
@@ -3594,14 +3613,14 @@ CItemDrawCommand::CItemDrawCommand()
 {
 	m_sCommand = "draw";
 	m_sHelp = "defines which items to draw";
-	m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::EntityTypeFlagsToString(EItemTypeAll);
+	m_sDescription = good::string("Can be 'none' / 'all' / 'next' or mix of: ") + CTypeToString::EntityTypeFlagsToString(FItemTypeAll);
 	m_iAccessLevel = FCommandAccessWaypoint; // User doesn't have control over items, he only can draw them.
 
 	StringVector args;
 	args.push_back(sNone);
 	args.push_back(sAll);
 	args.push_back(sNext);
-	for (int i = 0; i < EItemTypeOther + 1; ++i)
+	for (int i = 0; i < EItemTypeAll + 1; ++i)
 		args.push_back(CTypeToString::EntityTypeFlagsToString(1 << i).duplicate());
 
 	m_cAutoCompleteArguments.push_back(EConsoleAutoCompleteArgValuesForever);
@@ -3641,13 +3660,13 @@ TCommandResult CItemDrawCommand::Execute( CClient* pClient, int argc, const char
             bFinished = true;
         else if ( sAll == argv[0] )
         {
-            iFlags = EItemTypeAll;
+            iFlags = FItemTypeAll;
             bFinished = true;
         }
         else if ( sNext == argv[0] )
         {
             int iNew = (pClient->iItemTypeFlags)  ?  pClient->iItemTypeFlags << 1  :  1;
-            iFlags = (iNew > EItemTypeAll) ? 0 : iNew;
+            iFlags = (iNew > FItemTypeAll) ? 0 : iNew;
             bFinished = true;
         }
     }
@@ -3659,7 +3678,7 @@ TCommandResult CItemDrawCommand::Execute( CClient* pClient, int argc, const char
             int iAddFlag = CTypeToString::EntityTypeFlagsFromString(argv[i]);
             if ( iAddFlag == -1 )
             {
-                BULOG_W( pClient->GetEdict(), "Error, invalid item type(s). Can be 'none' / 'all' / 'next' or mix of: %s", CTypeToString::EntityTypeFlagsToString(EItemTypeAll).c_str() );
+                BULOG_W( pClient->GetEdict(), "Error, invalid item type(s). Can be 'none' / 'all' / 'next' or mix of: %s", CTypeToString::EntityTypeFlagsToString(FItemTypeAll).c_str() );
                 return ECommandError;
             }
             FLAG_SET(iAddFlag, iFlags);
@@ -3831,6 +3850,38 @@ TCommandResult CConfigLogCommand::Execute( CClient* pClient, int argc, const cha
     return ECommandPerformed;
 }
 
+TCommandResult CConfigWaypointAnalize::Execute( CClient* pClient, int argc, const char** argv )
+{
+	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+		return ECommandPerformed;
+
+	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+	
+	if ( argc > 1 )
+	{
+		BULOG_I( pEdict, "Invalid parameters count." );
+		return ECommandError;
+	}
+	if ( argc == 1 )
+	{
+		int iCount = -1;
+		if ( sOff == argv[ 0 ] )
+			iCount = 0;
+		else if ( sscanf( argv[ 0 ], "%d", iCount) != 1 )
+			iCount = -1;
+
+		if ( iCount < 0 )
+		{
+			BULOG_W( pEdict, "Error, invalid parameter: %s.", argv[0] );
+			return ECommandError;
+		}
+
+		CMod::iAnalizeWaypoints = iCount;
+	}
+	BULOG_I( pEdict, "Minimum waypoints count to auto-create new waypoints on map change: %d (0 = disabled).", CMod::iAnalizeWaypoints );
+	return ECommandPerformed;
+}
+
 CConfigAdminsSetAccessCommand::CConfigAdminsSetAccessCommand()
 {
 	m_sCommand = "access";
@@ -3954,12 +4005,8 @@ void bbotCommandCallback( const CCommand &command )
     CClient* pClient = CPlayers::GetListenServerClient();
 
     TCommandResult result = CBotrixCommand::instance->Execute( pClient, argc-1, &argv[1] );
-    if (result == ECommandRequireAccess)
-        BULOG_W(pClient ? pClient->GetEdict() : NULL, "Error, you don't have access to this command.");
-    else if (result == ECommandNotFound)
-        BULOG_W(pClient ? pClient->GetEdict() : NULL, "Error, command not found.");
-    else if (result == ECommandError)
-        BULOG_W(pClient ? pClient->GetEdict() : NULL, "Command error.");
+    if (result != ECommandPerformed)
+        BULOG_W(pClient ? pClient->GetEdict() : NULL, "%s", CTypeToString::ConsoleCommandResultToString(result).c_str() );
 }
 
 #if defined(BOTRIX_NO_COMMAND_COMPLETION)
@@ -3975,7 +4022,16 @@ int bbotCompletion( const char* partial, char commands[ COMMAND_COMPLETION_MAXIT
 
 void CBotrixCommand::CommandCallback( const CCommand &command )
 {
-    bbotCommandCallback(command);
+    try
+    {
+        bbotCommandCallback( command );
+    }
+    catch ( ... )
+    {
+        BLOG_E( "FATAL EXCEPTION: executing command '%s'.", command.GetCommandString() );
+        BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
+        GoodAssert( false );
+    }
 }
 
 #endif // BOTRIX_OLD_COMMAND_COMPLETION

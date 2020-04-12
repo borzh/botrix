@@ -108,6 +108,7 @@ good::vector<edict_t*> CItems::m_aNewEntities(16);
 good::vector< good::pair<good::string, TItemFlags> > CItems::m_aObjectFlagsForModels(4);
 good::bitset CItems::m_aUsedItems(MAX_EDICTS);
 int CItems::m_iCurrentEntity;
+int CItems::m_iMaxEntityIndex = MAX_EDICTS;
 bool CItems::m_bMapLoaded = false;
 
 
@@ -220,8 +221,9 @@ void CItems::MapLoaded(bool bLog)
     m_iCurrentEntity = CPlayers::Size()+1;
 
     // 0 is world, 1..max players are players. Other entities are from indexes above max players.
-    int iCount = CBotrixPlugin::pEngineServer->GetEntityCount();
-    for ( int i = m_iCurrentEntity; i < iCount; ++i ) //
+    m_iMaxEntityIndex = CBotrixPlugin::pEngineServer->GetEntityCount();
+
+    for ( int i = m_iCurrentEntity; i < MAX_EDICTS; ++i )
     {
         edict_t* pEdict = CBotrixPlugin::pEngineServer->PEntityOfEntIndex(i);
         if ( (pEdict == NULL) || pEdict->IsFree() )
@@ -274,7 +276,7 @@ void CItems::Update()
 
     // Update weapon entities on map.
     int iTo = m_iCurrentEntity + m_iCheckEntitiesPerFrame;
-    if ( iTo > iCount )
+    if ( iTo > m_iMaxEntityIndex )
         iTo = iCount;
 
     for ( TItemIndex i = m_iCurrentEntity; i < iTo; ++i )
@@ -341,7 +343,13 @@ TItemType CItems::GetEntityType( const char* szClassName, CItemClass* & pEntityC
 void CItems::CheckNewEntity(edict_t* pEdict, bool bLog)
 {
     const char* szClassName = pEdict->GetClassName();
-    BLOG_T( "New entity: %s", szClassName ? szClassName : "" );
+    if ( szClassName == NULL || szClassName[ 0 ] == 0 )
+        return;
+
+    int iEntIndex = pEdict->m_EdictIndex;
+
+    BLOG_T( "New entity: %s, index %d.", szClassName ? szClassName : "", iEntIndex );
+    m_iMaxEntityIndex = MAX2(iEntIndex, m_iMaxEntityIndex);
 
     // Check only server entities.
     IServerEntity* pServerEntity = pEdict->GetIServerEntity();
@@ -612,7 +620,7 @@ void CItems::Draw( CClient* pClient )
             ICollideable* pCollide = pServerEntity->GetCollideable();
             const Vector& vOrigin = pCollide->GetCollisionOrigin();
 
-            if ( CBotrixPlugin::pEngineServer->CheckOriginInPVS( vOrigin, pvs, sizeof(pvs) ) &&
+            if ( /*CBotrixPlugin::pEngineServer->CheckOriginInPVS( vOrigin, pvs, sizeof(pvs) ) &&*/
                  CUtil::IsVisible(pClient->GetHead(), vOrigin) )
             {
                 const CItem* pEntity = (iEntityType == EItemTypeOther) ? NULL : &m_aItems[iEntityType][i];

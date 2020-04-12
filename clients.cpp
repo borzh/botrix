@@ -88,7 +88,7 @@ void CClient::PreThink()
         //    float fHeight = GetPlayerInfo()->GetPlayerMaxs().z - GetPlayerInfo()->GetPlayerMins().z + 1;
         //    bool bIsCrouched = (fHeight < CMod::GetVar( EModVarPlayerHeight ));
 
-        //    CWaypoints::CreatePathsWithAutoFlags(iLastWaypoint, iCurrentWaypoint, bIsCrouched);
+        //    CWaypoints::CreatePathsWithAutoFlags(iLastWaypoint, iCurrentWaypoint, bIsCrouched, true);
         //    iDestinationWaypoint = iLastWaypoint;
         //}
     }

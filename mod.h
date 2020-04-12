@@ -156,8 +156,6 @@ public: // Static members.
 
 	static good::vector<TWeaponId> aDefaultWeapons; ///< Default respawn weapons. Can be set by a console command.
 	static bool bRemoveWeapons;                     ///< If true, will remove all weapons from the bot on respawn. Can be set by a console command.
-	static int iAnalizeWaypoints;                   ///< Waypoints count to start analizing a map.
-	static int iAnalizeWaypointsPerFrame;           ///< Positions per frame to analize.
 
     static StringVector aBotNames;                  ///< Available bot names.
     static StringVector aClassNames;                ///< Name of player's classes.
@@ -174,7 +172,8 @@ public: // Static members.
     static Vector vPlayerCollisionHull;             ///< Maxs of player collision box with origin in (0, 0, 0).
     static Vector vPlayerCollisionHullCrouched;     ///< Maxs of crouched player collision box with origin in (0, 0, 0).
 
-    static float fMinNonStuckSpeed;                 ///< Minimum velocity to consider that bot is moving and non stucked.
+    static float fMinNonStuckSpeed;                 ///< Minimum velocity to consider that bot is moving and non stucked.
+
 
     static int iPlayerRadius;                       ///< Player's radius (used to check if bot is stucked).
     static int iNearItemMaxDistanceSqr;             ///< Max distance to consider item to be near to player.

@@ -39,8 +39,6 @@ TReach CanClimbSlope( const Vector& vSrc, const Vector& vDest )
     VectorAngles(vDiff, ang); // Get pitch to know if gradient is too big.
 
     float slope = CMod::GetVar( EModVarSlopeGradientToSlideOff );
-    float GetVar( EModVarPlayerJumpHeightCrouched );
-
     if ( ang.x < -slope ) // Destination is higher and slope is more than 45 degrees, can't climb it.
         return EReachNotReachable;
     else if ( ( ang.x > slope ) &&       // Slope is more than 45 degrees.
@@ -176,7 +174,7 @@ bool CUtil::IsVisible( const Vector& vSrc, const Vector& vDest, TVisibilityFlags
 {
     CVisibilityTraceFilter filter(iFlags);
     TraceLine(vSrc, vDest, filter.iTraceFlags, &filter);
-    return m_TraceResult.fraction == 1.0f;
+    return m_TraceResult.fraction >= 0.95f;
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -191,15 +189,15 @@ bool CUtil::IsVisible( const Vector& vSrc, edict_t* pDest )
 }
 
 //----------------------------------------------------------------------------------------------------------------
-TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, const Vector& vDest, float fDistance )
+TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, const Vector& vDest, float fDistanceSqr, float fMaxDistanceSqr, bool bShowHelp )
 {
     static int iRandom = 0;      // This function may be called 2 times with (v1, v2) and (v2,v1)
     iRandom = (iRandom + 1) & 1; // so iRandom is to draw text higher that previous time.
 
-    if ( fDistance == 0.0f )
-        fDistance = vSrc.DistTo(vDest);
+    if ( fDistanceSqr <= 0.0f )
+        fDistanceSqr = vSrc.DistToSqr(vDest);
 
-    if ( SQR(fDistance) > (SQR(CWaypoint::iDefaultDistance) << 1) ) // Pitagoras.
+    if ( fDistanceSqr > fMaxDistanceSqr ) // Pitagoras.
         return EReachNotReachable;
 
     if ( !CUtil::IsVisible(vSrc, vDest) )
@@ -213,7 +211,8 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, const Vector& vDest, f
     TReach iResult = EReachReachable;
 
     Vector vMinZ(0, 0, -iHalfMaxMapSize);
-    CTraceFilterWorldAndPropsOnly filter;
+    //CTraceFilterWorldAndPropsOnly filter;
+    CTraceFilterWorldOnly filter;
 
     // Get ground positions.
     TraceLine(vSrc, vSrc + vMinZ, MASK_SOLID_BRUSHONLY, &filter);
@@ -225,17 +224,21 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, const Vector& vDest, f
     vDestGround.z++;
 
     // Draw waypoints until ground.
-    DrawLine(vSrc, vSrcGround, iTextTime, 0xFF, 0xFF, 0xFF);
-    DrawLine(vDest, vDestGround, iTextTime, 0xFF, 0xFF, 0xFF);
+    if ( bShowHelp )
+    {
+        DrawLine( vSrc, vSrcGround, iTextTime, 0xFF, 0xFF, 0xFF );
+        DrawLine( vDest, vDestGround, iTextTime, 0xFF, 0xFF, 0xFF );
+    }
 
     bool bAlreadyJumped = false;
 
-    bool bVisible = CUtil::IsVisible(vSrcGround, vDestGround);
+    bool bVisible = CUtil::IsVisible( vSrcGround, vDestGround );
     Vector vHit = TraceResult().endpos;
 
     if ( bVisible ) // Check if can climb up slope.
     {
-        DrawLine(vSrcGround, vDestGround, iTextTime, 0xFF, 0xFF, 0xFF);
+        if ( bShowHelp )
+            DrawLine(vSrcGround, vDestGround, iTextTime, 0xFF, 0xFF, 0xFF);
         iResult = CanClimbSlope(vSrcGround, vDestGround);
     }
     else
@@ -266,8 +269,11 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, const Vector& vDest, f
 
             if ( !bCanPassOrJump )
             {
-                DrawLine(vStart, vHit, iTextTime, 0xFF, 0xFF, 0xFF);
-                DrawText(vHit, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Too high to jump");
+                if ( bShowHelp )
+                {
+                    DrawLine( vStart, vHit, iTextTime, 0xFF, 0xFF, 0xFF );
+                    DrawText( vHit, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Too high to jump" );
+                }
                 return EReachNotReachable;
             }
 
@@ -275,7 +281,8 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, const Vector& vDest, f
             {
                 if ( bAlreadyJumped )
                 {
-                    CUtil::DrawText(vHit, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Can't jump twice");
+                    if ( bShowHelp )
+                        CUtil::DrawText( vHit, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Can't jump twice" );
                     return EReachNotReachable;
                 }
                 bAlreadyJumped = true;
@@ -286,7 +293,8 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, const Vector& vDest, f
             vSrcGround.z = -CUtil::iHalfMaxMapSize;
             TraceLine(vHit, vSrcGround, MASK_SOLID_BRUSHONLY, &filter);
 
-            CUtil::DrawLine(vStart, TraceResult().endpos, iTextTime, 0xFF, 0xFF, 0xFF);
+            if ( bShowHelp )
+                CUtil::DrawLine( vStart, TraceResult().endpos, iTextTime, 0xFF, 0xFF, 0xFF );
             vStart = TraceResult().endpos;
 
             // Trace from new origin to destination ground.
@@ -296,7 +304,6 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, const Vector& vDest, f
 
         vSrcGround = vStart;
         iResult = CanClimbSlope(vSrcGround, vDestGround);
-
     }
 
     // Set text position.
@@ -309,18 +316,21 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, const Vector& vDest, f
         if (bAlreadyJumped)
         {
             iResult = EReachNeedJump;
-            CUtil::DrawText(vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Reachable with one jump");
+            if ( bShowHelp )
+                CUtil::DrawText( vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Reachable with one jump" );
         }
-        else
+        else if ( bShowHelp )
             CUtil::DrawText(vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Walkable");
         break;
 
     case EReachFallDamage:
-        CUtil::DrawText(vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Falling risk");
+        if ( bShowHelp )
+            CUtil::DrawText(vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Falling risk");
         break;
 
     case EReachNotReachable:
-        CUtil::DrawText(vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Too high gradient");
+        if ( bShowHelp )
+            CUtil::DrawText(vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Too high gradient");
         break;
 
     default:
@@ -337,6 +347,29 @@ void CUtil::TraceLine(const Vector& vSrc, const Vector& vDest, int mask, ITraceF
     memset(&m_TraceResult, 0, sizeof(trace_t));
     ray.Init( vSrc, vDest );
     CBotrixPlugin::pEngineTrace->TraceRay( ray, mask, pFilter, &m_TraceResult );
+}
+
+//----------------------------------------------------------------------------------------------------------------
+void CUtil::TraceHull( const Vector& vSrc, const Vector& vDest, const Vector& vMins, const Vector& vMaxs, int mask, ITraceFilter *pFilter )
+{
+    Ray_t ray;
+    memset( &m_TraceResult, 0, sizeof( trace_t ) );
+    ray.Init( vSrc, vDest, vMins, vMaxs );
+    CBotrixPlugin::pEngineTrace->TraceRay( ray, mask, pFilter, &m_TraceResult );
+}
+
+//----------------------------------------------------------------------------------------------------------------
+Vector& CUtil::GetGroundVec( const Vector& vSrc, const Vector& vHull )
+{
+    CTraceFilterWorldOnly cFilter;
+    Ray_t ray;
+    memset( &m_TraceResult, 0, sizeof( trace_t ) );
+    Vector vDest = vSrc;
+    vDest.z = -iHalfMaxMapSize;
+    ray.Init( vSrc, vDest, vZero, vHull );
+    CBotrixPlugin::pEngineTrace->TraceRay( ray, MASK_SOLID_BRUSHONLY, &cFilter, &m_TraceResult );
+
+    return m_TraceResult.endpos;
 }
 
 //----------------------------------------------------------------------------------------------------------------

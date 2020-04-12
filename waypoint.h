@@ -17,6 +17,30 @@
 //****************************************************************************************************************
 class CWaypoint
 {
+public: // Members and constants.
+    static const int MIN_ANGLE_PITCH = -64;         ///< Minimum pitch that can be used in angle argument.
+    static const int MAX_ANGLE_PITCH = +63;         ///< Maximun pitch that can be used in angle argument.
+    static const int MIN_ANGLE_YAW = -180;          ///< Minimum yaw that can be used in angle argument.
+    static const int MAX_ANGLE_YAW = +180;          ///< Maximun yaw that can be used in angle argument.
+
+    static const int DRAW_INTERVAL = 1;             ///< Waypoint interval for drawing in seconds.
+    static const int WIDTH = 8;                     ///< Waypoint width for drawing.
+    static const int PATH_WIDTH = 4;                ///< Waypoint's path width for drawing.
+
+    static const int MAX_RANGE = 256;               ///< Max waypoint range to invalidate current waypoint.
+
+    static int iWaypointTexture;                    ///< Texture of waypoint for beam. Precached at CWaypoints::Load().
+
+    static int iDefaultDistance;                    ///< Max waypoint distance to automatically add path to nearby waypoints.
+    
+    static int iAnalizeDistance;                    ///< Distance between waypoints when analizing a map.
+    static int iWaypointsMaxCountToAnalizeMap;      ///< Maximum waypoints count to start analizing a map.
+    static int iAnalizeWaypointsPerFrame;           ///< Positions per frame to analize.
+
+    Vector vOrigin;                                 ///< Coordinates of waypoint (x, y, z).
+    TWaypointFlags iFlags;                          ///< Waypoint flags.
+    int iArgument;                                  ///< Waypoint argument (button number).
+    TAreaId iAreaId;                                ///< Area id where waypoint belongs to (like "Bombsite A" / "Base CT" in counter-strike).
 
 public: // Methods.
     /// Default constructor.
@@ -129,27 +153,6 @@ public: // Methods.
     /// Draw this waypoint for given amount of time.
     void Draw( TWaypointId iWaypointId, TWaypointDrawFlags iDrawType, float fDrawTime ) const;
 
-
-public: // Members and constants.
-    static const int MIN_ANGLE_PITCH = -64;  ///< Minimum pitch that can be used in angle argument.
-    static const int MAX_ANGLE_PITCH = +63;  ///< Maximun pitch that can be used in angle argument.
-    static const int MIN_ANGLE_YAW = -180;   ///< Minimum yaw that can be used in angle argument.
-    static const int MAX_ANGLE_YAW = +180;   ///< Maximun yaw that can be used in angle argument.
-
-    static const int DRAW_INTERVAL = 1;      ///< Waypoint interval for drawing in seconds.
-    static const int WIDTH = 8;              ///< Waypoint width for drawing.
-    static const int PATH_WIDTH = 4;         ///< Waypoint's path width for drawing.
-
-    static const int MAX_RANGE = 256;        ///< Max waypoint range to invalidate current waypoint.
-
-    static int iWaypointTexture;             ///< Texture of waypoint for beam. Precached at CWaypoints::Load().
-    static int iDefaultDistance;             ///< Max waypoint distance to automatically add path to nearby waypoints.
-
-    Vector vOrigin;                          ///< Coordinates of waypoint (x, y, z).
-    TWaypointFlags iFlags;                   ///< Waypoint flags.
-    int iArgument;                           ///< Waypoint argument (button number).
-    TAreaId iAreaId;                         ///< Area id where waypoint belongs to (like "Bombsite A" / "Base CT" in counter-strike).
-
 protected:
     static const TWaypointFlags m_aFlagsForEntityType[EItemTypeTotalNotObject];
 };
@@ -194,7 +197,7 @@ public:
 	int GetDemoNumber() { return iArgument; }
 	void SetDemoNumber( int iDemo ) { iArgument = iDemo; }
 
-    float fLength;                           ///< Path length.
+    float fLength;                           ///< Path length. Needed for route calculation.
     TPathFlags iFlags;                       ///< Path flags.
 
     /// Path argument. At 1rst byte there is time to wait before action (in deciseconds). 2nd byte is action duration.
@@ -302,7 +305,8 @@ public: // Methods.
     static bool RemovePath( TWaypointId iFrom, TWaypointId iTo );
 
     /// Create waypoint paths if reachable, from iFrom to iTo and viceversa.
-    static void CreatePathsWithAutoFlags( TWaypointId iWaypoint1, TWaypointId iWaypoint2, bool bIsCrouched );
+    static void CreatePathsWithAutoFlags( TWaypointId iWaypoint1, TWaypointId iWaypoint2, bool bIsCrouched, 
+                                          int iMaxDistance = CWaypoint::iDefaultDistance, bool bShowHelp = true );
 
     /// Create waypoint paths to nearests waypoints.
     static void CreateAutoPaths( TWaypointId id, bool bIsCrouched );
@@ -311,6 +315,8 @@ public: // Methods.
     /// Get nearest waypoint to given position.
     static TWaypointId GetNearestWaypoint( const Vector& vOrigin, const good::bitset* aOmit = NULL, bool bNeedVisible = true,
                                            float fMaxDistance = CWaypoint::MAX_RANGE, TWaypointFlags iFlags = FWaypointNone );
+
+    static void GetNearestWaypoints( good::vector<TWaypointId>& aResult, const Vector& vOrigin, bool bNeedVisible, float fMaxDistance );
 
     /// Get any waypoint with some of the given flags set.
     static TWaypointId GetAnyWaypoint( TWaypointFlags iFlags = FWaypointNone );
@@ -341,11 +347,15 @@ public: // Methods.
     /// Stop analizing waypoints.
     static void StopAnalizing();
 
+    /// Return true if analizing.
+    static bool IsAnalizing() { return m_aWaypointsToAnalize.size() > 0; }
+
+    /// Analize step.
+    static void AnalizeStep();
+
 protected:
     friend class CWaypointNavigator; // Get access to m_cGraph (for A* search implementation).
 
-    static void AnalizeStep();
-    
     // Get path color.
     static void GetPathColor( TPathFlags iFlags, unsigned char& r, unsigned char& g, unsigned char& b );
 
@@ -420,8 +430,7 @@ protected:
     static WaypointGraph m_cGraph; // Waypoints graph.
     static good::vector< good::bitset > m_aVisTable;
 
-    static bool m_bIsAnalizing;
-    static good::vector<Vector> m_aAnalizingPositions;
+    static good::vector<TWaypointId> m_aWaypointsToAnalize;
 
 };
 

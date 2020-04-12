@@ -23,7 +23,8 @@ good::vector< good::pair<TFrameEvent, TPlayerIndex> > CMod::m_aFrameEvents;
 
 bool CMod::m_bMapHas[ EItemTypeCanPickTotal ]; // Health, armor, weapon, ammo.
 
-float CMod::fMinNonStuckSpeed = 30;
+float CMod::fMinNonStuckSpeed = 30;
+
 StringVector CMod::aTeamsNames;
 int CMod::iUnassignedTeam = 0;
 int CMod::iSpectatorTeam = 1;
@@ -32,8 +33,6 @@ good::vector<TWeaponId> CMod::aDefaultWeapons;
 
 // Next are console commands
 bool CMod::bRemoveWeapons = false;
-int CMod::iAnalizeWaypoints = 100;
-int CMod::iAnalizeWaypointsPerFrame = 64;
 
 StringVector CMod::aClassNames;
 
@@ -178,6 +177,9 @@ void CMod::Prepare()
     iPointTouchSquaredXY = SQR( fWidth / 4 );
     iPointTouchSquaredZ = SQR( fJumpCrouched );
     iPointTouchLadderSquaredZ = SQR( 5 );
+
+    CWaypoint::iAnalizeDistance = fWidth * 2;
+    CWaypoint::iDefaultDistance = fWidth * 4;
 }
 
 //----------------------------------------------------------------------------------------------------------------

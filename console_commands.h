@@ -250,10 +250,10 @@ public:
 	CWaypointAnalizeCommand()
 	{
 		m_sCommand = "analize";
-		m_sHelp = "analize map waypoints";
-		m_sDescription = "Start analizing waypoints for current map. Time consuming operation, so be patient.";
+		m_sHelp = "start / stop analizing waypoints for current map";
+		m_sDescription = "This is a time consuming operation, so be patient.";
 		m_iAccessLevel = FCommandAccessWaypoint;
-	}
+    }
 
 	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
@@ -1036,18 +1036,31 @@ public:
 class CConfigWaypointAnalize: public CConsoleCommand
 {
 public:
-	CConfigWaypointAnalize() {
-		m_sCommand = "analize";
-		m_sHelp = "analize waypoints on map change";
-		m_sDescription = "Parameter: minimum waypoints count to start analizing the map on map change. 'off' or 0 to disable.";
-		m_iAccessLevel = FCommandAccessConfig;
+    CConfigWaypointAnalize()
+    {
+        m_sCommand = "analize";
+        m_sHelp = "analize waypoints on map change";
+        m_sDescription = "Parameter: maximum waypoints count to start analizing the map on map change. 'off' or -1 to disable.";
+        m_iAccessLevel = FCommandAccessConfig;
 
-		StringVector args;
-		args.push_back( "off" );
-		m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
-		m_cAutoCompleteValues.push_back( args );
-	}
-	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+        StringVector args;
+        args.push_back( "off" );
+        m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+        m_cAutoCompleteValues.push_back( args );
+    }
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CConfigWaypointDistance: public CConsoleCommand
+{
+public:
+    CConfigWaypointDistance()
+    {
+        m_sCommand = "distance";
+        m_sHelp = "default distance between waypoints when analizing the map";
+        m_iAccessLevel = FCommandAccessConfig;
+    }
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
 class CConfigWaypoint: public CConsoleCommandContainer
@@ -1055,8 +1068,9 @@ class CConfigWaypoint: public CConsoleCommandContainer
 public:
 	CConfigWaypoint() {
 		m_sCommand = "waypoint";
-		m_aCommands.push_back( new CConfigWaypointAnalize );
-	}
+        m_aCommands.push_back( new CConfigWaypointAnalize );
+        m_aCommands.push_back( new CConfigWaypointDistance );
+    }
 };
 
 //****************************************************************************************************************

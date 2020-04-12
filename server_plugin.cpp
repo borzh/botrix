@@ -415,6 +415,9 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
 {
     if ( bMapRunning && m_bEnabled )
     {
+        if ( CWaypoints::IsAnalizing() )
+            CWaypoints::AnalizeStep();
+
         try
         {
             CUtil::PrintMessagesInQueue();
@@ -528,8 +531,9 @@ void CBotrixPlugin::LevelShutdown( void )
     sMapName = "";
 
     CPlayers::Clear();
-    CWaypoints::Clear();
     CItems::MapUnloaded();
+    CWaypoints::Clear();
+    CWaypoints::StopAnalizing();
 
 #ifdef USE_OLD_GAME_EVENT_MANAGER
     pGameEventManager->RemoveListener(this);

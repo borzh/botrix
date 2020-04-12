@@ -858,8 +858,16 @@ TCommandResult CWaypointAnalizeCommand::Execute( CClient* pClient, int argc, con
 		return ECommandError;
 	}
 
-    CWaypoints::Analize();
-    BULOG_W( pEdict, "Started to analize waypoints.");
+    if ( CWaypoints::IsAnalizing() )
+    {
+        CWaypoints::StopAnalizing();
+        BULOG_W( pEdict, "Stopped analizing waypoints." );
+    }
+    else
+    {
+        CWaypoints::Analize();
+        BULOG_W( pEdict, "Started to analize waypoints." );
+    }
 
     return ECommandPerformed;
 }
@@ -3866,20 +3874,59 @@ TCommandResult CConfigWaypointAnalize::Execute( CClient* pClient, int argc, cons
 	{
 		int iCount = -1;
 		if ( sOff == argv[ 0 ] )
-			iCount = 0;
-		else if ( sscanf( argv[ 0 ], "%d", iCount) != 1 )
 			iCount = -1;
+		else if ( sscanf( argv[ 0 ], "%d", &iCount) != 1 )
+			iCount = -2;
 
-		if ( iCount < 0 )
+		if ( iCount < -1 )
 		{
 			BULOG_W( pEdict, "Error, invalid parameter: %s.", argv[0] );
 			return ECommandError;
 		}
 
-		CMod::iAnalizeWaypoints = iCount;
+		CWaypoint::iWaypointsMaxCountToAnalizeMap = iCount;
 	}
-	BULOG_I( pEdict, "Minimum waypoints count to auto-create new waypoints on map change: %d (0 = disabled).", CMod::iAnalizeWaypoints );
+	BULOG_I( pEdict, "Maximum waypoints count to analize the map on map change: %d (-1 = disabled).", 
+             CWaypoint::iWaypointsMaxCountToAnalizeMap );
 	return ECommandPerformed;
+}
+
+TCommandResult CConfigWaypointDistance::Execute( CClient* pClient, int argc, const char** argv )
+{
+    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+        return ECommandPerformed;
+
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( argc > 1 )
+    {
+        BULOG_I( pEdict, "Invalid parameters count." );
+        return ECommandError;
+    }
+    if ( argc == 1 )
+    {
+        int iDistance = -1;
+        if ( sscanf( argv[ 0 ], "%d", &iDistance ) != 1 )
+            iDistance = -1;
+
+        if ( iDistance < -1 )
+        {
+            BULOG_W( pEdict, "Error, invalid parameter: %s.", argv[ 0 ] );
+            return ECommandError;
+        }
+
+        int iWidth = (int) CMod::GetVar( EModVarPlayerWidth );
+        if ( iDistance <= iWidth )
+        {
+            BULOG_W( pEdict, "Error, the distance should be at least player's width (%d).", iWidth );
+            return ECommandError;
+        }
+
+        CWaypoint::iAnalizeDistance = iDistance;
+    }
+    BULOG_I( pEdict, "Minimum waypoints count to auto-create new waypoints on map change: %d (-1 = disabled).", 
+             CWaypoint::iWaypointsMaxCountToAnalizeMap );
+    return ECommandPerformed;
 }
 
 CConfigAdminsSetAccessCommand::CConfigAdminsSetAccessCommand()

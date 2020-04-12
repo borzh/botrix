@@ -227,6 +227,8 @@ protected:
     static good::vector<edict_t*> m_aOthers;                             // Array of other entities.
 
     static TItemIndex m_iCurrentEntity;                                  // Current entity index to check.
+    static int m_iMaxEntityIndex;                                        // Maximum number of known used entity index.
+    
     static const int m_iCheckEntitiesPerFrame = 32;
 
     // This one is to have models specific flags (for example car model with 'heavy' flag, or barrel model with 'explosive' flag).

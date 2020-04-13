@@ -152,6 +152,9 @@ public:
         return ( it == m_aItemClasses[iEntityType].end() ) ? NULL : &*it;
     }
 
+    /// Get entity type and class given entity name.
+    static TItemType GetEntityType( const char* szClassName, CItemClass* & pEntityClass, TItemType iFrom, TItemType iTo );
+
     /// Get nearest item for a class (for example some item_battery or item_suitcharger for armor), skipping picked items in aSkip array.
     static TItemIndex GetNearestItem( TItemType iEntityType, const Vector& vOrigin, const good::vector<CPickedItem>& aSkip, const CItemClass* pClass = NULL );
 
@@ -207,9 +210,6 @@ public:
     static void Draw( CClient* pClient );
 
 protected:
-    /// Get entity type and class given entity name.
-    static TItemType GetEntityType( const char* szClassName, CItemClass* & pEntityClass, TItemType iFrom, TItemType iTo );
-
     static void CheckNewEntity( edict_t* pEdict, bool bLog = true );
     static TItemIndex InsertEntity( int iEntityType, const CItem& cEntity );
     static void AutoWaypointPathFlagsForEntity( TItemType iEntityType, TItemIndex iIndex, CItem& cEntity );

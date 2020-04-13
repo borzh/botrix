@@ -923,10 +923,6 @@ bool CBot::IsVisible( CPlayer* pPlayer, bool bViewCone ) const
     // Check PVS first. Get visible clusters from player's position.
     Vector vAim(pPlayer->GetHead());
 
-    CUtil::SetPVSForVector(m_vHead);
-    if ( !CUtil::IsVisiblePVS(vAim) )
-        return false;
-
     // First check if other player is in bot's view cone.
     static const float fFovHorizontal = 70.0f;              // Giving 140 degree of view horizontally.
     static const float fFovVertical = fFovHorizontal * 3/4; // Normal monitor has 4:3 aspect ratio.
@@ -1412,7 +1408,7 @@ void CBot::CheckAttackDuck( CPlayer* pPlayer )
         {
             Vector vSrc(m_vHead);
             vSrc.z -= CMod::GetVar( EModVarPlayerEye ) - CMod::GetVar( EModVarPlayerEyeCrouched );
-            m_bAttackDuck = CUtil::IsVisible( vSrc, m_pCurrentEnemy->GetHead() ); // Duck, if enemy is visible while ducking.
+            m_bAttackDuck = CUtil::IsVisible( vSrc, m_pCurrentEnemy->GetHead(), EVisibilitySeeAndShoot ); // Duck, if enemy is visible while ducking.
         }
         else
             m_bAttackDuck &= bInRangeDuck; // Stop ducking if enemy is far.

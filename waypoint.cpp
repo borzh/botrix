@@ -236,7 +236,7 @@ bool CWaypoints::Save()
         for ( TWaypointId j = 0; j < Size(); ++j )
         {
             if ( i < j )
-                cVisibles.set( j, CUtil::IsVisible(vFrom, Get(j).vOrigin) );
+                cVisibles.set( j, CUtil::IsVisible( vFrom, Get( j ).vOrigin, EVisibilityWorld ) );
             else
                 cVisibles.set( j, (i == j) || m_aVisTable[j].test(i) );
         }
@@ -579,7 +579,9 @@ void CWaypoints::CreatePathsWithAutoFlags( TWaypointId iWaypoint1, TWaypointId i
 
     float fDist = w1.vertex.vOrigin.DistTo( w2.vertex.vOrigin );
 
-    TReach iReach = CUtil::GetReachableInfoFromTo( w1.vertex.vOrigin, w2.vertex.vOrigin, Sqr( fDist ), Sqr( iMaxDistance ), bShowHelp );
+    Vector v1 = w1.vertex.vOrigin, v2 = w2.vertex.vOrigin;
+    bool bCrouch = bIsCrouched;
+    TReach iReach = CUtil::GetReachableInfoFromTo( v1, v2, bCrouch, Sqr( fDist ), Sqr( iMaxDistance ), bShowHelp );
     if (iReach != EReachNotReachable)
     {
         TPathFlags iFlags = (iReach == EReachNeedJump) ? FPathJump :
@@ -590,7 +592,7 @@ void CWaypoints::CreatePathsWithAutoFlags( TWaypointId iWaypoint1, TWaypointId i
         AddPath(iWaypoint1, iWaypoint2, fDist, iFlags);
     }
 
-    iReach = CUtil::GetReachableInfoFromTo( w2.vertex.vOrigin, w1.vertex.vOrigin, Sqr( fDist ), Sqr( iMaxDistance ), bShowHelp );
+    iReach = CUtil::GetReachableInfoFromTo( v2, v1, bCrouch, Sqr( fDist ), Sqr( iMaxDistance ), bShowHelp );
     if (iReach != EReachNotReachable)
     {
         TPathFlags iFlags = (iReach == EReachNeedJump) ? FPathJump :
@@ -606,7 +608,7 @@ void CWaypoints::CreatePathsWithAutoFlags( TWaypointId iWaypoint1, TWaypointId i
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CWaypoints::CreateAutoPaths( TWaypointId id, bool bIsCrouched )
+void CWaypoints::CreateAutoPaths( TWaypointId id, bool bIsCrouched, float fMaxDistance, bool bShowHelp )
 {
     WaypointNode& w = m_cGraph[id];
     Vector vOrigin = w.vertex.vOrigin;
@@ -624,10 +626,10 @@ void CWaypoints::CreateAutoPaths( TWaypointId id, bool bIsCrouched )
                 Bucket& bucket = m_cBuckets[x][y][z];
                 for (Bucket::iterator it=bucket.begin(); it != bucket.end(); ++it)
                 {
-                    if (*it == id)
+                    if ( *it == id || GetPath( *it, id ) || GetPath( id, *it ) )
                         continue;
 
-                    CreatePathsWithAutoFlags(id, *it, bIsCrouched);
+                    CreatePathsWithAutoFlags( id, *it, bIsCrouched, fMaxDistance, bShowHelp );
                 }
             }
 }
@@ -689,7 +691,7 @@ TWaypointId CWaypoints::GetNearestWaypoint(const Vector& vOrigin, const good::bi
                         float distTo = vOrigin.DistToSqr(node.vertex.vOrigin);
                         if ( (distTo <= sqDist) && (distTo < sqMinDistance) )
                         {
-                            if ( !bNeedVisible || CUtil::IsVisible(vOrigin, node.vertex.vOrigin, FVisibilityWorld) )
+                            if ( !bNeedVisible || CUtil::IsVisible( vOrigin, node.vertex.vOrigin, EVisibilityWorld ) )
                             {
                                 result = iWaypoint;
                                 sqMinDistance = distTo;
@@ -706,7 +708,7 @@ TWaypointId CWaypoints::GetNearestWaypoint(const Vector& vOrigin, const good::bi
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoints::GetNearestWaypoints( good::vector<TWaypointId>& aResult, const Vector& vOrigin, bool bNeedVisible, float fMaxDistance )
 {
-    float sqDist = SQR( fMaxDistance );
+    float fDistSqr = SQR( fMaxDistance );
 
     int minX, minY, minZ, maxX, maxY, maxZ;
     int x = GetBucketX( vOrigin.x );
@@ -723,11 +725,14 @@ void CWaypoints::GetNearestWaypoints( good::vector<TWaypointId>& aResult, const 
                 for ( Bucket::iterator it = bucket.begin(); it != bucket.end(); ++it )
                 {
                     TWaypointId iWaypoint = *it;
-
                     const WaypointNode& node = m_cGraph[ iWaypoint ];
-                    float distTo = vOrigin.DistToSqr( node.vertex.vOrigin );
-                    if ( distTo <= sqDist && ( !bNeedVisible || CUtil::IsVisible( vOrigin, node.vertex.vOrigin, FVisibilityWorld ) ) )
-                        aResult.push_back( iWaypoint );
+
+                    //if ( fabs( vOrigin.z - node.vertex.vOrigin.z ) <= fMaxDistance )
+                    {
+                        float distTo = vOrigin.AsVector2D().DistToSqr( node.vertex.vOrigin.AsVector2D() );
+                        if ( distTo <= fDistSqr && ( !bNeedVisible || CUtil::IsVisible( vOrigin, node.vertex.vOrigin, EVisibilityWorld ) ) )
+                            aResult.push_back( iWaypoint );
+                    }
                 }
             }
 }
@@ -905,13 +910,16 @@ void CWaypoints::AnalizeStep()
     GoodAssert( m_aWaypointsToAnalize.size() > 0 );
     static good::vector<TWaypointId> aNearWaypoints(16);
 
-    CTraceFilterWorldAndPropsOnly cWorldFilter;
+    //CTraceFilterWorldAndStaticProps cWorldFilter;
 
     float fPlayerEye = CMod::GetVar( EModVarPlayerEye );
     float fJumpHeight = CMod::GetVar( EModVarPlayerJumpHeightCrouched );
+    float fMaxFallHeight = CMod::GetVar( EModVarHeightForFallDamage );
+    float fStep = CMod::GetVar( EModVarPlayerObstacleToJump );
+    float fHalfPlayerWidthSqr = Sqr( CMod::GetVar( EModVarPlayerWidth ) / 2 );
 
     float fAnalizeDistance = CWaypoint::iAnalizeDistance;
-    float fAnalizeDistanceExtra = fAnalizeDistance * 1.9f; // To include diagonal, almost but not 2.
+    float fAnalizeDistanceExtra = fAnalizeDistance * 1.9f; // To include diagonal, almost but not 2 (Pythagoras).
     float fAnalizeDistanceSqr = Sqr( fAnalizeDistance );
 
     for ( int i = 0; i < CWaypoint::iAnalizeWaypointsPerFrame && m_aWaypointsToAnalize.size() > 0; ++i )
@@ -930,15 +938,21 @@ void CWaypoints::AnalizeStep()
                     continue;
 
                 // First check if there is a waypoint near final position.
-                Vector vGround = vPos;
-                vGround.x += CWaypoint::iAnalizeDistance * x;
-                vGround.y += CWaypoint::iAnalizeDistance * y;
+                Vector vNew = vPos;
+                vNew.x += CWaypoint::iAnalizeDistance * x;
+                vNew.y += CWaypoint::iAnalizeDistance * y;
 
-                vGround = CUtil::GetGroundVec( vGround, CMod::vPlayerCollisionHull );
+                //if ( CBotrixPlugin::pEngineTrace->PointOutsideWorld( vGround ) || CBotrixPlugin::pEngineTrace->PointOutsideWorld( vNew ) )
+                //    continue; // Not working.
+
+                if ( (CBotrixPlugin::pEngineTrace->GetPointContents( vNew ) & CONTENTS_SOLID) != 0 )
+                    continue; // Ignore, if inside some solid brush.
+
+                Vector vGround = CUtil::GetGroundVec( vNew, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxs );
                 vGround.z += 1 + fPlayerEye; // 1 point of elevation.
 
                 aNearWaypoints.clear();
-                CWaypoints::GetNearestWaypoints( aNearWaypoints, vGround, true, fAnalizeDistance ); // TODO: 2D
+                CWaypoints::GetNearestWaypoints( aNearWaypoints, vGround, true, fAnalizeDistance * 2 / 3 );
 
                 bool bSkip = false;
                 if ( aNearWaypoints.size() > 0 )
@@ -946,57 +960,132 @@ void CWaypoints::AnalizeStep()
                     for ( int w = 0; w < aNearWaypoints.size(); ++w )
                     {
                         int iNear = aNearWaypoints[ w ];
-                        if ( iNear != iWaypoint && CWaypoints::GetPath( iWaypoint, iNear ) == NULL )
+                        if ( iNear != iWaypoint && !CWaypoints::GetPath( iWaypoint, iNear ) && !CWaypoints::GetPath( iNear, iWaypoint ) )
                             CreatePathsWithAutoFlags( iWaypoint, iNear, false, fAnalizeDistanceExtra, false );
-                        // 3/2 is approximately sqrt(2) to add diagonal.
                         bSkip |= CWaypoints::GetPath( iWaypoint, iNear ) != NULL; // If has path, set bSkip to true.
                         
-                        // If path is not adding somehow, but the waypoint is really close.
-                        bSkip |= CWaypoints::Get(iNear).vOrigin.DistToSqr(vGround) <= 16*16; 
+                        // If path is not adding somehow, but the waypoint is really close (half player's width or closer).
+                        bSkip |= CWaypoints::Get(iNear).vOrigin.AsVector2D().DistToSqr(vGround.AsVector2D()) <= fHalfPlayerWidthSqr;
                     }
                 }
 
-                if ( !bSkip )
+                if ( bSkip )
+                    continue;
+
+                float fDistance = vPos.DistTo( vGround );
+                bool bCrouch = false;
+                TReach reach = CUtil::GetReachableInfoFromTo( vPos, vGround, bCrouch, fDistance, fAnalizeDistanceExtra, false );
+                if ( reach != EReachFallDamage && reach != EReachNotReachable )
                 {
-                    vGround.z -= fPlayerEye; // Back to the ground again.
+                    TPathFlags iFlags = bCrouch ? FPathCrouch : FPathNone;
+                    TWaypointId iNew = CWaypoints::Add( vGround );
+                    CWaypoints::AddPath( iWaypoint, iNew, fDistance, iFlags | ( reach == EReachNeedJump ? FPathJump : FPathNone ) );
+                    m_aWaypointsToAnalize.push_back( iNew );
 
-                    bool bAddedJump = false;
-                    CUtil::TraceHull( vPos, vGround, CUtil::vZero, CMod::vPlayerCollisionHull, MASK_SOLID_BRUSHONLY, &cWorldFilter );
-                    Vector vEnd = CUtil::TraceResult().endpos;
-
-                    bSkip = CUtil::IsTraceHitSomething();
-                    if ( bSkip )
+                    bCrouch = false;
+                    reach = CUtil::GetReachableInfoFromTo( vGround, vPos, bCrouch, fDistance, fAnalizeDistanceExtra, false );
+                    if ( reach != EReachFallDamage && reach != EReachNotReachable )
                     {
-                        // Try with jump.
-                        vGround.z += fJumpHeight;
-                        CUtil::TraceHull( vPos, vGround, CUtil::vZero, CMod::vPlayerCollisionHull, MASK_SOLID_BRUSHONLY, &cWorldFilter );
-                        bSkip = CUtil::IsTraceHitSomething();
-                        bAddedJump = !bSkip;
-                    }
-                    
-                    if ( !bSkip )
-                    {
-                        // Try to use the position where the ray hits.
-                        vGround = vEnd;
-                        bSkip = vPos.DistToSqr( vEnd ) < fAnalizeDistanceSqr/2;
+                        iFlags = bCrouch ? FPathCrouch : FPathNone;
+                        CWaypoints::AddPath( iNew, iWaypoint, fDistance, iFlags | ( reach == EReachNeedJump ? FPathJump : FPathNone ) );
                     }
 
-                    if ( !bSkip )
-                    {
-                        if ( bAddedJump )
-                        {
-                            vGround = CUtil::GetGroundVec( vGround, CMod::vPlayerCollisionHull );
-                            vGround.z += 1;
-                        }
-                        vGround.z += fPlayerEye;
+                    BLOG_T( "Added waypoint %d at (%.0f, %.0f, %.0f)", iNew, vGround.x, vGround.y, vGround.z );
+                }
+                //bool bAddedJump = false;
 
-                        TWaypointId iNew = CWaypoints::Add( vGround );
-                        CreatePathsWithAutoFlags( iWaypoint, iNew, false, fAnalizeDistanceExtra, false );
-                        m_aWaypointsToAnalize.push_back( iNew );
-                        
-                        BLOG_T( "Added waypoint %d at (%.0f, %.0f, %.0f)", iNew, vGround.x, vGround.y, vGround.z );
-                    }
-                }                
+                //float zDiff = vPos.z - vGround.z;
+                //if ( zDiff >= fMaxFallHeight )
+                //    continue; // IIgnore, if the fall takes damage. 
+
+                //if ( zDiff >= fJumpHeight )
+                //{
+                //    // Probably need to fall into destination, check if can get there first.
+                //    CUtil::TraceHull( vPos, vNew, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxs, MASK_SOLID_BRUSHONLY, &cWorldFilter );
+                //    bSkip = CUtil::IsTraceHitSomething();
+                //}
+                //else
+                //{
+                //    Vector vOrigin = vPos;
+
+                //    vOrigin.z -= fPlayerEye; // Go to the ground.
+                //    vGround.z -= fPlayerEye;
+
+                //    CUtil::TraceHull( vOrigin, vGround, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxs, MASK_SOLID_BRUSHONLY, &cWorldFilter );
+                //    bSkip = CUtil::IsTraceHitSomething();
+
+                //    // Try to climb the stairs.
+                //    while ( bSkip )
+                //    {
+                //        // Try to increment one step (distance without need to jump).
+                //        vOrigin.z += fStep;
+                //        vGround.z += fStep;
+
+                //        CUtil::TraceHull( vOrigin, vGround, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxs, MASK_SOLID_BRUSHONLY, &cWorldFilter );
+                //        bSkip = CUtil::IsTraceHitSomething();
+
+                //        if ( bSkip )
+                //        {
+                //            const Vector& vCollision = CUtil::TraceResult().endpos;
+                //            if ( vOrigin == vCollision )
+                //            {
+                //                vOrigin.z -= fStep;
+                //                vGround.z -= fStep;
+                //                break;
+                //            }
+                //            else
+                //                vOrigin = vCollision;
+                //        }
+                //    }
+
+                //    if ( bSkip )
+                //    {
+                //        // Check if can reach with one jump.
+                //        vOrigin.z += fJumpHeight;
+                //        vGround.z += fJumpHeight;
+                //        CUtil::TraceHull( vPos, vGround, CUtil::vZero, CMod::vPlayerCollisionHull, MASK_SOLID_BRUSHONLY, &cWorldFilter );
+                //        bSkip = CUtil::IsTraceHitSomething();
+                //        bAddedJump = !bSkip;
+                //        vGround.z -= fJumpHeight;
+                //    }
+
+
+                //    vHalfWayGround = CUtil::GetGroundVec( vGround, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxs );
+                //    if ( fabs( vPos.z - vGround.z ) >= fJumpHeight )
+                //        continue;
+
+
+                //    if ( !bAddedJump )
+                //    {
+
+                //    }
+                //    vPos.z -= fStep; // Remove step.
+                //    vGround.z -= fStep; // Remove step.
+                //    Vector vEnd = CUtil::TraceResult().endpos;// +vHalfPlayersHull;
+
+                //    if ( !bSkip )
+                //    {
+                //        // Try to use the position where the ray hits.
+                //        vGround = vEnd;
+                //        bSkip = vPos.AsVector2D().DistToSqr( vEnd.AsVector2D() ) < fAnalizeDistanceSqr / 4;
+                //    }
+                //}
+
+                //if ( !bSkip )
+                //{
+                //    if ( bAddedJump )
+                //    {
+                //        vGround = CUtil::GetGroundVec( vGround, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxs );
+                //        vGround.z += 1;
+                //    }
+                //    vGround.z += fPlayerEye;
+
+                //    TWaypointId iNew = CWaypoints::Add( vGround );
+                //    CreateAutoPaths( iNew, false, fAnalizeDistanceExtra, false );
+                //    m_aWaypointsToAnalize.push_back( iNew );
+
+                //    BLOG_T( "Added waypoint %d at (%.0f, %.0f, %.0f)", iNew, vGround.x, vGround.y, vGround.z );
+                //}
             }
         }
     }

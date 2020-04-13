@@ -620,8 +620,7 @@ void CItems::Draw( CClient* pClient )
             ICollideable* pCollide = pServerEntity->GetCollideable();
             const Vector& vOrigin = pCollide->GetCollisionOrigin();
 
-            if ( /*CBotrixPlugin::pEngineServer->CheckOriginInPVS( vOrigin, pvs, sizeof(pvs) ) &&*/
-                 CUtil::IsVisible(pClient->GetHead(), vOrigin) )
+            if ( CUtil::IsVisible(pClient->GetHead(), vOrigin, EVisibilityWorld ) )
             {
                 const CItem* pEntity = (iEntityType == EItemTypeOther) ? NULL : &m_aItems[iEntityType][i];
 

@@ -215,7 +215,7 @@ void CWeaponWithAmmo::GetLook( const Vector& vFrom, const CPlayer* pTo, TBotInte
         else
         {
             pTo->GetCenter(vResult);
-            if ( !CUtil::IsVisible(vFrom, vResult) )
+            if ( !CUtil::IsVisible( vFrom, vResult, EVisibilitySeeAndShoot ) )
                 vResult = pTo->GetHead();
         }
         break;

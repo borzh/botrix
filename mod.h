@@ -172,6 +172,12 @@ public: // Static members.
     static Vector vPlayerCollisionHull;             ///< Maxs of player collision box with origin in (0, 0, 0).
     static Vector vPlayerCollisionHullCrouched;     ///< Maxs of crouched player collision box with origin in (0, 0, 0).
 
+    static Vector vPlayerCollisionHullMins;         // Those are for centered hull in (0, 0, 0).
+    static Vector vPlayerCollisionHullMaxs;
+
+    static Vector vPlayerCollisionHullCrouchedMins;
+    static Vector vPlayerCollisionHullCrouchedMaxs;
+
     static float fMinNonStuckSpeed;                 ///< Minimum velocity to consider that bot is moving and non stucked.
 
 

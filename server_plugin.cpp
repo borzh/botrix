@@ -415,8 +415,18 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
 {
     if ( bMapRunning && m_bEnabled )
     {
-        if ( CWaypoints::IsAnalizing() )
-            CWaypoints::AnalizeStep();
+        try
+        {
+            if ( CWaypoints::IsAnalizing() )
+                CWaypoints::AnalizeStep();
+        }
+        catch ( ... )
+        {
+            BLOG_E( "FATAL EXCEPTION in CWaypoints::AnalizeStep'." );
+            BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
+            GoodAssert( false );
+        }
+        
 
         try
         {
@@ -424,7 +434,7 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
         }
         catch ( ... )
         {
-            BLOG_E( "FATAL EXCEPTION in CUtil::PrintMessagesInQueue'." );
+            BLOG_E( "FATAL EXCEPTION in CUtil::PrintMessagesInQueue." );
             BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
             GoodAssert( false );
         }

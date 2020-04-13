@@ -49,6 +49,12 @@ good::vector<float> CMod::m_aVars[EModVarTotal];
 Vector CMod::vPlayerCollisionHull;
 Vector CMod::vPlayerCollisionHullCrouched;
 
+Vector CMod::vPlayerCollisionHullMins;
+Vector CMod::vPlayerCollisionHullMaxs;
+
+Vector CMod::vPlayerCollisionHullCrouchedMins;
+Vector CMod::vPlayerCollisionHullCrouchedMaxs;
+
 int CMod::iPlayerRadius;
 
 int CMod::iNearItemMaxDistanceSqr = SQR(312);
@@ -167,13 +173,20 @@ bool CMod::LoadDefaults( TModId iModId )
 //----------------------------------------------------------------------------------------------------------------
 void CMod::Prepare()
 {
-    float fWidth = m_aVars[ EModVarPlayerWidth ][ 0 ];
+    float fWidth = m_aVars[ EModVarPlayerWidth ][ 0 ], fHalfWidth = fWidth / 2.0f;
     float fHeight = m_aVars[ EModVarPlayerHeight ][ 0 ];
+    float fHeightCrouched = m_aVars[ EModVarPlayerHeightCrouched ][ 0 ];
     float fJumpCrouched = m_aVars[ EModVarPlayerJumpHeightCrouched ][ 0 ];
 
     vPlayerCollisionHull = Vector( fWidth, fWidth, fHeight );
+    vPlayerCollisionHullMins = Vector( -fHalfWidth, -fHalfWidth, 0 );
+    vPlayerCollisionHullMaxs = Vector( fHalfWidth, fHalfWidth, fHeight );
 
-    iPlayerRadius = (int)FastSqrt( SQR( fWidth/2 ) + SQR( fWidth/2 ) );
+    vPlayerCollisionHullCrouched = Vector( fWidth, fWidth, fHeightCrouched );
+    vPlayerCollisionHullMins = Vector( -fHalfWidth, -fHalfWidth, 0 );
+    vPlayerCollisionHullMaxs = Vector( fHalfWidth, fHalfWidth, fHeightCrouched );
+
+    iPlayerRadius = (int)FastSqrt( SQR( fHalfWidth ) + SQR( fHalfWidth ) );
     iPointTouchSquaredXY = SQR( fWidth / 4 );
     iPointTouchSquaredZ = SQR( fJumpCrouched );
     iPointTouchLadderSquaredZ = SQR( 5 );

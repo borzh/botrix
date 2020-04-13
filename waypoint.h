@@ -309,7 +309,7 @@ public: // Methods.
                                           int iMaxDistance = CWaypoint::iDefaultDistance, bool bShowHelp = true );
 
     /// Create waypoint paths to nearests waypoints.
-    static void CreateAutoPaths( TWaypointId id, bool bIsCrouched );
+    static void CreateAutoPaths( TWaypointId id, bool bIsCrouched, float fMaxDistance = CWaypoint::iDefaultDistance, bool bShowHelp = true );
 
 
     /// Get nearest waypoint to given position.

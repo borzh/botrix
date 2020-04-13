@@ -27,16 +27,13 @@ typedef int TReach;
 
 
 /// Enum for flags used in CUtil::IsVisible() function.
-enum TVisibilityFlag
+enum TVisibilities
 {
-    FVisibilityWorld    = 1<<0,             ///< Visibility includes world.
-    FVisibilityProps    = 1<<1,             ///< Visibility includes props.
-    FVisibilitySolid    = (1<<2)-1,         ///< Visibility includes world and props.
-
-    FVisibilityEntity   = 1<<2,             ///< Visibility includes entities.
-    FVisibilityAll      = (1<<3)-1,         ///< Visibility includes world, props and entities.
+    EVisibilityWorld,                       ///< Visibility that is for brush only, excludes props.
+    EVisibilityOtherProps,                  ///< Visibility that include only 'other' (unknown) props.
+    EVisibilitySeeAndShoot,                 ///< Visibility includes player visibility for shooting.
 };
-typedef int TVisibilityFlags;               ///< Flags for CUtil::IsVisible() function.
+typedef int TVisibility;                    ///< Flags for CUtil::IsVisible() function.
 
 
 //****************************************************************************************************************
@@ -85,11 +82,12 @@ public:
 
     // Reference: https://developer.valvesoftware.com/wiki/UTIL_TraceLine
     /// Return true if vDest is visible from vSrc.
-    static bool IsVisible( const Vector& vSrc, const Vector& vDest, TVisibilityFlags iFlags = FVisibilityWorld );
+    static bool IsVisible( const Vector& vSrc, const Vector& vDest, TVisibility iVisibility );
     /// Return true if entity is visible from vSrc.
     static bool IsVisible( const Vector& vSrc, edict_t* pDest );
     /// Return true if can get from vSrc to vDest walking or jumping.
-    static TReach GetReachableInfoFromTo( const Vector& vSrc, const Vector& vDest, float fDistanceSqr, float fMaxDistanceSqr, bool bShowHelp = false );
+    static TReach GetReachableInfoFromTo( const Vector& vSrc, Vector& vDest, bool& bCrouch,
+                                          float fDistanceSqr, float fMaxDistanceSqr, bool bShowHelp = false );
 
     /// Trace line to know if hit any world object.
     static void TraceLine( const Vector& vSrc, const Vector& vDest, int mask, ITraceFilter *pFilter );
@@ -98,13 +96,13 @@ public:
     static void TraceHull( const Vector& vSrc, const Vector& vDest, const Vector& vMins, const Vector& vMaxs, int mask, ITraceFilter *pFilter );
 
     /// Return the ground (hit position) of the vector.
-    static Vector& GetGroundVec( const Vector& vSrc, const Vector& vHull );
+    static Vector& GetGroundVec( const Vector& vSrc, const Vector& vHullMins, const Vector& vHullMaxs );
 
     /// Return result of TraceLine() / TraceHull.
     static trace_t const& TraceResult() { return m_TraceResult; }
 
     /// Return true if TraceLine() / TraceHull() hit something.
-    static bool IsTraceHitSomething() { return m_TraceResult.fraction < 1.0f; }
+    static bool IsTraceHitSomething() { return m_TraceResult.fraction < 0.95f; }
 
     /// Util function to set angle to be [0..+360).
     static void NormalizeAngle( float& fAngle )

@@ -58,14 +58,20 @@ public:
         if ( index >= MAX_EDICTS )
             return false;
 
+        GoodAssert( index != 0 ); // Shouldn't pass in the world's entity.
+
+        // Should trace players only if the visibility is for shooting.
+        if ( index < 1 + CPlayers::Size() )
+            return iVisibility == EVisibilitySeeAndShoot; 
+
         edict_t *pEdict = CBotrixPlugin::instance->pEngineServer->PEntityOfEntIndex( index );
         if ( pEdict == NULL )
             return false;
 
         CItemClass* test;
         const char* szClassName = pEdict->GetClassName();
-        TItemType iType = CItems::GetEntityType( szClassName, test, 0, EItemTypeOther - 1 );
-        return iType != EItemTypeOther;
+        TItemType iType = CItems::GetEntityType( szClassName, test, 0, EItemTypeCollisionTotal );
+        return iType == EItemTypeOther;
     }
 
     virtual TraceType_t	GetTraceType() const

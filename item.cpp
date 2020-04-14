@@ -312,6 +312,7 @@ void CItems::Update()
 //----------------------------------------------------------------------------------------------------------------
 TItemType CItems::GetEntityType( const char* szClassName, CItemClass* & pEntityClass, TItemType iFrom, TItemType iTo )
 {
+    GoodAssert( iTo < EItemTypeAll );
     for ( TItemType iEntityType = iFrom; iEntityType < iTo; ++iEntityType )
     {
         const good::list<CItemClass>& aItemClasses = m_aItemClasses[iEntityType];

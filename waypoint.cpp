@@ -42,7 +42,7 @@ static const int WAYPOINT_FILE_FLAG_AREAS      = 1<<1;     // Flag for area name
 int CWaypoint::iWaypointTexture = -1;
 int CWaypoint::iDefaultDistance = 144;
 
-int CWaypoint::iAnalizeDistance = 72;
+int CWaypoint::iAnalizeDistance = 96;
 int CWaypoint::iWaypointsMaxCountToAnalizeMap = 100;
 int CWaypoint::iAnalizeWaypointsPerFrame = 1;
 
@@ -544,8 +544,7 @@ void CWaypoints::Remove( TWaypointId id )
 //----------------------------------------------------------------------------------------------------------------
 bool CWaypoints::AddPath( TWaypointId iFrom, TWaypointId iTo, float fDistance, TPathFlags iFlags )
 {
-    if ( !CWaypoint::IsValid(iFrom) || !CWaypoint::IsValid(iTo) || (iFrom == iTo) || HasPath(iFrom, iTo) )
-        return false;
+    BASSERT( CWaypoint::IsValid(iFrom) && CWaypoint::IsValid(iTo) && (iFrom != iTo) && !HasPath(iFrom, iTo), return false );
 
     WaypointGraph::node_it from = m_cGraph.begin() + iFrom;
     WaypointGraph::node_it to = m_cGraph.begin() + iTo;
@@ -626,7 +625,7 @@ void CWaypoints::CreateAutoPaths( TWaypointId id, bool bIsCrouched, float fMaxDi
                 Bucket& bucket = m_cBuckets[x][y][z];
                 for (Bucket::iterator it=bucket.begin(); it != bucket.end(); ++it)
                 {
-                    if ( *it == id || GetPath( *it, id ) || GetPath( id, *it ) )
+                    if ( *it == id || HasPath( *it, id ) || HasPath( id, *it ) )
                         continue;
 
                     CreatePathsWithAutoFlags( id, *it, bIsCrouched, fMaxDistance, bShowHelp );
@@ -730,7 +729,7 @@ void CWaypoints::GetNearestWaypoints( good::vector<TWaypointId>& aResult, const 
                     //if ( fabs( vOrigin.z - node.vertex.vOrigin.z ) <= fMaxDistance )
                     {
                         float distTo = vOrigin.AsVector2D().DistToSqr( node.vertex.vOrigin.AsVector2D() );
-                        if ( distTo <= fDistSqr && ( !bNeedVisible || CUtil::IsVisible( vOrigin, node.vertex.vOrigin, EVisibilityWorld ) ) )
+                        if ( distTo <= fDistSqr && ( !bNeedVisible || distTo == 0 || CUtil::IsVisible( vOrigin, node.vertex.vOrigin, EVisibilityWorld ) ) )
                             aResult.push_back( iWaypoint );
                     }
                 }
@@ -955,18 +954,15 @@ void CWaypoints::AnalizeStep()
                 CWaypoints::GetNearestWaypoints( aNearWaypoints, vGround, true, fAnalizeDistance * 2 / 3 );
 
                 bool bSkip = false;
-                if ( aNearWaypoints.size() > 0 )
+                for ( int w = 0; !bSkip && w < aNearWaypoints.size(); ++w )
                 {
-                    for ( int w = 0; w < aNearWaypoints.size(); ++w )
-                    {
-                        int iNear = aNearWaypoints[ w ];
-                        if ( iNear != iWaypoint && !CWaypoints::GetPath( iWaypoint, iNear ) && !CWaypoints::GetPath( iNear, iWaypoint ) )
-                            CreatePathsWithAutoFlags( iWaypoint, iNear, false, fAnalizeDistanceExtra, false );
-                        bSkip |= CWaypoints::GetPath( iWaypoint, iNear ) != NULL; // If has path, set bSkip to true.
+                    int iNear = aNearWaypoints[ w ];
+                    if ( iNear != iWaypoint && !CWaypoints::HasPath( iWaypoint, iNear ) && !CWaypoints::HasPath( iNear, iWaypoint ) )
+                        CreatePathsWithAutoFlags( iWaypoint, iNear, false, fAnalizeDistanceExtra, false );
+                    bSkip |= CWaypoints::HasPath( iWaypoint, iNear ) != NULL; // If has path, set bSkip to true.
                         
-                        // If path is not adding somehow, but the waypoint is really close (half player's width or closer).
-                        bSkip |= CWaypoints::Get(iNear).vOrigin.AsVector2D().DistToSqr(vGround.AsVector2D()) <= fHalfPlayerWidthSqr;
-                    }
+                    // If path is not adding somehow, but the waypoint is really close (half player's width or closer).
+                    bSkip |= CWaypoints::Get(iNear).vOrigin.AsVector2D().DistToSqr(vGround.AsVector2D()) <= fHalfPlayerWidthSqr;
                 }
 
                 if ( bSkip )
@@ -977,20 +973,23 @@ void CWaypoints::AnalizeStep()
                 TReach reach = CUtil::GetReachableInfoFromTo( vPos, vGround, bCrouch, fDistance, fAnalizeDistanceExtra, false );
                 if ( reach != EReachFallDamage && reach != EReachNotReachable )
                 {
-                    TPathFlags iFlags = bCrouch ? FPathCrouch : FPathNone;
                     TWaypointId iNew = CWaypoints::Add( vGround );
-                    CWaypoints::AddPath( iWaypoint, iNew, fDistance, iFlags | ( reach == EReachNeedJump ? FPathJump : FPathNone ) );
                     m_aWaypointsToAnalize.push_back( iNew );
 
-                    bCrouch = false;
-                    reach = CUtil::GetReachableInfoFromTo( vGround, vPos, bCrouch, fDistance, fAnalizeDistanceExtra, false );
+                    TPathFlags iFlags = bCrouch ? FPathCrouch : FPathNone;
+                    CWaypoints::AddPath( iWaypoint, iNew, fDistance, iFlags | ( reach == EReachNeedJump ? FPathJump : FPathNone ) );
+
+                    bool bDestCrouch = false;
+                    reach = CUtil::GetReachableInfoFromTo( vGround, vPos, bDestCrouch, fDistance, fAnalizeDistanceExtra, false );
                     if ( reach != EReachFallDamage && reach != EReachNotReachable )
                     {
-                        iFlags = bCrouch ? FPathCrouch : FPathNone;
+                        iFlags = bDestCrouch ? FPathCrouch : FPathNone;
                         CWaypoints::AddPath( iNew, iWaypoint, fDistance, iFlags | ( reach == EReachNeedJump ? FPathJump : FPathNone ) );
                     }
 
                     BLOG_T( "Added waypoint %d at (%.0f, %.0f, %.0f)", iNew, vGround.x, vGround.y, vGround.z );
+
+                    CreateAutoPaths( iNew, bCrouch, fAnalizeDistanceExtra, false );
                 }
                 //bool bAddedJump = false;
 

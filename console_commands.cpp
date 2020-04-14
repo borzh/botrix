@@ -57,6 +57,15 @@ extern int iMainBufferSize;
 StringVector aBoolsCompletion(2);
 StringVector aWaypointCompletion(2);
 
+
+#define ANALIZE_WAYPOINTS_CHECK() \
+    if ( CWaypoints::IsAnalizing() )\
+    {\
+        BLOG_W( "You can't use this command while map is being analized for waypoints." );\
+        return ECommandError;\
+    }
+
+
 //----------------------------------------------------------------------------------------------------------------
 // Singleton to access console variables.
 //----------------------------------------------------------------------------------------------------------------
@@ -592,6 +601,8 @@ TCommandResult CWaypointCreateCommand::Execute( CClient* pClient, int argc, cons
         return ECommandError;
     }
 
+    ANALIZE_WAYPOINTS_CHECK();
+
     if ( !pClient->IsAlive() )
     {
         BULOG_W(pClient->GetEdict(), "Error, you need to be alive to create waypoints (bots can't just fly around you know).");
@@ -639,6 +650,8 @@ TCommandResult CWaypointRemoveCommand::Execute( CClient* pClient, int argc, cons
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
     }
+
+    ANALIZE_WAYPOINTS_CHECK();
 
 	if ( argc > 1 )
 	{
@@ -698,7 +711,8 @@ TCommandResult CWaypointMoveCommand::Execute( CClient* pClient, int argc, const 
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
     }
-	if ( argc > 1 )
+    
+    if ( argc > 1 )
 	{
 		BLOG_W( "Error, invalid parameters count." );
 		return ECommandError;
@@ -738,6 +752,8 @@ TCommandResult CWaypointAutoCreateCommand::Execute( CClient* pClient, int argc, 
         return ECommandPerformed;
     }
 
+    ANALIZE_WAYPOINTS_CHECK();
+
     int iValue = -1;
     if ( argc == 1 )
         iValue = CTypeToString::BoolFromString(argv[0]);
@@ -765,6 +781,8 @@ TCommandResult CWaypointClearCommand::Execute( CClient* pClient, int argc, const
         return ECommandError;
     }
 
+    ANALIZE_WAYPOINTS_CHECK();
+
     // Invalidate current / next / destination waypoints for all players.
     for ( int i = 0; i < CPlayers::Size(); ++i )
     {
@@ -791,7 +809,7 @@ TCommandResult CWaypointAddTypeCommand::Execute( CClient* pClient, int argc, con
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
 		return ECommandPerformed;
 
-	if ( pClient == NULL )
+    if ( pClient == NULL )
     {
         BLOG_W( "Please login to server to execute this command." );
         return ECommandError;
@@ -865,6 +883,15 @@ TCommandResult CWaypointAnalizeCommand::Execute( CClient* pClient, int argc, con
     }
     else
     {
+        for ( int iPlayer = 0; iPlayer < CPlayers::Size(); ++iPlayer )
+        {
+            CClient *pClient = (CClient *)CPlayers::Get( iPlayer );
+            if ( pClient && !pClient->IsBot() && pClient->IsAutoCreatingWaypoints() )
+            {
+                BULOG_W( pEdict, "Someone (%s) is auto-creating waypoints, you can't mix it with analize command.", pClient->GetName() );
+                return ECommandError;
+            }
+        }
         CWaypoints::Analize();
         BULOG_W( pEdict, "Started to analize waypoints." );
     }
@@ -1436,6 +1463,8 @@ TCommandResult CWaypointSaveCommand::Execute( CClient* pClient, int argc, const 
         return ECommandError;
     }
 
+    ANALIZE_WAYPOINTS_CHECK();
+
 	bool bResult = CWaypoints::Save();
     if ( bResult )
         BULOG_I(pClient->GetEdict(), "%d waypoints saved.", CWaypoints::Size());
@@ -1459,7 +1488,9 @@ TCommandResult CWaypointLoadCommand::Execute( CClient* pClient, int argc, const 
         return ECommandError;
     }
 
-	bool result = CWaypoints::Load();
+    ANALIZE_WAYPOINTS_CHECK();
+
+    bool result = CWaypoints::Load();
 	if (result)
         BULOG_I(pClient->GetEdict(), "%d waypoints loaded for map %s.", CWaypoints::Size(), CBotrixPlugin::instance->sMapName.c_str() );
     else
@@ -1773,9 +1804,9 @@ TCommandResult CPathDistanceCommand::Execute( CClient* pClient, int argc, const 
         }
 
         int i = -1;
-        if ( (sscanf(argv[0], "%d", &i) != 1) || (i < 0) || (i > CWaypoint::MAX_RANGE) )
+        if ( (sscanf(argv[0], "%d", &i) != 1) || (i <= 0) || (i > CWaypoint::MAX_RANGE) )
         {
-            BULOG_W( pClient->GetEdict(), "Error, number from 0 to %d expected.", CWaypoint::MAX_RANGE );
+            BULOG_W( pClient->GetEdict(), "Error, a number from 1 to %d expected.", CWaypoint::MAX_RANGE );
             return ECommandError;
         }
         CWaypoint::iDefaultDistance = i;

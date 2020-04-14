@@ -221,7 +221,7 @@ CPlayer* CPlayers::AddBot( const char* szName, TTeam iTeam, TClass iClass,
 {
     if ( !CBotrixPlugin::instance->bMapRunning )
     {
-        m_sLastError = "Map is not running.";
+        m_sLastError = "Error: no map is loaded.";
         return NULL;
     }
 

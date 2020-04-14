@@ -241,6 +241,7 @@ public: // Methods.
         m_cAreas.clear();
 		m_cAreas.push_back("default"); // New waypoints without area id will be put under this empty area id.
         m_aVisTable.clear();
+        m_aWaypointsToAnalize.clear();
         bValidVisibilityTable = false;
     }
 

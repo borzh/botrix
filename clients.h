@@ -24,6 +24,8 @@ public: // Methods.
     /// Get Steam id of this player.
     const good::string& GetSteamID() { return m_sSteamId; }
 
+    /// Returns true, if auto-creating waypoints.
+    bool IsAutoCreatingWaypoints() { return bAutoCreateWaypoints; }
 
     /// Called when client finished connecting with server (becomes active).
     virtual void Activated();

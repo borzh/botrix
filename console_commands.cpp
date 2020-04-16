@@ -2799,19 +2799,19 @@ TCommandResult CConfigBotQuotaCommand::Execute( CClient* pClient, int argc, cons
             BULOG_W( pEdict, "Error, invalid argument: %s.", argv[0] );
             return ECommandError;
         }
-        for ( int i=0; i < aSplit.size(); ++i )
-            if ( (sscanf(aSplit[i].c_str(), "%d", &iArg[i]) != 1) || (iArg[i] <= 0) ||
-                 (CBotrixPlugin::instance->bMapRunning && (iArg[i] > CPlayers::Size())) )
-            {
-                BULOG_W( pEdict, "Error, invalid argument: %s.", aSplit[i].c_str() );
-                BULOG_W( pEdict, "  Should be a number from 0 to %d.", CPlayers::Size() );
-                return ECommandError;
-            }
+        bool bInvalid = false;
+        for ( int i = 0; i < aSplit.size(); ++i )
+            bInvalid |= (sscanf( aSplit[i].c_str(), "%d", &iArg[i] ) != 1) || (iArg[i] < 0);
+
+        if ( bInvalid || (aSplit.size() == 2 && iArg[0] == 0))
+        {
+            BULOG_W( pEdict, "Error, invalid argument: %s.", argv[0] );
+            return ECommandError;
+        }
 
         if ( aSplit.size() == 2 )
         {
-            if ( iArg[0] )
-                CPlayers::fPlayerBotRatio = (float)iArg[1]/(float)iArg[0];
+            CPlayers::fPlayerBotRatio = (float)iArg[1]/(float)iArg[0];
             BULOG_I( pEdict, "Player-Bot ratio is %.1f.", CPlayers::fPlayerBotRatio );
         }
         else

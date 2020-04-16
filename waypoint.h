@@ -343,19 +343,23 @@ public: // Methods.
     static void Draw( CClient* pClient );
 
     /// Analize waypoints.
-    static void Analize();
+    static void Analize( edict_t* pClient );
 
     /// Stop analizing waypoints.
     static void StopAnalizing();
 
     /// Return true if analizing.
-    static bool IsAnalizing() { return m_aWaypointsToAnalize.size() > 0; }
+    static bool IsAnalizing() { return m_iAnalizeStep != EAnalizeStepTotal; }
 
     /// Analize step.
     static void AnalizeStep();
 
 protected:
     friend class CWaypointNavigator; // Get access to m_cGraph (for A* search implementation).
+
+    // Analize one waypoint (for AnalizeStep()). Return true, if waypoint has nearby waypoints or new waypoint is added.
+    static bool AnalizeWaypoint( TWaypointId iWaypoint, Vector& vPos, Vector& vNew, float fPlayerEye, float fAnalizeDistance,
+                                 float fAnalizeDistanceExtra, float fAnalizeDistanceExtraSqr, float fHalfPlayerWidthSqr );
 
     // Get path color.
     static void GetPathColor( TPathFlags iFlags, unsigned char& r, unsigned char& g, unsigned char& b );
@@ -431,8 +435,23 @@ protected:
     static WaypointGraph m_cGraph; // Waypoints graph.
     static good::vector< good::bitset > m_aVisTable;
 
-    static good::vector<TWaypointId> m_aWaypointsToAnalize;
+    // Next fields are for analizing functions.
+    enum
+    {
+        EAnalizeStepNeighbours,    // Check for waypoint neighbours in all directions (left/right/up/down).
+        EAnalizeStepInters,        // Check for positions between adjacent neighbours (that are not added).
+        EAnalizeStepDeleteOrphans, // Delete waypoints that don't have neighbours, or don't have incoming path.
+        EAnalizeStepTotal
+    };
 
+    typedef int TAnalizeStep;
+    class CNeighbour { public: bool a[ 3 ][ 3 ]; };
+
+    static good::vector<TWaypointId> m_aWaypointsToAnalize;
+    static good::vector<CNeighbour> m_aWaypointsNeighbours; // To know if waypoint has neighbours near, initialized during first step.
+    static TAnalizeStep m_iAnalizeStep;
+    static bool m_bIsAnalizeStepAddedWaypoints;
+    static edict_t* m_pAnalizer; // The person who launched console command "analize".
 };
 
 

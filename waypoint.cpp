@@ -53,8 +53,8 @@ const TWaypointFlags CWaypoint::m_aFlagsForEntityType[EItemTypeTotalNotObject] =
     FWaypointWeapon,
     FWaypointAmmo,
     FWaypointButton,
-    FWaypointNone, //FWaypointDoor,
-    FWaypointNone, //FWaypointLadder,
+    FWaypointNone, // FWaypointDoor,
+    FWaypointNone, // FWaypointLadder,
 };
 
 
@@ -66,7 +66,21 @@ CWaypoints::Bucket CWaypoints::m_cBuckets[CWaypoints::BUCKETS_SIZE_X][CWaypoints
 good::vector< good::bitset > CWaypoints::m_aVisTable;
 bool CWaypoints::bValidVisibilityTable = false;
 
+// Sometimes the analize doesn't add waypoints in small passages, so we try to add waypoints at inter-position between waypoint 
+// analized neighbours. Waypoint analized neighbours are x's. W = analized waypoint.
+//
+// x - x - x
+// |   |   |
+// x - W - x
+// |   |   |
+// x - x - x
+//
+// '-' and '|' on the picture will be evaluated in 'inters' step, when the adjacent waypoints are not set for some reason (like hit wall).
 good::vector<TWaypointId> CWaypoints::m_aWaypointsToAnalize;
+good::vector<CWaypoints::CNeighbour> CWaypoints::m_aWaypointsNeighbours;
+CWaypoints::TAnalizeStep CWaypoints::m_iAnalizeStep = EAnalizeStepTotal;
+edict_t* CWaypoints::m_pAnalizer = NULL;
+bool CWaypoints::m_bIsAnalizeStepAddedWaypoints = false;
 
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoint::GetColor(unsigned char& r, unsigned char& g, unsigned char& b) const
@@ -872,10 +886,9 @@ void CWaypoints::Draw( CClient* pClient )
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CWaypoints::Analize()
+void CWaypoints::Analize( edict_t* pClient)
 {
-    m_aWaypointsToAnalize = good::vector<TWaypointId>(1024);
-
+    m_pAnalizer = pClient;
     const good::vector<CItem>& aSpawnSpots = CItems::GetItems( EItemTypePlayerSpawn );
     for ( TItemIndex i = 0; i < aSpawnSpots.size(); ++i )
     {
@@ -887,215 +900,236 @@ void CWaypoints::Analize()
             Add( vPos );
     }
 
-    for ( TWaypointId iWaypoint = 0; iWaypoint < Size(); ++iWaypoint )
-        m_aWaypointsToAnalize.push_back( iWaypoint );
-
-    if ( m_aWaypointsToAnalize.size() == 0 )
+     if ( Size() == 0 )
     {
         StopAnalizing();
-        BLOG_W( "No waypoints to analize (no player spawn entities on the map?)." );
-        BLOG_W( "Please add some waypoints manually and run the command again." );
-        BLOG_W( "Stopped analyzing waypoints." );
+        BULOG_W( pClient, "No waypoints to analize (no player spawn entities on the map?)." );
+        BULOG_W( pClient, "Please add some waypoints manually and run the command again." );
+        BULOG_W( pClient, "Stopped analyzing waypoints." );
     }
+
+     m_aWaypointsToAnalize = good::vector<TWaypointId>( 1024 );
+     m_aWaypointsNeighbours.resize( Size() );
+     for ( TWaypointId iWaypoint = 0; iWaypoint < Size(); ++iWaypoint )
+         m_aWaypointsToAnalize.push_back( iWaypoint );
+
+     m_iAnalizeStep = EAnalizeStepNeighbours;
 }
 
 void CWaypoints::StopAnalizing()
 {
     m_aWaypointsToAnalize = good::vector<TWaypointId>();
+    m_aWaypointsNeighbours = good::vector<CNeighbour>();
+    m_iAnalizeStep = EAnalizeStepTotal;
+    m_pAnalizer = NULL;
 }
 
 void CWaypoints::AnalizeStep()
 {
-    GoodAssert( m_aWaypointsToAnalize.size() > 0 );
-    static good::vector<TWaypointId> aNearWaypoints(16);
-
-    //CTraceFilterWorldAndStaticProps cWorldFilter;
-
-    float fPlayerEye = CMod::GetVar( EModVarPlayerEye );
-    float fJumpHeight = CMod::GetVar( EModVarPlayerJumpHeightCrouched );
-    float fMaxFallHeight = CMod::GetVar( EModVarHeightForFallDamage );
-    float fStep = CMod::GetVar( EModVarPlayerObstacleToJump );
-    float fHalfPlayerWidthSqr = Sqr( CMod::GetVar( EModVarPlayerWidth ) / 2 );
-
-    float fAnalizeDistance = CWaypoint::iAnalizeDistance;
-    float fAnalizeDistanceExtra = fAnalizeDistance * 1.9f; // To include diagonal, almost but not 2 (Pythagoras).
-    float fAnalizeDistanceSqr = Sqr( fAnalizeDistance );
-
-    for ( int i = 0; i < CWaypoint::iAnalizeWaypointsPerFrame && m_aWaypointsToAnalize.size() > 0; ++i )
+    GoodAssert( m_iAnalizeStep < EAnalizeStepTotal );
+    
+    // Search for analizer in players, else remove him. Can't rely on CPlayers::GetIndex() because the server is reusing edicts.
+    if ( m_pAnalizer )
     {
-        TWaypointId iWaypoint = m_aWaypointsToAnalize.back();
-        m_aWaypointsToAnalize.pop_back();
-
-        Vector vPos = Get( iWaypoint ).vOrigin;
-        vPos.z -= fPlayerEye;
-
-        for ( int x = -1; x <= 1; ++x )
+        bool bFound = false;
+        for ( TPlayerIndex iPlayer = 0; iPlayer < CPlayers::Size(); ++iPlayer )
         {
-            for ( int y = -1; y <= 1; ++y )
+            if ( CPlayers::Get( iPlayer )->GetEdict() == m_pAnalizer )
             {
-                if ( x == 0 && y == 0 )
-                    continue;
-
-                // First check if there is a waypoint near final position.
-                Vector vNew = vPos;
-                vNew.x += CWaypoint::iAnalizeDistance * x;
-                vNew.y += CWaypoint::iAnalizeDistance * y;
-
-                //if ( CBotrixPlugin::pEngineTrace->PointOutsideWorld( vGround ) || CBotrixPlugin::pEngineTrace->PointOutsideWorld( vNew ) )
-                //    continue; // Not working.
-
-                if ( (CBotrixPlugin::pEngineTrace->GetPointContents( vNew ) & CONTENTS_SOLID) != 0 )
-                    continue; // Ignore, if inside some solid brush.
-
-                Vector vGround = CUtil::GetGroundVec( vNew, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxs );
-                vGround.z += 1 + fPlayerEye; // 1 point of elevation.
-
-                aNearWaypoints.clear();
-                CWaypoints::GetNearestWaypoints( aNearWaypoints, vGround, true, fAnalizeDistance * 2 / 3 );
-
-                bool bSkip = false;
-                for ( int w = 0; !bSkip && w < aNearWaypoints.size(); ++w )
-                {
-                    int iNear = aNearWaypoints[ w ];
-                    if ( iNear != iWaypoint && !CWaypoints::HasPath( iWaypoint, iNear ) && !CWaypoints::HasPath( iNear, iWaypoint ) )
-                        CreatePathsWithAutoFlags( iWaypoint, iNear, false, fAnalizeDistanceExtra, false );
-                    bSkip |= CWaypoints::HasPath( iWaypoint, iNear ) != NULL; // If has path, set bSkip to true.
-                        
-                    // If path is not adding somehow, but the waypoint is really close (half player's width or closer).
-                    bSkip |= CWaypoints::Get(iNear).vOrigin.AsVector2D().DistToSqr(vGround.AsVector2D()) <= fHalfPlayerWidthSqr;
-                }
-
-                if ( bSkip )
-                    continue;
-
-                float fDistance = vPos.DistTo( vGround );
-                bool bCrouch = false;
-                TReach reach = CUtil::GetReachableInfoFromTo( vPos, vGround, bCrouch, fDistance, fAnalizeDistanceExtra, false );
-                if ( reach != EReachFallDamage && reach != EReachNotReachable )
-                {
-                    TWaypointId iNew = CWaypoints::Add( vGround );
-                    m_aWaypointsToAnalize.push_back( iNew );
-
-                    TPathFlags iFlags = bCrouch ? FPathCrouch : FPathNone;
-                    CWaypoints::AddPath( iWaypoint, iNew, fDistance, iFlags | ( reach == EReachNeedJump ? FPathJump : FPathNone ) );
-
-                    bool bDestCrouch = false;
-                    reach = CUtil::GetReachableInfoFromTo( vGround, vPos, bDestCrouch, fDistance, fAnalizeDistanceExtra, false );
-                    if ( reach != EReachFallDamage && reach != EReachNotReachable )
-                    {
-                        iFlags = bDestCrouch ? FPathCrouch : FPathNone;
-                        CWaypoints::AddPath( iNew, iWaypoint, fDistance, iFlags | ( reach == EReachNeedJump ? FPathJump : FPathNone ) );
-                    }
-
-                    BLOG_T( "Added waypoint %d at (%.0f, %.0f, %.0f)", iNew, vGround.x, vGround.y, vGround.z );
-
-                    CreateAutoPaths( iNew, bCrouch, fAnalizeDistanceExtra, false );
-                }
-                //bool bAddedJump = false;
-
-                //float zDiff = vPos.z - vGround.z;
-                //if ( zDiff >= fMaxFallHeight )
-                //    continue; // IIgnore, if the fall takes damage. 
-
-                //if ( zDiff >= fJumpHeight )
-                //{
-                //    // Probably need to fall into destination, check if can get there first.
-                //    CUtil::TraceHull( vPos, vNew, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxs, MASK_SOLID_BRUSHONLY, &cWorldFilter );
-                //    bSkip = CUtil::IsTraceHitSomething();
-                //}
-                //else
-                //{
-                //    Vector vOrigin = vPos;
-
-                //    vOrigin.z -= fPlayerEye; // Go to the ground.
-                //    vGround.z -= fPlayerEye;
-
-                //    CUtil::TraceHull( vOrigin, vGround, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxs, MASK_SOLID_BRUSHONLY, &cWorldFilter );
-                //    bSkip = CUtil::IsTraceHitSomething();
-
-                //    // Try to climb the stairs.
-                //    while ( bSkip )
-                //    {
-                //        // Try to increment one step (distance without need to jump).
-                //        vOrigin.z += fStep;
-                //        vGround.z += fStep;
-
-                //        CUtil::TraceHull( vOrigin, vGround, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxs, MASK_SOLID_BRUSHONLY, &cWorldFilter );
-                //        bSkip = CUtil::IsTraceHitSomething();
-
-                //        if ( bSkip )
-                //        {
-                //            const Vector& vCollision = CUtil::TraceResult().endpos;
-                //            if ( vOrigin == vCollision )
-                //            {
-                //                vOrigin.z -= fStep;
-                //                vGround.z -= fStep;
-                //                break;
-                //            }
-                //            else
-                //                vOrigin = vCollision;
-                //        }
-                //    }
-
-                //    if ( bSkip )
-                //    {
-                //        // Check if can reach with one jump.
-                //        vOrigin.z += fJumpHeight;
-                //        vGround.z += fJumpHeight;
-                //        CUtil::TraceHull( vPos, vGround, CUtil::vZero, CMod::vPlayerCollisionHull, MASK_SOLID_BRUSHONLY, &cWorldFilter );
-                //        bSkip = CUtil::IsTraceHitSomething();
-                //        bAddedJump = !bSkip;
-                //        vGround.z -= fJumpHeight;
-                //    }
-
-
-                //    vHalfWayGround = CUtil::GetGroundVec( vGround, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxs );
-                //    if ( fabs( vPos.z - vGround.z ) >= fJumpHeight )
-                //        continue;
-
-
-                //    if ( !bAddedJump )
-                //    {
-
-                //    }
-                //    vPos.z -= fStep; // Remove step.
-                //    vGround.z -= fStep; // Remove step.
-                //    Vector vEnd = CUtil::TraceResult().endpos;// +vHalfPlayersHull;
-
-                //    if ( !bSkip )
-                //    {
-                //        // Try to use the position where the ray hits.
-                //        vGround = vEnd;
-                //        bSkip = vPos.AsVector2D().DistToSqr( vEnd.AsVector2D() ) < fAnalizeDistanceSqr / 4;
-                //    }
-                //}
-
-                //if ( !bSkip )
-                //{
-                //    if ( bAddedJump )
-                //    {
-                //        vGround = CUtil::GetGroundVec( vGround, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxs );
-                //        vGround.z += 1;
-                //    }
-                //    vGround.z += fPlayerEye;
-
-                //    TWaypointId iNew = CWaypoints::Add( vGround );
-                //    CreateAutoPaths( iNew, false, fAnalizeDistanceExtra, false );
-                //    m_aWaypointsToAnalize.push_back( iNew );
-
-                //    BLOG_T( "Added waypoint %d at (%.0f, %.0f, %.0f)", iNew, vGround.x, vGround.y, vGround.z );
-                //}
+                bFound = true;
+                break;
             }
         }
+
+        if ( !bFound )
+            m_pAnalizer = NULL;
     }
+
+    if ( m_iAnalizeStep < EAnalizeStepDeleteOrphans )
+    {
+        float fPlayerEye = CMod::GetVar( EModVarPlayerEye );
+        float fHalfPlayerWidthSqr = Sqr( CMod::GetVar( EModVarPlayerWidth ) / 2 );
+
+        float fAnalizeDistance = CWaypoint::iAnalizeDistance;
+        float fAnalizeDistanceExtra = fAnalizeDistance * 1.9f; // To include diagonal, almost but not 2 (Pythagoras).
+        float fAnalizeDistanceExtraSqr = Sqr( fAnalizeDistanceExtra * 1.9f );
+
+        int iToAnalize = CWaypoint::iAnalizeWaypointsPerFrame * ( 1 + m_iAnalizeStep * 4 ); // Check more waypoints, as less traces are required.
+        for ( int i = 0; i < iToAnalize && m_aWaypointsToAnalize.size() > 0; ++i )
+        {
+            TWaypointId iWaypoint = m_aWaypointsToAnalize.back();
+            m_aWaypointsToAnalize.pop_back();
+
+            Vector vPos = Get( iWaypoint ).vOrigin;
+            vPos = CUtil::GetGroundVec( vPos, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxsGround );
+
+            CNeighbour neighbours = m_aWaypointsNeighbours[ iWaypoint ];
+            for ( int x = -1; x <= 1; ++x )
+            {
+                for ( int y = -1; y <= 1; ++y )
+                {
+                    if ( x == 0 && y == 0 )
+                        continue;
+
+                    Vector vNew = vPos;
+
+                    if ( m_iAnalizeStep == EAnalizeStepNeighbours )
+                    {
+                        // First check if there is a waypoint near final position.
+                        vNew.x += fAnalizeDistance * x;
+                        vNew.y += fAnalizeDistance * y;
+
+                        if ( AnalizeWaypoint( iWaypoint, vPos, vNew, fPlayerEye, fHalfPlayerWidthSqr,
+                                              fAnalizeDistance, fAnalizeDistanceExtra, fAnalizeDistanceExtraSqr ) )
+                            neighbours.a[ x + 1 ][ y + 1 ] = true; // Position is already occupied or new waypoint is added.
+                    }
+                    else
+                    {
+                        if ( x == 1 && y == 1 ) // Omit (1, 1), as there are no adjacent points up / right to it.
+                            continue;
+
+                        if ( m_aWaypointsNeighbours[ iWaypoint ].a[ x + 1 ][ y + 1 ] ) // Convert [-1..1] to [0..2].
+                            continue; // Don't use neighbours here, as it can be updated.
+
+                        int incX = x + 1; // Adjacent point on X.
+                        if ( incX <= 1 && !( incX == 0 && y == 0 ) && // Omit (0, 0) and (2, y).
+                             !m_aWaypointsNeighbours[ iWaypoint ].a[ incX + 1 ][ y + 1 ] )
+                        {
+                            vNew.x += fAnalizeDistance * ( x + incX / 2.0f ); // Will be -1/2 or 1/2.
+                            vNew.y += fAnalizeDistance * y;
+
+                            if ( AnalizeWaypoint( iWaypoint, vPos, vNew, fPlayerEye, fHalfPlayerWidthSqr,
+                                                  fAnalizeDistance, fAnalizeDistanceExtra, fAnalizeDistanceExtraSqr ) )
+                            {
+                                neighbours.a[ x + 1 ][ y + 1 ] = true;
+                            }
+                        }
+
+                        int incY = y + 1; // Adjacent point on Y.
+                        if ( incY <= 1 && !( x == 0 && incY == 0 ) && // Omit (0, 0) and (x, 2).
+                             !m_aWaypointsNeighbours[ iWaypoint ].a[ x + 1 ][ incY + 1 ] )
+                        {
+                            vNew = vPos;
+                            vNew.x += fAnalizeDistance * x;
+                            vNew.y += fAnalizeDistance * ( y + incY / 2.0f ); // Will be -1/2 or 1/2.
+
+                            if ( AnalizeWaypoint( iWaypoint, vPos, vNew, fPlayerEye, fHalfPlayerWidthSqr,
+                                                  fAnalizeDistance, fAnalizeDistanceExtra, fAnalizeDistanceExtraSqr ) )
+                            {
+                                neighbours.a[ x + 1 ][ y + 1 ] = true;
+                            }
+                        }
+                    }
+                }
+            } // for x.. y..
+            m_aWaypointsNeighbours[ iWaypoint ] = neighbours;
+        }
+    }
+    else
+    {
+        // Remove waypoints without paths.
+        //for ( int i = Size() - 1; i >= 0; --i )
+        //    if ( m_cGraph[ i ].neighbours.size() == 0 )
+        //        Remove( i++ );
+    }
+
     if ( m_aWaypointsToAnalize.size() == 0 )
     {
-        StopAnalizing(); // Stop analizing, no more waypoints.
-        BLOG_W( "Stopped analyzing waypoints." );
-        return;
+        switch ( m_iAnalizeStep )
+        {
+            case EAnalizeStepNeighbours:
+                BULOG_I( m_pAnalizer, "Checking for missing spots." );
+                for ( TWaypointId iWaypoint = 0; iWaypoint < Size(); ++iWaypoint )
+                    m_aWaypointsToAnalize.push_back( iWaypoint );
+                m_bIsAnalizeStepAddedWaypoints = false;
+                ++m_iAnalizeStep;
+                break;
+
+            case EAnalizeStepInters:
+                if ( m_bIsAnalizeStepAddedWaypoints )
+                {
+                    --m_iAnalizeStep;
+                    BULOG_I( m_pAnalizer, "Try to add new waypoints from the added ones." );
+                }
+                else
+                {
+                    ++m_iAnalizeStep;
+                    BULOG_I( m_pAnalizer, "Extra step: erasing orphans." );
+                }
+                break;
+
+            case EAnalizeStepDeleteOrphans:
+                StopAnalizing(); // Stop analizing, no more waypoints.
+                BULOG_W( m_pAnalizer, "Stopped analyzing waypoints." );
+                break;
+
+            default:
+                GoodAssert( false );
+        }
     }
 }
 
+
+bool CWaypoints::AnalizeWaypoint( TWaypointId iWaypoint, Vector& vPos, Vector& vNew, float fPlayerEye, float fHalfPlayerWidthSqr,
+                                  float fAnalizeDistance, float fAnalizeDistanceExtra, float fAnalizeDistanceExtraSqr )
+{
+    static good::vector<TWaypointId> aNearWaypoints( 16 );
+
+    if ( ( CBotrixPlugin::pEngineTrace->GetPointContents( vNew ) & MASK_SOLID_BRUSHONLY ) != 0 )
+        return false; // Ignore, if inside some solid brush.
+
+    Vector vGround = CUtil::GetGroundVec( vNew, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxsGround );
+    vGround.z += fPlayerEye;
+
+    aNearWaypoints.clear();
+    CWaypoints::GetNearestWaypoints( aNearWaypoints, vGround, true, fAnalizeDistance / 1.42f );
+
+    bool bSkip = false;
+    for ( int w = 0; !bSkip && w < aNearWaypoints.size(); ++w )
+    {
+        int iNear = aNearWaypoints[ w ];
+        if ( iNear != iWaypoint && !CWaypoints::HasPath( iWaypoint, iNear ) && !CWaypoints::HasPath( iNear, iWaypoint ) )
+            CreatePathsWithAutoFlags( iWaypoint, iNear, false, fAnalizeDistanceExtra, false );
+        
+        // If has path, set bSkip to true.
+        bSkip |= CWaypoints::HasPath( iWaypoint, iNear ) != NULL;
+
+        // If path is not adding somehow, but the waypoint is really close (half player's width or closer).
+        bSkip |= CWaypoints::Get( iNear ).vOrigin.AsVector2D().DistToSqr( vGround.AsVector2D() ) <= fHalfPlayerWidthSqr;
+    }
+
+    if ( bSkip )
+        return true;
+
+    bool bCrouch = false;
+    TReach reach = CUtil::GetReachableInfoFromTo( vPos, vGround, bCrouch, 0.0f, fAnalizeDistanceExtraSqr, false );
+    if ( reach != EReachFallDamage && reach != EReachNotReachable )
+    {
+        TWaypointId iNew = CWaypoints::Add( vGround );
+        m_aWaypointsToAnalize.push_back( iNew );
+        m_bIsAnalizeStepAddedWaypoints = true;
+
+        TPathFlags iFlags = bCrouch ? FPathCrouch : FPathNone;
+        CWaypoints::AddPath( iWaypoint, iNew, 0, iFlags | ( reach == EReachNeedJump ? FPathJump : FPathNone ) );
+
+        bool bDestCrouch = false;
+        reach = CUtil::GetReachableInfoFromTo( vGround, vPos, bDestCrouch, 0, fAnalizeDistanceExtraSqr, false );
+        if ( reach != EReachFallDamage && reach != EReachNotReachable )
+        {
+            iFlags = bDestCrouch ? FPathCrouch : FPathNone;
+            CWaypoints::AddPath( iNew, iWaypoint, 0, iFlags | ( reach == EReachNeedJump ? FPathJump : FPathNone ) );
+        }
+
+        BULOG_T( m_pAnalizer, "Added waypoint %d at (%.0f, %.0f, %.0f)", iNew, vGround.x, vGround.y, vGround.z );
+
+        CreateAutoPaths( iNew, bCrouch, fAnalizeDistanceExtra, false );
+
+        m_aWaypointsNeighbours.resize( CWaypoints::Size() );
+        return true;
+    }
+
+    return false; // No waypoint is added.
+}
 
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoints::GetPathColor( TPathFlags iFlags, unsigned char& r, unsigned char& g, unsigned char& b )

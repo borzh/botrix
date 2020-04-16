@@ -51,6 +51,10 @@ Vector CMod::vPlayerCollisionHullCrouched;
 
 Vector CMod::vPlayerCollisionHullMins;
 Vector CMod::vPlayerCollisionHullMaxs;
+Vector CMod::vPlayerCollisionHullMaxsGround;
+
+Vector CMod::vPlayerCollisionHullRotatedMins;
+Vector CMod::vPlayerCollisionHullRotatedMaxsGround;
 
 Vector CMod::vPlayerCollisionHullCrouchedMins;
 Vector CMod::vPlayerCollisionHullCrouchedMaxs;
@@ -178,21 +182,26 @@ void CMod::Prepare()
     float fHeightCrouched = m_aVars[ EModVarPlayerHeightCrouched ][ 0 ];
     float fJumpCrouched = m_aVars[ EModVarPlayerJumpHeightCrouched ][ 0 ];
 
-    vPlayerCollisionHull = Vector( fWidth, fWidth, fHeight );
-    vPlayerCollisionHullMins = Vector( -fHalfWidth, -fHalfWidth, 0 );
-    vPlayerCollisionHullMaxs = Vector( fHalfWidth, fHalfWidth, fHeight );
-
-    vPlayerCollisionHullCrouched = Vector( fWidth, fWidth, fHeightCrouched );
-    vPlayerCollisionHullMins = Vector( -fHalfWidth, -fHalfWidth, 0 );
-    vPlayerCollisionHullMaxs = Vector( fHalfWidth, fHalfWidth, fHeightCrouched );
-
-    iPlayerRadius = (int)FastSqrt( SQR( fHalfWidth ) + SQR( fHalfWidth ) );
+    iPlayerRadius = (int)FastSqrt( 2 * SQR( fHalfWidth ) ); // Pithagoras.
     iPointTouchSquaredXY = SQR( fWidth / 4 );
     iPointTouchSquaredZ = SQR( fJumpCrouched );
     iPointTouchLadderSquaredZ = SQR( 5 );
 
     CWaypoint::iAnalizeDistance = fWidth * 2;
     CWaypoint::iDefaultDistance = fWidth * 4;
+    
+    // Get max collision hull, so bot doesn't stack (when auto-create waypoints).
+    //fWidth *= FastSqrt( 2.0f );
+    //fHalfWidth = fWidth / 2.0f;
+
+    vPlayerCollisionHull = Vector( fWidth, fWidth, fHeight );
+    vPlayerCollisionHullMins = Vector( -fHalfWidth, -fHalfWidth, 0 );
+    vPlayerCollisionHullMaxs = Vector( fHalfWidth, fHalfWidth, fHeight );
+    vPlayerCollisionHullMaxsGround = Vector( fHalfWidth, fHalfWidth, 1.0f );
+
+    vPlayerCollisionHullCrouched = Vector( fWidth, fWidth, fHeightCrouched );
+    vPlayerCollisionHullCrouchedMins = Vector( -fHalfWidth, -fHalfWidth, 0 );
+    vPlayerCollisionHullCrouchedMaxs = Vector( fHalfWidth, fHalfWidth, fHeightCrouched );
 }
 
 //----------------------------------------------------------------------------------------------------------------

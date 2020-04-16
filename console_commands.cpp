@@ -872,7 +872,7 @@ TCommandResult CWaypointAnalizeCommand::Execute( CClient* pClient, int argc, con
 
 	if ( !CBotrixPlugin::instance->bMapRunning )
 	{
-		BULOG_W( pClient ? pClient->GetEdict() : NULL, "Error: no map is loaded." );
+		BULOG_W( pEdict, "Error: no map is loaded." );
 		return ECommandError;
 	}
 
@@ -892,7 +892,7 @@ TCommandResult CWaypointAnalizeCommand::Execute( CClient* pClient, int argc, con
                 return ECommandError;
             }
         }
-        CWaypoints::Analize();
+        CWaypoints::Analize( pEdict );
         BULOG_W( pEdict, "Started to analize waypoints." );
     }
 

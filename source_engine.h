@@ -131,6 +131,12 @@ public:
         DeNormalizeAngle(angDiff.y);
     }
 
+    /// Util function to compare 2 vectors.
+    static inline bool EqualVectors( const Vector& v1, const Vector& v2, float fEpsilon = 1.0f )
+    {
+        return fabs( v2.x - v1.x ) < fEpsilon && fabs( v2.y - v1.y ) < fEpsilon && fabs( v2.z - v1.z ) < fEpsilon;
+    }
+
     static bool IsTouchBoundingBox2d( const Vector2D &a1, const Vector2D &a2, const Vector2D &bmins, const Vector2D &bmaxs );
     static bool IsOnOppositeSides2d( const Vector2D &amins, const Vector2D &amaxs, const Vector2D &bmins, const Vector2D &bmaxs );
     static bool IsLineTouch2d( const Vector2D &amins, const Vector2D &amaxs, const Vector2D &bmins, const Vector2D &bmaxs );
@@ -181,6 +187,7 @@ public: // Members.
     static const int iMaxMapSize = 32768;               ///< This is max map size for HL2 (-16384..16383).
     static const int iMaxMapSizeSqr = SQR(iMaxMapSize); ///< This is square of max map size.
     static const int iHalfMaxMapSize = iMaxMapSize/2;   ///< Half map size.
+    static const int iMaxTraceRaysForReachable = 512;   ///< Max tries to get to the other waypoins.
 
     static const Vector vZero;               ///< Zero vector.
     static const QAngle angZero;             ///< Zero angle.

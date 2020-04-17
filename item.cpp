@@ -349,7 +349,8 @@ void CItems::CheckNewEntity(edict_t* pEdict, bool bLog)
 
     int iEntIndex = pEdict->m_EdictIndex;
 
-    BLOG_T( "New entity: %s, index %d.", szClassName ? szClassName : "", iEntIndex );
+    if ( bLog )
+        BLOG_T( "New entity: %s, index %d.", szClassName ? szClassName : "", iEntIndex );
     m_iMaxEntityIndex = MAX2(iEntIndex, m_iMaxEntityIndex);
 
     // Check only server entities.
@@ -388,7 +389,7 @@ void CItems::CheckNewEntity(edict_t* pEdict, bool bLog)
                 if ( CWaypoint::IsValid(iWaypoint) && bLog)
                     BLOG_W("  Nearest waypoint %d.", iWaypoint);
             }
-            else if ( iEntityType == EItemTypeDoor && !CWaypoint::IsValid((TWaypointId)cItem.pArguments) )
+            else if ( bLog && iEntityType == EItemTypeDoor && !CWaypoint::IsValid((TWaypointId)cItem.pArguments) )
                 BLOG_W("Door %d doesn't have 2 waypoints near.", iIndex);
         }
 

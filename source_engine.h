@@ -96,7 +96,7 @@ public:
     static void TraceHull( const Vector& vSrc, const Vector& vDest, const Vector& vMins, const Vector& vMaxs, int mask, ITraceFilter *pFilter );
 
     /// Return the ground (hit position) of the vector.
-    static Vector& GetGroundVec( const Vector& vSrc, const Vector& vHullMins, const Vector& vHullMaxs );
+    static Vector& GetGroundVec( const Vector& vSrc );
 
     /// Return result of TraceLine() / TraceHull.
     static trace_t const& TraceResult() { return m_TraceResult; }
@@ -189,8 +189,8 @@ public: // Members.
     static const int iHalfMaxMapSize = iMaxMapSize/2;   ///< Half map size.
     static const int iMaxTraceRaysForReachable = 512;   ///< Max tries to get to the other waypoins.
 
-    static const Vector vZero;               ///< Zero vector.
-    static const QAngle angZero;             ///< Zero angle.
+    static const Vector vZero;                          ///< Zero vector.
+    static const QAngle angZero;                        ///< Zero angle.
 
 protected:
     static trace_t m_TraceResult;

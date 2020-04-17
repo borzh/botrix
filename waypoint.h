@@ -35,7 +35,7 @@ public: // Members and constants.
     
     static int iAnalizeDistance;                    ///< Distance between waypoints when analizing a map.
     static int iWaypointsMaxCountToAnalizeMap;      ///< Maximum waypoints count to start analizing a map.
-    static int iAnalizeWaypointsPerFrame;           ///< Positions per frame to analize.
+    static float fAnalizeWaypointsPerFrame;         ///< Positions per frame to analize.
 
     Vector vOrigin;                                 ///< Coordinates of waypoint (x, y, z).
     TWaypointFlags iFlags;                          ///< Waypoint flags.
@@ -351,6 +351,17 @@ public: // Methods.
     /// Return true if analizing.
     static bool IsAnalizing() { return m_iAnalizeStep != EAnalizeStepTotal; }
 
+    /// Clear omitted waypoints.
+    static void AnalizeOmitClear() { m_aWaypointsToOmitAnalize.clear(); }
+
+    /// Omit waypoint for analization next time.
+    static void AnalizeOmit( TWaypointId iWaypoint, bool bAdd ) {
+        if ( bAdd )
+            m_aWaypointsToOmitAnalize.push_back( Get( iWaypoint ).vOrigin );
+        else
+            m_aWaypointsToOmitAnalize.erase( good::find( m_aWaypointsToOmitAnalize, Get( iWaypoint ).vOrigin ) );
+    }
+
     /// Analize step.
     static void AnalizeStep();
 
@@ -448,8 +459,11 @@ protected:
     class CNeighbour { public: bool a[ 3 ][ 3 ]; };
 
     static good::vector<TWaypointId> m_aWaypointsToAnalize;
-    static good::vector<CNeighbour> m_aWaypointsNeighbours; // To know if waypoint has neighbours near, initialized during first step.
+    static good::vector<CNeighbour> m_aWaypointsNeighbours; // To know if waypoint made check for neighbours near, initialized during first step.
+    static good::vector<Vector> m_aWaypointsToOmitAnalize;
+
     static TAnalizeStep m_iAnalizeStep;
+    static float m_fAnalizeWaypointsForNextFrame; // Positions for next frame to analize.
     static bool m_bIsAnalizeStepAddedWaypoints;
     static edict_t* m_pAnalizer; // The person who launched console command "analize".
 };

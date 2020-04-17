@@ -51,13 +51,11 @@ Vector CMod::vPlayerCollisionHullCrouched;
 
 Vector CMod::vPlayerCollisionHullMins;
 Vector CMod::vPlayerCollisionHullMaxs;
-Vector CMod::vPlayerCollisionHullMaxsGround;
-
-Vector CMod::vPlayerCollisionHullRotatedMins;
-Vector CMod::vPlayerCollisionHullRotatedMaxsGround;
 
 Vector CMod::vPlayerCollisionHullCrouchedMins;
 Vector CMod::vPlayerCollisionHullCrouchedMaxs;
+
+Vector CMod::vPlayerCollisionHullMaxsGround;
 
 int CMod::iPlayerRadius;
 

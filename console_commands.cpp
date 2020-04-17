@@ -478,7 +478,7 @@ void CConsoleCommandContainer::PrintCommand( edict_t* pPrintTo, int indent )
 TWaypointId GetWaypointId( int iCurrentIndex, int argc, const char **argv, CClient *pClient, int iDefaultId )
 {
 	TWaypointId id = -1;
-	if ( iCurrentIndex == argc )
+	if ( iCurrentIndex >= argc )
 		id = iDefaultId;
 	else if ( iCurrentIndex < argc )
 	{
@@ -863,18 +863,18 @@ TCommandResult CWaypointAddTypeCommand::Execute( CClient* pClient, int argc, con
     }
 }
 
-TCommandResult CWaypointAnalizeCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CWaypointAnalizeToggleCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
-	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
-		return ECommandPerformed;
+    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+        return ECommandPerformed;
 
-	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
-	if ( !CBotrixPlugin::instance->bMapRunning )
-	{
-		BULOG_W( pEdict, "Error: no map is loaded." );
-		return ECommandError;
-	}
+    if ( !CBotrixPlugin::instance->bMapRunning )
+    {
+        BULOG_W( pEdict, "Error: no map is loaded." );
+        return ECommandError;
+    }
 
     if ( CWaypoints::IsAnalizing() )
     {
@@ -895,6 +895,59 @@ TCommandResult CWaypointAnalizeCommand::Execute( CClient* pClient, int argc, con
         CWaypoints::Analize( pEdict );
         BULOG_W( pEdict, "Started to analize waypoints." );
     }
+
+    return ECommandPerformed;
+}
+
+CWaypointAnalizeOmitCommand::CWaypointAnalizeOmitCommand()
+{
+    m_sCommand = "omit";
+    m_sHelp = "omit waypoint next time analize runs";
+    m_sDescription = "Parameter: (on / off) (current / destination / waypoint id). Sometimes analize adds waypoints at invalid places. This command will disable analization for a given waypoint.";
+    m_iAccessLevel = FCommandAccessWaypoint;
+
+    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
+    m_cAutoCompleteValues.push_back( StringVector() );
+
+    StringVector args;
+    args.push_back( sCurrent );
+    args.push_back( sDestination );
+
+    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+    m_cAutoCompleteValues.push_back( args );
+}
+
+TCommandResult CWaypointAnalizeOmitCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+        return ECommandPerformed;
+
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( !CBotrixPlugin::instance->bMapRunning )
+    {
+        BULOG_W( pEdict, "Error: no map is loaded." );
+        return ECommandError;
+    }
+
+    int iAdd = 1;
+    if ( argc > 0 )
+        iAdd = CTypeToString::BoolFromString( argv[ 0 ] );
+
+    if ( iAdd == -1 )
+    {
+        BULOG_W( pClient->GetEdict(), "Error, invalid argument '%s' (must be 'on' or 'off').", argv[0] );
+        return ECommandError;
+    }
+
+    TWaypointId iWaypoint = GetWaypointId( 1, argc, argv, pClient, pClient->iCurrentWaypoint );
+    if ( iAdd == -1 )
+    {
+        BULOG_W( pClient->GetEdict(), "Error, invalid waypoint." );
+        return ECommandError;
+    }
+
+    CWaypoints::AnalizeOmit( iWaypoint, iAdd != 0 );
 
     return ECommandPerformed;
 }
@@ -3889,40 +3942,7 @@ TCommandResult CConfigLogCommand::Execute( CClient* pClient, int argc, const cha
     return ECommandPerformed;
 }
 
-TCommandResult CConfigWaypointAnalize::Execute( CClient* pClient, int argc, const char** argv )
-{
-	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
-		return ECommandPerformed;
-
-	edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
-	
-	if ( argc > 1 )
-	{
-		BULOG_I( pEdict, "Invalid parameters count." );
-		return ECommandError;
-	}
-	if ( argc == 1 )
-	{
-		int iCount = -1;
-		if ( sOff == argv[ 0 ] )
-			iCount = -1;
-		else if ( sscanf( argv[ 0 ], "%d", &iCount) != 1 )
-			iCount = -2;
-
-		if ( iCount < -1 )
-		{
-			BULOG_W( pEdict, "Error, invalid parameter: %s.", argv[0] );
-			return ECommandError;
-		}
-
-		CWaypoint::iWaypointsMaxCountToAnalizeMap = iCount;
-	}
-	BULOG_I( pEdict, "Maximum waypoints count to analize the map on map change: %d (-1 = disabled).", 
-             CWaypoint::iWaypointsMaxCountToAnalizeMap );
-	return ECommandPerformed;
-}
-
-TCommandResult CConfigWaypointDistance::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CConfigWaypointAnalizeDistance::Execute( CClient* pClient, int argc, const char** argv )
 {
     if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
         return ECommandPerformed;
@@ -3955,8 +3975,70 @@ TCommandResult CConfigWaypointDistance::Execute( CClient* pClient, int argc, con
 
         CWaypoint::iAnalizeDistance = iDistance;
     }
-    BULOG_I( pEdict, "Minimum waypoints count to auto-create new waypoints on map change: %d (-1 = disabled).", 
+    BULOG_I( pEdict, "Analize distance: %d (-1 = disabled).", CWaypoint::iAnalizeDistance );
+    return ECommandPerformed;
+}
+
+TCommandResult CConfigWaypointAnalizeMapChange::Execute( CClient* pClient, int argc, const char** argv )
+{
+    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+        return ECommandPerformed;
+
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( argc > 1 )
+    {
+        BULOG_I( pEdict, "Invalid parameters count." );
+        return ECommandError;
+    }
+    if ( argc == 1 )
+    {
+        int iCount = -1;
+        if ( sOff == argv[ 0 ] )
+            iCount = -1;
+        else if ( sscanf( argv[ 0 ], "%d", &iCount ) != 1 )
+            iCount = -2;
+
+        if ( iCount < -1 )
+        {
+            BULOG_W( pEdict, "Error, invalid parameter: %s.", argv[ 0 ] );
+            return ECommandError;
+        }
+
+        CWaypoint::iWaypointsMaxCountToAnalizeMap = iCount;
+    }
+    BULOG_I( pEdict, "Maximum waypoints count to analize the map on map change: %d (-1 = disabled).",
              CWaypoint::iWaypointsMaxCountToAnalizeMap );
+    return ECommandPerformed;
+}
+
+TCommandResult CConfigWaypointAnalizeAmount::Execute( CClient* pClient, int argc, const char** argv )
+{
+    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+        return ECommandPerformed;
+
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( argc > 1 )
+    {
+        BULOG_I( pEdict, "Invalid parameters count." );
+        return ECommandError;
+    }
+    if ( argc == 1 )
+    {
+        float fAmount = -1;
+        if ( sscanf( argv[ 0 ], "%f", &fAmount ) != 1 )
+            fAmount = 0;
+
+        if ( fAmount <= 0 )
+        {
+            BULOG_W( pEdict, "Error, invalid parameter: %s.", argv[ 0 ] );
+            return ECommandError;
+        }
+
+        CWaypoint::fAnalizeWaypointsPerFrame = fAmount;
+    }
+    BULOG_I( pEdict, "Analize waypoints per frame: %.6f.", CWaypoint::fAnalizeWaypointsPerFrame );
     return ECommandPerformed;
 }
 

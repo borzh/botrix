@@ -244,18 +244,36 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CWaypointAnalizeCommand: public CConsoleCommand
+class CWaypointAnalizeToggleCommand: public CConsoleCommand
 {
 public:
-	CWaypointAnalizeCommand()
-	{
-		m_sCommand = "analize";
-		m_sHelp = "start / stop analizing waypoints for current map";
-		m_sDescription = "This is a time consuming operation, so be patient.";
-		m_iAccessLevel = FCommandAccessWaypoint;
+    CWaypointAnalizeToggleCommand()
+    {
+        m_sCommand = "toggle";
+        m_sHelp = "start / stop analizing waypoints for current map";
+        m_sDescription = "This is a time consuming operation, so be patient.";
+        m_iAccessLevel = FCommandAccessWaypoint;
     }
 
-	TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CWaypointAnalizeOmitCommand: public CConsoleCommand
+{
+public:
+    CWaypointAnalizeOmitCommand();
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CWaypointAnalizeCommand: public CConsoleCommandContainer
+{
+public:
+    CWaypointAnalizeCommand()
+    {
+        m_sCommand = "analize";
+        Add( new CWaypointAnalizeToggleCommand );
+        Add( new CWaypointAnalizeOmitCommand );
+    }
 };
 
 class CWaypointRemoveTypeCommand: public CConsoleCommand
@@ -1033,14 +1051,27 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CConfigWaypointAnalize: public CConsoleCommand
+class CConfigWaypointAnalizeAmount: public CConsoleCommand
 {
 public:
-    CConfigWaypointAnalize()
+    CConfigWaypointAnalizeAmount()
     {
-        m_sCommand = "analize";
+        m_sCommand = "amount";
+        m_sHelp = "amount of waypoints to analize per frame";
+        m_sDescription = "Parameter: number of waypoints to analize per frame. Can be fractional.";
+        m_iAccessLevel = FCommandAccessConfig;
+    }
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CConfigWaypointAnalizeMapChange: public CConsoleCommand
+{
+public:
+    CConfigWaypointAnalizeMapChange()
+    {
+        m_sCommand = "map-change";
         m_sHelp = "analize waypoints on map change";
-        m_sDescription = "Parameter: maximum waypoints count to start analizing the map on map change. 'off' or -1 to disable.";
+        m_sDescription = "Parameter: maximum number of waypoints to start analize on map change. 'off' or -1 to disable.";
         m_iAccessLevel = FCommandAccessConfig;
 
         StringVector args;
@@ -1051,10 +1082,10 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CConfigWaypointDistance: public CConsoleCommand
+class CConfigWaypointAnalizeDistance: public CConsoleCommand
 {
 public:
-    CConfigWaypointDistance()
+    CConfigWaypointAnalizeDistance()
     {
         m_sCommand = "distance";
         m_sHelp = "default distance between waypoints when analizing the map";
@@ -1063,16 +1094,26 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CConfigWaypoint: public CConsoleCommandContainer
+class CConfigWaypointAnalize: public CConsoleCommandContainer
 {
 public:
-	CConfigWaypoint() {
-		m_sCommand = "waypoint";
-        m_aCommands.push_back( new CConfigWaypointAnalize );
-        m_aCommands.push_back( new CConfigWaypointDistance );
+    CConfigWaypointAnalize() {
+		m_sCommand = "analize";
+        m_aCommands.push_back( new CConfigWaypointAnalizeAmount );
+        m_aCommands.push_back( new CConfigWaypointAnalizeDistance );
+        m_aCommands.push_back( new CConfigWaypointAnalizeMapChange );
     }
 };
 
+class CConfigWaypoint: public CConsoleCommandContainer
+{
+public:
+    CConfigWaypoint()
+    {
+        m_sCommand = "waypoint";
+        m_aCommands.push_back( new CConfigWaypointAnalize );
+    }
+};
 //****************************************************************************************************************
 // Admins: show admins and set admin flags.
 //****************************************************************************************************************

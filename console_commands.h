@@ -258,6 +258,13 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
+class CWaypointAnalizeDebugCommand: public CConsoleCommand
+{
+public:
+    CWaypointAnalizeDebugCommand();
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
 class CWaypointAnalizeOmitCommand: public CConsoleCommand
 {
 public:
@@ -272,6 +279,7 @@ public:
     {
         m_sCommand = "analize";
         Add( new CWaypointAnalizeToggleCommand );
+        Add( new CWaypointAnalizeDebugCommand );
         Add( new CWaypointAnalizeOmitCommand );
     }
 };

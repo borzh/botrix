@@ -751,7 +751,8 @@ void CBotrixPlugin::PrepareLevel( const char* szMapName )
 
     CWaypoint::iWaypointTexture = CBotrixPlugin::pEngineServer->PrecacheModel( "sprites/lgtning.vmt" );
 #endif
-    CWaypoints::AnalizeOmitClear();
+    for ( int i = 0; i < CWaypoints::EAnalizeWaypointsTotal; ++i )
+        CWaypoints::AnalizeClear( i );
     if ( CWaypoints::Load() )
         BLOG_I("%d waypoints loaded for map %s.", CWaypoints::Size(), CBotrixPlugin::instance->sMapName.c_str());
 }
@@ -772,4 +773,7 @@ void CBotrixPlugin::ActivateLevel( int iMaxPlayers )
     CMod::MapLoaded();
 
     BLOG_I("Level \"%s\" has been loaded.", sMapName.c_str());
+
+    if ( CWaypoints::Size() <= CWaypoint::iWaypointsMaxCountToAnalizeMap )
+        CWaypoints::Analize( NULL );
 }

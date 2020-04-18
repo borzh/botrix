@@ -234,16 +234,7 @@ public: // Methods.
     static int Size() { return (int)m_cGraph.size(); }
 
     /// Clear waypoints.
-    static void Clear()
-    {
-        ClearLocations();
-        m_cGraph.clear();
-        m_cAreas.clear();
-		m_cAreas.push_back("default"); // New waypoints without area id will be put under this empty area id.
-        m_aVisTable.clear();
-        m_aWaypointsToAnalize.clear();
-        bValidVisibilityTable = false;
-    }
+    static void Clear();
 
     /// Save waypoints to a file.
     static bool Save();
@@ -351,22 +342,35 @@ public: // Methods.
     /// Return true if analizing.
     static bool IsAnalizing() { return m_iAnalizeStep != EAnalizeStepTotal; }
 
-    /// Clear omitted waypoints.
-    static void AnalizeOmitClear() { m_aWaypointsToOmitAnalize.clear(); }
-
-    /// Omit waypoint for analization next time.
-    static void AnalizeOmit( TWaypointId iWaypoint, bool bAdd ) {
-        if ( bAdd )
-            m_aWaypointsToOmitAnalize.push_back( Get( iWaypoint ).vOrigin );
-        else
-            m_aWaypointsToOmitAnalize.erase( good::find( m_aWaypointsToOmitAnalize, Get( iWaypoint ).vOrigin ) );
-    }
-
     /// Analize step.
     static void AnalizeStep();
 
+
+    // For console commands: waypoint analize debug / omit.
+    enum
+    {
+        EAnalizeWaypointsOmit = 0,
+        EAnalizeWaypointsDebug,
+        EAnalizeWaypointsTotal,
+    };
+    typedef int TAnalizeWaypoints;
+
+    /// Clear omit/debug waypoints.
+    static void AnalizeClear( TAnalizeWaypoints iWhich ) { m_aWaypointsToOmitOrDebugInAnalize[ iWhich ].clear(); }
+
+    /// Omit/debug waypoint for analization next time.
+    static void AnalizeOmitOrDebug( TWaypointId iWaypoint, bool bAdd, TAnalizeWaypoints iWhich ) {
+        if ( bAdd )
+            m_aWaypointsToOmitOrDebugInAnalize[ iWhich ].push_back( Get( iWaypoint ).vOrigin );
+        else
+            m_aWaypointsToOmitOrDebugInAnalize[ iWhich ].erase( good::find( m_aWaypointsToOmitOrDebugInAnalize[ iWhich ], Get( iWaypoint ).vOrigin ) );
+    }
+
+
 protected:
     friend class CWaypointNavigator; // Get access to m_cGraph (for A* search implementation).
+
+    static void InvalidatePlayersWaypoints(); // Util after removing some waypoint.
 
     // Analize one waypoint (for AnalizeStep()). Return true, if waypoint has nearby waypoints or new waypoint is added.
     static bool AnalizeWaypoint( TWaypointId iWaypoint, Vector& vPos, Vector& vNew, float fPlayerEye, float fAnalizeDistance,
@@ -460,7 +464,7 @@ protected:
 
     static good::vector<TWaypointId> m_aWaypointsToAnalize;
     static good::vector<CNeighbour> m_aWaypointsNeighbours; // To know if waypoint made check for neighbours near, initialized during first step.
-    static good::vector<Vector> m_aWaypointsToOmitAnalize;
+    static good::vector<Vector> m_aWaypointsToOmitOrDebugInAnalize[EAnalizeWaypointsTotal];
 
     static TAnalizeStep m_iAnalizeStep;
     static float m_fAnalizeWaypointsForNextFrame; // Positions for next frame to analize.

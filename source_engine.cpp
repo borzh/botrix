@@ -74,8 +74,9 @@ public:
 
         CItemClass* test;
         const char* szClassName = pEdict->GetClassName();
+        //BLOG_I("Should hit %s", szClassName);
         TItemType iType = CItems::GetEntityType( szClassName, test, 0, EItemTypeCollisionTotal );
-        return iType == EItemTypeDoor || iType == EItemTypeOther; // Skip weapons, ammo, health / armor.
+        return iType == EItemTypeDoor || iType == EItemTypeOther; // Skip weapons, ammo, health, armor.
     }
 
     virtual TraceType_t	GetTraceType() const
@@ -272,7 +273,7 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, Vector& vDest, bool& b
     int color = colors[ iRandom ];
     unsigned char r = GET_3RD_BYTE( color ), g = GET_2ND_BYTE( color ), b = GET_1ST_BYTE( color );
     
-    Vector vOffset( iRandom, iRandom, 0 );
+    Vector vOffset( iRandom / 4.0, iRandom / 4.0, 0 );
 
     if ( fDistanceSqr <= 0.0f )
         fDistanceSqr = vSrc.AsVector2D().DistToSqr(vDest.AsVector2D());
@@ -303,7 +304,7 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, Vector& vDest, bool& b
 
     // Get ground positions.
     Vector vSrcGround = GetGroundVec( vSrc );
-    GoodAssert(vSrcGround.z > vMinZ.z);
+    BASSERT(vSrcGround.z > vMinZ.z, return EReachNotReachable);
 
     Vector vDestGround = GetGroundVec( vDest );
     if ( vDestGround.z == vMinZ.z )

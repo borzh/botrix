@@ -495,7 +495,7 @@ void CBot::PreThink()
 
     if ( CWaypoints::Size() <= 3 )
     {
-        BLOG_W( "Please create more waypoints, so I could move. I am paused." );
+        BotDebug( "Please create more waypoints, so I could move. I am paused." );
         m_bCommandPaused = true;
         return;
     }
@@ -1970,7 +1970,7 @@ bool CBot::NavigatorMove()
 
             if ( m_bMoveFailure )
             {
-                BLOG_W( "%s -> Can't reach waypoint %d.", GetName(), m_iDestinationWaypoint );
+                BotDebug( "%s -> Can't reach waypoint %d.", GetName(), m_iDestinationWaypoint );
             }
             else
             {

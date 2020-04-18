@@ -189,6 +189,24 @@ void CPlayers::CheckBotsCount()
 }
 
 //----------------------------------------------------------------------------------------------------------------
+void CPlayers::InvalidatePlayersWaypoints()
+{
+    // Invalidate current / destination waypoints for all players.
+    for ( int iPlayer = 0; iPlayer < Size(); ++iPlayer )
+    {
+        CPlayer *pPlayer = Get( iPlayer );
+        if ( pPlayer )
+        {
+            if ( !pPlayer->IsBot() ) // TODO: virtual function for players to invalidate waypoints.
+                ( (CClient *)pPlayer )->iDestinationWaypoint = EWaypointIdInvalid;
+
+            // Force move failure, because path can contain removed waypoint.
+            pPlayer->iCurrentWaypoint = pPlayer->iNextWaypoint = pPlayer->iPrevWaypoint = EWaypointIdInvalid;
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------
 void CPlayers::Init( int iMaxPlayers )
 {
     m_aPlayers.clear();

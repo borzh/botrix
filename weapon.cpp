@@ -101,7 +101,7 @@ void CWeaponWithAmmo::EndHold()
     float fShotTime = m_pWeapon->fShotTime[m_iSecondary];
     if ( fShotTime )
     {
-        WEAPON_TRACE( "%.5f shoot %d.", CBotrixPlugin::fTime, m_iSecondary );
+        WEAPON_TRACE( "Time %.5f shoot %d.", CBotrixPlugin::fTime, m_iSecondary );
         m_bShooting = true;
         m_fEndTime = CBotrixPlugin::fTime + fShotTime;
     }

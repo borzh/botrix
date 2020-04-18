@@ -127,7 +127,7 @@ void CBot_TF2::Think()
 
             if ( m_iFailsCount >= 3 )
             {
-                BLOG_W( "%s -> Failed to find a path from %d to %d 3 times, marking task as finished.",
+                BotDebug( "%s -> Failed to find a path from %d to %d 3 times, marking task as finished.",
                         GetName(), m_iFailWaypoint, m_iDestinationWaypoint );
                 TaskFinished();
                 m_bNeedTaskCheck = bForceNewTask = true;

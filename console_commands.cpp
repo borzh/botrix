@@ -26,30 +26,33 @@ const good::string sNext( "next" );
 
 const good::string sRandom( "random" );
 
-const good::string sFirstAngle = "angle1";
-const good::string sSecondAngle = "angle2";
-const good::string sButton = "button";
-const good::string sDoor = "door";
-const good::string sElevator = "elevator";
+const good::string sFirstAngle( "angle1" );
+const good::string sSecondAngle( "angle2" );
+const good::string sButton( "button" );
+const good::string sDoor( "door" );
+const good::string sElevator( "elevator" );
 
-const good::string sWeapon = "weapon"; // Next 4 are only for unknown mods
-const good::string sAmmo = "ammo";
-const good::string sHealth = "health";
-const good::string sArmor = "armor";
+const good::string sWeapon( "weapon" ); // Next 4 are only for unknown mods
+const good::string sAmmo( "ammo" );
+const good::string sHealth( "health" );
+const good::string sArmor( "armor" );
 
-const good::string sCurrent = "current";
-const good::string sDestination = "destination";
+const good::string sCurrent( "current" );
+const good::string sDestination( "destination" );
 
-const good::string sActionTime = "action-time";
-const good::string sActionDuration = "action-duration";
+const good::string sActionTime( "action-time" );
+const good::string sActionDuration( "action-duration" );
 
-const good::string sUnlock = "unlock";
+const good::string sUnlock( "unlock" );
 
 const good::string sForever( "forever" );
+const good::string sOn( "on" );
 const good::string sOff( "off" );
 
-const good::string sMelee = "melee";
-const good::string sRanged = "ranged";
+const good::string sClear( "clear" );
+
+const good::string sMelee( "melee" );
+const good::string sRanged( "ranged" );
 
 extern char* szMainBuffer;
 extern int iMainBufferSize;
@@ -669,31 +672,7 @@ TCommandResult CWaypointRemoveCommand::Execute( CClient* pClient, int argc, cons
     CWaypoints::Remove(id);
     BULOG_I(pClient->GetEdict(), "Waypoint %d deleted.", id);
 
-    // Invalidate current / destination waypoints for all players.
-    for (int i=0; i < CPlayers::Size(); ++i)
-    {
-        CPlayer* pPlayer = CPlayers::Get(i);
-        if ( pPlayer )
-        {
-            if ( pPlayer->IsBot() )
-            {
-                pPlayer->iCurrentWaypoint = -1; // Force bot move failure, because path can contain removed waypoint.
-                pPlayer->iNextWaypoint = -1;
-            }
-            else
-            {
-                CClient* pClient = (CClient*)pPlayer;
-                if ( pClient->iCurrentWaypoint == id )
-                    pClient->iCurrentWaypoint = -1;
-                else if ( pClient->iCurrentWaypoint > id )
-                    pClient->iCurrentWaypoint--;
-                if ( pClient->iDestinationWaypoint == id )
-                    pClient->iDestinationWaypoint = -1;
-                else if ( pClient->iDestinationWaypoint > id )
-                    pClient->iDestinationWaypoint--;
-            }
-        }
-    }
+    CPlayers::InvalidatePlayersWaypoints();
 
 	CItems::MapUnloaded();
 	CItems::MapLoaded(false);
@@ -783,20 +762,9 @@ TCommandResult CWaypointClearCommand::Execute( CClient* pClient, int argc, const
 
     ANALIZE_WAYPOINTS_CHECK();
 
-    // Invalidate current / next / destination waypoints for all players.
-    for ( int i = 0; i < CPlayers::Size(); ++i )
-    {
-        CPlayer* pPlayer = CPlayers::Get(i);
-        if ( pPlayer )
-        {
-            pPlayer->iCurrentWaypoint = pPlayer->iNextWaypoint = -1;
-            if ( !pPlayer->IsBot() )
-                ((CClient*)pPlayer)->iDestinationWaypoint = -1;
-        }
-    }
-
+    int iSize = CWaypoints::Size();
     CWaypoints::Clear();
-    BULOG_I(pClient->GetEdict(), "All waypoints deleted.");
+    BULOG_I( pClient->GetEdict(), "%d waypoints deleted.", iSize );
 
 	CItems::MapUnloaded();
 	CItems::MapLoaded(false);
@@ -899,29 +867,31 @@ TCommandResult CWaypointAnalizeToggleCommand::Execute( CClient* pClient, int arg
     return ECommandPerformed;
 }
 
-CWaypointAnalizeOmitCommand::CWaypointAnalizeOmitCommand()
+CWaypointAnalizeDebugCommand::CWaypointAnalizeDebugCommand()
 {
-    m_sCommand = "omit";
-    m_sHelp = "omit waypoint next time analize runs";
-    m_sDescription = "Parameter: (on / off) (current / destination / waypoint id). Sometimes analize adds waypoints at invalid places. This command will disable analization for a given waypoint.";
+    m_sCommand = "debug";
+    m_sHelp = "show collision lines for given waypoint(s) during map analize";
+    m_sDescription = "Parameter: (on / off / clear) (current / destination / waypoint id).";
     m_iAccessLevel = FCommandAccessWaypoint;
 
-    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
-    m_cAutoCompleteValues.push_back( StringVector() );
-
-    StringVector args;
-    args.push_back( sCurrent );
-    args.push_back( sDestination );
+    StringVector args0;
+    args0.push_back( sOn );
+    args0.push_back( sOff );
+    args0.push_back( sClear );
 
     m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
-    m_cAutoCompleteValues.push_back( args );
+    m_cAutoCompleteValues.push_back( args0 );
+
+    StringVector args1;
+    args1.push_back( sCurrent );
+    args1.push_back( sDestination );
+
+    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+    m_cAutoCompleteValues.push_back( args1 );
 }
 
-TCommandResult CWaypointAnalizeOmitCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult WaypointAnalizeAux( CClient* pClient, int argc, const char** argv, CWaypoints::TAnalizeWaypoints iWhich )
 {
-    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
-        return ECommandPerformed;
-
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
     if ( !CBotrixPlugin::instance->bMapRunning )
@@ -930,26 +900,71 @@ TCommandResult CWaypointAnalizeOmitCommand::Execute( CClient* pClient, int argc,
         return ECommandError;
     }
 
+    if ( argc == 1 && sClear == argv[ 0 ] )
+    {
+        CWaypoints::AnalizeClear( iWhich );
+        return ECommandPerformed;
+    }
+
     int iAdd = 1;
     if ( argc > 0 )
         iAdd = CTypeToString::BoolFromString( argv[ 0 ] );
 
     if ( iAdd == -1 )
     {
-        BULOG_W( pClient->GetEdict(), "Error, invalid argument '%s' (must be 'on' or 'off').", argv[0] );
+        BULOG_W( pClient->GetEdict(), "Error, invalid argument '%s' (must be 'on' or 'off').", argv[ 0 ] );
         return ECommandError;
     }
 
     TWaypointId iWaypoint = GetWaypointId( 1, argc, argv, pClient, pClient->iCurrentWaypoint );
-    if ( iAdd == -1 )
+    if ( !CWaypoints::IsValid(iWaypoint)  )
     {
         BULOG_W( pClient->GetEdict(), "Error, invalid waypoint." );
         return ECommandError;
     }
 
-    CWaypoints::AnalizeOmit( iWaypoint, iAdd != 0 );
+    CWaypoints::AnalizeOmitOrDebug( iWaypoint, iAdd != 0, iWhich );
 
     return ECommandPerformed;
+}
+
+TCommandResult CWaypointAnalizeDebugCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+        return ECommandPerformed;
+
+    return WaypointAnalizeAux(pClient, argc, argv, CWaypoints::EAnalizeWaypointsDebug);
+}
+
+CWaypointAnalizeOmitCommand::CWaypointAnalizeOmitCommand()
+{
+    m_sCommand = "omit";
+    m_sHelp = "omit waypoint next time analize runs";
+    m_sDescription = "Parameter: (on / off / clear) (current / destination / waypoint id). Sometimes analize adds waypoints at invalid places. This command will disable analization for a given waypoint.";
+    m_iAccessLevel = FCommandAccessWaypoint;
+
+    StringVector args0;
+    args0.push_back( sOn );
+    args0.push_back( sOff );
+    args0.push_back( sClear );
+
+    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+    m_cAutoCompleteValues.push_back( args0 ); 
+    
+    StringVector args1;
+    args1.push_back( sCurrent );
+    args1.push_back( sDestination );
+
+    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+    m_cAutoCompleteValues.push_back( args1 );
+}
+
+TCommandResult CWaypointAnalizeOmitCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+        return ECommandPerformed;
+
+    return WaypointAnalizeAux( pClient, argc, argv, CWaypoints::EAnalizeWaypointsOmit );
 }
 
 TCommandResult CWaypointRemoveTypeCommand::Execute( CClient* pClient, int argc, const char** argv )

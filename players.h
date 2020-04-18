@@ -198,6 +198,8 @@ public:
     /// Get client that created listen server (not dedicated server).
     static inline CClient* GetListenServerClient() { return m_pListenServerClient; }
 
+    /// Invalidate waypoints for all players.
+    static void InvalidatePlayersWaypoints();
 
     /// Start new map.
     static void Init( int iMaxPlayers );

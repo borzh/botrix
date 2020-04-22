@@ -62,7 +62,7 @@ StringVector aWaypointCompletion(2);
 
 
 #define ANALIZE_WAYPOINTS_CHECK() \
-    if ( CWaypoints::IsAnalizing() )\
+    if ( CWaypoints::IsAnalyzing() )\
     {\
         BLOG_W( "You can't use this command while map is being analized for waypoints." );\
         return ECommandError;\
@@ -844,10 +844,10 @@ TCommandResult CWaypointAnalizeToggleCommand::Execute( CClient* pClient, int arg
         return ECommandError;
     }
 
-    if ( CWaypoints::IsAnalizing() )
+    if ( CWaypoints::IsAnalyzing() )
     {
-        CWaypoints::StopAnalizing();
-        BULOG_W( pEdict, "Stopped analizing waypoints." );
+        CWaypoints::StopAnalyzing();
+        BULOG_W( pEdict, "Stopped analyzing waypoints." );
     }
     else
     {
@@ -861,33 +861,9 @@ TCommandResult CWaypointAnalizeToggleCommand::Execute( CClient* pClient, int arg
             }
         }
         CWaypoints::Analize( pEdict );
-        BULOG_W( pEdict, "Started to analize waypoints." );
     }
 
     return ECommandPerformed;
-}
-
-CWaypointAnalizeDebugCommand::CWaypointAnalizeDebugCommand()
-{
-    m_sCommand = "debug";
-    m_sHelp = "show collision lines for given waypoint(s) during map analize";
-    m_sDescription = "Parameter: (on / off / clear) (current / destination / waypoint id).";
-    m_iAccessLevel = FCommandAccessWaypoint;
-
-    StringVector args0;
-    args0.push_back( sOn );
-    args0.push_back( sOff );
-    args0.push_back( sClear );
-
-    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
-    m_cAutoCompleteValues.push_back( args0 );
-
-    StringVector args1;
-    args1.push_back( sCurrent );
-    args1.push_back( sDestination );
-
-    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
-    m_cAutoCompleteValues.push_back( args1 );
 }
 
 TCommandResult WaypointAnalizeAux( CClient* pClient, int argc, const char** argv, CWaypoints::TAnalizeWaypoints iWhich )
@@ -917,15 +893,69 @@ TCommandResult WaypointAnalizeAux( CClient* pClient, int argc, const char** argv
     }
 
     TWaypointId iWaypoint = GetWaypointId( 1, argc, argv, pClient, pClient->iCurrentWaypoint );
-    if ( !CWaypoints::IsValid(iWaypoint)  )
+    if ( !CWaypoints::IsValid( iWaypoint ) )
     {
         BULOG_W( pClient->GetEdict(), "Error, invalid waypoint." );
         return ECommandError;
     }
 
-    CWaypoints::AnalizeOmitOrDebug( iWaypoint, iAdd != 0, iWhich );
+    CWaypoints::AnalizeAddPosition( iWaypoint, iAdd != 0, iWhich );
 
     return ECommandPerformed;
+}
+
+CWaypointAnalizeCreateCommand::CWaypointAnalizeCreateCommand()
+{
+    m_sCommand = "create";
+    m_sHelp = "create given waypoint during map analize";
+    m_sDescription = "Parameter: (on / off / clear) (current / destination / waypoint id). 'clear' will remove all positions to create waypoints.";
+    m_iAccessLevel = FCommandAccessWaypoint;
+
+    StringVector args0;
+    args0.push_back( sOn );
+    args0.push_back( sOff );
+    args0.push_back( sClear );
+
+    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+    m_cAutoCompleteValues.push_back( args0 );
+
+    StringVector args1;
+    args1.push_back( sCurrent );
+    args1.push_back( sDestination );
+
+    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+    m_cAutoCompleteValues.push_back( args1 );
+}
+
+TCommandResult CWaypointAnalizeCreateCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+        return ECommandPerformed;
+
+    return WaypointAnalizeAux( pClient, argc, argv, CWaypoints::EAnalizeWaypointsAdd );
+}
+
+CWaypointAnalizeDebugCommand::CWaypointAnalizeDebugCommand()
+{
+    m_sCommand = "debug";
+    m_sHelp = "show collision lines for given waypoint during map analize";
+    m_sDescription = "Parameter: (on / off / clear) (current / destination / waypoint id). 'clear' will remove all debug waypoints.";
+    m_iAccessLevel = FCommandAccessWaypoint;
+
+    StringVector args0;
+    args0.push_back( sOn );
+    args0.push_back( sOff );
+    args0.push_back( sClear );
+
+    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+    m_cAutoCompleteValues.push_back( args0 );
+
+    StringVector args1;
+    args1.push_back( sCurrent );
+    args1.push_back( sDestination );
+
+    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+    m_cAutoCompleteValues.push_back( args1 );
 }
 
 TCommandResult CWaypointAnalizeDebugCommand::Execute( CClient* pClient, int argc, const char** argv )
@@ -939,8 +969,8 @@ TCommandResult CWaypointAnalizeDebugCommand::Execute( CClient* pClient, int argc
 CWaypointAnalizeOmitCommand::CWaypointAnalizeOmitCommand()
 {
     m_sCommand = "omit";
-    m_sHelp = "omit waypoint next time analize runs";
-    m_sDescription = "Parameter: (on / off / clear) (current / destination / waypoint id). Sometimes analize adds waypoints at invalid places. This command will disable analization for a given waypoint.";
+    m_sHelp = "omit given waypoint next time analize runs";
+    m_sDescription = "Parameter: (on / off / clear) (current / destination / waypoint id). Sometimes analize adds waypoints at invalid places. This command will disable analize for a given waypoint. 'clear' will remove all omited waypoints.";
     m_iAccessLevel = FCommandAccessWaypoint;
 
     StringVector args0;
@@ -3879,6 +3909,109 @@ TCommandResult CItemDrawTypeCommand::Execute( CClient* pClient, int argc, const 
     return ECommandPerformed;
 }
 
+CItemMarkCommand::CItemMarkCommand()
+{
+    m_sCommand = "mark";
+    m_sHelp = "add object flags (object only)";
+    m_sDescription = good::string( "Parameters: <object-index-not-id> (flags). 'flags' can be mix of: " ) + CTypeToString::EntityClassFlagsToString( FEntityAll );
+    m_iAccessLevel = FCommandAccessWaypoint;
+
+    StringVector args0;
+    args0.push_back( sClear );
+
+    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+    m_cAutoCompleteValues.push_back( args0 );
+
+    StringVector args1;
+    for ( TItemFlags i = 0; i < EItemFlagsUserTotal; ++i )
+        args1.push_back( CTypeToString::EntityClassFlagsToString( 1 << i ).duplicate() );
+
+    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValuesForever );
+    m_cAutoCompleteValues.push_back( args1 );
+}
+
+TCommandResult CItemMarkCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+        return ECommandPerformed;
+
+    if ( pClient == NULL )
+    {
+        BLOG_W( "Please login to server to execute this command." );
+        return ECommandError;
+    }
+
+    if ( argc == 0 )
+    {
+        const good::vector<TItemIndex>& aItems = CItems::GetObjectsFlags();
+        for ( int i = 0; i < aItems.size(); ++i )
+            BULOG_I( pClient->GetEdict(), "Object id %d: %s", aItems[i], CTypeToString::EntityClassFlagsToString( aItems[ ++i ] ).c_str() );
+        return ECommandPerformed;
+    }
+
+    if ( argc == 1 && sClear == argv[ 0 ] )
+    {
+        good::vector<TItemIndex> aObjectFlags;
+        CItems::SetObjectsFlags( aObjectFlags );
+        BULOG_I( pClient->GetEdict(), "Objects flags cleared. Please reload items to take effect." );
+        return ECommandPerformed;
+    }
+    
+    int iIndex = -1;
+    if ( sscanf( argv[0], "%d", &iIndex ) != 1 )
+        iIndex = -1;
+
+    if ( iIndex < 0 || iIndex >= CItems::GetItems(EItemTypeObject).size() )
+    {
+        BULOG_W( pClient->GetEdict(), "Error, invalid object index: %s.", argv[0] );
+        return ECommandError;
+    }
+    // Retrieve flags from string arguments.
+    TItemFlags iFlags = FEntityNone;
+
+    for ( int i = 1; i < argc; ++i )
+    {
+        int iAddFlag = CTypeToString::EntityClassFlagsFromString( argv[ i ] );
+        if ( iAddFlag == -1 )
+        {
+            BULOG_W( pClient->GetEdict(), "Error, invalid object flag. Can be 'none' or mix of: %s", 
+                     CTypeToString::EntityClassFlagsToString( FEntityAll ).c_str() );
+            return ECommandError;
+        }
+        FLAG_SET( iAddFlag, iFlags );
+    }
+    if ( argc == 1 )
+        CItems::GetObjectFlags( iIndex, iFlags );
+    else
+        CItems::SetObjectFlags( iIndex, iFlags );
+  
+    BULOG_I( pClient->GetEdict(), "Entity %d: %s.", iIndex, CTypeToString::EntityClassFlagsToString( iFlags ).c_str() );
+    
+    return ECommandPerformed;
+}
+
+CItemReloadCommand::CItemReloadCommand()
+{
+    m_sCommand = "reload";
+    m_sHelp = "reload all items (will recalculate nearest waypoints)";
+    m_iAccessLevel = FCommandAccessWaypoint;
+}
+
+TCommandResult CItemReloadCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+        return ECommandPerformed;
+
+    if ( !CBotrixPlugin::instance->bMapRunning )
+    {
+        BULOG_W( pClient ? pClient->GetEdict() : NULL, "Error: no map is loaded." );
+        return ECommandError;
+    }
+
+    CItems::MapUnloaded();
+    CItems::MapLoaded( true );
+    return ECommandPerformed;
+}
 //----------------------------------------------------------------------------------------------------------------
 // Config commands.
 //----------------------------------------------------------------------------------------------------------------
@@ -4054,6 +4187,93 @@ TCommandResult CConfigWaypointAnalizeAmount::Execute( CClient* pClient, int argc
         CWaypoint::fAnalizeWaypointsPerFrame = fAmount;
     }
     BULOG_I( pEdict, "Analize waypoints per frame: %.6f.", CWaypoint::fAnalizeWaypointsPerFrame );
+    return ECommandPerformed;
+}
+
+CConfigWaypointSave::CConfigWaypointSave()
+{
+    m_sCommand = "save";
+    m_sHelp = "auto save waypoints on map change";
+    m_sDescription = "Parameter: (on / off). Warning: bots can modify map waypoint (botrix config waypoint unreachable).";
+    m_iAccessLevel = FCommandAccessConfig;
+
+    StringVector args;
+    args.push_back( sOff );
+
+    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+    m_cAutoCompleteValues.push_back( args );
+}
+
+TCommandResult CConfigWaypointSave::Execute( CClient* pClient, int argc, const char** argv )
+{
+    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+        return ECommandPerformed;
+
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( argc > 1 )
+    {
+        BULOG_I( pEdict, "Invalid parameters count." );
+        return ECommandError;
+    }
+    if ( argc == 1 )
+    {
+        int iSave = CTypeToString::BoolFromString(argv[0]);
+        if ( iSave == -1 )
+        {
+            BULOG_W( pEdict, "Error, invalid parameter: %s.", argv[ 0 ] );
+            return ECommandError;
+        }
+
+        CWaypoint::bSaveOnMapChange = ( iSave != 0 );
+    }
+    BULOG_I( pEdict, "Save waypoints on map change: %s.", CWaypoint::bSaveOnMapChange ? "on" : "off" );
+    return ECommandPerformed;
+}
+
+CConfigWaypointUnreachable::CConfigWaypointUnreachable()
+{
+    m_sCommand = "unreachable";
+    m_sHelp = "bots can erase paths between waypoints";
+    m_sDescription = "Parameter: (off / number of failed tries). If a bot can't reach path's destination waypoint X times, that path will be deleted.";
+    m_iAccessLevel = FCommandAccessConfig;
+
+    StringVector args;
+    args.push_back( sOff );
+
+    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+    m_cAutoCompleteValues.push_back( args );
+}
+
+TCommandResult CConfigWaypointUnreachable::Execute( CClient* pClient, int argc, const char** argv )
+{
+    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+        return ECommandPerformed;
+
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( argc > 1 )
+    {
+        BULOG_I( pEdict, "Invalid parameters count." );
+        return ECommandError;
+    }
+    if ( argc == 1 )
+    {
+        int iAmount = -1;
+        if ( sOff == argv[ 0 ] )
+            iAmount = 0;
+        else if ( sscanf( argv[ 0 ], "%d", &iAmount ) != 1 )
+            iAmount = -1;
+
+        if ( iAmount < 0 )
+        {
+            BULOG_W( pEdict, "Error, invalid number: %s.", argv[ 0 ] );
+            return ECommandError;
+        }
+
+        CWaypoint::iUnreachablePathFailuresToDelete = iAmount;
+    }
+    BULOG_I( pEdict, "Number of failed tries of bots to delete waypoint path: %d (0 = off).", CWaypoint::iUnreachablePathFailuresToDelete );
     return ECommandPerformed;
 }
 

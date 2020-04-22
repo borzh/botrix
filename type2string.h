@@ -60,7 +60,7 @@ public:
     static int AccessFlagsFromString( const good::string& sFlags );
 
     /// Get string from access flags.
-    static const good::string& AccessFlagsToString( TCommandAccessFlags iFlags );
+    static const good::string& AccessFlagsToString( TCommandAccessFlags iFlags, bool bUseNone = true );
 
 
     //------------------------------------------------------------------------------------------------------------
@@ -69,7 +69,7 @@ public:
     static int WaypointFlagsFromString( const good::string& sFlags );
 
     /// Get string from waypoint flags.
-    static const good::string& WaypointFlagsToString( TWaypointFlags iFlags );
+    static const good::string& WaypointFlagsToString( TWaypointFlags iFlags, bool bUseNone = true );
 
 
     //------------------------------------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ public:
     static int PathFlagsFromString( const good::string& sFlags );
 
     /// Get string from path flags.
-    static const good::string& PathFlagsToString( TPathFlags iFlags );
+    static const good::string& PathFlagsToString( TPathFlags iFlags, bool bUseNone = true );
 
 
     //------------------------------------------------------------------------------------------------------------
@@ -87,7 +87,7 @@ public:
     static int WaypointDrawFlagsFromString( const good::string& sFlags );
 
     /// Get string from waypoint draw types.
-    static const good::string& WaypointDrawFlagsToString( TWaypointDrawFlags iFlags );
+    static const good::string& WaypointDrawFlagsToString( TWaypointDrawFlags iFlags, bool bUseNone = true );
 
 
     //------------------------------------------------------------------------------------------------------------
@@ -96,7 +96,7 @@ public:
     static int PathDrawFlagsFromString( const good::string& sFlags );
 
     /// Get string from waypoint draw flags.
-    static const good::string& PathDrawFlagsToString( TPathDrawFlags iFlags );
+    static const good::string& PathDrawFlagsToString( TPathDrawFlags iFlags, bool bUseNone = true );
 
 
     //------------------------------------------------------------------------------------------------------------
@@ -114,7 +114,7 @@ public:
     static int EntityTypeFlagsFromString( const good::string& sFlag );
 
     /// Get string from item type flags.
-    static const good::string& EntityTypeFlagsToString( TItemTypeFlags iItemTypeFlags );
+    static const good::string& EntityTypeFlagsToString( TItemTypeFlags iItemTypeFlags, bool bUseNone = true );
 
 
     //------------------------------------------------------------------------------------------------------------
@@ -123,7 +123,7 @@ public:
     static int EntityClassFlagsFromString( const good::string& sFlags );
 
     /// Get string from item flags.
-    static const good::string& EntityClassFlagsToString( TItemFlags iItemFlags );
+    static const good::string& EntityClassFlagsToString( TItemFlags iItemFlags, bool bUseNone = true );
 
 
     //------------------------------------------------------------------------------------------------------------
@@ -132,7 +132,7 @@ public:
     static int ItemDrawFlagsFromString( const good::string& sFlags );
 
     /// Get string from item draw flags.
-    static const good::string& ItemDrawFlagsToString( TItemDrawFlags iFlags );
+    static const good::string& ItemDrawFlagsToString( TItemDrawFlags iFlags, bool bUseNone = true );
 
 
     //------------------------------------------------------------------------------------------------------------
@@ -150,7 +150,7 @@ public:
     static TWeaponFlags WeaponFlagsFromString( const good::string& sWeaponFlag );
 
     /// Get string from weapon flags.
-    static const good::string& WeaponFlagsToString( TWeaponFlags iWeaponFlags );
+    static const good::string& WeaponFlagsToString( TWeaponFlags iWeaponFlags, bool bUseNone = true );
 
     //------------------------------------------------------------------------------------------------------------
     /// Get weapon aim from string.
@@ -183,10 +183,10 @@ public:
     //------------------------------------------------------------------------------------------------------------
     static const good::string& TeamToString( int iTeam );
 
-    /// Get bot class from string.
-    static const good::string& TeamFlagsToString( int iTeams );
+    /// Team flags to string.
+    static const good::string& TeamFlagsToString( int iTeams, bool bUseNone = true );
 
-    /// Get bot class from string.
+    /// Get team from string.
     static int TeamFromString( const good::string& sTeam );
 
 
@@ -196,7 +196,7 @@ public:
     static const good::string& ClassToString( int iClass );
 
     /// Get bot class from string.
-    static const good::string& ClassFlagsToString( int iClasses );
+    static const good::string& ClassFlagsToString( int iClasses, bool bUseNone = true );
 
     /// Get bot class from string.
     static int ClassFromString( const good::string& sClass );
@@ -237,7 +237,7 @@ public:
     static int StrategyFlagsFromString( const good::string& sFlags );
 
     /// Get string from strategy flags.
-    static const good::string& StrategyFlagsToString( int iFlags );
+    static const good::string& StrategyFlagsToString( int iFlags, bool bUseNone = true );
 
     //------------------------------------------------------------------------------------------------------------
     /// Get strategy argument from string.

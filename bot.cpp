@@ -762,7 +762,8 @@ void CBot::ApplyPathFlags()
             m_vForward = wNext.vOrigin;
 
             CWaypointPath* pCurrentPath = CWaypoints::GetPath(iCurrentWaypoint, iNextWaypoint);
-            BASSERT( pCurrentPath, return ); // TODO: check why it is happening sometimes?
+            if ( !pCurrentPath ) 
+                return; // TODO: check why it is happening sometimes?
 
             m_bLadderMove = FLAG_ALL_SET(FPathLadder, pCurrentPath->iFlags);
 
@@ -1739,7 +1740,7 @@ bool CBot::ResolveStuckMove()
     {
         m_bMoveFailure = true;
         m_cNavigator.Stop();
-        BotMessage( "%s -> Current waypoint invalid.", GetName() );
+        BotDebug( "%s -> Current waypoint invalid.", GetName() );
         return false;
     }
 
@@ -1747,11 +1748,13 @@ bool CBot::ResolveStuckMove()
     if ( !m_bTest && m_aNearestItems[ EItemTypeDoor ].size() )
     {
         m_bMoveFailure = true; // Let mod decide what to do.
+        return false;
     }
 
     pStuckObject = NULL;
 	CWaypoint& wCurr = CWaypoints::Get( iCurrentWaypoint );
 
+    // Check if bot is stucked with some object.
 	for ( int iIndexStuckObject = 0; iIndexStuckObject < m_aNearestItems[EItemTypeObject].size(); ++iIndexStuckObject )
     {
         pStuckObject = &CItems::GetItems(EItemTypeObject)[ m_aNearestItems[EItemTypeObject][iIndexStuckObject] ];
@@ -1828,7 +1831,25 @@ bool CBot::ResolveStuckMove()
 
     else if ( m_bUseNavigatorToMove )
     {
-        if ( iCurrentWaypoint == iPrevCurrWaypoint ) // Got stucked because action didn't work?
+        bool bSameWaypoint = iCurrentWaypoint == iPrevCurrWaypoint;
+
+        if ( bSameWaypoint )
+        {
+            m_cNavigator.SetPreviousPathPosition(); // Curreint -> next.
+            m_cNavigator.SetPreviousPathPosition(); // Previous -> current.
+            m_cNavigator.GetNextWaypoints( iNextWaypoint, m_iAfterNextWaypoint );
+            if ( iCurrentWaypoint == iNextWaypoint )
+                m_cNavigator.GetNextWaypoints( iNextWaypoint, m_iAfterNextWaypoint );
+        }
+
+        // Mark path as unreachable.
+        if ( CWaypoints::HasPath( iCurrentWaypoint, iNextWaypoint ) )
+        {
+            BotDebug( "%s -> Mark unreachable path from %d to %d.", GetName(), iCurrentWaypoint, iNextWaypoint );
+            CWaypoints::MarkUnreachablePath( iCurrentWaypoint, iNextWaypoint );
+        }
+
+        if ( bSameWaypoint ) // Got stucked because action didn't work?
         {
             m_bStuck = false;
 
@@ -1836,13 +1857,6 @@ bool CBot::ResolveStuckMove()
             bool bTouch = wCurr.IsTouching(m_vHead, m_bLadderMove);
             if ( bTouch || m_bStuckGotoCurrent )
             {
-                BotDebug( "%s -> Stucked, will go to previous waypoint %d.", GetName(), iNextWaypoint );
-
-                // Force to make action again.
-                m_cNavigator.SetPreviousPathPosition();
-                m_cNavigator.SetPreviousPathPosition();
-                m_cNavigator.GetNextWaypoints(iNextWaypoint, m_iAfterNextWaypoint);
-
 				m_bResolvingStuck = m_bRepeatWaypointAction = true;
 
                 if ( !bTouch )
@@ -1851,11 +1865,11 @@ bool CBot::ResolveStuckMove()
                     m_bNeedJump = rand()&1; // Jump for just in case sometimes.
                 }
 				m_bStuckGotoCurrent = false; // Try to move left right next time.
+
+                BotDebug( "%s -> Stucked, will go to previous waypoint %d (from %d).", GetName(), iNextWaypoint, iCurrentWaypoint );
             }
             else
             {
-                BotDebug("%s -> Stucked, try to move %s.", GetName(), m_bStuckTryGoLeft ? "left" : "right");
-
                 // Check if next waypoint is more on left or right.
                 CWaypoint& wNext = CWaypoints::Get(iNextWaypoint);
                 Vector wNeed( wNext.vOrigin );
@@ -1872,10 +1886,12 @@ bool CBot::ResolveStuckMove()
                 m_bStuckTryGoLeft = ( angNow.y >= 0.0f ); // Need to increment angles, move left.
                 m_bStuckTryingSide = true;
                 m_bNeedJump = m_bNeedJumpDuck = true;
-                m_fStartActionTime = CBotrixPlugin::fTime + 0.75f;
+                m_fStartActionTime = CBotrixPlugin::fTime + 0.5f;
                 m_fEndActionTime = CBotrixPlugin::fTime + 1.0f;
 
 				m_bResolvingStuck = m_bStuckGotoCurrent = true; // Try to go back to current waypoint next time.
+            
+                BotDebug( "%s -> Stucked, try to move %s.", GetName(), m_bStuckTryGoLeft ? "left" : "right" );
             }
             return true;
         }

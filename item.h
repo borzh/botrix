@@ -77,6 +77,12 @@ public:
     /// Return true if item is breakable (bot will break it instead of jumping on it or moving it).
     bool IsBreakable() const;
 
+    /// Return true if item is taken (grabbed by player/bot).
+    bool IsTaken() const;
+
+    /// Return true if item can be picked up by gravity gun.
+    bool CanPickup() const;
+
     /// Return true if item can explode (bot will never break it and can throw it, if near).
     bool IsExplosive() const { return FLAG_SOME_SET(FObjectExplosive, iFlags); }
 
@@ -129,9 +135,13 @@ class CItems
 
 public:
 
+    /// Will print all item classes.
 	static void PrintClasses();
 
-	/// Get item classes.
+    /// Get item from edict.
+    static TItemType GetItemFromEdict( edict_t* pEdict, TItemIndex* pIndex );
+
+        /// Get item classes.
 	static const good::list<CItemClass>* GetClasses() { return m_aItemClasses; }
 
     /// Get random item clas for given entity type.
@@ -200,6 +210,20 @@ public:
     /// Update items. Called when player is connected or picks up weapon (new one will be created to respawn later).
     static void Update();
 
+
+    /// Get all objects flags.
+    static const good::vector<TItemIndex>& GetObjectsFlags() { return m_aObjectFlags; }
+
+    /// Set all objects flags.
+    static void SetObjectsFlags( good::vector<TItemIndex>& aObjectsFlags ) { m_aObjectFlags = aObjectsFlags; }
+
+    /// Get object flags.
+    static bool GetObjectFlags( TItemIndex iObject, TItemFlags &iFlags );
+
+    /// Set flags for object index.
+    static void SetObjectFlags( TItemIndex iObject, TItemFlags iFlags );
+
+
     /// Check if given door is closed (a ray hits it).
     static int IsDoorClosed( TItemIndex iDoor );
 
@@ -211,7 +235,7 @@ public:
 
 protected:
     static void CheckNewEntity( edict_t* pEdict, bool bLog = true );
-    static TItemIndex InsertEntity( int iEntityType, const CItem& cEntity );
+    static TItemIndex NewEntityIndex( int iEntityType );
     static void AutoWaypointPathFlagsForEntity( TItemType iEntityType, TItemIndex iIndex, CItem& cEntity );
     static TItemIndex AddItem( TItemType iEntityType, edict_t* pEdict, CItemClass* pItemClass, IServerEntity* pServerEntity );
     static void AddObject( edict_t* pEdict, const CItemClass* pObjectClass, IServerEntity* pServerEntity );
@@ -233,6 +257,8 @@ protected:
 
     // This one is to have models specific flags (for example car model with 'heavy' flag, or barrel model with 'explosive' flag).
     static good::vector< good::pair<good::string, TItemFlags> > m_aObjectFlagsForModels;
+
+    static good::vector< TItemIndex > m_aObjectFlags; // Array of (object index, item flags).
 
     static good::bitset m_aUsedItems; // To know which items are already in m_aItems.
 

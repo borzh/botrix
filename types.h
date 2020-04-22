@@ -233,11 +233,13 @@ enum TWaypointFlag
     FWaypointSeeButton         = 1<<10,          ///< Button is visible. Arguments are angle (low word), button index+1 (3rd byte), door index+1 (4th byte).
     FWaypointUse               = 1<<11,          ///< Always need to USE (along with first angle).
     FWaypointElevator          = 1<<12,          ///< Waypoint should be marked as button. Instead of door's index it has elevator's index.
+    FWaypointLadder            = 1<<13,          ///< Ladder point.
 
-    EWaypointFlagTotal         = 13,             ///< Amount of waypoint flags.
-    FWaypointAll               = (1<<13) - 1     ///< All flags set.
+    EWaypointFlagTotal         = 14,             ///< Amount of waypoint flags.
+    FWaypointAll               = (1<<14) - 1     ///< All flags set.
 };
-typedef unsigned short TWaypointFlags;           ///< Set of waypoint flags.
+typedef short TWaypointFlags;                    ///< Set of waypoint flags.
+typedef int TWaypointArgument;                   ///< Waypoint argument.
 
 
 //****************************************************************************************************************
@@ -263,11 +265,11 @@ enum TPathFlag
 	EPathFlagUserTotal         = 11,             ///< Amount of path flags for the user.
 	FPathAll                   = (1<<11)-1,      ///< All userpath flags.
 
-	FPathUntested              = 1<<14,          ///< Need to make ladder of living corpses. Argument is count of players needed (1..).
     FPathDemo                  = 1<<15,          ///< Flag for use demo to reach adjacent waypoints. Demo number is at lower bits. Not implemented yet.
     EPathFlagTotal             = 16,             ///< Amount of path flags.
 };
 typedef short TPathFlags;                        ///< Set of waypoint path flags.
+typedef short TPathArgument;                     ///< Waypoint path argument.
 
 enum TInvalidWaypoint
 {
@@ -433,10 +435,11 @@ enum TItemFlag
     FObjectHeavy               = 1<<3,           ///< Can't use physcannon on this object.
     FObjectBox                 = 1<<4,           ///< Can use this entity to jump on.
 
-    EItemFlagTotal             = 5,              ///< Amount of entity flags.
-    FEntityAll                 = (1<<5)-1,       ///< All entity flags (that are configurable at config.ini).
+    EItemFlagsUserTotal        = 5,              ///< Amount of entity flags.
+    FEntityAll                 = (1<<5)-1,       ///< Entity flags that are configurable at config.ini or through console.
 
-    FTaken                     = 1<<4,           ///< This flag is set for all weapons that belong to some player.
+    FTaken                     = 1<<5,           ///< This flag is set for all weapons that belong to some player.
+    EItemFlagsTotal            = 6,              ///< All item flags.
 };
 typedef int TItemFlags;                          ///< Entity flags.
 

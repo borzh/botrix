@@ -417,7 +417,7 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
     {
         try
         {
-            if ( CWaypoints::IsAnalizing() )
+            if ( CWaypoints::IsAnalyzing() )
                 CWaypoints::AnalizeStep();
         }
         catch ( ... )
@@ -540,10 +540,18 @@ void CBotrixPlugin::LevelShutdown( void )
     bMapRunning = false;
     sMapName = "";
 
+    if ( CWaypoints::IsAnalyzing() )
+        CWaypoints::StopAnalyzing(); // Don't save if currently analyzing.
+    else if ( CWaypoint::bSaveOnMapChange )
+        CWaypoints::Save();
+        
+    CWaypoints::ClearUnreachablePaths();
+    CWaypoints::Clear();
+    for ( int i = 0; i < CWaypoints::EAnalizeWaypointsTotal; ++i )
+        CWaypoints::AnalizeClear( i );
+
     CPlayers::Clear();
     CItems::MapUnloaded();
-    CWaypoints::Clear();
-    CWaypoints::StopAnalizing();
 
 #ifdef USE_OLD_GAME_EVENT_MANAGER
     pGameEventManager->RemoveListener(this);
@@ -751,8 +759,6 @@ void CBotrixPlugin::PrepareLevel( const char* szMapName )
 
     CWaypoint::iWaypointTexture = CBotrixPlugin::pEngineServer->PrecacheModel( "sprites/lgtning.vmt" );
 #endif
-    for ( int i = 0; i < CWaypoints::EAnalizeWaypointsTotal; ++i )
-        CWaypoints::AnalizeClear( i );
     if ( CWaypoints::Load() )
         BLOG_I("%d waypoints loaded for map %s.", CWaypoints::Size(), CBotrixPlugin::instance->sMapName.c_str());
 }

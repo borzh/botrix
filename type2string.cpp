@@ -47,11 +47,11 @@ inline int EnumFromString( const good::string& s, const StringVector& aStrings )
 
 
 //================================================================================================================
-const good::string& FlagsToString( int iFlags, int iFlagsCount, const good::string aStrings[] )
+const good::string& FlagsToString( int iFlags, int iFlagsCount, const good::string aStrings[], bool bUseNone )
 {
     GoodAssert( 0 <= iFlagsCount );
     if ( iFlags == 0 )
-        return sNone;
+        return bUseNone ? sNone : sEmpty;
 
     static good::string_buffer sbBuffer(szMainBuffer, iMainBufferSize, false);
     sbBuffer.erase();
@@ -65,9 +65,9 @@ const good::string& FlagsToString( int iFlags, int iFlagsCount, const good::stri
     return sbBuffer;
 }
 
-const good::string& FlagsToString( int iFlags, const StringVector& aStrings )
+const good::string& FlagsToString( int iFlags, const StringVector& aStrings, bool bUseNone )
 {
-    return FlagsToString(iFlags, aStrings.size(), aStrings.data());
+    return FlagsToString( iFlags, aStrings.size(), aStrings.data(), bUseNone );
 }
 
 int FlagsFromString( const good::string& s, int iFlagsCount, const good::string aStrings[] )
@@ -210,9 +210,9 @@ int CTypeToString::AccessFlagsFromString( const good::string& sFlags )
     return FlagsFromString( sFlags, ECommandAccessFlagTotal, aAccessFlags );
 }
 
-const good::string& CTypeToString::AccessFlagsToString( TCommandAccessFlags iFlags )
+const good::string& CTypeToString::AccessFlagsToString( TCommandAccessFlags iFlags, bool bUseNone )
 {
-    return FlagsToString( iFlags, ECommandAccessFlagTotal, aAccessFlags );
+    return FlagsToString( iFlags, ECommandAccessFlagTotal, aAccessFlags, bUseNone );
 }
 
 
@@ -234,6 +234,7 @@ good::string aWaypointFlags[EWaypointFlagTotal] =
 	"see-button",
     "use",
     "elevator",
+    "ladder",
 };
 
 int CTypeToString::WaypointFlagsFromString( const good::string& sFlags )
@@ -241,9 +242,9 @@ int CTypeToString::WaypointFlagsFromString( const good::string& sFlags )
     return FlagsFromString( sFlags, EWaypointFlagTotal, aWaypointFlags );
 }
 
-const good::string& CTypeToString::WaypointFlagsToString(TWaypointFlags iFlags)
+const good::string& CTypeToString::WaypointFlagsToString(TWaypointFlags iFlags, bool bUseNone )
 {
-    return FlagsToString( iFlags, EWaypointFlagTotal, aWaypointFlags );
+    return FlagsToString( iFlags, EWaypointFlagTotal, aWaypointFlags, bUseNone );
 }
 
 
@@ -276,9 +277,9 @@ int CTypeToString::PathFlagsFromString( const good::string& sFlags )
     return FlagsFromString( sFlags, EPathFlagTotal, aPathFlags );
 }
 
-const good::string& CTypeToString::PathFlagsToString( TPathFlags iFlags )
+const good::string& CTypeToString::PathFlagsToString( TPathFlags iFlags, bool bUseNone )
 {
-    return FlagsToString( iFlags, EPathFlagTotal, aPathFlags );
+    return FlagsToString( iFlags, EPathFlagTotal, aPathFlags, bUseNone );
 }
 
 
@@ -298,9 +299,9 @@ int CTypeToString::WaypointDrawFlagsFromString( const good::string& sFlags )
     return FlagsFromString( sFlags, EWaypointDrawFlagTotal, aDrawTypeFlags );
 }
 
-const good::string& CTypeToString::WaypointDrawFlagsToString( TWaypointDrawFlags iFlags )
+const good::string& CTypeToString::WaypointDrawFlagsToString( TWaypointDrawFlags iFlags, bool bUseNone )
 {
-    return FlagsToString( iFlags, EWaypointDrawFlagTotal, aDrawTypeFlags );
+    return FlagsToString( iFlags, EWaypointDrawFlagTotal, aDrawTypeFlags, bUseNone );
 }
 
 
@@ -309,9 +310,9 @@ int CTypeToString::PathDrawFlagsFromString( const good::string& sFlags )
     return FlagsFromString( sFlags, EPathDrawFlagTotal, aDrawTypeFlags );
 }
 
-const good::string& CTypeToString::PathDrawFlagsToString( TPathDrawFlags iFlags )
+const good::string& CTypeToString::PathDrawFlagsToString( TPathDrawFlags iFlags, bool bUseNone )
 {
-    return FlagsToString( iFlags, EPathDrawFlagTotal, aDrawTypeFlags );
+    return FlagsToString( iFlags, EPathDrawFlagTotal, aDrawTypeFlags, bUseNone );
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -347,22 +348,23 @@ int CTypeToString::EntityTypeFlagsFromString( const good::string& sFlags )
     return FlagsFromString( sFlags, EItemTypeKnownTotal+1, aItemTypes );
 }
 
-const good::string& CTypeToString::EntityTypeFlagsToString( TItemTypeFlags iItemTypeFlags )
+const good::string& CTypeToString::EntityTypeFlagsToString( TItemTypeFlags iItemTypeFlags, bool bUseNone )
 {
-    return FlagsToString( iItemTypeFlags, EItemTypeKnownTotal+1, aItemTypes );
+    return FlagsToString( iItemTypeFlags, EItemTypeKnownTotal+1, aItemTypes, bUseNone );
 }
 
 
 //----------------------------------------------------------------------------------------------------------------
 // Ordered by TItemFlags.
 //----------------------------------------------------------------------------------------------------------------
-good::string aEntityClassFlags[EItemFlagTotal] =
+good::string aEntityClassFlags[ EItemFlagsTotal ] =
 {
     "use",
     "respawnable",
     "explosive",
     "heavy",
     "box",
+    "taken",
 };
 
 int CTypeToString::EntityClassFlagsFromString( const good::string& sFlags )
@@ -370,15 +372,12 @@ int CTypeToString::EntityClassFlagsFromString( const good::string& sFlags )
     if ( sFlags == sNone )
         return 0;
     else
-        return FlagsFromString( sFlags, EItemFlagTotal, aEntityClassFlags );
+        return FlagsFromString( sFlags, EItemFlagsTotal, aEntityClassFlags );
 }
 
-const good::string& CTypeToString::EntityClassFlagsToString( TItemFlags iItemFlags )
+const good::string& CTypeToString::EntityClassFlagsToString( TItemFlags iItemFlags, bool bUseNone )
 {
-    if ( iItemFlags == 0 )
-        return sNone;
-    else
-        return FlagsToString( iItemFlags, EItemFlagTotal, aEntityClassFlags );
+    return FlagsToString( iItemFlags, EItemFlagsTotal, aEntityClassFlags, bUseNone );
 }
 
 
@@ -397,9 +396,9 @@ int CTypeToString::ItemDrawFlagsFromString( const good::string& sFlags )
     return FlagsFromString( sFlags, EItemDrawFlagTotal, aItemDrawFlags );
 }
 
-const good::string& CTypeToString::ItemDrawFlagsToString( TItemDrawFlags iFlags )
+const good::string& CTypeToString::ItemDrawFlagsToString( TItemDrawFlags iFlags, bool bUseNone )
 {
-    return FlagsToString( iFlags, EItemDrawFlagTotal, aItemDrawFlags );
+    return FlagsToString( iFlags, EItemDrawFlagTotal, aItemDrawFlags, bUseNone );
 }
 
 
@@ -456,9 +455,9 @@ TWeaponFlags CTypeToString::WeaponFlagsFromString( const good::string& sType )
     return FlagsFromString( sType, EWeaponFlagsTotal, aWeaponFlags );
 }
 
-const good::string& CTypeToString::WeaponFlagsToString( TWeaponFlags iType )
+const good::string& CTypeToString::WeaponFlagsToString( TWeaponFlags iType, bool bUseNone )
 {
-    return FlagsToString( iType, EWeaponFlagsTotal, aWeaponFlags );
+    return FlagsToString( iType, EWeaponFlagsTotal, aWeaponFlags, bUseNone );
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -531,9 +530,9 @@ const good::string& CTypeToString::TeamToString( int iTeam )
     return EnumToString( iTeam, CMod::aTeamsNames, sUnknown );
 }
 
-const good::string& CTypeToString::TeamFlagsToString( int iTeams )
+const good::string& CTypeToString::TeamFlagsToString( int iTeams, bool bUseNone )
 {
-    return FlagsToString( iTeams, CMod::aTeamsNames );
+    return FlagsToString( iTeams, CMod::aTeamsNames, bUseNone );
 }
 
 int CTypeToString::TeamFromString( const good::string& sTeam )
@@ -547,9 +546,9 @@ const good::string& CTypeToString::ClassToString( int iClass )
     return EnumToString( iClass, CMod::aClassNames, sUnknown );
 }
 
-const good::string& CTypeToString::ClassFlagsToString( int iClasses )
+const good::string& CTypeToString::ClassFlagsToString( int iClasses, bool bUseNone )
 {
-    return FlagsToString( iClasses, CMod::aClassNames );
+    return FlagsToString( iClasses, CMod::aClassNames, bUseNone );
 }
 
 int CTypeToString::ClassFromString( const good::string& sClass )
@@ -728,9 +727,9 @@ int CTypeToString::StrategyFlagsFromString( const good::string& sArg )
     return FlagsFromString( sArg, EFightStrategyFlagTotal, aStrategyFlags );
 }
 
-const good::string& CTypeToString::StrategyFlagsToString( int iArg )
+const good::string& CTypeToString::StrategyFlagsToString( int iArg, bool bUseNone )
 {
-    return FlagsToString( iArg, EFightStrategyFlagTotal, aStrategyFlags );
+    return FlagsToString( iArg, EFightStrategyFlagTotal, aStrategyFlags, bUseNone );
 }
 
 

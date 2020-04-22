@@ -33,13 +33,17 @@ public: // Members and constants.
 
     static int iDefaultDistance;                    ///< Max waypoint distance to automatically add path to nearby waypoints.
     
-    static int iAnalizeDistance;                    ///< Distance between waypoints when analizing a map.
-    static int iWaypointsMaxCountToAnalizeMap;      ///< Maximum waypoints count to start analizing a map.
+    static int iUnreachablePathFailuresToDelete;    ///< Max failures to erase the failed path.
+
+    static int iAnalizeDistance;                    ///< Distance between waypoints when analyzing a map.
+    static int iWaypointsMaxCountToAnalizeMap;      ///< Maximum waypoints count to start analyzing a map.
     static float fAnalizeWaypointsPerFrame;         ///< Positions per frame to analize.
+
+    static bool bSaveOnMapChange;                   ///< Save waypoints on map change.
 
     Vector vOrigin;                                 ///< Coordinates of waypoint (x, y, z).
     TWaypointFlags iFlags;                          ///< Waypoint flags.
-    int iArgument;                                  ///< Waypoint argument (button number).
+    TWaypointArgument iArgument;                                  ///< Waypoint argument (button number).
     TAreaId iAreaId;                                ///< Area id where waypoint belongs to (like "Bombsite A" / "Base CT" in counter-strike).
 
 public: // Methods.
@@ -154,7 +158,7 @@ public: // Methods.
     void Draw( TWaypointId iWaypointId, TWaypointDrawFlags iDrawType, float fDrawTime ) const;
 
 protected:
-    static const TWaypointFlags m_aFlagsForEntityType[EItemTypeTotalNotObject];
+    static const TWaypointFlags m_aFlagsForEntityType[ EItemTypeCanPickTotal ];
 };
 
 
@@ -201,7 +205,7 @@ public:
     TPathFlags iFlags;                       ///< Path flags.
 
     /// Path argument. At 1rst byte there is time to wait before action (in deciseconds). 2nd byte is action duration.
-    unsigned short iArgument;
+    TPathArgument iArgument;
 };
 
 
@@ -315,17 +319,17 @@ public: // Methods.
 
 
     /// Get areas names for current map.
-    static StringVector& GetAreas() { return m_cAreas; }
+    static StringVector& GetAreas() { return m_aAreas; }
 
     /// Get area id from name.
     static TAreaId GetAreaId( const good::string& sName )
     {
-        StringVector::const_iterator it( good::find(m_cAreas.begin(), m_cAreas.end(), sName) );
-        return ( it == m_cAreas.end() )  ?  EAreaIdInvalid  :  ( it - m_cAreas.begin() );
+        StringVector::const_iterator it( good::find(m_aAreas.begin(), m_aAreas.end(), sName) );
+        return ( it == m_aAreas.end() )  ?  EAreaIdInvalid  :  ( it - m_aAreas.begin() );
     }
 
     /// Add new area name.
-    static TAreaId AddAreaName( const good::string& sName ) { m_cAreas.push_back(sName); return m_cAreas.size()-1; }
+    static TAreaId AddAreaName( const good::string& sName ) { m_aAreas.push_back(sName); return m_aAreas.size()-1; }
 
     /// Get waypoint at which player is looking at.
     static TWaypointId GetAimedWaypoint( const Vector& vOrigin, const QAngle& ang );
@@ -333,14 +337,22 @@ public: // Methods.
     /// Draw nearest waypoints around player.
     static void Draw( CClient* pClient );
 
+
+    /// Mark 2 waypoints as unreachable.
+    static void MarkUnreachablePath( TWaypointId iWaypointFrom, TWaypointId iWaypointTo );
+
+    /// Clear unreachable paths.
+    static void ClearUnreachablePaths() { m_aUnreachablePaths.clear(); }
+
+
     /// Analize waypoints.
     static void Analize( edict_t* pClient );
 
-    /// Stop analizing waypoints.
-    static void StopAnalizing();
+    /// Stop analyzing waypoints.
+    static void StopAnalyzing();
 
-    /// Return true if analizing.
-    static bool IsAnalizing() { return m_iAnalizeStep != EAnalizeStepTotal; }
+    /// Return true if analyzing.
+    static bool IsAnalyzing() { return m_iAnalizeStep != EAnalizeStepTotal; }
 
     /// Analize step.
     static void AnalizeStep();
@@ -349,28 +361,32 @@ public: // Methods.
     // For console commands: waypoint analize debug / omit.
     enum
     {
-        EAnalizeWaypointsOmit = 0,
+        EAnalizeWaypointsAdd = 0,
+        EAnalizeWaypointsOmit,
         EAnalizeWaypointsDebug,
         EAnalizeWaypointsTotal,
     };
     typedef int TAnalizeWaypoints;
 
     /// Clear omit/debug waypoints.
-    static void AnalizeClear( TAnalizeWaypoints iWhich ) { m_aWaypointsToOmitOrDebugInAnalize[ iWhich ].clear(); }
+    static void AnalizeClear( TAnalizeWaypoints iWhich ) { m_aWaypointsToAddOmitInAnalize[ iWhich ].clear(); }
 
     /// Omit/debug waypoint for analization next time.
-    static void AnalizeOmitOrDebug( TWaypointId iWaypoint, bool bAdd, TAnalizeWaypoints iWhich ) {
+    static void AnalizeAddPosition( TWaypointId iWaypoint, bool bAdd, TAnalizeWaypoints iWhich ) {
+        good::vector<Vector>& aWhich = m_aWaypointsToAddOmitInAnalize[ iWhich ];
         if ( bAdd )
-            m_aWaypointsToOmitOrDebugInAnalize[ iWhich ].push_back( Get( iWaypoint ).vOrigin );
+            aWhich.push_back( Get( iWaypoint ).vOrigin );
         else
-            m_aWaypointsToOmitOrDebugInAnalize[ iWhich ].erase( good::find( m_aWaypointsToOmitOrDebugInAnalize[ iWhich ], Get( iWaypoint ).vOrigin ) );
+        {
+            good::vector<Vector>::iterator it = good::find( aWhich, Get( iWaypoint ).vOrigin );
+            if ( it != aWhich.end() )
+                aWhich.erase( it );
+        }
     }
 
 
 protected:
     friend class CWaypointNavigator; // Get access to m_cGraph (for A* search implementation).
-
-    static void InvalidatePlayersWaypoints(); // Util after removing some waypoint.
 
     // Analize one waypoint (for AnalizeStep()). Return true, if waypoint has nearby waypoints or new waypoint is added.
     static bool AnalizeWaypoint( TWaypointId iWaypoint, Vector& vPos, Vector& vNew, float fPlayerEye, float fAnalizeDistance,
@@ -445,12 +461,22 @@ protected:
     typedef good::vector<TWaypointId> Bucket;
     static Bucket m_cBuckets[BUCKETS_SIZE_X][BUCKETS_SIZE_Y][BUCKETS_SIZE_Z]; // 3D hash table of arrays of waypoint IDs.
 
-    static StringVector m_cAreas;  // Areas names.
+    static StringVector m_aAreas;  // Areas names.
 
     static WaypointGraph m_cGraph; // Waypoints graph.
     static good::vector< good::bitset > m_aVisTable;
 
-    // Next fields are for analizing functions.
+    // Unreachable path with failed count.
+    typedef struct
+    {
+        Vector vFrom;
+        Vector vTo;
+        int iFailedCount;
+    } unreachable_path_t;
+
+    static good::vector<unreachable_path_t> m_aUnreachablePaths; // Paths marked from bots that are unreachable.
+
+    // Next fields are for analyzing functions.
     enum
     {
         EAnalizeStepNeighbours,    // Check for waypoint neighbours in all directions (left/right/up/down).
@@ -464,7 +490,7 @@ protected:
 
     static good::vector<TWaypointId> m_aWaypointsToAnalize;
     static good::vector<CNeighbour> m_aWaypointsNeighbours; // To know if waypoint made check for neighbours near, initialized during first step.
-    static good::vector<Vector> m_aWaypointsToOmitOrDebugInAnalize[EAnalizeWaypointsTotal];
+    static good::vector<Vector> m_aWaypointsToAddOmitInAnalize[EAnalizeWaypointsTotal];
 
     static TAnalizeStep m_iAnalizeStep;
     static float m_fAnalizeWaypointsForNextFrame; // Positions for next frame to analize.

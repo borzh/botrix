@@ -72,11 +72,15 @@ public:
         if ( pEdict == NULL )
             return false;
 
-        CItemClass* test;
-        const char* szClassName = pEdict->GetClassName();
+        //const char* szClassName = pEdict->GetClassName();
         //BLOG_I("Should hit %s", szClassName);
-        TItemType iType = CItems::GetEntityType( szClassName, test, 0, EItemTypeCollisionTotal );
-        return iType == EItemTypeDoor || iType == EItemTypeOther; // Skip weapons, ammo, health, armor.
+
+        TItemIndex iItemIndex;
+        TItemType iType = CItems::GetItemFromEdict( pEdict, &iItemIndex );
+
+        // Trace only heavy objects / doors (elevators) / other objects.
+        return ( iType == EItemTypeObject && FLAG_SOME_SET( FObjectHeavy, CItems::GetItems( iType )[ iItemIndex ].iFlags ) ) || 
+                 iType == EItemTypeDoor || iType == EItemTypeOther;
     }
 
     virtual TraceType_t	GetTraceType() const
@@ -243,11 +247,14 @@ bool CUtil::IsRayHitsEntity( edict_t* pEntity, const Vector& vSrc, const Vector&
 }
 
 //----------------------------------------------------------------------------------------------------------------
-bool CUtil::IsVisible( const Vector& vSrc, const Vector& vDest, TVisibility iVisibility )
+bool CUtil::IsVisible( const Vector& vSrc, const Vector& vDest, TVisibility iVisibility, bool bUsePVS )
 {
-    CUtil::SetPVSForVector( vSrc );
-    if ( !CUtil::IsVisiblePVS( vDest ) )
-        return false;
+    if ( bUsePVS )
+    {
+        CUtil::SetPVSForVector( vSrc );
+        if ( !CUtil::IsVisiblePVS( vDest ) )
+            return false;
+    }
 
     CTraceFilterWithFlags* pTraceFilter = &GetFilter( iVisibility );
     TraceLine(vSrc, vDest, pTraceFilter->iTraceFlags, pTraceFilter );

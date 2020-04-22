@@ -12,10 +12,17 @@
 #include "source_engine.h"
 #include "type2string.h"
 #include "waypoint.h"
-
+//#include <game/server/iplayerinfo.h>
+#include <game/shared/props_shared.h>
+#include <public/vphysics/friction.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+
+#ifndef BOTRIX_SOURCE_ENGINE_2006
+#define BOTRIX_ENTITY_USE_KEY_VALUE
+#endif
 
 
 extern IVDebugOverlay* pVDebugOverlay;
@@ -25,12 +32,36 @@ extern int iMainBufferSize;
 
 char szValueBuffer[16];
 
-#ifndef BOTRIX_SOURCE_ENGINE_2006
-    #define BOTRIX_ENTITY_USE_KEY_VALUE
-#endif
+typedef struct
+{
+    unsigned short iItemType;
+    unsigned short iItemIndex;
+} fast_edict_index_t;
+
+fast_edict_index_t m_aEdictsIndexes[ MAX_EDICTS ];
 
 //================================================================================================================
-inline int GetEntityFlags( IServerEntity* pServerEntity )
+//inline int GetEntityFlags( IServerEntity* pServerEntity )
+//{
+//    // ObjectCaps(), GetMaxHealth(), IsAlive().
+//    CBaseEntity* pEntity = pServerEntity->GetBaseEntity();
+//    //return pEntity->GetEFlags(); // GetEFlags();
+//    int iFlags1 = pEntity->GetEffects();
+//    int iFlags2 = pEntity->GetEFlags();
+//    int iFlags3 = pEntity->GetFlags();
+//    //int iFlags4 = pEntity->GetSolidFlags();
+//    int iFlags5 = pEntity->GetSpawnFlags();
+//
+//#ifdef BOTRIX_ENTITY_USE_KEY_VALUE
+//    pEntity->GetKeyValue( "ignite", szValueBuffer, 16 );
+//    int flags = atoi( szValueBuffer );
+//    return iFlags5;
+//#else
+//    return pEntity->GetEffects();
+//#endif
+//}
+
+inline int GetEntityEffects( IServerEntity* pServerEntity )
 {
     // ObjectCaps(), GetMaxHealth(), IsAlive().
     CBaseEntity* pEntity = pServerEntity->GetBaseEntity();
@@ -58,20 +89,40 @@ inline int GetEntityHealth( IServerEntity* pServerEntity )
 inline bool IsEntityOnMap( IServerEntity* pServerEntity )
 {
      // EF_BONEMERGE is set for weapon, when picked up.
-    return FLAG_CLEARED( EF_NODRAW | EF_BONEMERGE, GetEntityFlags(pServerEntity) );
-    //return !FLAG_SOME_SET( EF_NODRAW | EF_BONEMERGE, GetEntityFlags(pServerEntity) );
+    return FLAG_CLEARED( EF_NODRAW | EF_BONEMERGE, GetEntityEffects(pServerEntity) );
+    //return !FLAG_SOME_SET( EF_NODRAW | EF_BONEMERGE, GetEntityEffects(pServerEntity) );
 }
 
 inline bool IsEntityTaken( IServerEntity* pServerEntity )
 {
      // EF_BONEMERGE is set for weapon, when picked up.
-    return FLAG_SOME_SET( EF_BONEMERGE, GetEntityFlags(pServerEntity) );
+    return FLAG_SOME_SET( EF_BONEMERGE, GetEntityEffects(pServerEntity) );
 }
 
 inline bool IsEntityBreakable( IServerEntity* pServerEntity )
 {
     return GetEntityHealth(pServerEntity) != 0;
 }
+
+//inline bool CanPickupEntity( IServerEntity* pServerEntity )
+//{
+//    CBaseEntity* pEntity = pServerEntity->GetBaseEntity();
+//    if ( pEntity == NULL )
+//        return false;
+//
+//    // Not working:
+//    IPhysicsObject *pObject = (IPhysicsObject *)pEntity;
+//    if ( pObject )
+//        return pObject->IsMoveable();
+//
+//    // Not working:
+//    int iEFlags = pEntity->GetEFlags();
+//    int iFlags3 = pEntity->GetFlags();
+//    int iFlags4 = pEntity->GetSolidFlags();
+//    int iSpawnFlags = pEntity->GetSpawnFlags();
+//    return !FLAG_SOME_SET( EFL_NO_PHYSCANNON_INTERACTION, iEFlags ) && ( FLAG_SOME_SET( SF_PHYSPROP_ALWAYS_PICK_UP, iSpawnFlags ) ||
+//                                                                         !FLAG_SOME_SET( SF_PHYSPROP_PREVENT_PICKUP, iSpawnFlags ) );
+//}
 
 inline string_t GetEntityName( IServerEntity* pServerEntity )
 {
@@ -92,6 +143,12 @@ bool CItem::IsBreakable() const
     return IsEntityBreakable(pEdict->GetIServerEntity());
 }
 
+//----------------------------------------------------------------------------------------------------------------
+bool CItem::IsTaken() const
+{
+    return IsEntityTaken( pEdict->GetIServerEntity() );
+}
+
 
 //================================================================================================================
 good::vector<CItem> CItems::m_aItems[EItemTypeKnownTotal];            // Array of items.
@@ -99,13 +156,15 @@ good::list<CItemClass> CItems::m_aItemClasses[EItemTypeKnownTotal];   // Array o
 TItemIndex CItems::m_iFreeIndex[EItemTypeKnownTotal];                 // First free weapon index.
 int CItems::m_iFreeEntityCount[EItemTypeKnownTotal];                  // Count of unused entities.
 
-good::vector<edict_t*> CItems::m_aOthers(1024);                       // Array of other entities.
+good::vector<edict_t*> CItems::m_aOthers(256);                        // Array of other entities.
 
 #ifndef BOTRIX_SOURCE_ENGINE_2006
 good::vector<edict_t*> CItems::m_aNewEntities(16);
 #endif
 
 good::vector< good::pair<good::string, TItemFlags> > CItems::m_aObjectFlagsForModels(4);
+good::vector< TItemIndex > CItems::m_aObjectFlags;
+
 good::bitset CItems::m_aUsedItems(MAX_EDICTS);
 int CItems::m_iCurrentEntity;
 int CItems::m_iMaxEntityIndex = MAX_EDICTS;
@@ -123,6 +182,15 @@ void CItems::PrintClasses()
 		for ( good::list<CItemClass>::const_iterator it = aItemClasses.begin(); it != aItemClasses.end(); ++it )
 			BLOG_D( "  Item class %s", it->sClassName.c_str() );
 	}
+}
+
+TItemType CItems::GetItemFromEdict( edict_t* pEdict, TItemIndex* pIndex )
+{
+    GoodAssert( pEdict && pEdict->m_EdictIndex < MAX_EDICTS );
+    const fast_edict_index_t& pLookup = m_aEdictsIndexes[ pEdict->m_EdictIndex ];
+    if ( pIndex )
+        *pIndex = pLookup.iItemIndex;
+    return pLookup.iItemType;
 }
 
 TItemIndex CItems::GetNearestItem( TItemType iEntityType, const Vector& vOrigin, const good::vector<CPickedItem>& aSkip, const CItemClass* pClass )
@@ -209,7 +277,11 @@ void CItems::MapUnloaded()
         }
     }
 
+#ifndef BOTRIX_SOURCE_ENGINE_2006
+    m_aNewEntities.clear();
+#endif
     m_aOthers.clear();
+    m_aObjectFlags.clear();
     m_aUsedItems.reset();
     m_bMapLoaded = false;
 }
@@ -308,6 +380,37 @@ void CItems::Update()
 #endif // BOTRIX_SOURCE_ENGINE_2006
 }
 
+//----------------------------------------------------------------------------------------------------------------
+good::vector<TItemIndex>::iterator LocateObjectFlags( good::vector<TItemIndex>& aFlags, TItemIndex iObject )
+{
+    for ( good::vector<TItemIndex>::iterator it = aFlags.begin(); it != aFlags.end(); it += 2 )
+        if ( *it == iObject )
+            return it;
+    return aFlags.end();
+}
+
+bool CItems::GetObjectFlags( TItemIndex iObject, TItemFlags& iFlags )
+{
+    good::vector<TItemIndex>::const_iterator it = LocateObjectFlags( m_aObjectFlags, iObject );
+    if ( it == m_aObjectFlags.end() )
+        return false;
+    iFlags = *( ++it );
+    return true;
+}
+
+void CItems::SetObjectFlags( TItemIndex iObject, TItemFlags iFlags )
+{
+    good::vector<TItemIndex>::iterator it = LocateObjectFlags( m_aObjectFlags, iObject );
+    if ( it == m_aObjectFlags.end() )
+    {
+        m_aObjectFlags.push_back( iObject );
+        m_aObjectFlags.push_back( iFlags );
+    }
+    else
+        *(++it) = iFlags;
+
+    m_aItems[ EItemTypeObject ][ iObject ].iFlags = iFlags;
+}
 
 //----------------------------------------------------------------------------------------------------------------
 TItemType CItems::GetEntityType( const char* szClassName, CItemClass* & pEntityClass, TItemType iFrom, TItemType iTo )
@@ -408,7 +511,7 @@ void CItems::CheckNewEntity(edict_t* pEdict, bool bLog)
 
 
 //----------------------------------------------------------------------------------------------------------------
-TItemIndex CItems::InsertEntity( int iEntityType, const CItem& cEntity )
+TItemIndex CItems::NewEntityIndex( int iEntityType )
 {
     good::vector<CItem>& aItems = m_aItems[iEntityType];
 
@@ -418,20 +521,15 @@ TItemIndex CItems::InsertEntity( int iEntityType, const CItem& cEntity )
         {
             int iIndex = m_iFreeIndex[iEntityType];
             m_iFreeIndex[iEntityType] = -1;
-            aItems[iIndex] = cEntity;
             return iIndex;
         }
 
-        for ( int i=0; i < aItems.size(); ++i ) // TODO: add free count.
-            if ( aItems[i].pEdict == NULL )
-            {
-                aItems[i] = cEntity;
+        for ( int i = 0; i < aItems.size(); ++i ) // TODO: add free count.
+            if ( aItems[ i ].pEdict == NULL )
                 return i;
-            }
     }
 
-    aItems.push_back( cEntity );
-    return aItems.size() - 1;
+    return aItems.size();
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -512,11 +610,17 @@ TItemIndex CItems::AddItem( TItemType iEntityType, edict_t* pEdict, CItemClass* 
     else
 		iWaypoint = CWaypoints::GetNearestWaypoint( vItemOrigin, NULL, true, CItem::iMaxDistToWaypoint );
 
-    CItem cNewEntity(pEdict, iFlags, fPickupDistanceSqr, pItemClass, vItemOrigin, iWaypoint);
-    TItemIndex iIndex = InsertEntity( iEntityType, cNewEntity );
+    TItemIndex iIndex = NewEntityIndex( iEntityType );
+    m_aEdictsIndexes[ pEdict->m_EdictIndex ] = fast_edict_index_t { iEntityType, iIndex };
 
-    CItem& cEntity = m_aItems[iEntityType][iIndex];
-    AutoWaypointPathFlagsForEntity( iEntityType, iIndex, cEntity );
+    CItem cNewEntity(pEdict, iFlags, fPickupDistanceSqr, pItemClass, vItemOrigin, iWaypoint);
+    AutoWaypointPathFlagsForEntity( iEntityType, iIndex, cNewEntity );
+
+    good::vector<CItem>& aItems = m_aItems[ iEntityType ];
+    if ( iIndex < aItems.size() )
+        aItems[ iIndex ] = cNewEntity;
+    else
+        aItems.push_back( cNewEntity );
 
     return iIndex;
 }
@@ -534,41 +638,37 @@ void CItems::AddObject( edict_t* pEdict, const CItemClass* pObjectClass, IServer
     fMaxsRadiusSqr = FastSqrt( MAX2(fMaxsRadiusSqr, fMinsRadiusSqr) );
     fMaxsRadiusSqr += CMod::iPlayerRadius;
     fMaxsRadiusSqr *= fMaxsRadiusSqr;
+    
+    TItemIndex iIndex = NewEntityIndex( EItemTypeObject );
+    m_aEdictsIndexes[pEdict->m_EdictIndex] = fast_edict_index_t { EItemTypeObject, iIndex };
 
-    int iFlags = pObjectClass->iFlags;
+    TItemFlags iFlags = pObjectClass->iFlags;
 
-    // Get object flags.
-    if ( m_aObjectFlagsForModels.size() )
+    // Get object flags (saved in waypoints).
+    bool bHasFlags = GetObjectFlags( iIndex, iFlags );
+    if ( !bHasFlags )
     {
-        good::string sModel = STRING( pServerEntity->GetModelName() );
-        for ( int i = 0; i < m_aObjectFlagsForModels.size(); ++i )
-            if ( sModel.find( m_aObjectFlagsForModels[i].first ) != good::string::npos )
-            {
-                FLAG_SET(m_aObjectFlagsForModels[i].second, iFlags);
-                break;
-            }
-    }
-
-    good::vector<CItem>& aItems = m_aItems[EItemTypeObject];
-    CItem cObject( pEdict, iFlags, fMaxsRadiusSqr, pObjectClass, pCollidable->GetCollisionOrigin(), -1 );
-    if ( m_bMapLoaded ) // Check if there are free space in items array.
-    {
-        if ( m_iFreeIndex[EItemTypeObject] != -1 )
+        // Get flags from model name.
+        if ( m_aObjectFlagsForModels.size() )
         {
-            CItem& cResult = aItems[m_iFreeIndex[EItemTypeObject]];
-            m_iFreeIndex[EItemTypeObject] = -1;
-            cResult = cObject;
-            return;
+            good::string sModel = STRING( pServerEntity->GetModelName() );
+            for ( int i = 0; i < m_aObjectFlagsForModels.size(); ++i )
+                if ( sModel.find( m_aObjectFlagsForModels[ i ].first ) != good::string::npos )
+                {
+                    FLAG_SET( m_aObjectFlagsForModels[ i ].second, iFlags );
+                    break;
+                }
         }
-
-        for ( int i=0; i < aItems.size(); ++i )
-            if ( aItems[i].pEdict == NULL )
-            {
-                aItems[i] = cObject;
-                return;
-            }
     }
-    aItems.push_back( cObject );
+
+    CItem cObject( pEdict, iFlags, fMaxsRadiusSqr, pObjectClass, pCollidable->GetCollisionOrigin(), -1 );
+
+    good::vector<CItem>& aItems = m_aItems[ EItemTypeObject ];
+    if ( iIndex < aItems.size() )
+        aItems[ iIndex ] = cObject;
+    else
+        aItems.push_back( cObject );
+
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -600,6 +700,9 @@ void CItems::Draw( CClient* pClient )
     int iClusterIndex = CBotrixPlugin::pEngineServer->GetClusterForOrigin( pClient->GetHead() );
     CBotrixPlugin::pEngineServer->GetPVSForCluster( iClusterIndex, sizeof(pvs), pvs );
 
+    Vector vHead = pClient->GetHead();
+    CUtil::SetPVSForVector( vHead );
+    
     for ( TItemType iEntityType = 0; iEntityType < EItemTypeAll; ++iEntityType )
     {
         if ( !FLAG_SOME_SET(1<<iEntityType, pClient->iItemTypeFlags) ) // Don't draw items of disabled item type.
@@ -622,7 +725,7 @@ void CItems::Draw( CClient* pClient )
             ICollideable* pCollide = pServerEntity->GetCollideable();
             const Vector& vOrigin = pCollide->GetCollisionOrigin();
 
-            if ( CUtil::IsVisible(pClient->GetHead(), vOrigin, EVisibilityWorld ) )
+            if ( CUtil::IsVisiblePVS(vOrigin) && CUtil::IsVisible(vHead, vOrigin, EVisibilityWorld, false ) )
             {
                 const CItem* pEntity = (iEntityType == EItemTypeOther) ? NULL : &m_aItems[iEntityType][i];
 
@@ -631,7 +734,8 @@ void CItems::Draw( CClient* pClient )
                     int pos = 0;
 
                     // Draw entity class name name with index.
-                    sprintf( szMainBuffer, "%s %d", CTypeToString::EntityTypeToString(iEntityType).c_str(), i );
+                    sprintf( szMainBuffer, "%s %d", CTypeToString::EntityTypeToString( iEntityType ).c_str(), i );
+
                     CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, szMainBuffer );
 
                     CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, pEdict->GetClassName() );
@@ -645,8 +749,11 @@ void CItems::Draw( CClient* pClient )
                         sprintf( szMainBuffer, "%s %d", CTypeToString::EntityTypeToString(iEntityType).c_str(), i );
                         CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityOnMap(pServerEntity) ? "alive" : "dead" );
                         //CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityTaken(pServerEntity) ? "taken" : "not taken" ); // Taken not shown.
+                        //CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, CanPickupEntity(pServerEntity) ? "moveable" : "static" ); // Taken not shown.
                         CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, IsEntityBreakable(pServerEntity) ? "breakable" : "non breakable" );
-                        CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, CTypeToString::EntityClassFlagsToString(pEntity->iFlags).c_str() );
+                        const char* sFlags = CTypeToString::EntityClassFlagsToString( pEntity->iFlags, false ).c_str();
+                        if ( sFlags[0] != 0 )
+                            CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, sFlags);
                     }
 
                     if ( iEntityType >= EItemTypeObject ) // Draw object model.

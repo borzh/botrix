@@ -82,7 +82,7 @@ public:
 
     // Reference: https://developer.valvesoftware.com/wiki/UTIL_TraceLine
     /// Return true if vDest is visible from vSrc.
-    static bool IsVisible( const Vector& vSrc, const Vector& vDest, TVisibility iVisibility );
+    static bool IsVisible( const Vector& vSrc, const Vector& vDest, TVisibility iVisibility, bool bUsePVS = true );
     /// Return true if entity is visible from vSrc.
     static bool IsVisible( const Vector& vSrc, edict_t* pDest );
     /// Return true if can get from vSrc to vDest walking or jumping.

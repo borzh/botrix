@@ -250,11 +250,18 @@ public:
     CWaypointAnalizeToggleCommand()
     {
         m_sCommand = "toggle";
-        m_sHelp = "start / stop analizing waypoints for current map";
+        m_sHelp = "start / stop analyzing waypoints for current map";
         m_sDescription = "This is a time consuming operation, so be patient.";
         m_iAccessLevel = FCommandAccessWaypoint;
     }
 
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CWaypointAnalizeCreateCommand: public CConsoleCommand
+{
+public:
+    CWaypointAnalizeCreateCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
@@ -279,6 +286,7 @@ public:
     {
         m_sCommand = "analize";
         Add( new CWaypointAnalizeToggleCommand );
+        Add( new CWaypointAnalizeCreateCommand );
         Add( new CWaypointAnalizeDebugCommand );
         Add( new CWaypointAnalizeOmitCommand );
     }
@@ -983,32 +991,18 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
+class CItemMarkCommand: public CConsoleCommand
+{
+public:
+    CItemMarkCommand();
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
 
 class CItemReloadCommand: public CConsoleCommand
 {
 public:
-    CItemReloadCommand()
-    {
-        m_sCommand = "reload";
-        m_sHelp = "reload all items (will recalculate nearest waypoints)";
-        m_iAccessLevel = FCommandAccessWaypoint;
-    }
-
-    TCommandResult Execute( CClient* pClient, int argc, const char** argv )
-    {
-		if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
-			return ECommandPerformed;
-
-		if ( !CBotrixPlugin::instance->bMapRunning )
-		{
-			BULOG_W( pClient ? pClient->GetEdict() : NULL, "Error: no map is loaded." );
-			return ECommandError;
-		}
-
-        CItems::MapUnloaded();
-		CItems::MapLoaded(true);
-        return ECommandPerformed;
-    }
+    CItemReloadCommand();
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
 
@@ -1096,7 +1090,7 @@ public:
     CConfigWaypointAnalizeDistance()
     {
         m_sCommand = "distance";
-        m_sHelp = "default distance between waypoints when analizing the map";
+        m_sHelp = "default distance between waypoints when analyzing the map";
         m_iAccessLevel = FCommandAccessConfig;
     }
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
@@ -1113,6 +1107,20 @@ public:
     }
 };
 
+class CConfigWaypointUnreachable: public CConsoleCommand
+{
+public:
+    CConfigWaypointUnreachable();
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CConfigWaypointSave: public CConsoleCommand
+{
+public:
+    CConfigWaypointSave();
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
 class CConfigWaypoint: public CConsoleCommandContainer
 {
 public:
@@ -1120,6 +1128,8 @@ public:
     {
         m_sCommand = "waypoint";
         m_aCommands.push_back( new CConfigWaypointAnalize );
+        m_aCommands.push_back( new CConfigWaypointSave );
+        m_aCommands.push_back( new CConfigWaypointUnreachable );
     }
 };
 //****************************************************************************************************************
@@ -1216,9 +1226,10 @@ public:
     CItemCommand()
     {
         m_sCommand = "item";
-        Add(new CItemDrawCommand);
-        Add(new CItemDrawTypeCommand);
-        Add(new CItemReloadCommand);
+        Add( new CItemDrawCommand );
+        Add( new CItemDrawTypeCommand );
+        Add( new CItemMarkCommand );
+        Add( new CItemReloadCommand );
     }
 };
 

@@ -461,7 +461,7 @@ find_enemy:
         // Check if waypoint to go to is valid.
         if ( (m_iTaskDestination == EWaypointIdInvalid) || (m_iTaskDestination == iCurrentWaypoint) )
         {
-            BLOG_W( "%s -> Task %s, invalid destination waypoint %d (current %d), recalculate task.", GetName(),
+            BotDebug( "%s -> Task %s, invalid destination waypoint %d (current %d), recalculate task.", GetName(),
                     CTypeToString::BotTaskToString(m_iCurrentTask).c_str(), m_iTaskDestination, iCurrentWaypoint );
             m_iCurrentTask = -1;
             m_bNeedTaskCheck = true; // Check new task in next frame.

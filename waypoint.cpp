@@ -56,6 +56,7 @@ float CWaypoint::fAnalizeWaypointsPerFrame = 0.05;
 #endif
 
 bool CWaypoint::bSaveOnMapChange = false;
+bool CWaypoint::bAnalizeTraceAll = true;
 
 
 const TWaypointFlags CWaypoint::m_aFlagsForEntityType[ EItemTypeCanPickTotal ] =

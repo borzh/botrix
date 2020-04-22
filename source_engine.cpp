@@ -45,13 +45,11 @@ public:
         switch ( iVisibility )
         {
             case EVisibilityWorld:
-                iTraceFlags = MASK_PLAYERSOLID_BRUSHONLY;
+            case EVisibilityOtherProps:
+                iTraceFlags = MASK_SOLID_BRUSHONLY;
                 break;
             case EVisibilitySeeAndShoot:
-                iTraceFlags = MASK_VISIBLE | MASK_SHOT;
-                break;
-            case EVisibilityOtherProps:
-                iTraceFlags = MASK_PLAYERSOLID; // MASK_SOLID_BRUSHONLY?
+                iTraceFlags = MASK_VISIBLE;// | MASK_SHOT;
                 break;
             default:
                 BASSERT(false);
@@ -66,17 +64,23 @@ public:
 
         // Should trace players only if the visibility is for shooting.
         if ( index < 1 + CPlayers::Size() )
-            return false;//iVisibility == EVisibilitySeeAndShoot; 
-
-        edict_t *pEdict = CBotrixPlugin::instance->pEngineServer->PEntityOfEntIndex( index );
-        if ( pEdict == NULL )
             return false;
 
-        //const char* szClassName = pEdict->GetClassName();
-        //BLOG_I("Should hit %s", szClassName);
+        if ( iVisibility == EVisibilitySeeAndShoot || !CWaypoints::IsAnalyzing() || CWaypoint::bAnalizeTraceAll )
+            return true; // For shooting, trace everything.
+
+        edict_t *pEdict = CBotrixPlugin::instance->pEngineServer->PEntityOfEntIndex( index );
+        if ( pEdict == NULL ) // For just in case...
+            return true;
 
         TItemIndex iItemIndex;
         TItemType iType = CItems::GetItemFromEdict( pEdict, &iItemIndex );
+
+        if ( !CWaypoints::IsAnalyzing() )
+        {
+            const char* szClassName = pEdict->GetClassName();
+            BLOG_T( "Should hit %s %d (id %d): %s.", CTypeToString::EntityTypeToString( iType ).c_str(), iItemIndex, pEdict->m_EdictIndex, szClassName );
+        }
 
         // Trace only heavy objects / doors (elevators) / other objects.
         return ( iType == EItemTypeObject && FLAG_SOME_SET( FObjectHeavy, CItems::GetItems( iType )[ iItemIndex ].iFlags ) ) || 

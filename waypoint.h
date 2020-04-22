@@ -41,6 +41,8 @@ public: // Members and constants.
 
     static bool bSaveOnMapChange;                   ///< Save waypoints on map change.
 
+    static bool bAnalizeTraceAll;                   ///< Trace against all entities in analize.
+
     Vector vOrigin;                                 ///< Coordinates of waypoint (x, y, z).
     TWaypointFlags iFlags;                          ///< Waypoint flags.
     TWaypointArgument iArgument;                                  ///< Waypoint argument (button number).

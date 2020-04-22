@@ -997,6 +997,33 @@ TCommandResult CWaypointAnalizeOmitCommand::Execute( CClient* pClient, int argc,
     return WaypointAnalizeAux( pClient, argc, argv, CWaypoints::EAnalizeWaypointsOmit );
 }
 
+TCommandResult CWaypointAnalizeTraceCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+        return ECommandPerformed;
+
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+
+    if ( argc > 1 )
+    {
+        BULOG_I( pEdict, "Invalid parameters count." );
+        return ECommandError;
+    }
+    if ( argc == 1 )
+    {
+        int iTrace = CTypeToString::BoolFromString( argv[ 0 ] );
+        if ( iTrace == -1 )
+        {
+            BULOG_W( pEdict, "Error, invalid parameter: %s.", argv[ 0 ] );
+            return ECommandError;
+        }
+
+        CWaypoint::bAnalizeTraceAll = ( iTrace != 0 );
+    }
+    BULOG_I( pEdict, "Ray tracing against all entities: %s.", CWaypoint::bAnalizeTraceAll ? "on" : "off" );
+    return ECommandPerformed;
+}
+
 TCommandResult CWaypointRemoveTypeCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )

@@ -734,7 +734,7 @@ void CItems::Draw( CClient* pClient )
                     int pos = 0;
 
                     // Draw entity class name name with index.
-                    sprintf( szMainBuffer, "%s %d", CTypeToString::EntityTypeToString( iEntityType ).c_str(), i );
+                    sprintf( szMainBuffer, "%s %d (id %d)", CTypeToString::EntityTypeToString( iEntityType ).c_str(), i, pEdict->m_EdictIndex );
 
                     CUtil::DrawText( vOrigin, pos++, 1.0f, 0xFF, 0xFF, 0xFF, szMainBuffer );
 

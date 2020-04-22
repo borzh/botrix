@@ -279,6 +279,24 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
+class CWaypointAnalizeTraceCommand: public CConsoleCommand
+{
+public:
+    CWaypointAnalizeTraceCommand()
+    {
+        m_sCommand = "trace";
+        m_sHelp = "ray trace all entities";
+        m_sDescription = "Parameter: (on / off). When on, ray tracing will hit weapon/ammo/health/armor/non heavy objects, "
+            "so waypoints will be placed on top of those entities. It is better 'off' for manual waypoint editing, but this "
+            "can add waypoints in invalid positions.";
+        m_iAccessLevel = FCommandAccessWaypoint;
+
+        m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
+        m_cAutoCompleteValues.push_back( StringVector() );
+    }
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
 class CWaypointAnalizeCommand: public CConsoleCommandContainer
 {
 public:
@@ -289,6 +307,7 @@ public:
         Add( new CWaypointAnalizeCreateCommand );
         Add( new CWaypointAnalizeDebugCommand );
         Add( new CWaypointAnalizeOmitCommand );
+        Add( new CWaypointAnalizeTraceCommand );
     }
 };
 
@@ -1107,17 +1126,17 @@ public:
     }
 };
 
-class CConfigWaypointUnreachable: public CConsoleCommand
-{
-public:
-    CConfigWaypointUnreachable();
-    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
-};
-
 class CConfigWaypointSave: public CConsoleCommand
 {
 public:
     CConfigWaypointSave();
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
+class CConfigWaypointUnreachable: public CConsoleCommand
+{
+public:
+    CConfigWaypointUnreachable();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 

@@ -33,7 +33,7 @@ TTeam CBot::iDefaultTeam = 0;
 TClass CBot::iDefaultClass = -1;
 int CBot::iChangeClassRound = 0;
 
-TFightStrategyFlags CBot::iDefaultFightStrategy = FFightStrategyRunAwayIfNear | FFightStrategyComeCloserIfFar;
+TFightStrategyFlags CBot::iDefaultFightStrategy = FFightStrategyComeCloserIfFar;
 float CBot::fNearDistanceSqr = SQR(200);
 float CBot::fFarDistanceSqr = SQR(500);
 float CBot::fInvalidWaypointSuicideTime = 10.0f;

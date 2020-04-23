@@ -184,10 +184,10 @@ void CItems::PrintClasses()
 	}
 }
 
-TItemType CItems::GetItemFromEdict( edict_t* pEdict, TItemIndex* pIndex )
+TItemType CItems::GetItemFromId( TItemId iId, TItemIndex* pIndex )
 {
-    GoodAssert( pEdict && pEdict->m_EdictIndex < MAX_EDICTS );
-    const fast_edict_index_t& pLookup = m_aEdictsIndexes[ pEdict->m_EdictIndex ];
+    GoodAssert( 0 <= iId && iId < MAX_EDICTS );
+    const fast_edict_index_t& pLookup = m_aEdictsIndexes[ iId ];
     if ( pIndex )
         *pIndex = pLookup.iItemIndex;
     return pLookup.iItemType;
@@ -260,7 +260,7 @@ void CItems::Freed( const edict_t* pEdict )
 #endif // BOTRIX_SOURCE_ENGINE_2006
 
 //----------------------------------------------------------------------------------------------------------------
-void CItems::MapUnloaded()
+void CItems::MapUnloaded( bool bClearObjectFlags )
 {
     for ( TItemType iEntityType = 0; iEntityType < EItemTypeKnownTotal; ++iEntityType )
     {
@@ -281,7 +281,8 @@ void CItems::MapUnloaded()
     m_aNewEntities.clear();
 #endif
     m_aOthers.clear();
-    m_aObjectFlags.clear();
+    if ( bClearObjectFlags )
+        m_aObjectFlags.clear();
     m_aUsedItems.reset();
     m_bMapLoaded = false;
 }
@@ -297,6 +298,7 @@ void CItems::MapLoaded(bool bLog)
 
     for ( int i = m_iCurrentEntity; i < MAX_EDICTS; ++i )
     {
+        m_aEdictsIndexes[ i ] = fast_edict_index_t { EItemTypeInvalid, EItemIndexInvalid };
         edict_t* pEdict = CBotrixPlugin::pEngineServer->PEntityOfEntIndex(i);
         if ( (pEdict == NULL) || pEdict->IsFree() )
             continue;
@@ -381,26 +383,33 @@ void CItems::Update()
 }
 
 //----------------------------------------------------------------------------------------------------------------
-good::vector<TItemIndex>::iterator LocateObjectFlags( good::vector<TItemIndex>& aFlags, TItemIndex iObject )
+good::vector<TItemId>::iterator LocateObjectFlags( good::vector<TItemId>& aFlags, TItemId iObject )
 {
-    for ( good::vector<TItemIndex>::iterator it = aFlags.begin(); it != aFlags.end(); it += 2 )
+    for ( good::vector<TItemId>::iterator it = aFlags.begin(); it != aFlags.end(); it += 2 )
         if ( *it == iObject )
             return it;
     return aFlags.end();
 }
 
-bool CItems::GetObjectFlags( TItemIndex iObject, TItemFlags& iFlags )
+bool CItems::GetObjectFlags( TItemId iObject, TItemFlags& iFlags )
 {
-    good::vector<TItemIndex>::const_iterator it = LocateObjectFlags( m_aObjectFlags, iObject );
+    good::vector<TItemId>::const_iterator it = LocateObjectFlags( m_aObjectFlags, iObject );
     if ( it == m_aObjectFlags.end() )
         return false;
     iFlags = *( ++it );
     return true;
 }
 
-void CItems::SetObjectFlags( TItemIndex iObject, TItemFlags iFlags )
+bool CItems::SetObjectFlags( TItemId iObject, TItemFlags iFlags )
 {
-    good::vector<TItemIndex>::iterator it = LocateObjectFlags( m_aObjectFlags, iObject );
+    GoodAssert( 0 <= iObject && iObject < MAX_EDICTS );
+    if ( m_aEdictsIndexes[ iObject ].iItemType != EItemTypeObject )
+        return false;
+    
+    int iIndex = m_aEdictsIndexes[ iObject ].iItemIndex;
+    m_aItems[ EItemTypeObject ][ iIndex ].iFlags = iFlags;
+
+    good::vector<TItemId>::iterator it = LocateObjectFlags( m_aObjectFlags, iObject );
     if ( it == m_aObjectFlags.end() )
     {
         m_aObjectFlags.push_back( iObject );
@@ -409,7 +418,7 @@ void CItems::SetObjectFlags( TItemIndex iObject, TItemFlags iFlags )
     else
         *(++it) = iFlags;
 
-    m_aItems[ EItemTypeObject ][ iObject ].iFlags = iFlags;
+    return true;
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -645,7 +654,7 @@ void CItems::AddObject( edict_t* pEdict, const CItemClass* pObjectClass, IServer
     TItemFlags iFlags = pObjectClass->iFlags;
 
     // Get object flags (saved in waypoints).
-    bool bHasFlags = GetObjectFlags( iIndex, iFlags );
+    bool bHasFlags = GetObjectFlags( pEdict->m_EdictIndex, iFlags );
     if ( !bHasFlags )
     {
         // Get flags from model name.

@@ -38,10 +38,13 @@ public: // Members and constants.
     static int iAnalizeDistance;                    ///< Distance between waypoints when analyzing a map.
     static int iWaypointsMaxCountToAnalizeMap;      ///< Maximum waypoints count to start analyzing a map.
     static float fAnalizeWaypointsPerFrame;         ///< Positions per frame to analize.
+    static bool bShowAnalizePotencialWaypoints;     ///< Show potencial waypoints with white line. Show from console command, hide from map change.
 
     static bool bSaveOnMapChange;                   ///< Save waypoints on map change.
 
-    static bool bAnalizeTraceAll;                   ///< Trace against all entities in analize.
+    /// Trace against all entities in analize. The issue is that ray tracing sometimes returns some entity (like box shell or object)
+    /// instead of hit world. By enabling all trace, we make sure that we won't be adding waypoints at invalid positions.
+    static bool bAnalizeTraceAll;                   
 
     Vector vOrigin;                                 ///< Coordinates of waypoint (x, y, z).
     TWaypointFlags iFlags;                          ///< Waypoint flags.
@@ -348,7 +351,7 @@ public: // Methods.
 
 
     /// Analize waypoints.
-    static void Analize( edict_t* pClient );
+    static void Analize( edict_t* pClient, bool bShowLines = false );
 
     /// Stop analyzing waypoints.
     static void StopAnalyzing();

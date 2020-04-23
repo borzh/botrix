@@ -67,20 +67,27 @@ public:
             return false;
 
         if ( iVisibility == EVisibilitySeeAndShoot || !CWaypoints::IsAnalyzing() || CWaypoint::bAnalizeTraceAll )
-            return true; // For shooting, trace everything.
+            return true; // Trace everything for shooting / analyzing with all trace.
 
+        // Here we know for sure that we are analyzing the map.
         edict_t *pEdict = CBotrixPlugin::instance->pEngineServer->PEntityOfEntIndex( index );
-        if ( pEdict == NULL ) // For just in case...
+        if ( pEdict == NULL ) //Sometimes happens.
             return true;
 
         TItemIndex iItemIndex;
-        TItemType iType = CItems::GetItemFromEdict( pEdict, &iItemIndex );
+        TItemType iType = CItems::GetItemFromId( pEdict->m_EdictIndex, &iItemIndex );
 
-        if ( !CWaypoints::IsAnalyzing() )
-        {
-            const char* szClassName = pEdict->GetClassName();
-            BLOG_T( "Should hit %s %d (id %d): %s.", CTypeToString::EntityTypeToString( iType ).c_str(), iItemIndex, pEdict->m_EdictIndex, szClassName );
-        }
+        //ICollideable* pCollideable = pEdict->GetCollideable();
+        //if ( pCollideable )
+        //{
+
+        //}
+
+        //if ( !CWaypoints::IsAnalyzing() )
+        //{
+        //    const char* szClassName = pEdict->GetClassName();
+        //    BLOG_T( "Should hit %s %d (id %d): %s.", CTypeToString::EntityTypeToString( iType ).c_str(), iItemIndex, pEdict->m_EdictIndex, szClassName );
+        //}
 
         // Trace only heavy objects / doors (elevators) / other objects.
         return ( iType == EItemTypeObject && FLAG_SOME_SET( FObjectHeavy, CItems::GetItems( iType )[ iItemIndex ].iFlags ) ) || 
@@ -361,60 +368,55 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, Vector& vDest, bool& b
     bool bAlreadyJumped = false;
     TReach iResult = EReachReachable;
 
-    //TraceHull( vSrcGround, vDestGround, vMins, vMaxs, cTraceFilter.iTraceFlags, &cTraceFilter );
-    //Vector vHit = TraceResult().endpos;
+    // Need to trace several times to know if can jump up all obstacles.
+    Vector vHit = vSrcGround;
+    Vector vDirection = vDestGround - vSrcGround;
+    vDirection.z = 0.0f; // We need only X-Y direction.
+    vDirection.NormalizeInPlace();
+    vDirection *= 1.0;
 
-    //if ( !IsTraceHitSomething() ) // Check if can climb up slope.
-    //{
-    //    if ( bShowHelp )
-    //        DrawLine(vSrcGround, vDestGround, iTextTime, 0xFF, 0xFF, 0xFF);
-    //    iResult = CanClimbSlope(vSrcGround, vDestGround);
-    //}
-    //else
+
+    bool bNeedJump = false;
+    int i = 0;
+    for ( ; i < iMaxTraceRaysForReachable && !EqualVectors(vHit, vDestGround); ++i )
     {
-        // Need to trace several times to know if can jump up all obstacles.
-        Vector vHit = vSrcGround;
-        Vector vDirection = vDestGround - vSrcGround;
-        vDirection.z = 0.0f; // We need only X-Y direction.
-        vDirection.NormalizeInPlace();
-        vDirection *= 1.0;
+        Vector vStart = vHit;
 
+        // Trace from hit point to the floor.
+        bool bCanPassOrJump = CanPassOrJump( vHit, vDirection, vMins, vMaxs, vJumpMaxs, bNeedJump, bShowHelp );
 
-        bool bNeedJump = false;
-        for ( int i = 0; i < iMaxTraceRaysForReachable && !EqualVectors(vHit, vDestGround); ++i )
+        if ( bShowHelp )
+            DrawLine( vStart + vOffset, vHit + vOffset, iTextTime, r, g, b );
+
+        if ( !bCanPassOrJump )
         {
-            Vector vStart = vHit;
-
-            // Trace from hit point to the floor.
-            bool bCanPassOrJump = CanPassOrJump( vHit, vDirection, vMins, vMaxs, vJumpMaxs, bNeedJump, bShowHelp );
-
             if ( bShowHelp )
-                DrawLine( vStart + vOffset, vHit + vOffset, iTextTime, r, g, b );
+                DrawText( vHit, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Too high to jump" );
+            return EReachNotReachable;
+        }
 
-            if ( !bCanPassOrJump )
+        if ( bNeedJump )
+        {
+            if ( bAlreadyJumped )
             {
                 if ( bShowHelp )
-                    DrawText( vHit, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Too high to jump" );
+                    CUtil::DrawText( vHit, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Can't jump twice" );
                 return EReachNotReachable;
             }
-
-            if ( bNeedJump )
-            {
-                if ( bAlreadyJumped )
-                {
-                    if ( bShowHelp )
-                        CUtil::DrawText( vHit, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Can't jump twice" );
-                    return EReachNotReachable;
-                }
-                bAlreadyJumped = true;
-            }
+            bAlreadyJumped = true;
         }
     }
-
+    
     // Set text position.
     Vector vText = (vSrcGround + vDestGround) / 2;
     vText.z += iRandom * 10;
 
+    if ( i == iMaxTraceRaysForReachable )
+    {
+        CUtil::DrawText( vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Destination high" );
+        return EReachNotReachable;
+    }
+    
     switch (iResult)
     {
     case EReachReachable:

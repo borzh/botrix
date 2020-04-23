@@ -184,7 +184,8 @@ void CBot_HL2DM::CheckEngagedEnemy()
         if ( m_pCurrentEnemy ) // Seeing new enemy.
         {
             m_pChasedEnemy = m_pCurrentEnemy;
-            m_bChasing = CWeapons::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsMelee();
+            m_bChasing = CWeapons::IsValid(m_iWeapon) && (m_aWeapons[m_iWeapon].IsMelee() || 
+                                                          m_aWeapons[ m_iWeapon ].NeedsToBeCloser( m_fDistanceSqrToEnemy ) );
             m_bNeedMove = m_bUseNavigatorToMove = false; // Start moving on next tick.
         }
         else
@@ -233,7 +234,7 @@ void CBot_HL2DM::CheckEngagedEnemy()
                     m_vDestination = m_pCurrentEnemy->GetHead();
                     m_bNeedMove = true;
                 }
-                else
+                else if ( !m_bChasing || (CBotrixPlugin::fTime >= m_fChaseEnemyTime) )
                     ChaseEnemy();
                 return;
             }
@@ -241,20 +242,21 @@ void CBot_HL2DM::CheckEngagedEnemy()
                       CWaypoint::IsValid(m_pCurrentEnemy->iCurrentWaypoint) &&
                       (m_iIntelligence >= EBotNormal) )
             {
-                if ( FLAG_SOME_SET(FFightStrategyRunAwayIfNear, CBot::iDefaultFightStrategy) &&
+                bool bNeedComeCloser = m_aWeapons[ m_iWeapon ].IsMelee() || m_aWeapons[ m_iWeapon ].NeedsToBeCloser( m_fDistanceSqrToEnemy );
+                if ( bNeedComeCloser || ( FLAG_SOME_SET( FFightStrategyComeCloserIfFar, CBot::iDefaultFightStrategy ) &&
+                                          m_fDistanceSqrToEnemy >= CBot::fNearDistanceSqr ) )
+                {
+                    // Try to come closer a little.
+                    iNextWaypoint = CWaypoints::GetNearestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true );
+                    BotDebug( "%s -> Moving to nearest waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+                    return;
+                }
+                else if ( FLAG_SOME_SET(FFightStrategyRunAwayIfNear, CBot::iDefaultFightStrategy) &&
                      (m_fDistanceSqrToEnemy <= CBot::fNearDistanceSqr) )
                 {
                     // Try to run away a little.
                     iNextWaypoint = CWaypoints::GetFarestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true );
                     BotDebug( "%s -> Moving to farest waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
-                    return;
-                }
-                else if ( FLAG_SOME_SET(FFightStrategyComeCloserIfFar, CBot::iDefaultFightStrategy) &&
-                          m_fDistanceSqrToEnemy >= CBot::fNearDistanceSqr )
-                {
-                    // Try to come closer a little.
-                    iNextWaypoint = CWaypoints::GetNearestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true );
-                    BotDebug( "%s -> Moving to nearest waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
                     return;
                 }
             }
@@ -263,12 +265,14 @@ void CBot_HL2DM::CheckEngagedEnemy()
         iNextWaypoint = CWaypoints::GetRandomNeighbour(iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true);
 		BotDebug( "%s -> Moving to random neighbour waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
     }
-    else if ( m_pCurrentEnemy && m_bUseNavigatorToMove &&
-              CWeapons::IsValid(m_iWeapon) && !m_aWeapons[m_iWeapon].IsMelee() )
-        m_bNeedMove = m_bUseNavigatorToMove = false;
-    else if ( m_bChasing && (iCurrentWaypoint != m_pChasedEnemy->iCurrentWaypoint ) &&
-              (CBotrixPlugin::fTime >= m_fChaseEnemyTime) )
-        ChaseEnemy(); // Recalculate route to enemy every 3 seconds.
+    else if ( m_pCurrentEnemy )
+    {
+        if ( m_bUseNavigatorToMove && CWeapons::IsValid(m_iWeapon) && 
+             ( !m_aWeapons[m_iWeapon].IsMelee() && !m_aWeapons[m_iWeapon].NeedsToBeCloser(m_fDistanceSqrToEnemy) ) )
+            m_bNeedMove = m_bUseNavigatorToMove = false; // Stop running and start moving randomly.
+        else if ( m_bChasing && (iCurrentWaypoint != m_pChasedEnemy->iCurrentWaypoint ) && (CBotrixPlugin::fTime >= m_fChaseEnemyTime) )
+            ChaseEnemy(); // Recalculate route to enemy every 3 seconds.
+    }
 }
 
 

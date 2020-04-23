@@ -1619,7 +1619,7 @@ TCommandResult CWaypointLoadCommand::Execute( CClient* pClient, int argc, const 
 	if (result)
         BULOG_I(pClient->GetEdict(), "%d waypoints loaded for map %s.", CWaypoints::Size(), CBotrixPlugin::instance->sMapName.c_str() );
     else
-        BULOG_E( pClient->GetEdict(), "Error, could not load waypoints for %s.", CBotrixPlugin::instance->sMapName.c_str() );
+        BULOG_E( pClient->GetEdict(), "Error, could not load waypoints for map %s.", CBotrixPlugin::instance->sMapName.c_str() );
 
 	CItems::MapUnloaded();
 	CItems::MapLoaded(true);
@@ -3940,11 +3940,12 @@ CItemMarkCommand::CItemMarkCommand()
 {
     m_sCommand = "mark";
     m_sHelp = "add object flags (object only)";
-    m_sDescription = good::string( "Parameters: <object-index-not-id> (flags). 'flags' can be mix of: " ) + CTypeToString::EntityClassFlagsToString( FEntityAll );
+    m_sDescription = good::string( "Parameters: <object-id-not-index> (flags). 'flags' can be mix of: " ) + CTypeToString::EntityClassFlagsToString( FEntityAll );
     m_iAccessLevel = FCommandAccessWaypoint;
 
     StringVector args0;
     args0.push_back( sClear );
+    args0.push_back( "<object-id>" );
 
     m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
     m_cAutoCompleteValues.push_back( args0 );
@@ -3970,7 +3971,7 @@ TCommandResult CItemMarkCommand::Execute( CClient* pClient, int argc, const char
 
     if ( argc == 0 )
     {
-        const good::vector<TItemIndex>& aItems = CItems::GetObjectsFlags();
+        const good::vector<TItemId>& aItems = CItems::GetObjectsFlags();
         for ( int i = 0; i < aItems.size(); ++i )
             BULOG_I( pClient->GetEdict(), "Object id %d: %s", aItems[i], CTypeToString::EntityClassFlagsToString( aItems[ ++i ] ).c_str() );
         return ECommandPerformed;
@@ -3978,24 +3979,18 @@ TCommandResult CItemMarkCommand::Execute( CClient* pClient, int argc, const char
 
     if ( argc == 1 && sClear == argv[ 0 ] )
     {
-        good::vector<TItemIndex> aObjectFlags;
+        good::vector<TItemId> aObjectFlags;
         CItems::SetObjectsFlags( aObjectFlags );
         BULOG_I( pClient->GetEdict(), "Objects flags cleared. Please reload items to take effect." );
         return ECommandPerformed;
     }
     
-    int iIndex = -1;
-    if ( sscanf( argv[0], "%d", &iIndex ) != 1 )
-        iIndex = -1;
+    int iId = -1;
+    if ( sscanf( argv[0], "%d", &iId ) != 1 )
+        iId = -1;
 
-    if ( iIndex < 0 || iIndex >= CItems::GetItems(EItemTypeObject).size() )
-    {
-        BULOG_W( pClient->GetEdict(), "Error, invalid object index: %s.", argv[0] );
-        return ECommandError;
-    }
     // Retrieve flags from string arguments.
     TItemFlags iFlags = FEntityNone;
-
     for ( int i = 1; i < argc; ++i )
     {
         int iAddFlag = CTypeToString::EntityClassFlagsFromString( argv[ i ] );
@@ -4007,12 +4002,16 @@ TCommandResult CItemMarkCommand::Execute( CClient* pClient, int argc, const char
         }
         FLAG_SET( iAddFlag, iFlags );
     }
+
     if ( argc == 1 )
-        CItems::GetObjectFlags( iIndex, iFlags );
-    else
-        CItems::SetObjectFlags( iIndex, iFlags );
-  
-    BULOG_I( pClient->GetEdict(), "Entity %d: %s.", iIndex, CTypeToString::EntityClassFlagsToString( iFlags ).c_str() );
+        CItems::GetObjectFlags( iId, iFlags );
+    else if ( !CItems::SetObjectFlags( iId, iFlags ) )
+    {
+        BULOG_W( pClient->GetEdict(), "Error, invalid object id: %s.", argv[ 0 ] );
+        return ECommandError;
+    }
+
+    BULOG_I( pClient->GetEdict(), "Object %d: %s.", iId, CTypeToString::EntityClassFlagsToString( iFlags ).c_str() );
     
     return ECommandPerformed;
 }

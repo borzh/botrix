@@ -551,7 +551,7 @@ void CBotrixPlugin::LevelShutdown( void )
         CWaypoints::AnalizeClear( i );
 
     CPlayers::Clear();
-    CItems::MapUnloaded();
+    CItems::MapUnloaded( true );
 
 #ifdef USE_OLD_GAME_EVENT_MANAGER
     pGameEventManager->RemoveListener(this);
@@ -781,5 +781,5 @@ void CBotrixPlugin::ActivateLevel( int iMaxPlayers )
     BLOG_I("Level \"%s\" has been loaded.", sMapName.c_str());
 
     if ( CWaypoints::Size() <= CWaypoint::iWaypointsMaxCountToAnalizeMap )
-        CWaypoints::Analize( NULL );
+        CWaypoints::Analize( NULL, false );
 }

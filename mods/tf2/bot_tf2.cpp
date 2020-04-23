@@ -10,13 +10,13 @@
 #include "mods/tf2/bot_tf2.h"
 
 
-extern char* szMainBuffer;
-extern int iMainBufferSize;
-
-
 #ifdef _WIN32
     #pragma warning(disable:4706) // Assignment in expression.
 #endif
+
+
+extern char* szMainBuffer;
+extern int iMainBufferSize;
 
 
 bool CBot_TF2::bCanJoinTeams = true;
@@ -100,19 +100,23 @@ void CBot_TF2::HurtBy( int iPlayerIndex, CPlayer* pAttacker, int iHealthNow )
         m_bNeedTaskCheck = true; // Check if need search for health.
 }
 
+
 //----------------------------------------------------------------------------------------------------------------
 void CBot_TF2::Think()
 {
     GoodAssert( !m_bTest );
     if ( !m_bAlive )
     {
-        m_cCmd.buttons = rand() & IN_ATTACK; // TODO: force bot to respawn by hitting randomly attack button?
+        m_cCmd.buttons = rand() & IN_ATTACK; // Force bot to respawn by hitting randomly attack button.
         return;
     }
 
     bool bForceNewTask = false;
 
-    // Check for move failure.
+	if ( !m_bNeedMove && !m_bResolvingStuck && !m_pCurrentEnemy )
+		m_bMoveFailure = true;
+
+	// Check for move failure.
     if ( m_bMoveFailure )
     {
         if ( m_bUseNavigatorToMove )
@@ -144,7 +148,7 @@ void CBot_TF2::Think()
         else
             m_bNeedMove = false; // As if we got to the needed destination.
 
-        m_bMoveFailure = m_bStuck = false;
+        m_bMoveFailure = m_bStuck = m_bResolvingStuck = false;
     }
 
     // Check if needs to add new tasks.
@@ -194,7 +198,8 @@ void CBot_TF2::CheckEngagedEnemy()
         if ( m_pCurrentEnemy ) // Seeing new enemy.
         {
             m_pChasedEnemy = m_pCurrentEnemy;
-            m_bChasing = CWeapons::IsValid(m_iWeapon) && m_aWeapons[m_iWeapon].IsMelee();
+            m_bChasing = CWeapons::IsValid(m_iWeapon) && (m_aWeapons[m_iWeapon].IsMelee() || 
+                                                          m_aWeapons[ m_iWeapon ].NeedsToBeCloser( m_fDistanceSqrToEnemy ) );
             m_bNeedMove = m_bUseNavigatorToMove = false; // Start moving on next tick.
         }
         else
@@ -230,7 +235,7 @@ void CBot_TF2::CheckEngagedEnemy()
 
         if ( CWeapons::IsValid(m_iWeapon) )
         {
-            if ( m_aWeapons[m_iWeapon].IsMelee() || m_aWeapons[m_iWeapon].NeedsToBeCloser(m_fDistanceSqrToEnemy) ) // Rush toward enemy.
+            if ( m_aWeapons[m_iWeapon].IsMelee() ) // Rush toward enemy.
             {
                 CWaypointPath* pPath;
                 bool bNear = (m_pChasedEnemy->iCurrentWaypoint == iCurrentWaypoint) ||
@@ -251,20 +256,21 @@ void CBot_TF2::CheckEngagedEnemy()
                       CWaypoint::IsValid(m_pCurrentEnemy->iCurrentWaypoint) &&
                       (m_iIntelligence >= EBotNormal) )
             {
-                if ( FLAG_SOME_SET(FFightStrategyRunAwayIfNear, CBot::iDefaultFightStrategy) &&
+                bool bNeedComeCloser = m_aWeapons[ m_iWeapon ].IsMelee() || m_aWeapons[ m_iWeapon ].NeedsToBeCloser( m_fDistanceSqrToEnemy );
+                if ( bNeedComeCloser || ( FLAG_SOME_SET( FFightStrategyComeCloserIfFar, CBot::iDefaultFightStrategy ) &&
+                                          m_fDistanceSqrToEnemy >= CBot::fNearDistanceSqr ) )
+                {
+                    // Try to come closer a little.
+                    iNextWaypoint = CWaypoints::GetNearestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true );
+                    BotDebug( "%s -> Moving to nearest waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+                    return;
+                }
+                else if ( FLAG_SOME_SET(FFightStrategyRunAwayIfNear, CBot::iDefaultFightStrategy) &&
                      (m_fDistanceSqrToEnemy <= CBot::fNearDistanceSqr) )
                 {
                     // Try to run away a little.
                     iNextWaypoint = CWaypoints::GetFarestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true );
-                    BotDebug( "%s -> Moving to far waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
-                    return;
-                }
-                else if ( FLAG_SOME_SET(FFightStrategyComeCloserIfFar, CBot::iDefaultFightStrategy) &&
-                          m_fDistanceSqrToEnemy >= CBot::fFarDistanceSqr )
-                {
-                    // Try to come closer a little.
-                    iNextWaypoint = CWaypoints::GetNearestNeighbour( iCurrentWaypoint, m_pCurrentEnemy->iCurrentWaypoint, true );
-                    BotDebug( "%s -> Moving to near waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
+                    BotDebug( "%s -> Moving to farest waypoint %d (current %d)", GetName(), iNextWaypoint, iCurrentWaypoint );
                     return;
                 }
             }
@@ -381,7 +387,7 @@ restart_find_task: // TODO: remove gotos.
             iWeapon = CWeapons::GetRandomWeapon(iPreference, m_cSkipWeapons);
             if ( iWeapon != EWeaponIdInvalid )
             {
-				pEntityClass = CWeapons::Get(iWeapon)->GetBaseWeapon()->pWeaponClass;
+                pEntityClass = CWeapons::Get(iWeapon)->GetBaseWeapon()->pWeaponClass;
                 break;
             }
         }
@@ -393,7 +399,7 @@ restart_find_task: // TODO: remove gotos.
                 iWeapon = CWeapons::GetRandomWeapon(iPreference, m_cSkipWeapons);
                 if ( iWeapon != EWeaponIdInvalid )
                 {
-					pEntityClass = CWeapons::Get(iWeapon)->GetBaseWeapon()->pWeaponClass;
+                    pEntityClass = CWeapons::Get(iWeapon)->GetBaseWeapon()->pWeaponClass;
                     break;
                 }
             }
@@ -484,7 +490,7 @@ find_enemy:
         }
         else
         {
-			BotDebug( "%s -> New task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
+            BotDebug( "%s -> New task: %s %s, waypoint %d (current %d).", GetName(), CTypeToString::BotTaskToString(m_iCurrentTask).c_str(),
                         pEntityClass ? pEntityClass->sClassName.c_str() : "", m_iTaskDestination, iCurrentWaypoint );
 
             m_iDestinationWaypoint = m_iTaskDestination;

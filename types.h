@@ -367,6 +367,7 @@ enum TItemIndexInvalid
     EItemIndexInvalid = -1                     ///< Invalid entity index.
 };
 typedef int TItemIndex;                        ///< Index of entity in CItems::GetItems().
+typedef int TItemId;                           ///< Server index of entity (m_EntIndex).
 
 enum TItemTypeFlag
 {

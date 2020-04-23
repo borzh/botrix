@@ -138,8 +138,8 @@ public:
     /// Will print all item classes.
 	static void PrintClasses();
 
-    /// Get item from edict.
-    static TItemType GetItemFromEdict( edict_t* pEdict, TItemIndex* pIndex );
+    /// Get item from item id (edict's index).
+    static TItemType GetItemFromId( TItemId iId, TItemIndex* pIndex );
 
         /// Get item classes.
 	static const good::list<CItemClass>* GetClasses() { return m_aItemClasses; }
@@ -202,7 +202,7 @@ public:
     }
 
     /// Clear all loaded entities.
-    static void MapUnloaded();
+    static void MapUnloaded( bool bClearObjectFlags = false );
 
     /// Load entities from current map.
 	static void MapLoaded(bool bLog = true);
@@ -212,16 +212,16 @@ public:
 
 
     /// Get all objects flags.
-    static const good::vector<TItemIndex>& GetObjectsFlags() { return m_aObjectFlags; }
+    static const good::vector<TItemId>& GetObjectsFlags() { return m_aObjectFlags; }
 
     /// Set all objects flags.
-    static void SetObjectsFlags( good::vector<TItemIndex>& aObjectsFlags ) { m_aObjectFlags = aObjectsFlags; }
+    static void SetObjectsFlags( const good::vector<TItemId>& aObjectsFlags ) { m_aObjectFlags = aObjectsFlags; }
 
     /// Get object flags.
-    static bool GetObjectFlags( TItemIndex iObject, TItemFlags &iFlags );
+    static bool GetObjectFlags( TItemId iObject, TItemFlags &iFlags );
 
     /// Set flags for object index.
-    static void SetObjectFlags( TItemIndex iObject, TItemFlags iFlags );
+    static bool SetObjectFlags( TItemId iObject, TItemFlags iFlags );
 
 
     /// Check if given door is closed (a ray hits it).

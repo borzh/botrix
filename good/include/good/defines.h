@@ -273,7 +273,7 @@ typedef char TChar;
         GOOD_SCOPE_START \
             if ( !(exp) )\
             {\
-                DebugPrint(start " failed: (%s); in %s(), file %s, line %d\n", #exp, __FUNCTION__, __FILE__, __LINE__);\
+                DebugPrint(start " failed: (" #exp "); in %s(), file %s, line %d\n", __FUNCTION__, __FILE__, __LINE__);\
                 BreakDebugger();\
                 __VA_ARGS__;\
             }\

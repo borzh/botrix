@@ -16,7 +16,6 @@
 #include "tier0/memdbgon.h"
 
 
-
 //----------------------------------------------------------------------------------------------------------------
 extern IVDebugOverlay* pVDebugOverlay;
 extern IEffects* pEffects;
@@ -27,7 +26,6 @@ extern int iMainBufferSize;
 const int iTextTime = 30; // Time in seconds to show text in CUtil::GetReachableInfoFromTo().
 
 
-
 //----------------------------------------------------------------------------------------------------------------
 class CTraceFilterWithFlags: public ITraceFilter
 {
@@ -35,27 +33,49 @@ public:
     int iTraceFlags;
 };
 
-class CTraceFilterWorldAndOtherProps: public CTraceFilterWithFlags
+class CGenericTraceFilter: public CTraceFilterWithFlags
 {
 public:
     TVisibility iVisibility;
 
-    CTraceFilterWorldAndOtherProps( TVisibility iVisibility ): iVisibility( iVisibility )
+    CGenericTraceFilter( TVisibility iVisibility ): iVisibility( iVisibility )
     {
         switch ( iVisibility )
         {
             case EVisibilityWorld:
-            case EVisibilityOtherProps:
-                iTraceFlags = MASK_SOLID_BRUSHONLY;
+                // Everything that can be seen by player / bot.
+                iTraceFlags = MASK_VISIBLE; 
                 break;
-            case EVisibilitySeeAndShoot:
-                iTraceFlags = MASK_VISIBLE;// | MASK_SHOT;
+            case EVisibilityWaypoints:
+                // Everything that blocks player movement. Should include CONTENTS_PLAYERCLIP!!!
+                iTraceFlags = MASK_PLAYERSOLID & ~CONTENTS_MOVEABLE;
+                break;
+            case EVisibilityBots:
+                // Should't include CONTENTS_GRATE.
+                iTraceFlags = MASK_VISIBLE | MASK_SHOT;
                 break;
             default:
                 BASSERT(false);
         }
     }
 
+    virtual TraceType_t	GetTraceType() const
+    {
+        switch ( iVisibility )
+        {
+            case EVisibilityWorld:
+                return TRACE_WORLD_ONLY;
+            case EVisibilityWaypoints:
+                return CWaypoints::IsAnalyzing() && CWaypoint::bAnalyzeTraceAll ? TRACE_EVERYTHING_FILTER_PROPS : TRACE_EVERYTHING;
+            case EVisibilityBots:
+                return TRACE_EVERYTHING_FILTER_PROPS;
+            default:
+                BASSERT( false );
+        }
+        return TRACE_WORLD_ONLY;
+    }
+    
+    // Note that this function is not used for iVisibility == EVisibilityWorld. 
     virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
     {
         int index = pServerEntity->GetRefEHandle().GetEntryIndex();
@@ -66,47 +86,29 @@ public:
         if ( index < 1 + CPlayers::Size() )
             return false;
 
-        if ( iVisibility == EVisibilitySeeAndShoot || !CWaypoints::IsAnalyzing() || CWaypoint::bAnalizeTraceAll )
+        if ( iVisibility == EVisibilityBots )
             return true; // Trace everything for shooting / analyzing with all trace.
 
-        // Here we know for sure that we are analyzing the map.
+        // Here we know for sure that we are analyzing the map: CWaypoints::IsAnalyzing() && CWaypoint::bAnalyzeTraceAll
         edict_t *pEdict = CBotrixPlugin::instance->pEngineServer->PEntityOfEntIndex( index );
-        if ( pEdict == NULL ) //Sometimes happens.
+        if ( pEdict == NULL ) // Sometimes happens.
             return true;
 
         TItemIndex iItemIndex;
         TItemType iType = CItems::GetItemFromId( pEdict->m_EdictIndex, &iItemIndex );
 
-        //ICollideable* pCollideable = pEdict->GetCollideable();
-        //if ( pCollideable )
-        //{
-
-        //}
-
-        //if ( !CWaypoints::IsAnalyzing() )
-        //{
-        //    const char* szClassName = pEdict->GetClassName();
-        //    BLOG_T( "Should hit %s %d (id %d): %s.", CTypeToString::EntityTypeToString( iType ).c_str(), iItemIndex, pEdict->m_EdictIndex, szClassName );
-        //}
+        bool bShouldHit = ( iType == EItemTypeObject && FLAG_SOME_SET( FObjectHeavy, CItems::GetItems( iType )[ iItemIndex ].iFlags ) ) ||
+                            iType == EItemTypeDoor || iType == EItemTypeOther || iType == EItemTypePlayerSpawn;
 
         // Trace only heavy objects / doors (elevators) / other objects.
-        return ( iType == EItemTypeObject && FLAG_SOME_SET( FObjectHeavy, CItems::GetItems( iType )[ iItemIndex ].iFlags ) ) || 
-                 iType == EItemTypeDoor || iType == EItemTypeOther;
-    }
-
-    virtual TraceType_t	GetTraceType() const
-    {
-        switch ( iVisibility )
+        if ( !CWaypoints::IsAnalyzing() )// && iVisibility == EVisibilityWaypoints )
         {
-            case EVisibilityWorld:
-                return TRACE_WORLD_ONLY;
-            case EVisibilityOtherProps:
-            case EVisibilitySeeAndShoot:
-                return TRACE_EVERYTHING_FILTER_PROPS;
-            default:
-                BASSERT( false );
+            const char* szClassName = pEdict->GetClassName();
+            BLOG_T( "Should hit %s %d (%s, id %d): %s.", CTypeToString::EntityTypeToString( iType ).c_str(), 
+                    iItemIndex, szClassName, pEdict->m_EdictIndex, bShouldHit ? "yes" : "no" );
         }
-        return TRACE_WORLD_ONLY;
+
+        return bShouldHit;
     }
 };
 
@@ -126,24 +128,10 @@ protected:
     const IHandleEntity* pHandle;
 };
 
-class CTraceFilterWorldOnlyWithFlags: public CTraceFilterWithFlags
-{
-public:
-    CTraceFilterWorldOnlyWithFlags() { iTraceFlags = MASK_SOLID_BRUSHONLY; } // MASK_PLAYERSOLID
-    bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
-    {
-        return false;
-    }
-    virtual TraceType_t	GetTraceType() const
-    {
-        return TRACE_WORLD_ONLY;
-    }
-};
 
-CTraceFilterWorldAndOtherProps cWorldTraceFilter( EVisibilityWorld );
-//CTraceFilterWorldOnlyWithFlags cWorldTraceFilter;
-CTraceFilterWorldAndOtherProps cTraceFilter( EVisibilityOtherProps );
-CTraceFilterWorldAndOtherProps cVisibilityTraceFilter(EVisibilitySeeAndShoot);
+CGenericTraceFilter cWorldTraceFilter( EVisibilityWorld );
+CGenericTraceFilter cWaypointTraceFilter( EVisibilityWaypoints );
+CGenericTraceFilter cBotsTraceFilter(EVisibilityBots);
 
 inline CTraceFilterWithFlags& GetFilter( TVisibility iVisibility )
 {
@@ -151,10 +139,10 @@ inline CTraceFilterWithFlags& GetFilter( TVisibility iVisibility )
     {
         case EVisibilityWorld:
             return cWorldTraceFilter;
-        case EVisibilityOtherProps:
-            return cTraceFilter;
-        case EVisibilitySeeAndShoot:
-            return cVisibilityTraceFilter;
+        case EVisibilityWaypoints:
+            return cWaypointTraceFilter;
+        case EVisibilityBots:
+            return cBotsTraceFilter;
         default:
             BASSERT(false);
     }
@@ -171,70 +159,75 @@ TReach CanClimbSlope( const Vector& vSrc, const Vector& vDest )
 {
     Vector vDiff = vDest - vSrc;
     QAngle ang;
-    VectorAngles(vDiff, ang); // Get pitch to know if gradient is too big.
+    VectorAngles( vDiff, ang ); // Get pitch to know if gradient is too big.
 
-    float slope = CMod::GetVar( EModVarSlopeGradientToSlideOff );
-    if ( ang.x < -slope ) // Destination is higher and slope is more than 45 degrees, can't climb it.
-        return EReachNotReachable;
-    else if ( ( ang.x > slope ) &&       // Slope is more than 45 degrees.
-              ( vDiff.z > CMod::GetVar( EModVarHeightForFallDamage ) ) ) // Source is higher.
-        return EReachFallDamage; // Can take damage at fall.
-    else
-        return EReachReachable; // Slope gradient is less than 45 degrees.
+    if ( !CWaypoints::IsAnalyzing() )
+        BLOG_T( "Slope angle %.2f", ang.x );
+
+    float fSlope = CMod::GetVar( EModVarSlopeGradientToSlideOff );
+    return CUtil::CanPassSlope( ang.x, fSlope ) ? EReachReachable : EReachNotReachable;
 }
 
 //----------------------------------------------------------------------------------------------------------------
 // Returns true if can move forward when standing at vGround performing a jump (normal, with crouch o maybe just
 // walking). At return vHit contains new coord which is where player can get after jump.
 //----------------------------------------------------------------------------------------------------------------
-bool CanPassOrJump( Vector& vGround, Vector& vDirectionInc, const Vector& vMins, const Vector& vMaxs,
-                    const Vector& vJumpMaxs, bool& bNeedJump, bool bShowHelp )
+TReach CanPassOrJump( Vector& vGround, Vector& vDirectionInc, const Vector& vMins, const Vector& vMaxs,
+                    const Vector& vJumpMaxs, bool bShowHelp )
 {
-    bNeedJump = false;
-
     // Try to walk unit.
     Vector vHit = vGround + vDirectionInc;
-    CUtil::TraceHull( vGround, vHit, vMins, vMaxs, cTraceFilter.iTraceFlags, &cTraceFilter );
+
+    CUtil::TraceHull( vGround, vHit, vMins, vMaxs, cWaypointTraceFilter.iTraceFlags, &cWaypointTraceFilter );
+
     if ( !CUtil::IsTraceHitSomething() )
     {
         vGround = CUtil::GetGroundVec( vHit );
-        return true;
+        return EReachReachable;
     }
 
     if ( !CUtil::EqualVectors( vGround, CUtil::TraceResult().endpos, 0.01f ) )
     {
         vGround = CUtil::TraceResult().endpos;
-        return true; // Can walk from vGround to vHit.
+        return EReachReachable; // Can walk from vGround to vHit.
     }
 
     // Try to walk over (one stair step).
     float fMaxWalkHeight = CMod::GetVar( EModVarPlayerObstacleToJump );
-    vGround.z += fMaxWalkHeight;
+    Vector vStair = vGround; vStair.z += fMaxWalkHeight;
     vHit.z += fMaxWalkHeight;
-    CUtil::TraceHull( vGround, vHit, vMins, vMaxs, cTraceFilter.iTraceFlags, &cTraceFilter );
-        
+   
+    CUtil::TraceHull( vStair, vHit, vMins, vMaxs, cWaypointTraceFilter.iTraceFlags, &cWaypointTraceFilter );
     if ( !CUtil::IsTraceHitSomething() )
     {
+        vStair = vGround;
         vGround = CUtil::GetGroundVec( vHit );
-        return true;
+        if ( CanClimbSlope( vStair, vGround ) )
+        {
+            // Check if can climb up without making the stair step.
+            CUtil::TraceHull( vStair, vGround, vMins, vMaxs, cWaypointTraceFilter.iTraceFlags, &cWaypointTraceFilter );
+            if ( !CUtil::IsTraceHitSomething() )
+                return EReachReachable;
+        }
+        return EReachStairs;
     }
 
     // Try to jump.
     float fJumpCrouched = CMod::GetVar( EModVarPlayerJumpHeightCrouched );
-    vGround.z += fJumpCrouched - fMaxWalkHeight;
-    vHit.z += fJumpCrouched - fMaxWalkHeight;
+    vGround.z += fJumpCrouched;
+    vHit.z += fJumpCrouched - fMaxWalkHeight; // We added previously fMaxWalkHeight.
 
-    CUtil::TraceHull( vGround, vHit, vMins, vMaxs, cTraceFilter.iTraceFlags, &cTraceFilter ); // TODO: use vJumpMaxs instead of vMaxs here.
+    CUtil::TraceHull( vGround, vHit, vMins, vMaxs, cWaypointTraceFilter.iTraceFlags, &cWaypointTraceFilter ); // TODO: use vJumpMaxs instead of vMaxs here.
+    
     if ( !CUtil::IsTraceHitSomething() ) // We can stand on vHit after jump.
     {
-        bNeedJump = true;
         vGround = CUtil::GetGroundVec( vHit );
-        return true;
+        return EReachNeedJump;
     }
 
     vGround = CUtil::TraceResult().endpos;
     //vGround = CUtil::GetGroundVec( CUtil::TraceResult().endpos );
-    return false; // Can't jump over.
+    return EReachNotReachable; // Can't jump over.
 }
 
 
@@ -278,7 +271,7 @@ bool CUtil::IsVisible( const Vector& vSrc, edict_t* pDest )
     Vector v;
     EntityHead(pDest, v);
     
-    return IsVisible(vSrc, v, EVisibilitySeeAndShoot);
+    return IsVisible(vSrc, v, EVisibilityBots);
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -287,7 +280,7 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, Vector& vDest, bool& b
     static int iRandom = 0; // This function may be called 2 times with (v1, v2) and (v2,v1)
     iRandom = (iRandom + 1) % 4;  // so iRandom is to draw text higher / other color that previous time.
 
-    static int colors[] = { 0xFFFF00, 0xFFFFFF, 0xFF0000, 0x00FF00 };
+    static int colors[4] = { 0xFFFF00, 0xFFFFFF, 0xFF0000, 0x00FF00 };
     int color = colors[ iRandom ];
     unsigned char r = GET_3RD_BYTE( color ), g = GET_2ND_BYTE( color ), b = GET_1ST_BYTE( color );
     
@@ -299,7 +292,7 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, Vector& vDest, bool& b
     if ( fDistanceSqr > fMaxDistanceSqr )
         return EReachNotReachable;
 
-    if ( !CUtil::IsVisible(vSrc, vDest, EVisibilityOtherProps ) )
+    if ( !CUtil::IsVisible(vSrc, vDest, EVisibilityWaypoints ) )
         return EReachNotReachable;
 
     // Check if can swim there first.
@@ -343,7 +336,7 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, Vector& vDest, bool& b
         {
             // Try to stand up.
             vDest.z = vDestGround.z + fPlayerEye;
-            TraceHull( vDest, vDestGround, vMins, vGroundMaxs, cTraceFilter.iTraceFlags, &cTraceFilter );
+            TraceHull( vDest, vDestGround, vMins, vGroundMaxs, cWaypointTraceFilter.iTraceFlags, &cWaypointTraceFilter );
             bCrouch = IsTraceHitSomething();
         }
         
@@ -351,7 +344,7 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, Vector& vDest, bool& b
         {
             // Try to stand up crouching.
             vDest.z = vDestGround.z + fPlayerEyeCrouched;
-            TraceHull( vDest, vDestGround, vMins, vGroundMaxs, cTraceFilter.iTraceFlags, &cTraceFilter );
+            TraceHull( vDest, vDestGround, vMins, vGroundMaxs, cWaypointTraceFilter.iTraceFlags, &cWaypointTraceFilter );
             if ( IsTraceHitSomething() )
                 return EReachNotReachable;
         }
@@ -365,7 +358,6 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, Vector& vDest, bool& b
         DrawLine( vDest + vOffset, vDestGround + vOffset, iTextTime, r, g, b );
     }
 
-    bool bAlreadyJumped = false;
     TReach iResult = EReachReachable;
 
     // Need to trace several times to know if can jump up all obstacles.
@@ -375,35 +367,56 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, Vector& vDest, bool& b
     vDirection.NormalizeInPlace();
     vDirection *= 1.0;
 
-
-    bool bNeedJump = false;
+    Vector vLastStair;
+    bool bNeedJump = false, bHasStair = false;
     int i = 0;
     for ( ; i < iMaxTraceRaysForReachable && !EqualVectors(vHit, vDestGround); ++i )
     {
         Vector vStart = vHit;
 
         // Trace from hit point to the floor.
-        bool bCanPassOrJump = CanPassOrJump( vHit, vDirection, vMins, vMaxs, vJumpMaxs, bNeedJump, bShowHelp );
+        TReach iReach = CanPassOrJump( vHit, vDirection, vMins, vMaxs, vJumpMaxs, bShowHelp );
 
         if ( bShowHelp )
             DrawLine( vStart + vOffset, vHit + vOffset, iTextTime, r, g, b );
 
-        if ( !bCanPassOrJump )
+        switch ( iReach )
         {
-            if ( bShowHelp )
-                DrawText( vHit, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Too high to jump" );
-            return EReachNotReachable;
-        }
-
-        if ( bNeedJump )
-        {
-            if ( bAlreadyJumped )
-            {
+            case EReachNotReachable:
                 if ( bShowHelp )
-                    CUtil::DrawText( vHit, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Can't jump twice" );
+                    DrawText( vHit, 0, iTextTime, 0xFF, 0xFF, 0xFF, "High jump" );
                 return EReachNotReachable;
+
+            case EReachNeedJump:
+                if ( bNeedJump )
+                {
+                    if ( bShowHelp )
+                        CUtil::DrawText( vHit, 0, iTextTime, 0xFF, 0xFF, 0xFF, "2 jumps" );
+                    return EReachNotReachable;
+                }
+                bNeedJump = true;
+                break;
+
+            case EReachStairs:
+            {
+                float fDistSqr = vLastStair.AsVector2D().DistToSqr( vHit.AsVector2D() );
+                if ( bHasStair && fDistSqr <= 9 ) // 3 units at least
+                {
+                    if ( bShowHelp )
+                        CUtil::DrawText( vHit, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Slope" );
+                    return EReachNotReachable;
+                }
+                bHasStair = true;
+                vLastStair = vStart;
+                break;
             }
-            bAlreadyJumped = true;
+
+            case EReachReachable:
+                break;
+
+            default:
+                GoodAssert( false );
+                break;
         }
     }
     
@@ -412,36 +425,33 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, Vector& vDest, bool& b
     vText.z += iRandom * 10;
 
     if ( i == iMaxTraceRaysForReachable )
-    {
-        CUtil::DrawText( vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Destination high" );
-        return EReachNotReachable;
-    }
+        iResult = EReachNotReachable;
     
     switch (iResult)
     {
     case EReachReachable:
-        if (bAlreadyJumped)
+        if ( bNeedJump )
         {
             iResult = EReachNeedJump;
             if ( bShowHelp )
-                CUtil::DrawText( vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Reachable with one jump" );
+                CUtil::DrawText( vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Jump" );
         }
         else if ( bShowHelp )
-            CUtil::DrawText(vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Walkable");
+            CUtil::DrawText(vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Walk");
         break;
 
     case EReachFallDamage:
         if ( bShowHelp )
-            CUtil::DrawText(vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Falling risk");
+            CUtil::DrawText(vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Fall");
         break;
 
     case EReachNotReachable:
         if ( bShowHelp )
-            CUtil::DrawText(vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "Too high gradient");
+            CUtil::DrawText( vText, 0, iTextTime, 0xFF, 0xFF, 0xFF, "High" );
         break;
 
     default:
-        BASSERT(false);
+        GoodAssert( false );
     }
 
     return iResult;
@@ -471,10 +481,11 @@ Vector& CUtil::GetGroundVec( const Vector& vSrc )
     Vector vDest = vSrc;
     vDest.z = -iHalfMaxMapSize;
 
-    TraceHull( vSrc, vDest, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxsGround, cTraceFilter.iTraceFlags, &cTraceFilter );
+    TraceHull( vSrc, vDest, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxsGround, cWaypointTraceFilter.iTraceFlags, &cWaypointTraceFilter );
+
     //float fHullPos = m_TraceResult.endpos.z;
 
-    //TraceLine( vSrc, vDest, cTraceFilter.iTraceFlags, &cTraceFilter );
+    //TraceLine( vSrc, vDest, cWaypointTraceFilter.iTraceFlags, &cWaypointTraceFilter );
 
     //if ( fHullPos >= m_TraceResult.endpos.z )
     //    m_TraceResult.endpos.z = fHullPos + 2;

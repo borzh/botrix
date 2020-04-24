@@ -3,8 +3,8 @@ Changelog
 1.0.1
 -----
 * The purpose of this version is HUGE: auto waypoint generation for the map. So, proudly presenting 
-  'botrix waypoint analize' command.
-  It analizes the map very neatly, creating waypoints for bots. This command should be used as first step in creating
+  'botrix waypoint analyze' command.
+  It analyzes the map very neatly, creating waypoints for bots. This command should be used as first step in creating
   waypoints for the map. WARNING: you should edit waypoints anyway for complex maps with doors / elevators.
 * Bots parameters (such as speed / player's width / height / jump height, etc.) are added in config.ini. This is helpful
   for other MODs based on Source engine to adapt Botrix's bots.

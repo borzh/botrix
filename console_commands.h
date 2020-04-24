@@ -244,10 +244,10 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CWaypointAnalizeToggleCommand: public CConsoleCommand
+class CWaypointAnalyzeToggleCommand: public CConsoleCommand
 {
 public:
-    CWaypointAnalizeToggleCommand()
+    CWaypointAnalyzeToggleCommand()
     {
         m_sCommand = "toggle";
         m_sHelp = "start / stop analyzing waypoints for current map";
@@ -258,37 +258,36 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CWaypointAnalizeCreateCommand: public CConsoleCommand
+class CWaypointAnalyzeCreateCommand: public CConsoleCommand
 {
 public:
-    CWaypointAnalizeCreateCommand();
+    CWaypointAnalyzeCreateCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CWaypointAnalizeDebugCommand: public CConsoleCommand
+class CWaypointAnalyzeDebugCommand: public CConsoleCommand
 {
 public:
-    CWaypointAnalizeDebugCommand();
+    CWaypointAnalyzeDebugCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CWaypointAnalizeOmitCommand: public CConsoleCommand
+class CWaypointAnalyzeOmitCommand: public CConsoleCommand
 {
 public:
-    CWaypointAnalizeOmitCommand();
+    CWaypointAnalyzeOmitCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CWaypointAnalizeTraceCommand: public CConsoleCommand
+class CWaypointAnalyzeTraceCommand: public CConsoleCommand
 {
 public:
-    CWaypointAnalizeTraceCommand()
+    CWaypointAnalyzeTraceCommand()
     {
         m_sCommand = "trace";
         m_sHelp = "ray trace all entities";
-        m_sDescription = "Parameter: (on / off). When on, ray tracing will hit weapon/ammo/health/armor/non heavy objects, "
-            "so waypoints will be placed on top of those entities. It is better 'off' for manual waypoint editing, but this "
-            "can add waypoints in invalid positions.";
+        m_sDescription = "Parameter: (on / off). When 'off', ray tracing will not hit weapon/ammo/health/armor/non heavy objects, "
+            "so waypoints will be placed 'inside' those entities. Put it in 'on', if there are troubles with analyze.";
         m_iAccessLevel = FCommandAccessWaypoint;
 
         m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
@@ -297,17 +296,17 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CWaypointAnalizeCommand: public CConsoleCommandContainer
+class CWaypointAnalyzeCommand: public CConsoleCommandContainer
 {
 public:
-    CWaypointAnalizeCommand()
+    CWaypointAnalyzeCommand()
     {
-        m_sCommand = "analize";
-        Add( new CWaypointAnalizeToggleCommand );
-        Add( new CWaypointAnalizeCreateCommand );
-        Add( new CWaypointAnalizeDebugCommand );
-        Add( new CWaypointAnalizeOmitCommand );
-        Add( new CWaypointAnalizeTraceCommand );
+        m_sCommand = "analyze";
+        Add( new CWaypointAnalyzeToggleCommand );
+        Add( new CWaypointAnalyzeCreateCommand );
+        Add( new CWaypointAnalyzeDebugCommand );
+        Add( new CWaypointAnalyzeOmitCommand );
+        Add( new CWaypointAnalyzeTraceCommand );
     }
 };
 
@@ -1072,27 +1071,27 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CConfigWaypointAnalizeAmount: public CConsoleCommand
+class CConfigWaypointAnalyzeAmount: public CConsoleCommand
 {
 public:
-    CConfigWaypointAnalizeAmount()
+    CConfigWaypointAnalyzeAmount()
     {
         m_sCommand = "amount";
-        m_sHelp = "amount of waypoints to analize per frame";
-        m_sDescription = "Parameter: number of waypoints to analize per frame. Can be fractional.";
+        m_sHelp = "amount of waypoints to analyze per frame";
+        m_sDescription = "Parameter: number of waypoints to analyze per frame. Can be fractional.";
         m_iAccessLevel = FCommandAccessConfig;
     }
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CConfigWaypointAnalizeMapChange: public CConsoleCommand
+class CConfigWaypointAnalyzeMapChange: public CConsoleCommand
 {
 public:
-    CConfigWaypointAnalizeMapChange()
+    CConfigWaypointAnalyzeMapChange()
     {
         m_sCommand = "map-change";
-        m_sHelp = "analize waypoints on map change";
-        m_sDescription = "Parameter: maximum number of waypoints to start analize on map change. 'off' or -1 to disable.";
+        m_sHelp = "analyze waypoints on map change";
+        m_sDescription = "Parameter: maximum number of waypoints to start analyze on map change. 'off' or -1 to disable.";
         m_iAccessLevel = FCommandAccessConfig;
 
         StringVector args;
@@ -1103,10 +1102,10 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CConfigWaypointAnalizeDistance: public CConsoleCommand
+class CConfigWaypointAnalyzeDistance: public CConsoleCommand
 {
 public:
-    CConfigWaypointAnalizeDistance()
+    CConfigWaypointAnalyzeDistance()
     {
         m_sCommand = "distance";
         m_sHelp = "default distance between waypoints when analyzing the map";
@@ -1115,14 +1114,14 @@ public:
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
-class CConfigWaypointAnalize: public CConsoleCommandContainer
+class CConfigWaypointAnalyze: public CConsoleCommandContainer
 {
 public:
-    CConfigWaypointAnalize() {
-		m_sCommand = "analize";
-        m_aCommands.push_back( new CConfigWaypointAnalizeAmount );
-        m_aCommands.push_back( new CConfigWaypointAnalizeDistance );
-        m_aCommands.push_back( new CConfigWaypointAnalizeMapChange );
+    CConfigWaypointAnalyze() {
+		m_sCommand = "analyze";
+        m_aCommands.push_back( new CConfigWaypointAnalyzeAmount );
+        m_aCommands.push_back( new CConfigWaypointAnalyzeDistance );
+        m_aCommands.push_back( new CConfigWaypointAnalyzeMapChange );
     }
 };
 
@@ -1146,7 +1145,7 @@ public:
     CConfigWaypoint()
     {
         m_sCommand = "waypoint";
-        m_aCommands.push_back( new CConfigWaypointAnalize );
+        m_aCommands.push_back( new CConfigWaypointAnalyze );
         m_aCommands.push_back( new CConfigWaypointSave );
         m_aCommands.push_back( new CConfigWaypointUnreachable );
     }
@@ -1193,7 +1192,7 @@ public:
     {
         m_sCommand = "waypoint";
 		Add( new CWaypointAddTypeCommand );
-		Add( new CWaypointAnalizeCommand );
+		Add( new CWaypointAnalyzeCommand );
 		Add(new CWaypointAreaCommand);
         Add(new CWaypointArgumentCommand);
         Add(new CWaypointAutoCreateCommand);

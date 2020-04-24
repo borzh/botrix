@@ -418,11 +418,11 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
         try
         {
             if ( CWaypoints::IsAnalyzing() )
-                CWaypoints::AnalizeStep();
+                CWaypoints::AnalyzeStep();
         }
         catch ( ... )
         {
-            BLOG_E( "FATAL EXCEPTION in CWaypoints::AnalizeStep'." );
+            BLOG_E( "FATAL EXCEPTION in CWaypoints::AnalyzeStep'." );
             BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
             GoodAssert( false );
         }
@@ -547,8 +547,8 @@ void CBotrixPlugin::LevelShutdown( void )
         
     CWaypoints::ClearUnreachablePaths();
     CWaypoints::Clear();
-    for ( int i = 0; i < CWaypoints::EAnalizeWaypointsTotal; ++i )
-        CWaypoints::AnalizeClear( i );
+    for ( int i = 0; i < CWaypoints::EAnalyzeWaypointsTotal; ++i )
+        CWaypoints::AnalyzeClear( i );
 
     CPlayers::Clear();
     CItems::MapUnloaded( true );
@@ -759,8 +759,6 @@ void CBotrixPlugin::PrepareLevel( const char* szMapName )
 
     CWaypoint::iWaypointTexture = CBotrixPlugin::pEngineServer->PrecacheModel( "sprites/lgtning.vmt" );
 #endif
-    if ( CWaypoints::Load() )
-        BLOG_I("%d waypoints loaded for map %s.", CWaypoints::Size(), CBotrixPlugin::instance->sMapName.c_str());
 }
 
 
@@ -775,11 +773,19 @@ void CBotrixPlugin::ActivateLevel( int iMaxPlayers )
 //        iMaxPlayers = 256;
 
     CPlayers::Init(iMaxPlayers);
+ 
+    // Waypoints should be loaded after CPlayers::Size() is known.
+    if ( CWaypoints::Load() )
+        BLOG_I( "%d waypoints loaded for map %s.", CWaypoints::Size(), CBotrixPlugin::instance->sMapName.c_str() );
+
+    // Waypoints can save object, so waypoints should be loaded first.
     CItems::MapLoaded();
+
+    // May depend on items / waypoints.
     CMod::MapLoaded();
 
     BLOG_I("Level \"%s\" has been loaded.", sMapName.c_str());
 
-    if ( CWaypoints::Size() <= CWaypoint::iWaypointsMaxCountToAnalizeMap )
-        CWaypoints::Analize( NULL, false );
+    if ( CWaypoints::Size() <= CWaypoint::iWaypointsMaxCountToAnalyzeMap )
+        CWaypoints::Analyze( NULL, false );
 }

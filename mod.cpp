@@ -185,7 +185,7 @@ void CMod::Prepare()
     iPointTouchSquaredZ = SQR( fJumpCrouched );
     iPointTouchLadderSquaredZ = SQR( 5 );
 
-    CWaypoint::iAnalizeDistance = fWidth * 2;
+    CWaypoint::iAnalyzeDistance = fWidth * 2;
     CWaypoint::iDefaultDistance = fWidth * 4;
     
     // Get max collision hull, so bot doesn't stack (when auto-create waypoints).

@@ -242,6 +242,8 @@ void CItems::Freed( const edict_t* pEdict )
     int iIndex = CBotrixPlugin::pEngineServer->IndexOfEdict(pEdict);
     GoodAssert( iIndex > 0 ); // Valve should not allow this assert.
 
+    m_aEdictsIndexes[ iIndex ].iItemType = EItemTypeOther;
+
     // Check only server entities.
     if ( !m_aUsedItems.test(iIndex) )
         return;
@@ -298,7 +300,7 @@ void CItems::MapLoaded(bool bLog)
 
     for ( int i = m_iCurrentEntity; i < MAX_EDICTS; ++i )
     {
-        m_aEdictsIndexes[ i ] = fast_edict_index_t { EItemTypeInvalid, EItemIndexInvalid };
+        m_aEdictsIndexes[ i ] = fast_edict_index_t { EItemTypeOther, EItemIndexInvalid };
         edict_t* pEdict = CBotrixPlugin::pEngineServer->PEntityOfEntIndex(i);
         if ( (pEdict == NULL) || pEdict->IsFree() )
             continue;

@@ -1409,7 +1409,7 @@ void CBot::CheckAttackDuck( CPlayer* pPlayer )
         {
             Vector vSrc(m_vHead);
             vSrc.z -= CMod::GetVar( EModVarPlayerEye ) - CMod::GetVar( EModVarPlayerEyeCrouched );
-            m_bAttackDuck = CUtil::IsVisible( vSrc, m_pCurrentEnemy->GetHead(), EVisibilitySeeAndShoot ); // Duck, if enemy is visible while ducking.
+            m_bAttackDuck = CUtil::IsVisible( vSrc, m_pCurrentEnemy->GetHead(), EVisibilityBots ); // Duck, if enemy is visible while ducking.
         }
         else
             m_bAttackDuck &= bInRangeDuck; // Stop ducking if enemy is far.
@@ -1995,7 +1995,7 @@ bool CBot::NavigatorMove()
                 ApplyPathFlags();
 
                 // First coord in path must be current waypoint.
-                GoodAssert( iCurrentWaypoint == iNextWaypoint );
+                //GoodAssert( iCurrentWaypoint == iNextWaypoint );
 
                 // If lost and iCurrentWaypoint == iNextWaypoint, perform waypoint 'touch'.
                 if ( CWaypoints::Get(iNextWaypoint).IsTouching(m_vHead, m_bLadderMove) )

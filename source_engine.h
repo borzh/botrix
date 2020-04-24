@@ -18,6 +18,7 @@ enum TReachs
 {
     EReachNotReachable = 0,                 ///< Something blocks our way.
     EReachReachable,                        ///< Path free.
+    EReachStairs,                           ///< Can walk.
     EReachNeedJump,                         ///< Need to jump to get there.
     //EReachNeedCrouchJump,                   ///< Not used, will always jump crouched.
     //EReachNeedCrouch,                       ///< Not used, will check player's height instead.
@@ -29,9 +30,9 @@ typedef int TReach;
 /// Enum for flags used in CUtil::IsVisible() function.
 enum TVisibilities
 {
-    EVisibilityWorld,                       ///< Visibility that is for brush only, excludes props.
-    EVisibilityOtherProps,                  ///< Visibility that include only 'other' (unknown) props.
-    EVisibilitySeeAndShoot,                 ///< Visibility includes player visibility for shooting.
+    EVisibilityWorld = 0,                   ///< For nearest waypoints & draw, waypoints visibility table (brush only, excludes props).
+    EVisibilityWaypoints,                   ///< For waypoints creation - reachable areas (player solid brush only, includes some props).
+    EVisibilityBots,                        ///< Visibility for bots - shooting (player solid brush only, includes some props).
 };
 typedef int TVisibility;                    ///< Flags for CUtil::IsVisible() function.
 
@@ -120,6 +121,17 @@ public:
             fAngle += 360.0f;
         else if (fAngle >= 180.0f)
             fAngle -= 360.0f;
+    }
+
+    /// Util function to check if can pass slope.
+    static bool CanPassSlope( float fAngle, float fMaxSlope )
+    {
+        DeNormalizeAngle(fAngle);
+        fAngle = fabsf( fAngle );
+        if ( fAngle <= 90.0f )
+            return fAngle < fMaxSlope;
+        else
+            return fAngle > 180.0f - fMaxSlope;
     }
 
     /// Util function to get pitch/yaw angle difference forcing it to be [-180..+180).

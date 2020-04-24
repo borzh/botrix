@@ -64,7 +64,7 @@ StringVector aWaypointCompletion(2);
 #define ANALIZE_WAYPOINTS_CHECK() \
     if ( CWaypoints::IsAnalyzing() )\
     {\
-        BLOG_W( "You can't use this command while map is being analized for waypoints." );\
+        BLOG_W( "You can't use this command while map is being analyzed for waypoints." );\
         return ECommandError;\
     }
 
@@ -831,7 +831,7 @@ TCommandResult CWaypointAddTypeCommand::Execute( CClient* pClient, int argc, con
     }
 }
 
-TCommandResult CWaypointAnalizeToggleCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CWaypointAnalyzeToggleCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
         return ECommandPerformed;
@@ -856,17 +856,17 @@ TCommandResult CWaypointAnalizeToggleCommand::Execute( CClient* pClient, int arg
             CClient *pClient = (CClient *)CPlayers::Get( iPlayer );
             if ( pClient && !pClient->IsBot() && pClient->IsAutoCreatingWaypoints() )
             {
-                BULOG_W( pEdict, "Someone (%s) is auto-creating waypoints, you can't mix it with analize command.", pClient->GetName() );
+                BULOG_W( pEdict, "Someone (%s) is auto-creating waypoints, you can't mix it with analyze command.", pClient->GetName() );
                 return ECommandError;
             }
         }
-        CWaypoints::Analize( pEdict );
+        CWaypoints::Analyze( pEdict );
     }
 
     return ECommandPerformed;
 }
 
-TCommandResult WaypointAnalizeAux( CClient* pClient, int argc, const char** argv, CWaypoints::TAnalizeWaypoints iWhich )
+TCommandResult WaypointAnalyzeAux( CClient* pClient, int argc, const char** argv, CWaypoints::TAnalyzeWaypoints iWhich )
 {
     edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
 
@@ -878,7 +878,7 @@ TCommandResult WaypointAnalizeAux( CClient* pClient, int argc, const char** argv
 
     if ( argc == 1 && sClear == argv[ 0 ] )
     {
-        CWaypoints::AnalizeClear( iWhich );
+        CWaypoints::AnalyzeClear( iWhich );
         return ECommandPerformed;
     }
 
@@ -899,15 +899,15 @@ TCommandResult WaypointAnalizeAux( CClient* pClient, int argc, const char** argv
         return ECommandError;
     }
 
-    CWaypoints::AnalizeAddPosition( iWaypoint, iAdd != 0, iWhich );
+    CWaypoints::AnalyzeAddPosition( iWaypoint, iAdd != 0, iWhich );
 
     return ECommandPerformed;
 }
 
-CWaypointAnalizeCreateCommand::CWaypointAnalizeCreateCommand()
+CWaypointAnalyzeCreateCommand::CWaypointAnalyzeCreateCommand()
 {
     m_sCommand = "create";
-    m_sHelp = "create given waypoint during map analize";
+    m_sHelp = "create given waypoint during map analyze";
     m_sDescription = "Parameter: (on / off / clear) (current / destination / waypoint id). 'clear' will remove all positions to create waypoints.";
     m_iAccessLevel = FCommandAccessWaypoint;
 
@@ -927,18 +927,18 @@ CWaypointAnalizeCreateCommand::CWaypointAnalizeCreateCommand()
     m_cAutoCompleteValues.push_back( args1 );
 }
 
-TCommandResult CWaypointAnalizeCreateCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CWaypointAnalyzeCreateCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
         return ECommandPerformed;
 
-    return WaypointAnalizeAux( pClient, argc, argv, CWaypoints::EAnalizeWaypointsAdd );
+    return WaypointAnalyzeAux( pClient, argc, argv, CWaypoints::EAnalyzeWaypointsAdd );
 }
 
-CWaypointAnalizeDebugCommand::CWaypointAnalizeDebugCommand()
+CWaypointAnalyzeDebugCommand::CWaypointAnalyzeDebugCommand()
 {
     m_sCommand = "debug";
-    m_sHelp = "show collision lines for given waypoint during map analize";
+    m_sHelp = "show collision lines for given waypoint during map analyze";
     m_sDescription = "Parameter: (on / off / clear) (current / destination / waypoint id). 'clear' will remove all debug waypoints.";
     m_iAccessLevel = FCommandAccessWaypoint;
 
@@ -958,19 +958,19 @@ CWaypointAnalizeDebugCommand::CWaypointAnalizeDebugCommand()
     m_cAutoCompleteValues.push_back( args1 );
 }
 
-TCommandResult CWaypointAnalizeDebugCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CWaypointAnalyzeDebugCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
         return ECommandPerformed;
 
-    return WaypointAnalizeAux(pClient, argc, argv, CWaypoints::EAnalizeWaypointsDebug);
+    return WaypointAnalyzeAux(pClient, argc, argv, CWaypoints::EAnalyzeWaypointsDebug);
 }
 
-CWaypointAnalizeOmitCommand::CWaypointAnalizeOmitCommand()
+CWaypointAnalyzeOmitCommand::CWaypointAnalyzeOmitCommand()
 {
     m_sCommand = "omit";
-    m_sHelp = "omit given waypoint next time analize runs";
-    m_sDescription = "Parameter: (on / off / clear) (current / destination / waypoint id). Sometimes analize adds waypoints at invalid places. This command will disable analize for a given waypoint. 'clear' will remove all omited waypoints.";
+    m_sHelp = "omit given waypoint next time analyze runs";
+    m_sDescription = "Parameter: (on / off / clear) (current / destination / waypoint id). Sometimes analyze adds waypoints at invalid places. This command will disable analyze for a given waypoint. 'clear' will remove all omited waypoints.";
     m_iAccessLevel = FCommandAccessWaypoint;
 
     StringVector args0;
@@ -989,15 +989,15 @@ CWaypointAnalizeOmitCommand::CWaypointAnalizeOmitCommand()
     m_cAutoCompleteValues.push_back( args1 );
 }
 
-TCommandResult CWaypointAnalizeOmitCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CWaypointAnalyzeOmitCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
         return ECommandPerformed;
 
-    return WaypointAnalizeAux( pClient, argc, argv, CWaypoints::EAnalizeWaypointsOmit );
+    return WaypointAnalyzeAux( pClient, argc, argv, CWaypoints::EAnalyzeWaypointsOmit );
 }
 
-TCommandResult CWaypointAnalizeTraceCommand::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CWaypointAnalyzeTraceCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
     if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
         return ECommandPerformed;
@@ -1018,9 +1018,9 @@ TCommandResult CWaypointAnalizeTraceCommand::Execute( CClient* pClient, int argc
             return ECommandError;
         }
 
-        CWaypoint::bAnalizeTraceAll = ( iTrace != 0 );
+        CWaypoint::bAnalyzeTraceAll = ( iTrace != 0 );
     }
-    BULOG_I( pEdict, "Ray tracing against all entities: %s.", CWaypoint::bAnalizeTraceAll ? "on" : "off" );
+    BULOG_I( pEdict, "Ray tracing against all entities: %s.", CWaypoint::bAnalyzeTraceAll ? "on" : "off" );
     return ECommandPerformed;
 }
 
@@ -3951,6 +3951,7 @@ CItemMarkCommand::CItemMarkCommand()
     m_cAutoCompleteValues.push_back( args0 );
 
     StringVector args1;
+    args1.push_back( sNone );
     for ( TItemFlags i = 0; i < EItemFlagsUserTotal; ++i )
         args1.push_back( CTypeToString::EntityClassFlagsToString( 1 << i ).duplicate() );
 
@@ -4116,7 +4117,7 @@ TCommandResult CConfigLogCommand::Execute( CClient* pClient, int argc, const cha
     return ECommandPerformed;
 }
 
-TCommandResult CConfigWaypointAnalizeDistance::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CConfigWaypointAnalyzeDistance::Execute( CClient* pClient, int argc, const char** argv )
 {
     if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
         return ECommandPerformed;
@@ -4147,13 +4148,13 @@ TCommandResult CConfigWaypointAnalizeDistance::Execute( CClient* pClient, int ar
             return ECommandError;
         }
 
-        CWaypoint::iAnalizeDistance = iDistance;
+        CWaypoint::iAnalyzeDistance = iDistance;
     }
-    BULOG_I( pEdict, "Analize distance: %d (-1 = disabled).", CWaypoint::iAnalizeDistance );
+    BULOG_I( pEdict, "Analyze distance: %d (-1 = disabled).", CWaypoint::iAnalyzeDistance );
     return ECommandPerformed;
 }
 
-TCommandResult CConfigWaypointAnalizeMapChange::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CConfigWaypointAnalyzeMapChange::Execute( CClient* pClient, int argc, const char** argv )
 {
     if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
         return ECommandPerformed;
@@ -4179,14 +4180,14 @@ TCommandResult CConfigWaypointAnalizeMapChange::Execute( CClient* pClient, int a
             return ECommandError;
         }
 
-        CWaypoint::iWaypointsMaxCountToAnalizeMap = iCount;
+        CWaypoint::iWaypointsMaxCountToAnalyzeMap = iCount;
     }
-    BULOG_I( pEdict, "Maximum waypoints count to analize the map on map change: %d (-1 = disabled).",
-             CWaypoint::iWaypointsMaxCountToAnalizeMap );
+    BULOG_I( pEdict, "Maximum waypoints count to analyze the map on map change: %d (-1 = disabled).",
+             CWaypoint::iWaypointsMaxCountToAnalyzeMap );
     return ECommandPerformed;
 }
 
-TCommandResult CConfigWaypointAnalizeAmount::Execute( CClient* pClient, int argc, const char** argv )
+TCommandResult CConfigWaypointAnalyzeAmount::Execute( CClient* pClient, int argc, const char** argv )
 {
     if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
         return ECommandPerformed;
@@ -4210,9 +4211,9 @@ TCommandResult CConfigWaypointAnalizeAmount::Execute( CClient* pClient, int argc
             return ECommandError;
         }
 
-        CWaypoint::fAnalizeWaypointsPerFrame = fAmount;
+        CWaypoint::fAnalyzeWaypointsPerFrame = fAmount;
     }
-    BULOG_I( pEdict, "Analize waypoints per frame: %.6f.", CWaypoint::fAnalizeWaypointsPerFrame );
+    BULOG_I( pEdict, "Analyze waypoints per frame: %.6f.", CWaypoint::fAnalyzeWaypointsPerFrame );
     return ECommandPerformed;
 }
 

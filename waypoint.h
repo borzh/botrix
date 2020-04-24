@@ -35,16 +35,16 @@ public: // Members and constants.
     
     static int iUnreachablePathFailuresToDelete;    ///< Max failures to erase the failed path.
 
-    static int iAnalizeDistance;                    ///< Distance between waypoints when analyzing a map.
-    static int iWaypointsMaxCountToAnalizeMap;      ///< Maximum waypoints count to start analyzing a map.
-    static float fAnalizeWaypointsPerFrame;         ///< Positions per frame to analize.
-    static bool bShowAnalizePotencialWaypoints;     ///< Show potencial waypoints with white line. Show from console command, hide from map change.
+    static int iAnalyzeDistance;                    ///< Distance between waypoints when analyzing a map.
+    static int iWaypointsMaxCountToAnalyzeMap;      ///< Maximum waypoints count to start analyzing a map.
+    static float fAnalyzeWaypointsPerFrame;         ///< Positions per frame to analyze.
+    static bool bShowAnalyzePotencialWaypoints;     ///< Show potencial waypoints with white line. Show from console command, hide from map change.
 
     static bool bSaveOnMapChange;                   ///< Save waypoints on map change.
 
-    /// Trace against all entities in analize. The issue is that ray tracing sometimes returns some entity (like box shell or object)
+    /// Trace against all entities in analyze. The issue is that ray tracing sometimes returns some entity (like box shell or object)
     /// instead of hit world. By enabling all trace, we make sure that we won't be adding waypoints at invalid positions.
-    static bool bAnalizeTraceAll;                   
+    static bool bAnalyzeTraceAll;                   
 
     Vector vOrigin;                                 ///< Coordinates of waypoint (x, y, z).
     TWaypointFlags iFlags;                          ///< Waypoint flags.
@@ -287,7 +287,7 @@ public: // Methods.
     static TWaypointId Add( const Vector& vOrigin, TWaypointFlags iFlags = FWaypointNone, int iArgument = 0, int iAreaId = 0 );
 
     /// Remove waypoint.
-    static void Remove( TWaypointId id );
+    static void Remove( TWaypointId id, bool bResetPlayers = true );
 
     /// Move waypoint to new position.
     static inline void Move( TWaypointId id, const Vector& vOrigin )
@@ -350,35 +350,35 @@ public: // Methods.
     static void ClearUnreachablePaths() { m_aUnreachablePaths.clear(); }
 
 
-    /// Analize waypoints.
-    static void Analize( edict_t* pClient, bool bShowLines = false );
+    /// Analyze waypoints.
+    static void Analyze( edict_t* pClient, bool bShowLines = false );
 
     /// Stop analyzing waypoints.
     static void StopAnalyzing();
 
     /// Return true if analyzing.
-    static bool IsAnalyzing() { return m_iAnalizeStep != EAnalizeStepTotal; }
+    static bool IsAnalyzing() { return m_iAnalyzeStep != EAnalyzeStepTotal; }
 
-    /// Analize step.
-    static void AnalizeStep();
+    /// Analyze step.
+    static void AnalyzeStep();
 
 
-    // For console commands: waypoint analize debug / omit.
+    // For console commands: waypoint analyze debug / omit.
     enum
     {
-        EAnalizeWaypointsAdd = 0,
-        EAnalizeWaypointsOmit,
-        EAnalizeWaypointsDebug,
-        EAnalizeWaypointsTotal,
+        EAnalyzeWaypointsAdd = 0,
+        EAnalyzeWaypointsOmit,
+        EAnalyzeWaypointsDebug,
+        EAnalyzeWaypointsTotal,
     };
-    typedef int TAnalizeWaypoints;
+    typedef int TAnalyzeWaypoints;
 
     /// Clear omit/debug waypoints.
-    static void AnalizeClear( TAnalizeWaypoints iWhich ) { m_aWaypointsToAddOmitInAnalize[ iWhich ].clear(); }
+    static void AnalyzeClear( TAnalyzeWaypoints iWhich ) { m_aWaypointsToAddOmitInAnalyze[ iWhich ].clear(); }
 
     /// Omit/debug waypoint for analization next time.
-    static void AnalizeAddPosition( TWaypointId iWaypoint, bool bAdd, TAnalizeWaypoints iWhich ) {
-        good::vector<Vector>& aWhich = m_aWaypointsToAddOmitInAnalize[ iWhich ];
+    static void AnalyzeAddPosition( TWaypointId iWaypoint, bool bAdd, TAnalyzeWaypoints iWhich ) {
+        good::vector<Vector>& aWhich = m_aWaypointsToAddOmitInAnalyze[ iWhich ];
         if ( bAdd )
             aWhich.push_back( Get( iWaypoint ).vOrigin );
         else
@@ -393,9 +393,9 @@ public: // Methods.
 protected:
     friend class CWaypointNavigator; // Get access to m_cGraph (for A* search implementation).
 
-    // Analize one waypoint (for AnalizeStep()). Return true, if waypoint has nearby waypoints or new waypoint is added.
-    static bool AnalizeWaypoint( TWaypointId iWaypoint, Vector& vPos, Vector& vNew, float fPlayerEye, float fAnalizeDistance,
-                                 float fAnalizeDistanceExtra, float fAnalizeDistanceExtraSqr, float fHalfPlayerWidthSqr );
+    // Analyze one waypoint (for AnalyzeStep()). Return true, if waypoint has nearby waypoints or new waypoint is added.
+    static bool AnalyzeWaypoint( TWaypointId iWaypoint, Vector& vPos, Vector& vNew, float fPlayerEye, float fAnalyzeDistance,
+                                 float fAnalyzeDistanceExtra, float fAnalyzeDistanceExtraSqr, float fHalfPlayerWidthSqr );
 
     // Get path color.
     static void GetPathColor( TPathFlags iFlags, unsigned char& r, unsigned char& g, unsigned char& b );
@@ -484,23 +484,23 @@ protected:
     // Next fields are for analyzing functions.
     enum
     {
-        EAnalizeStepNeighbours,    // Check for waypoint neighbours in all directions (left/right/up/down).
-        EAnalizeStepInters,        // Check for positions between adjacent neighbours (that are not added).
-        EAnalizeStepDeleteOrphans, // Delete waypoints that don't have neighbours, or don't have incoming path.
-        EAnalizeStepTotal
+        EAnalyzeStepNeighbours,    // Check for waypoint neighbours in all directions (left/right/up/down).
+        EAnalyzeStepInters,        // Check for positions between adjacent neighbours (that are not added).
+        EAnalyzeStepDeleteOrphans, // Delete waypoints that don't have neighbours, or don't have incoming path.
+        EAnalyzeStepTotal
     };
 
-    typedef int TAnalizeStep;
+    typedef int TAnalyzeStep;
     class CNeighbour { public: bool a[ 3 ][ 3 ]; };
 
-    static good::vector<TWaypointId> m_aWaypointsToAnalize;
+    static good::vector<TWaypointId> m_aWaypointsToAnalyze;
     static good::vector<CNeighbour> m_aWaypointsNeighbours; // To know if waypoint made check for neighbours near, initialized during first step.
-    static good::vector<Vector> m_aWaypointsToAddOmitInAnalize[EAnalizeWaypointsTotal];
+    static good::vector<Vector> m_aWaypointsToAddOmitInAnalyze[EAnalyzeWaypointsTotal];
 
-    static TAnalizeStep m_iAnalizeStep;
-    static float m_fAnalizeWaypointsForNextFrame; // Positions for next frame to analize.
-    static bool m_bIsAnalizeStepAddedWaypoints;
-    static edict_t* m_pAnalizer; // The person who launched console command "analize".
+    static TAnalyzeStep m_iAnalyzeStep;
+    static float m_fAnalyzeWaypointsForNextFrame; // Positions for next frame to analyze.
+    static bool m_bIsAnalyzeStepAddedWaypoints;
+    static edict_t* m_pAnalyzer; // The person who launched console command "analyze".
 };
 
 

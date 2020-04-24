@@ -37,6 +37,13 @@ enum TVisibilities
 typedef int TVisibility;                    ///< Flags for CUtil::IsVisible() function.
 
 
+/// Trace filter with relevant trace flags (to be used with CUtil::GetTraceFilter()).
+class CTraceFilterWithFlags: public ITraceFilter
+{
+public:
+    int iTraceFlags;
+};
+
 //****************************************************************************************************************
 /// Usefull class to ease engine interraction.
 //****************************************************************************************************************
@@ -46,6 +53,8 @@ class CUtil
 public:
 
     static good::TLogLevel iLogLevel; /// Console log level. Info by default.
+    static int iTextTime;             /// Time in seconds to show text in CUtil::GetReachableInfoFromTo().
+
 
     /// First make folders in file path, then open that file.
     static FILE* OpenFile( const good::string& szFile, const char *szMode );
@@ -91,6 +100,9 @@ public:
                                           float fDistanceSqr, float fMaxDistanceSqr, bool bShowHelp = false );
 
     /// Trace line to know if hit any world object.
+    static CTraceFilterWithFlags& GetTraceFilter( TVisibility iVisibility );
+
+    /// Trace line to know if hit any world object.
     static void TraceLine( const Vector& vSrc, const Vector& vDest, int mask, ITraceFilter *pFilter );
 
     /// Trace hull to know if hit any world object.
@@ -98,6 +110,9 @@ public:
 
     /// Return the ground (hit position) of the vector.
     static Vector& GetGroundVec( const Vector& vSrc );
+
+    /// Return the ground (bottom hit position) of the vector, using the player's hull.
+    static Vector& GetHullGroundVec( const Vector& vSrc );
 
     /// Return result of TraceLine() / TraceHull.
     static trace_t const& TraceResult() { return m_TraceResult; }

@@ -393,9 +393,12 @@ public: // Methods.
 protected:
     friend class CWaypointNavigator; // Get access to m_cGraph (for A* search implementation).
 
+    // Add ladder dismounts waypoints.
+    static void AddLadderDismounts( ICollideable *pLadder, float fPlayerWidth, float fPlayerEye, TWaypointId iBottom, TWaypointId iTop );
+
     // Analyze one waypoint (for AnalyzeStep()). Return true, if waypoint has nearby waypoints or new waypoint is added.
     static bool AnalyzeWaypoint( TWaypointId iWaypoint, Vector& vPos, Vector& vNew, float fPlayerEye, float fAnalyzeDistance,
-                                 float fAnalyzeDistanceExtra, float fAnalyzeDistanceExtraSqr, float fHalfPlayerWidthSqr );
+                                 float fAnalyzeDistanceExtra, float fAnalyzeDistanceExtraSqr, float fHalfPlayerWidth );
 
     // Get path color.
     static void GetPathColor( TPathFlags iFlags, unsigned char& r, unsigned char& g, unsigned char& b );
@@ -491,13 +494,13 @@ protected:
     };
 
     typedef int TAnalyzeStep;
-    class CNeighbour { public: bool a[ 3 ][ 3 ]; };
+    class CNeighbour { public: bool a[ 3 ][ 3 ]; }; // From left bottom to right upper.
 
-    static good::vector<TWaypointId> m_aWaypointsToAnalyze;
     static good::vector<CNeighbour> m_aWaypointsNeighbours; // To know if waypoint made check for neighbours near, initialized during first step.
     static good::vector<Vector> m_aWaypointsToAddOmitInAnalyze[EAnalyzeWaypointsTotal];
 
     static TAnalyzeStep m_iAnalyzeStep;
+    static TWaypointId m_iCurrentAnalyzeWaypoint; // Current waypoint index being analyzed.
     static float m_fAnalyzeWaypointsForNextFrame; // Positions for next frame to analyze.
     static bool m_bIsAnalyzeStepAddedWaypoints;
     static edict_t* m_pAnalyzer; // The person who launched console command "analyze".

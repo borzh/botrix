@@ -89,7 +89,6 @@ good::vector<CWaypoints::unreachable_path_t> CWaypoints::m_aUnreachablePaths;
 // x - x - x
 //
 // '-' and '|' on the picture will be evaluated in 'inters' step, when the adjacent waypoints are not set for some reason (like hit wall).
-good::vector<TWaypointId> CWaypoints::m_aWaypointsToAnalyze;
 good::vector<CWaypoints::CNeighbour> CWaypoints::m_aWaypointsNeighbours;
 good::vector<Vector> CWaypoints::m_aWaypointsToAddOmitInAnalyze[ CWaypoints::EAnalyzeWaypointsTotal ];
 
@@ -97,6 +96,7 @@ CWaypoints::TAnalyzeStep CWaypoints::m_iAnalyzeStep = EAnalyzeStepTotal;
 float CWaypoints::m_fAnalyzeWaypointsForNextFrame = 0;
 edict_t* CWaypoints::m_pAnalyzer = NULL;
 bool CWaypoints::m_bIsAnalyzeStepAddedWaypoints = false;
+TWaypointId CWaypoints::m_iCurrentAnalyzeWaypoint = 0;
 
 static const float ANALIZE_HELP_IF_LESS_WAYPOINTS_PER_FRAME = 0.0011;
 
@@ -953,8 +953,8 @@ void CWaypoints::Draw( CClient* pClient )
             unsigned char r[ 3 ] = { 0x00, 0xFF, 0x00 }, g[ 3 ] = { 0xFF, 0x00, 0x00 }, b[ 3 ] = { 0x00, 0x00, 0xFF };
             for ( int i = 0; i < aPositions.size(); ++i )
             {
-                Vector vOrigin = aPositions[ i ];
-                Vector vEnd = vOrigin; vEnd.z -= fPlayerEye;
+                Vector vOrigin = aPositions[ i ]; vOrigin.x += 0.3f; vOrigin.y += 0.3f;
+                Vector vEnd = vOrigin; vEnd.x += 0.3f; vEnd.y += 0.3f; vEnd.z -= fPlayerEye;
                 if ( CUtil::IsVisiblePVS( aPositions[ i ] ) && CUtil::IsVisible( vOrigin, aPositions[ i ], EVisibilityWorld ) )
                     CUtil::DrawLine( vOrigin, vEnd, fDrawTime, r[ j ], g[ j ], b[ j ] );
             }
@@ -1021,22 +1021,88 @@ void CWaypoints::MarkUnreachablePath( TWaypointId iWaypointFrom, TWaypointId iWa
     m_aUnreachablePaths.push_back( cPath );
 }
 
+//----------------------------------------------------------------------------------------------------------------
+void CWaypoints::AddLadderDismounts( ICollideable *pLadder, float fPlayerWidth, float fPlayerEye, TWaypointId iBottom, TWaypointId iTop )
+{
+    float fMaxHeight = CMod::GetVar( EModVarPlayerJumpHeightCrouched );
+    float fPlayerHalfWidth = fPlayerWidth / 2.0f;
+    QAngle angles = pLadder->GetCollisionAngles();
 
+    Vector vZ( 0, 0, 1 );
+    Vector vDirection; AngleVectors( angles, &vDirection ); vDirection.z = 0; vDirection.NormalizeInPlace();
+    Vector vPerpendicular = vDirection.Cross( vZ );
+
+    Vector vDirections[ 4 ];
+    vDirections[ 0 ] = vDirection * fPlayerWidth;
+    vDirections[ 1 ] = -vDirection * fPlayerWidth;
+    vDirections[ 2 ] = vPerpendicular * fPlayerWidth;
+    vDirections[ 3 ] = -vPerpendicular * fPlayerWidth;
+
+    TWaypointId iWaypoints[ 2 ] = { iBottom, iTop };
+    CTraceFilterWithFlags& iTracer = CUtil::GetTraceFilter( EVisibilityWaypoints );
+
+    for ( int i = 0; i < 2; ++i )
+    {
+        Vector vPos = Get( iWaypoints[ i ] ).vOrigin;
+        Vector vPosGround = vPos; vPosGround.z -= fPlayerEye;
+
+        bool bFound = false;
+        for ( int j = 0; j < 4; ++j )
+        {
+            Vector vNew = vPos + vDirections[j];
+            Vector vGround = CUtil::GetGroundVec( vNew ); // Not hull ground.
+            vGround.z += fPlayerEye;
+
+            if ( vPos.z - vGround.z > fMaxHeight ) // Too high.
+                continue;
+
+            if ( !CUtil::IsVisible( vPos, vGround, EVisibilityWaypoints, false ) )
+                continue;
+
+            vGround = CUtil::GetHullGroundVec( vNew );
+            CUtil::TraceHull( vPosGround, vGround, CMod::vPlayerCollisionHullMins, CMod::vPlayerCollisionHullMaxs, iTracer.iTraceFlags, &iTracer );
+
+            if ( CUtil::IsTraceHitSomething() )
+                continue;
+
+            vGround.z += fPlayerEye;
+
+            TWaypointId iDismount = CWaypoints::GetNearestWaypoint( vGround, NULL, false, fPlayerHalfWidth );
+            if ( iDismount == EWaypointIdInvalid )
+            {
+                iDismount = Add( vGround );
+                BULOG_D( m_pAnalyzer, "  added waypoint %d (%s ladder dismount) at (%.0f, %.0f, %.0f)", iDismount,
+                         i == 0 ? "bottom" : "top", vPos.x, vPos.y, vPos.z );
+            }
+
+            AddPath( iWaypoints[ i ], iDismount, 0.0f, FPathLadder | FPathJump );
+            AddPath( iDismount, iWaypoints[ i ], 0.0f, FPathLadder );
+
+            bFound = true;
+        }
+
+        if ( !bFound )
+            BULOG_W( m_pAnalyzer, "Ladder waypoint %d, couldn't create dismount waypoints.", iWaypoints[i] );
+    }
+}
 //----------------------------------------------------------------------------------------------------------------
 void CWaypoints::Analyze( edict_t* pClient, bool bShowLines )
 {
     m_pAnalyzer = pClient;
     CWaypoint::bShowAnalyzePotencialWaypoints = bShowLines;
-
+    
     m_iAnalyzeStep = EAnalyzeStepNeighbours;
+    m_iCurrentAnalyzeWaypoint = 0;
+    m_fAnalyzeWaypointsForNextFrame = 0;
 
     BULOG_W( pClient, "Started to analyze waypoints." );
     static TItemType aItemTypes[] = { EItemTypePlayerSpawn, EItemTypeHealth, EItemTypeArmor, EItemTypeWeapon, EItemTypeAmmo };
 
     float fPlayerHeight = CMod::GetVar( EModVarPlayerHeight );
     float fPlayerEye = CMod::GetVar( EModVarPlayerEye );
-    float fPlayerHalfWidth = CMod::GetVar( EModVarPlayerWidth ) / 2.0f;
-    
+    float fPlayerWidth = CMod::GetVar( EModVarPlayerWidth );
+    float fPlayerHalfWidth = fPlayerWidth / 2.0f;
+
     float fAnalyzeDistance = CWaypoint::iAnalyzeDistance;
     float fAnalyzeDistanceExtra = fAnalyzeDistance * 1.9f; // To include diagonal, almost but not 2 (Pythagoras).
 
@@ -1072,7 +1138,7 @@ void CWaypoints::Analyze( edict_t* pClient, bool bShowLines )
                 vDirection *= fItemHalfWidth + fPlayerHalfWidth + 5.0f;
 
                 vPos = vMid + vDirection;
-                vPos = CUtil::GetGroundVec( vPos );
+                vPos = CUtil::GetHullGroundVec( vPos );
                 vPos.z += fPlayerEye;
 
                 if ( fabs( vPos.z - vMid.z ) > fPlayerHeight ) // Too high or need to fall to grab, probably needs to grab with gravity gun.
@@ -1090,7 +1156,7 @@ void CWaypoints::Analyze( edict_t* pClient, bool bShowLines )
                 vPos = items[ i ].CurrentPosition();
                 vPos.z += fPlayerEye;
 
-                Vector vGround = CUtil::GetGroundVec( vPos );
+                Vector vGround = CUtil::GetHullGroundVec( vPos );
                 vGround.z += fPlayerEye;
 
                 if ( fabs( vPos.z - vGround.z ) > fPlayerHeight ) // Too high or need to fall to grab, probably needs to grab with gravity gun.
@@ -1110,6 +1176,7 @@ void CWaypoints::Analyze( edict_t* pClient, bool bShowLines )
         }
     }
 
+    // Add ladder waypoints.
     const good::vector<CItem>& items = CItems::GetItems( EItemTypeLadder );
     for ( TItemIndex i = 0; i < items.size(); ++i )
     {
@@ -1125,7 +1192,7 @@ void CWaypoints::Analyze( edict_t* pClient, bool bShowLines )
         vMaxs.x = vMins.x; vMaxs.y = vMins.y;
 
         vMins.z += fPlayerEye;
-        vMins = CUtil::GetGroundVec( vMins );
+        vMins = CUtil::GetHullGroundVec( vMins );
         vMins.z += fPlayerEye + 2.0f;
 
         vMaxs.z += -fPlayerHeight + fPlayerEye - 2.0f;
@@ -1162,6 +1229,8 @@ void CWaypoints::Analyze( edict_t* pClient, bool bShowLines )
         
         CreateAutoPaths( w1, false, fAnalyzeDistanceExtra, false );
         CreateAutoPaths( w2, false, fAnalyzeDistanceExtra, false );
+
+        AddLadderDismounts( pCollideable, fPlayerWidth, fPlayerEye, w1, w2 );
     }
 
     BULOG_I( pClient, "Adding waypoints at added positions ('botrix waypoint analyze add')." );
@@ -1189,17 +1258,12 @@ void CWaypoints::Analyze( edict_t* pClient, bool bShowLines )
     }
 
     BULOG_I( m_pAnalyzer, "Adding new waypoints." );
-    m_aWaypointsToAnalyze = good::vector<TWaypointId>( 2048 );
-     m_aWaypointsNeighbours.resize( Size() );
-     for ( TWaypointId iWaypoint = 0; iWaypoint < Size(); ++iWaypoint )
-         m_aWaypointsToAnalyze.push_back( iWaypoint );
+    m_aWaypointsNeighbours.resize( 2048 );
 }
 
 void CWaypoints::StopAnalyzing()
 {
-    m_aWaypointsToAnalyze = good::vector<TWaypointId>();
     m_aWaypointsNeighbours = good::vector<CNeighbour>();
-    m_fAnalyzeWaypointsForNextFrame = 0;
     m_iAnalyzeStep = EAnalyzeStepTotal;
     m_pAnalyzer = NULL;
 }
@@ -1207,6 +1271,7 @@ void CWaypoints::StopAnalyzing()
 void CWaypoints::AnalyzeStep()
 {
     GoodAssert( m_iAnalyzeStep < EAnalyzeStepTotal );
+    static int iOldSize;
     
     // Search for analyzer in players, else remove him. Can't rely on CPlayers::GetIndex() because the server is reusing edicts.
     if ( m_pAnalyzer )
@@ -1234,18 +1299,17 @@ void CWaypoints::AnalyzeStep()
     if ( m_iAnalyzeStep < EAnalyzeStepDeleteOrphans )
     {
         float fPlayerEye = CMod::GetVar( EModVarPlayerEye );
-        float fHalfPlayerWidthSqr = Sqr( CMod::GetVar( EModVarPlayerWidth ) / 2 );
+        float fHalfPlayerWidth = CMod::GetVar( EModVarPlayerWidth ) / 2.0f;
 
         float fAnalyzeDistance = CWaypoint::iAnalyzeDistance;
         float fAnalyzeDistanceExtra = fAnalyzeDistance * 1.9f; // To include diagonal, almost but not 2 (Pythagoras).
         float fAnalyzeDistanceExtraSqr = Sqr( fAnalyzeDistanceExtra * 1.9f );
 
-        for ( int i = 0; i < iToAnalyze && m_aWaypointsToAnalyze.size() > 0; ++i )
+        for ( int i = 0; i < iToAnalyze && m_iCurrentAnalyzeWaypoint < Size(); ++i, ++m_iCurrentAnalyzeWaypoint )
         {
-            TWaypointId iWaypoint = m_aWaypointsToAnalyze.back();
-            m_aWaypointsToAnalyze.pop_back();
-
+            TWaypointId iWaypoint = m_iCurrentAnalyzeWaypoint;
             CWaypoint &cWaypoint = Get( iWaypoint );
+
             if ( FLAG_SOME_SET( FWaypointLadder, cWaypoint.iFlags ) )
                 continue; // Don't analyze ladder waypoints here, this will be done in the last step.
 
@@ -1269,7 +1333,7 @@ void CWaypoints::AnalyzeStep()
                         vNew.x += fAnalyzeDistance * x;
                         vNew.y += fAnalyzeDistance * y;
 
-                        if ( AnalyzeWaypoint( iWaypoint, vPos, vNew, fPlayerEye, fHalfPlayerWidthSqr,
+                        if ( AnalyzeWaypoint( iWaypoint, vPos, vNew, fPlayerEye, fHalfPlayerWidth,
                                               fAnalyzeDistance, fAnalyzeDistanceExtra, fAnalyzeDistanceExtraSqr ) )
                             neighbours.a[ x + 1 ][ y + 1 ] = true; // Position is already occupied or new waypoint is added.
                     }
@@ -1288,7 +1352,7 @@ void CWaypoints::AnalyzeStep()
                             vNew.x += fAnalyzeDistance * ( x + incX / 2.0f ); // Will be -1/2 or 1/2.
                             vNew.y += fAnalyzeDistance * y;
 
-                           if ( AnalyzeWaypoint( iWaypoint, vPos, vNew, fPlayerEye, fHalfPlayerWidthSqr,
+                           if ( AnalyzeWaypoint( iWaypoint, vPos, vNew, fPlayerEye, fHalfPlayerWidth,
                                                  fAnalyzeDistance, fAnalyzeDistanceExtra, fAnalyzeDistanceExtraSqr ) )
                                 neighbours.a[ x + 1 ][ y + 1 ] = true;
                         }
@@ -1301,7 +1365,7 @@ void CWaypoints::AnalyzeStep()
                             vNew.x += fAnalyzeDistance * x;
                             vNew.y += fAnalyzeDistance * ( y + incY / 2.0f ); // Will be -1/2 or 1/2.
 
-                            if ( AnalyzeWaypoint( iWaypoint, vPos, vNew, fPlayerEye, fHalfPlayerWidthSqr,
+                            if ( AnalyzeWaypoint( iWaypoint, vPos, vNew, fPlayerEye, fHalfPlayerWidth,
                                                   fAnalyzeDistance, fAnalyzeDistanceExtra, fAnalyzeDistanceExtraSqr ) )
                                 neighbours.a[ x + 1 ][ y + 1 ] = true;
                         }
@@ -1315,55 +1379,31 @@ void CWaypoints::AnalyzeStep()
     {
         // Remove waypoints without paths.
         good::vector<Vector> &aToOmit = m_aWaypointsToAddOmitInAnalyze[ EAnalyzeWaypointsOmit ];
-        TWaypointId i = m_aWaypointsToAnalyze[ 0 ];
-        for ( ; iToAnalyze >= 0 && i >= 0; --i, --iToAnalyze )
+        TWaypointId i = m_iCurrentAnalyzeWaypoint;
+        for ( ; iToAnalyze >= 0 && i < Size(); ++i, --iToAnalyze )
             if ( m_cGraph[ i ].neighbours.size() == 0 ||
                  good::find( aToOmit, m_cGraph[ i ].vertex.vOrigin ) != aToOmit.end() )
             {
-                Remove( i-- );
+                BULOG_D( m_pAnalyzer, "  removing waypoint %d.", i );
+                Remove( i );
                 break; // Don't remove more that 1 waypoint per frame, will hang up for couple of seconds.
             }
-        m_aWaypointsToAnalyze[ 0 ] = i;
-
-        if ( i < 0 )
-        {
-            int iOldSize = m_aWaypointsToAnalyze[ 1 ];
-            m_aWaypointsToAnalyze.clear(); // Will end analyze.
-            BULOG_I( m_pAnalyzer, "Removed %d orphan / omitted waypoints.", iOldSize - Size() );
-        
-            // Add paths for nearest waypoints from ladder.
-            for ( TWaypointId i = 0; i < Size(); ++i )
-            {
-                CWaypoint& cWaypoint = Get( i );
-                if ( FLAG_SOME_SET( FWaypointLadder, cWaypoint.iFlags ) )
-                {
-                    good::bitset cOmitWaypoints( CWaypoints::Size() );
-                    cOmitWaypoints.set( i );
-                    TWaypointId iNeighbour = CWaypoints::GetNearestWaypoint( cWaypoint.vOrigin, &cOmitWaypoints, true );
-                    if ( iNeighbour != EWaypointIdInvalid )
-                    {
-                        AddPath( i, iNeighbour, 0, FPathJump | FPathLadder );
-                        AddPath( iNeighbour, i, 0, FPathLadder );
-                    }
-                }
-            }
-        }
-        
+        m_iCurrentAnalyzeWaypoint = i;
     }
 
-    if ( m_aWaypointsToAnalyze.size() == 0 )
+    if ( m_iCurrentAnalyzeWaypoint >= Size() )
     {
         switch ( m_iAnalyzeStep )
         {
             case EAnalyzeStepNeighbours:
                 BULOG_I( m_pAnalyzer, "Checking for missing spots." );
-                for ( TWaypointId iWaypoint = 0; iWaypoint < Size(); ++iWaypoint )
-                    m_aWaypointsToAnalyze.push_back( iWaypoint );
+                m_iCurrentAnalyzeWaypoint = 0;
                 m_bIsAnalyzeStepAddedWaypoints = false;
                 ++m_iAnalyzeStep;
                 break;
 
             case EAnalyzeStepInters:
+                m_iCurrentAnalyzeWaypoint = 0;
                 if ( m_bIsAnalyzeStepAddedWaypoints )
                 {
                     --m_iAnalyzeStep;
@@ -1372,13 +1412,14 @@ void CWaypoints::AnalyzeStep()
                 else
                 {
                     ++m_iAnalyzeStep;
-                    m_aWaypointsToAnalyze.push_back( Size() - 1 ); // Analize orphans from end to start.
-                    m_aWaypointsToAnalyze.push_back( Size() ); // Save amount before any deletion.
+                    iOldSize = Size(); // Save size before erasing waypoints.
                     BULOG_I( m_pAnalyzer, "Erasing orphans / omitted waypoints." );
                 }
                 break;
 
             case EAnalyzeStepDeleteOrphans:
+                BULOG_I( m_pAnalyzer, "Removed %d orphan / omitted waypoints.", iOldSize - Size() );
+
                 StopAnalyzing(); // Stop analyzing, no more waypoints.
                 BULOG_I( m_pAnalyzer, "Total waypoints: %d.", Size() );
                 BULOG_W( m_pAnalyzer, "Stopped analyzing waypoints." );
@@ -1390,7 +1431,7 @@ void CWaypoints::AnalyzeStep()
     }
 }
 
-bool CWaypoints::AnalyzeWaypoint( TWaypointId iWaypoint, Vector& vPos, Vector& vNew, float fPlayerEye, float fHalfPlayerWidthSqr,
+bool CWaypoints::AnalyzeWaypoint( TWaypointId iWaypoint, Vector& vPos, Vector& vNew, float fPlayerEye, float fHalfPlayerWidth,
                                   float fAnalyzeDistance, float fAnalyzeDistanceExtra, float fAnalyzeDistanceExtraSqr )
 {
     static good::vector<TWaypointId> aNearWaypoints( 16 );
@@ -1398,7 +1439,36 @@ bool CWaypoints::AnalyzeWaypoint( TWaypointId iWaypoint, Vector& vPos, Vector& v
     if ( ( CBotrixPlugin::pEngineTrace->GetPointContents( vNew ) & MASK_SOLID_BRUSHONLY ) != 0 )
         return false; // Ignore, if inside some solid brush.
 
-    Vector vGround = CUtil::GetGroundVec( vNew );
+    float fJumpHeight = CMod::GetVar( EModVarPlayerJumpHeightCrouched );
+    float fHalfPlayerWidthSqr = SQR( fHalfPlayerWidth );
+    Vector vGround = CUtil::GetHullGroundVec( vNew );
+
+    // Check if on a border.
+    Vector vHullGround = vGround, vFineGround = CUtil::GetGroundVec( vNew );
+    if ( vHullGround.z - vFineGround.z > fJumpHeight )
+    {
+        // On a border (line trace hits lower ground), try to get off from there.
+        static float directions[ 4 ][ 3 ] = { { 1, 0, 0 }, { -1, 0, 0 }, { 0, 1, 0 }, { 0, -1, 0 } };
+
+        for ( int i = 0; i < 4; ++i )
+        {
+            Vector vDirection = Vector( directions[ i ][ 0 ], directions[ i ][ 1 ], directions[ i ][ 2 ] );
+            vDirection *= fHalfPlayerWidth;
+
+            Vector vDisplaced = vNew + vDirection;
+            vHullGround = CUtil::GetHullGroundVec( vDisplaced );
+            if ( fabs( vHullGround.z - vGround.z ) < CMod::GetVar( EModVarPlayerObstacleToJump ) ) // Small difference.
+            {
+                vFineGround = CUtil::GetGroundVec( vDisplaced );
+                if ( fabs( vHullGround.z - vFineGround.z ) < CMod::GetVar( EModVarPlayerObstacleToJump ) ) // Small difference.
+                {
+                    vGround = vHullGround;
+                    break;
+                }
+            }
+        }
+    }
+
     vGround.z += fPlayerEye;
 
     if ( CWaypoint::bShowAnalyzePotencialWaypoints )
@@ -1440,7 +1510,6 @@ bool CWaypoints::AnalyzeWaypoint( TWaypointId iWaypoint, Vector& vPos, Vector& v
         TWaypointId iNew = Add( vGround );
         BULOG_D( m_pAnalyzer, "  added waypoint %d (from %d) at (%.0f, %.0f, %.0f)", iNew, iWaypoint, vGround.x, vGround.y, vGround.z );
 
-        m_aWaypointsToAnalyze.push_back( iNew );
         m_bIsAnalyzeStepAddedWaypoints = true;
 
         TPathFlags iFlags = bCrouch ? FPathCrouch : FPathNone;
@@ -1484,7 +1553,7 @@ void CWaypoints::GetPathColor( TPathFlags iFlags, unsigned char& r, unsigned cha
     }
     else if ( FLAG_SOME_SET(FPathLadder, iFlags) )
     {
-        r = 0xFF; g = 0x33; b = 0x00; // Orange effect, ladder.
+        r = 0xFF; g = 0x80; b = 0x00; // Orange effect, ladder.
     }
     else if ( FLAG_ALL_SET_OR_0(FPathJump | FPathCrouch, iFlags) )
     {

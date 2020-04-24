@@ -23,16 +23,10 @@ extern IEffects* pEffects;
 extern char* szMainBuffer;
 extern int iMainBufferSize;
 
-const int iTextTime = 30; // Time in seconds to show text in CUtil::GetReachableInfoFromTo().
+int CUtil::iTextTime = 20.0; // Time in seconds to show text in CUtil::GetReachableInfoFromTo().
 
 
 //----------------------------------------------------------------------------------------------------------------
-class CTraceFilterWithFlags: public ITraceFilter
-{
-public:
-    int iTraceFlags;
-};
-
 class CGenericTraceFilter: public CTraceFilterWithFlags
 {
 public:
@@ -51,7 +45,7 @@ public:
                 iTraceFlags = MASK_PLAYERSOLID & ~CONTENTS_MOVEABLE;
                 break;
             case EVisibilityBots:
-                // Should't include CONTENTS_GRATE.
+                // Should't include CONTENTS_GRATE. TODO: exclude WINDOW?
                 iTraceFlags = MASK_VISIBLE | MASK_SHOT;
                 break;
             default:
@@ -66,6 +60,9 @@ public:
             case EVisibilityWorld:
                 return TRACE_WORLD_ONLY;
             case EVisibilityWaypoints:
+                // Apparently, there is a bug in Source Engine when using TRACE_EVERYTHING_FILTER_PROPS, 
+                // that doesn't pass in ShouldHitEntity() props that are CONTENTS_PLAYERCLIP. This will make to create
+                // waypoints in invalid positions.
                 return CWaypoints::IsAnalyzing() && CWaypoint::bAnalyzeTraceAll ? TRACE_EVERYTHING_FILTER_PROPS : TRACE_EVERYTHING;
             case EVisibilityBots:
                 return TRACE_EVERYTHING_FILTER_PROPS;
@@ -89,7 +86,7 @@ public:
         if ( iVisibility == EVisibilityBots )
             return true; // Trace everything for shooting / analyzing with all trace.
 
-        // Here we know for sure that we are analyzing the map: CWaypoints::IsAnalyzing() && CWaypoint::bAnalyzeTraceAll
+        // Here we know for sure that we are analyzing the map: CWaypoints::IsAnalyzing() && CWaypoint::bAnalyzeTraceAll.
         edict_t *pEdict = CBotrixPlugin::instance->pEngineServer->PEntityOfEntIndex( index );
         if ( pEdict == NULL ) // Sometimes happens.
             return true;
@@ -133,7 +130,7 @@ CGenericTraceFilter cWorldTraceFilter( EVisibilityWorld );
 CGenericTraceFilter cWaypointTraceFilter( EVisibilityWaypoints );
 CGenericTraceFilter cBotsTraceFilter(EVisibilityBots);
 
-inline CTraceFilterWithFlags& GetFilter( TVisibility iVisibility )
+CTraceFilterWithFlags& CUtil::GetTraceFilter( TVisibility iVisibility )
 {
     switch ( iVisibility )
     {
@@ -182,7 +179,7 @@ TReach CanPassOrJump( Vector& vGround, Vector& vDirectionInc, const Vector& vMin
 
     if ( !CUtil::IsTraceHitSomething() )
     {
-        vGround = CUtil::GetGroundVec( vHit );
+        vGround = CUtil::GetHullGroundVec( vHit );
         return EReachReachable;
     }
 
@@ -201,7 +198,7 @@ TReach CanPassOrJump( Vector& vGround, Vector& vDirectionInc, const Vector& vMin
     if ( !CUtil::IsTraceHitSomething() )
     {
         vStair = vGround;
-        vGround = CUtil::GetGroundVec( vHit );
+        vGround = CUtil::GetHullGroundVec( vHit );
         if ( CanClimbSlope( vStair, vGround ) )
         {
             // Check if can climb up without making the stair step.
@@ -221,12 +218,12 @@ TReach CanPassOrJump( Vector& vGround, Vector& vDirectionInc, const Vector& vMin
     
     if ( !CUtil::IsTraceHitSomething() ) // We can stand on vHit after jump.
     {
-        vGround = CUtil::GetGroundVec( vHit );
+        vGround = CUtil::GetHullGroundVec( vHit );
         return EReachNeedJump;
     }
 
     vGround = CUtil::TraceResult().endpos;
-    //vGround = CUtil::GetGroundVec( CUtil::TraceResult().endpos );
+    //vGround = CUtil::GetHullGroundVec( CUtil::TraceResult().endpos );
     return EReachNotReachable; // Can't jump over.
 }
 
@@ -260,7 +257,7 @@ bool CUtil::IsVisible( const Vector& vSrc, const Vector& vDest, TVisibility iVis
             return false;
     }
 
-    CTraceFilterWithFlags* pTraceFilter = &GetFilter( iVisibility );
+    CTraceFilterWithFlags* pTraceFilter = &GetTraceFilter( iVisibility );
     TraceLine(vSrc, vDest, pTraceFilter->iTraceFlags, pTraceFilter );
     return m_TraceResult.fraction >= 0.95f;
 }
@@ -314,10 +311,11 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, Vector& vDest, bool& b
     vGroundMaxs.z = 1.0f;
 
     // Get ground positions.
-    Vector vSrcGround = GetGroundVec( vSrc );
-    BASSERT(vSrcGround.z > vMinZ.z, return EReachNotReachable);
+    Vector vSrcGround = GetHullGroundVec( vSrc );
+    if ( vSrcGround.z <= vMinZ.z ) 
+        return EReachNotReachable;
 
-    Vector vDestGround = GetGroundVec( vDest );
+    Vector vDestGround = GetHullGroundVec( vDest );
     if ( vDestGround.z == vMinZ.z )
         return EReachNotReachable;
 
@@ -477,6 +475,16 @@ void CUtil::TraceHull( const Vector& vSrc, const Vector& vDest, const Vector& vM
 
 //----------------------------------------------------------------------------------------------------------------
 Vector& CUtil::GetGroundVec( const Vector& vSrc )
+{
+    Vector vDest = vSrc;
+    vDest.z = -iHalfMaxMapSize;
+
+    TraceLine( vSrc, vDest, cWaypointTraceFilter.iTraceFlags, &cWaypointTraceFilter );
+    return m_TraceResult.endpos;
+}
+
+//----------------------------------------------------------------------------------------------------------------
+Vector& CUtil::GetHullGroundVec( const Vector& vSrc )
 {
     Vector vDest = vSrc;
     vDest.z = -iHalfMaxMapSize;

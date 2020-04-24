@@ -236,7 +236,7 @@ enum TWaypointFlag
     FWaypointLadder            = 1<<13,          ///< Ladder point.
 
     EWaypointFlagTotal         = 14,             ///< Amount of waypoint flags.
-    FWaypointAll               = (1<<14) - 1     ///< All flags set.
+    FWaypointAll               = (1<<14) - 1,    ///< All flags set.
 };
 typedef short TWaypointFlags;                    ///< Set of waypoint flags.
 typedef int TWaypointArgument;                   ///< Waypoint argument.

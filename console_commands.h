@@ -180,7 +180,7 @@ public:
 class CWaypointDestinationCommand: public CConsoleCommand
 {
 public:
-	CWaypointDestinationCommand();
+    CWaypointDestinationCommand();
     TCommandResult Execute( CClient* pClient, int argc, const char** argv );
 };
 
@@ -399,6 +399,13 @@ public:
 //****************************************************************************************************************
 // Path waypoint commands.
 //****************************************************************************************************************
+class CPathDebugCommand: public CConsoleCommand
+{
+public:
+    CPathDebugCommand();
+    TCommandResult Execute( CClient* pClient, int argc, const char** argv );
+};
+
 class CPathDistanceCommand: public CConsoleCommand
 {
 public:
@@ -1221,16 +1228,17 @@ public:
     CPathCommand()
     {
         m_sCommand = "path";
-        Add(new CPathAutoCreateCommand);
-        Add(new CPathAddTypeCommand);
-        Add(new CPathArgumentCommand);
-        Add(new CPathCreateCommand);
-        Add(new CPathDistanceCommand);
-        Add(new CPathDrawCommand);
-        Add(new CPathInfoCommand);
+        Add( new CPathAutoCreateCommand );
+        Add( new CPathAddTypeCommand );
+        Add( new CPathArgumentCommand );
+        Add( new CPathCreateCommand );
+        Add( new CPathDebugCommand );
+        Add( new CPathDistanceCommand );
+        Add( new CPathDrawCommand );
+        Add( new CPathInfoCommand );
         //Add(new CPathSwapCommand);
-        Add(new CPathRemoveCommand);
-        Add(new CPathRemoveTypeCommand);
+        Add( new CPathRemoveCommand );
+        Add( new CPathRemoveTypeCommand );
     }
 };
 

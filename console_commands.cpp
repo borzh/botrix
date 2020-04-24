@@ -1911,6 +1911,54 @@ TCommandResult CPathSwapCommand::Execute( CClient* pClient, int argc, const char
 }
 */
 
+CPathDebugCommand::CPathDebugCommand()
+{
+    m_sCommand = "debug";
+    m_sHelp = "show lines indicating path creation / problems";
+    m_sDescription = "Parameter: (off / seconds-to-disappear). When not 'off', will show lines / texts showing reachable / unreachable paths when adding new waypoint.";
+    m_iAccessLevel = FCommandAccessWaypoint;
+
+    StringVector args; args.push_back( sOff );
+    m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgValues );
+    m_cAutoCompleteValues.push_back( args );
+}
+
+TCommandResult CPathDebugCommand::Execute( CClient* pClient, int argc, const char** argv )
+{
+    if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )
+        return ECommandPerformed;
+
+    edict_t* pEdict = ( pClient ) ? pClient->GetEdict() : NULL;
+    if ( argc > 1 )
+    {
+        BULOG_W( pEdict, "Error, invalid parameters count." );
+        return ECommandError;
+    }
+    else if ( argc == 1 )
+    {
+        int amount = -1;
+        if ( sOff == argv[ 0 ] )
+            amount = 0;
+        else if ( sscanf( argv[ 0 ], "%d", &amount ) != 1 )
+            amount = -1;
+
+        if ( amount < 0 )
+        {
+            BULOG_W( pEdict, "Error, invalid health amount: %s.", argv[ 0 ] );
+            return ECommandError;
+        }
+
+        CUtil::iTextTime = amount;
+    }
+
+    if ( CUtil::iTextTime == 0 )
+        BULOG_I( pEdict, "Show auto-created path lines: off." );
+    else
+        BULOG_I( pEdict, "Show auto-created path lines for %d seconds.", CUtil::iTextTime );
+
+    return ECommandPerformed;
+}
+
 TCommandResult CPathDistanceCommand::Execute( CClient* pClient, int argc, const char** argv )
 {
 	if ( CConsoleCommand::Execute( pClient, argc, argv ) == ECommandPerformed )

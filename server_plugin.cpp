@@ -415,29 +415,29 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
 {
     if ( bMapRunning && m_bEnabled )
     {
-        try
-        {
+        // try
+        // {
             if ( CWaypoints::IsAnalyzing() )
                 CWaypoints::AnalyzeStep();
-        }
-        catch ( ... )
-        {
-            BLOG_E( "FATAL EXCEPTION in CWaypoints::AnalyzeStep'." );
-            BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
-            GoodAssert( false );
-        }
+        // }
+        // catch ( ... )
+        // {
+        //     BLOG_E( "FATAL EXCEPTION in CWaypoints::AnalyzeStep'." );
+        //     BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
+        //     GoodAssert( false );
+        // }
         
 
-        try
-        {
+        // try
+        // {
             CUtil::PrintMessagesInQueue();
-        }
-        catch ( ... )
-        {
-            BLOG_E( "FATAL EXCEPTION in CUtil::PrintMessagesInQueue." );
-            BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
-            GoodAssert( false );
-        }
+        // }
+        // catch ( ... )
+        // {
+        //     BLOG_E( "FATAL EXCEPTION in CUtil::PrintMessagesInQueue." );
+        //     BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
+        //     GoodAssert( false );
+        // }
 
         float fPrevEngineTime = fEngineTime;
         fEngineTime = pEngineServer->Time();
@@ -462,16 +462,16 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
 		}
 #endif
 
-        try
-        {
+        // try
+        // {
             CMod::Think();
-        }
-        catch ( ... )
-        {
-            BLOG_E( "FATAL EXCEPTION in CMod::Think()." );
-            BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
-            GoodAssert( false );
-        }
+        // }
+        // catch ( ... )
+        // {
+        //     BLOG_E( "FATAL EXCEPTION in CMod::Think()." );
+        //     BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
+        //     GoodAssert( false );
+        // }
         
 
 #ifdef SHOW_FPS
@@ -485,28 +485,28 @@ void CBotrixPlugin::GameFrame( bool /*simulating*/ )
         }
 #endif
 
-        try
-        {
+        // try
+        // {
             CItems::Update();
-        }
-        catch ( ... )
-        {
-            BLOG_E( "FATAL EXCEPTION in CItems::Update()." );
-            BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
-            GoodAssert( false );
-        }
+        // }
+        // catch ( ... )
+        // {
+        //     BLOG_E( "FATAL EXCEPTION in CItems::Update()." );
+        //     BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
+        //     GoodAssert( false );
+        // }
         
         
-        try
-        {
+        // try
+        // {
             CPlayers::PreThink();
-        }
-        catch ( ... )
-        {
-            BLOG_E( "FATAL EXCEPTION in CPlayers::PreThink()." );
-            BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
-            GoodAssert( false );
-        }
+        // }
+        // catch ( ... )
+        // {
+        //     BLOG_E( "FATAL EXCEPTION in CPlayers::PreThink()." );
+        //     BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
+        //     GoodAssert( false );
+        // }
 
 //#define BOTRIX_SHOW_PERFORMANCE
 #ifdef BOTRIX_SHOW_PERFORMANCE

@@ -4493,16 +4493,16 @@ int bbotCompletion( const char* partial, char commands[ COMMAND_COMPLETION_MAXIT
 
 void CBotrixCommand::CommandCallback( const CCommand &command )
 {
-    try
-    {
+    // try
+    // {
         bbotCommandCallback( command );
-    }
-    catch ( ... )
-    {
-        BLOG_E( "FATAL EXCEPTION: executing command '%s'.", command.GetCommandString() );
-        BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
-        GoodAssert( false );
-    }
+    // }
+    // catch ( ... )
+    // {
+    //     BLOG_E( "FATAL EXCEPTION: executing command '%s'.", command.GetCommandString() );
+    //     BLOG_E( "Please report to botrix.plugin@gmail.com, attaching the log file." );
+    //     GoodAssert( false );
+    // }
 }
 
 #endif // BOTRIX_OLD_COMMAND_COMPLETION

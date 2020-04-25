@@ -305,7 +305,6 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, Vector& vDest, bool& b
 
     Vector vMins = CMod::vPlayerCollisionHullMins;
     Vector vMaxs = CMod::vPlayerCollisionHullMaxs;
-    Vector vJumpMaxs = CMod::vPlayerCollisionHullCrouchedMaxs;
     Vector vGroundMaxs = CMod::vPlayerCollisionHullMaxsGround;
     vGroundMaxs.z = 1.0f;
 

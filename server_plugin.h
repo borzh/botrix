@@ -135,7 +135,7 @@ public: // Methods.
 #endif
 
     // Generate say event.
-    void GenerateSayEvent( edict_t* pEntity, const char* szText, bool bTeamOnly );
+    bool GenerateSayEvent( edict_t* pEntity, const char* szText, bool bTeamOnly );
 
 public: // Static methods.
 //    static void HudTextMessage( edict_t* pEntity, char *szTitle, char *szMessage,

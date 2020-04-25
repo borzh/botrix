@@ -697,10 +697,10 @@ PLUGIN_RESULT CBotrixPlugin::NetworkIDValidated( const char *pszUserName, const 
 
 
 //----------------------------------------------------------------------------------------------------------------
-void CBotrixPlugin::GenerateSayEvent( edict_t* pEntity, const char* szText, bool bTeamOnly )
+bool CBotrixPlugin::GenerateSayEvent( edict_t* pEntity, const char* szText, bool bTeamOnly )
 {
     int iUserId = pEngineServer->GetPlayerUserId(pEntity);
-    BASSERT(iUserId != -1, return);
+    BASSERT(iUserId != -1, return false);
 
     IGameEvent* pEvent = pGameEventManager->CreateEvent("player_say");
     if ( pEvent )
@@ -711,7 +711,9 @@ void CBotrixPlugin::GenerateSayEvent( edict_t* pEntity, const char* szText, bool
         //pEvent->SetInt("priority", 1 );	// HLTV event priority, not transmitted
         pGameEventManager->FireEvent(pEvent);
         //pGameEventManager2->FreeEvent(pEvent); // Don't free it !!!
+        return true;
     }
+    return false;
 }
 
 

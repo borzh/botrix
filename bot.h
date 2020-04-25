@@ -503,6 +503,8 @@ protected: // Bot flags.
     bool m_bRequestTimeout:1;                                      // If true then end performing chat request after timeout.
 #endif
 
+    bool m_bSaidNoWaypoints:1;                                     // Say that there are no waypoints only once.
+
 };
 
 

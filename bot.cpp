@@ -58,7 +58,8 @@ CBot::CBot( edict_t* pEdict, TBotIntelligence iIntelligence, TClass iClass ):
     m_bDebugging(false),
 #endif
     m_bDontBreakObjects(false), m_bDontThrowObjects(false),
-    m_bFeatureAttackDuckEnabled(iIntelligence < EBotNormal), m_bFeatureWeaponCheck(true)
+    m_bFeatureAttackDuckEnabled(iIntelligence < EBotNormal), m_bFeatureWeaponCheck(true),
+    m_bSaidNoWaypoints(false)
 {
     m_aPickedItems.reserve(16);
     for ( TItemType i=0; i < EItemTypeCollisionTotal; ++i )
@@ -104,6 +105,8 @@ void CBot::Say( bool bTeamOnly, const char* szFormat, ... )
     good::string_buffer sBuffer(szBotBuffer, 2048, false);
     if ( bTeamOnly )
         sBuffer << "(TEAM) " << GetName() << ": ";
+    //sBuffer << ( bTeamOnly ? "say_team " : "say" );
+
     int iSize = sBuffer.size();
 
     va_list vaList;
@@ -112,6 +115,7 @@ void CBot::Say( bool bTeamOnly, const char* szFormat, ... )
     va_end(vaList);
 
     //CBotrixPlugin::pServerPluginHelpers->ClientCommand(m_pEdict, szBotBuffer);
+    //CBotrixPlugin::pEngineServer->ClientCommand(m_pEdict, "%s", szBotBuffer);
 
 #ifdef BOTRIX_SEND_BOT_CHAT
     for ( int i = 0; i <= CPlayers::GetPlayersCount(); i++ )
@@ -133,14 +137,17 @@ void CBot::Say( bool bTeamOnly, const char* szFormat, ... )
             bf->WriteByte( true );
         }
         CBotrixPlugin::pEngineServer->MessageEnd();
-    }
+    //}
 
     // Echo to server console.
     if ( CBotrixPlugin::pEngineServer->IsDedicatedServer() )
          Msg( "%s", szBotBuffer );
 #endif
 
-    CBotrixPlugin::instance->GenerateSayEvent(m_pEdict, &szBotBuffer[iSize], bTeamOnly);
+    if ( !CBotrixPlugin::instance->GenerateSayEvent( m_pEdict, szBotBuffer, bTeamOnly ) )
+    {
+        BLOG_E("%s -> %s", GetName(), szBotBuffer);
+    }
 }
 
 
@@ -493,10 +500,13 @@ void CBot::PreThink()
     }
 #endif
 
-    if ( CWaypoints::Size() <= 3 )
+    if ( m_bAlive && CWaypoints::Size() <= 64 )
     {
-        BotDebug( "Please create more waypoints, so I could move. I am paused." );
-        m_bCommandPaused = true;
+        if ( !m_bSaidNoWaypoints )
+        {
+            m_bSaidNoWaypoints = true;
+            Say( false, "Please create more waypoints for me." );
+        }
         return;
     }
 

@@ -18,8 +18,8 @@ Steps to compile
 
         Microsoft Visual Studio 2010 with Service Pack 1 (at least).
         Download Git.
-        git clone https://github.com/ValveSoftware/source-sdk-2013.git source-sdk-2013
-        git clone https://github.com/borzh/botrix botrix
+        git clone git@github.com:ValveSoftware/source-sdk-2013.git
+        git clone git@github.com:borzh/botrix.git
 
 - OSX compilation:
 
@@ -29,8 +29,8 @@ Steps to compile
         
         Install CMake, like: brew install cmake
 
-        git clone https://github.com/ValveSoftware/source-sdk-2013.git source-sdk-2013
-        git clone https://github.com/borzh/botrix botrix
+        git clone git@github.com:ValveSoftware/source-sdk-2013.git
+        git clone git@github.com:borzh/botrix.git
         mkdir botrix/build
         cd botrix/build
         cmake ..
@@ -39,8 +39,8 @@ Steps to compile
 - Linux compilation:
 
         sudo apt-get install git build-essential gcc-multilib g++-multilib cmake ia32-libs
-        git clone https://github.com/ValveSoftware/source-sdk-2013.git source-sdk-2013
-        git clone https://github.com/borzh/botrix botrix
+        git clone git@github.com:ValveSoftware/source-sdk-2013.git
+        git clone git@github.com:borzh/botrix.git
         mkdir botrix/build
         cd botrix/build
         cmake ..

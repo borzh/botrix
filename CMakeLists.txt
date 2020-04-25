@@ -25,10 +25,10 @@ cmake_minimum_required( VERSION 2.6 )
 set( SHARED_COMPILE_FLAGS "-Wall -Wextra -Wno-format-security" ) # -std=c++11
 
 #if( UNIX AND NOT APPLE )
-    set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m32 -march=pentium4" ) #  -std=c++11
+    set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m32 -march=pentium4" )
 #endif()
 
-set( SHARED_LINKER_FLAGS  "-fvisibility=hidden -fpermissive" ) #
+set( SHARED_LINKER_FLAGS  "-fvisibility=hidden -fpermissive -fno-rtti -fno-exceptions" )
 
 set( SHARED_FLAGS "${SHARED_COMPILE_FLAGS} ${SHARED_LINKER_FLAGS}")
 
@@ -61,6 +61,10 @@ if(APPLE)
 elseif(UNIX)
     set( OS_COMPILE_FLAGS -DCOMPILER_GCC -DGNUC=1 -DPOSIX=1 -DLINUX=1 -D_LINUX=1 )
     set( OS_LINK_FLAGS -Wno-free-nonheap-object -rdynamic -Wl,--no-undefined -Wl,--as-needed )
+    # While linking libpthread.a into a shared library is theoretically possible, it is a really bad idea. 
+    # The reason is that libpthread is part of glibc, and all parts of glibc must match exactly, or you'll 
+    # see strange and un-explainable crashes.
+#    set( STATIC_OS_LIBS /usr/lib32/libpthread.a /usr/lib32/libm.a /usr/lib32/libc.a )
     set( SOURCE_SDK_2013_LINK_PATH_SUFFIX "/linux32" )
     set( STEAMAPP_DIR "$ENV{HOME}/.steam/steam/SteamApps" )
     set( STEAMCMD_DIR "$ENV{HOME}/steamcmd" )
@@ -133,10 +137,13 @@ set( SOURCE_SDK_2013_LINK_PATH "${SOURCE_SDK_2013_PATH}/mp/src/lib/public${SOURC
 set( PROJECT_LINK_LIBS ${OS_LINK_FLAGS} ${OS_LINK_LIBS}
     ${SOURCE_SDK_2013_LINK_PATH}/mathlib.a
     ${SOURCE_SDK_2013_LINK_PATH}/tier1.a
+    ${STATIC_OS_LIBS}
     tier0
     vstdlib
     dl                   # tier1.a needs that
     good
+    -static-libgcc
+    -static-libstdc++
 )
 
 # Link Botrix plugin library.

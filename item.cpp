@@ -300,7 +300,9 @@ void CItems::MapLoaded(bool bLog)
 
     for ( int i = m_iCurrentEntity; i < MAX_EDICTS; ++i )
     {
-        m_aEdictsIndexes[ i ] = fast_edict_index_t { EItemTypeOther, EItemIndexInvalid };
+        fast_edict_index_t t = { EItemTypeOther, 0 };
+        m_aEdictsIndexes[ i ] = t;
+
         edict_t* pEdict = CBotrixPlugin::pEngineServer->PEntityOfEntIndex(i);
         if ( (pEdict == NULL) || pEdict->IsFree() )
             continue;
@@ -475,7 +477,11 @@ void CItems::CheckNewEntity(edict_t* pEdict, bool bLog)
     CItemClass* pItemClass;
     TItemType iEntityType = GetEntityType(szClassName, pItemClass, 0, EItemTypeKnownTotal);
     if ( iEntityType == EItemTypeOther )
+    {
+        fast_edict_index_t t = { EItemTypeOther, m_aOthers.size() };
+        m_aEdictsIndexes[ iEntIndex ] = t;
         m_aOthers.push_back(pEdict);
+    }
     else if ( iEntityType == EItemTypeObject )
         AddObject( pEdict, pItemClass, pServerEntity );
     else
@@ -622,7 +628,8 @@ TItemIndex CItems::AddItem( TItemType iEntityType, edict_t* pEdict, CItemClass* 
 		iWaypoint = CWaypoints::GetNearestWaypoint( vItemOrigin, NULL, true, CItem::iMaxDistToWaypoint );
 
     TItemIndex iIndex = NewEntityIndex( iEntityType );
-    m_aEdictsIndexes[ pEdict->m_EdictIndex ] = fast_edict_index_t { iEntityType, iIndex };
+    fast_edict_index_t t = { iEntityType, iIndex };
+    m_aEdictsIndexes[ pEdict->m_EdictIndex ] = t;
 
     CItem cNewEntity(pEdict, iFlags, fPickupDistanceSqr, pItemClass, vItemOrigin, iWaypoint);
     AutoWaypointPathFlagsForEntity( iEntityType, iIndex, cNewEntity );
@@ -651,7 +658,8 @@ void CItems::AddObject( edict_t* pEdict, const CItemClass* pObjectClass, IServer
     fMaxsRadiusSqr *= fMaxsRadiusSqr;
     
     TItemIndex iIndex = NewEntityIndex( EItemTypeObject );
-    m_aEdictsIndexes[pEdict->m_EdictIndex] = fast_edict_index_t { EItemTypeObject, iIndex };
+    fast_edict_index_t t = { EItemTypeObject, iIndex };
+    m_aEdictsIndexes[pEdict->m_EdictIndex] = t;
 
     TItemFlags iFlags = pObjectClass->iFlags;
 

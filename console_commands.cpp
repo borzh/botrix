@@ -4021,8 +4021,9 @@ TCommandResult CItemMarkCommand::Execute( CClient* pClient, int argc, const char
     if ( argc == 0 )
     {
         const good::vector<TItemId>& aItems = CItems::GetObjectsFlags();
-        for ( int i = 0; i < aItems.size(); ++i )
-            BULOG_I( pClient->GetEdict(), "Object id %d: %s", aItems[i], CTypeToString::EntityClassFlagsToString( aItems[ ++i ] ).c_str() );
+        for ( int i = 0; i < aItems.size(); i += 2 )
+            BULOG_I( pClient->GetEdict(), "Object id %d: %s", aItems[i], CTypeToString::EntityClassFlagsToString( aItems[ i+1 ] ).c_str() );
+        BULOG_I( pClient->GetEdict(), "Total %d objects.", aItems.size() );
         return ECommandPerformed;
     }
 
@@ -4511,39 +4512,39 @@ void CBotrixCommand::CommandCallback( const CCommand &command )
 //----------------------------------------------------------------------------------------------------------------
 CBotrixCommand::CBotrixCommand()
 {
-   m_sCommand = "botrix";
+    m_sCommand = "botrix";
     if ( CBotrixPlugin::instance->IsEnabled() )
     {
-        Add(new CBotCommand);
-        Add(new CConfigCommand);
-        Add(new CItemCommand);
-        Add(new CWaypointCommand);
-        Add(new CPathCommand);
-        Add(new CVersionCommand);
-        Add(new CDisableCommand);
+        Add( new CBotCommand );
+        Add( new CConfigCommand );
+        Add( new CItemCommand );
+        Add( new CWaypointCommand );
+        Add( new CPathCommand );
+        Add( new CVersionCommand );
+        Add( new CDisableCommand );
     }
     else
-        Add(new CEnableCommand);
+        Add( new CEnableCommand );
 
-	aBoolsCompletion.push_back("on");
-	aBoolsCompletion.push_back("off");
+    aBoolsCompletion.push_back( "on" );
+    aBoolsCompletion.push_back( "off" );
 
-	aWaypointCompletion.push_back("current");
-	aWaypointCompletion.push_back("destination");
+    aWaypointCompletion.push_back( "current" );
+    aWaypointCompletion.push_back( "destination" );
 
 #if defined(BOTRIX_NO_COMMAND_COMPLETION)
-	m_pServerCommand = new ConCommand( MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, 0 );
+    m_pServerCommand = new ConCommand( MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, 0 );
 #elif defined(BOTRIX_OLD_COMMAND_COMPLETION)
-	m_pServerCommand = new ConCommand( MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, bbotCompletion );
+    m_pServerCommand = new ConCommand( MAIN_COMMAND, bbotCommandCallback, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, bbotCompletion );
 #else
-	m_pServerCommand = new ConCommand( MAIN_COMMAND, this, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, this );
+    m_pServerCommand = new ConCommand( MAIN_COMMAND, this, "Botrix plugin's commands. " PLUGIN_VERSION " Beta(BUILD " __DATE__ ")\n", FCVAR_NONE, this );
 #endif
 
 #ifndef DONT_USE_VALVE_FUNCTIONS
 #ifdef BOTRIX_SOURCE_ENGINE_2006
-	CBotrixPlugin::pCVar->RegisterConCommandBase( m_pServerCommand.get() );
+    CBotrixPlugin::pCVar->RegisterConCommandBase( m_pServerCommand.get() );
 #else
-	CBotrixPlugin::pCVar->RegisterConCommand( m_pServerCommand.get() );
+    CBotrixPlugin::pCVar->RegisterConCommand( m_pServerCommand.get() );
 #endif
 #endif
 }

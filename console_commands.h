@@ -285,9 +285,9 @@ public:
     CWaypointAnalyzeTraceCommand()
     {
         m_sCommand = "trace";
-        m_sHelp = "ray trace all entities";
-        m_sDescription = "Parameter: (on / off). When 'off', ray tracing will not hit weapon/ammo/health/armor/non heavy objects, "
-            "so waypoints will be placed 'inside' those entities. Put it in 'on', if there are troubles with analyze.";
+        m_sHelp = "ray trace moveable entities (such as objects) during map analyze";
+        m_sDescription = "Parameter: (on / off). When 'off', ray tracing won't hit any moveable entities (such as objects), "
+            "so waypoints will be placed 'inside' those entities. But when it is 'on', there may be troubles with analyze.";
         m_iAccessLevel = FCommandAccessWaypoint;
 
         m_cAutoCompleteArguments.push_back( EConsoleAutoCompleteArgBool );
@@ -1097,7 +1097,7 @@ public:
     CConfigWaypointAnalyzeMapChange()
     {
         m_sCommand = "map-change";
-        m_sHelp = "analyze waypoints on map change";
+        m_sHelp = "force analyze waypoints on map change";
         m_sDescription = "Parameter: maximum number of waypoints to start analyze on map change. 'off' or -1 to disable.";
         m_iAccessLevel = FCommandAccessConfig;
 

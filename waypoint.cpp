@@ -1120,7 +1120,7 @@ void CWaypoints::Analyze( edict_t* pClient, bool bShowLines )
             bool bUse = FLAG_SOME_SET( FItemUse, items[ i ].pItemClass->iFlags );
             TWaypointFlags iFlags = CWaypoint::GetFlagsFor(iItemType);
             int iArgument = 0;
-            Vector vPos;
+            Vector vOrigin, vPos;
             
             if ( bUse )
             {
@@ -1129,8 +1129,8 @@ void CWaypoints::Analyze( edict_t* pClient, bool bShowLines )
                 ICollideable *pCollideable = items[ i ].pEdict->GetCollideable();
                 Vector vMins, vMaxs; pCollideable->WorldSpaceSurroundingBounds( &vMins, &vMaxs );
                 Vector vMid = ( vMins + vMaxs ) / 2.0f;
-                Vector vHalf = ( vMaxs - vMins ) / 2.0f;
-                float fItemHalfWidth = MAX2( vHalf.x, vHalf.y );
+                vOrigin = ( vMaxs - vMins ) / 2.0f;
+                float fItemHalfWidth = MAX2( vOrigin.x, vOrigin.y );
                 
                 QAngle angles = pCollideable->GetCollisionAngles();
 
@@ -1153,7 +1153,8 @@ void CWaypoints::Analyze( edict_t* pClient, bool bShowLines )
             {
                 FLAG_CLEAR( FWaypointHealthMachine | FWaypointArmorMachine, iFlags ); // Leave only items, not chargers.
 
-                vPos = items[ i ].CurrentPosition();
+                vOrigin = items[ i ].CurrentPosition();
+                vPos = vOrigin;
                 vPos.z += fPlayerEye;
 
                 Vector vGround = CUtil::GetHullGroundVec( vPos );
@@ -1169,7 +1170,8 @@ void CWaypoints::Analyze( edict_t* pClient, bool bShowLines )
             if ( iWaypoint == EWaypointIdInvalid )
             {
                 iWaypoint = Add( vPos, iFlags, iArgument );
-                BULOG_D( m_pAnalyzer, "  added waypoint %d (%s) at (%.0f, %.0f, %.0f)", iWaypoint, items[ i ].pItemClass->sClassName.c_str(), vPos.x, vPos.y, vPos.z );
+                BULOG_D( m_pAnalyzer, "  added waypoint %d (%s %d at (%.0f, %.0f, %.0f)) at (%.0f, %.0f, %.0f)", iWaypoint, items[ i ].pItemClass->sClassName.c_str(), i,
+                         vOrigin.x, vOrigin.y, vOrigin.z, vPos.x, vPos.y, vPos.z );
             }
 
             CreateAutoPaths( iWaypoint, false, fAnalyzeDistanceExtra, false );
@@ -1201,7 +1203,7 @@ void CWaypoints::Analyze( edict_t* pClient, bool bShowLines )
         if ( w1 == EWaypointIdInvalid )
         {
             w1 = Add( vMins, FWaypointLadder );
-            BULOG_D( m_pAnalyzer, "  added waypoint %d (bottom ladder) at (%.0f, %.0f, %.0f)", w1, vMins.x, vMins.y, vMins.z );
+            BULOG_D( m_pAnalyzer, "  added waypoint %d (bottom ladder %d) at (%.0f, %.0f, %.0f)", w1, i, vMins.x, vMins.y, vMins.z );
         }
         else
             FLAG_SET( FWaypointLadder, Get( w1 ).iFlags );
@@ -1210,7 +1212,7 @@ void CWaypoints::Analyze( edict_t* pClient, bool bShowLines )
         if ( w2 == EWaypointIdInvalid )
         {
             w2 = Add( vMaxs, FWaypointLadder );
-            BULOG_D( m_pAnalyzer, "  added waypoint %d (top ladder) at (%.0f, %.0f, %.0f)", w2, vMaxs.x, vMaxs.y, vMaxs.z );
+            BULOG_D( m_pAnalyzer, "  added waypoint %d (top ladder %d) at (%.0f, %.0f, %.0f)", w2, i, vMaxs.x, vMaxs.y, vMaxs.z );
         }
         else
             FLAG_SET( FWaypointLadder, Get( w2 ).iFlags );
@@ -1292,7 +1294,7 @@ void CWaypoints::AnalyzeStep()
 
     // Check more waypoints in inters step, as less traces are required.
     float fToAnalyze = m_fAnalyzeWaypointsForNextFrame;
-    fToAnalyze += CWaypoint::fAnalyzeWaypointsPerFrame * ( 1 + ( m_iAnalyzeStep == EAnalyzeStepInters ? 4 : 0) );
+    fToAnalyze += CWaypoint::fAnalyzeWaypointsPerFrame * ( 1 + m_iAnalyzeStep * 4 );
     int iToAnalyze = (int)fToAnalyze;
     m_fAnalyzeWaypointsForNextFrame = fToAnalyze - iToAnalyze;
 
@@ -1380,18 +1382,18 @@ void CWaypoints::AnalyzeStep()
         // Remove waypoints without paths.
         good::vector<Vector> &aToOmit = m_aWaypointsToAddOmitInAnalyze[ EAnalyzeWaypointsOmit ];
         TWaypointId i = m_iCurrentAnalyzeWaypoint;
-        for ( ; iToAnalyze >= 0 && i < Size(); ++i, --iToAnalyze )
+        for ( ; iToAnalyze > 0 && i >= 0; --i, --iToAnalyze )
             if ( m_cGraph[ i ].neighbours.size() == 0 ||
                  good::find( aToOmit, m_cGraph[ i ].vertex.vOrigin ) != aToOmit.end() )
             {
                 BULOG_D( m_pAnalyzer, "  removing waypoint %d.", i );
-                Remove( i );
+                Remove( i-- );
                 break; // Don't remove more that 1 waypoint per frame, will hang up for couple of seconds.
             }
         m_iCurrentAnalyzeWaypoint = i;
     }
 
-    if ( m_iCurrentAnalyzeWaypoint >= Size() )
+    if ( m_iCurrentAnalyzeWaypoint < 0 || m_iCurrentAnalyzeWaypoint >= Size() ) // Got out of bounds.
     {
         switch ( m_iAnalyzeStep )
         {
@@ -1403,17 +1405,18 @@ void CWaypoints::AnalyzeStep()
                 break;
 
             case EAnalyzeStepInters:
-                m_iCurrentAnalyzeWaypoint = 0;
                 if ( m_bIsAnalyzeStepAddedWaypoints )
                 {
                     --m_iAnalyzeStep;
                     BULOG_I( m_pAnalyzer, "Checking new waypoints from missing spots." );
+                    m_iCurrentAnalyzeWaypoint = 0;
                 }
                 else
                 {
                     ++m_iAnalyzeStep;
                     iOldSize = Size(); // Save size before erasing waypoints.
                     BULOG_I( m_pAnalyzer, "Erasing orphans / omitted waypoints." );
+                    m_iCurrentAnalyzeWaypoint = Size() - 1;
                 }
                 break;
 

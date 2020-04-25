@@ -63,7 +63,13 @@ public: // Methods.
 	static inline bool IsValid( TWaypointId id ) { return ( id >= 0 ); }
 
 	/// Get waypoint flags for needed entity type (health, armor, weapon, ammo).
-    static TWaypointFlags GetFlagsFor( TItemType iEntityType ) { return m_aFlagsForEntityType[iEntityType]; }
+    static TWaypointFlags GetFlagsFor( TItemType iEntityType )
+    {
+        if ( iEntityType < EItemTypeCanPickTotal )
+            return m_aFlagsForEntityType[ iEntityType ];
+        else
+            return FWaypointNone;
+    }
 
     /// Get first angle from waypoint argument.
     static void GetFirstAngle( QAngle& a, int iArgument )

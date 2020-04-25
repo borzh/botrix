@@ -1914,7 +1914,7 @@ TCommandResult CPathSwapCommand::Execute( CClient* pClient, int argc, const char
 CPathDebugCommand::CPathDebugCommand()
 {
     m_sCommand = "debug";
-    m_sHelp = "show lines indicating path creation / problems";
+    m_sHelp = "time to show lines that indicate path creation / problems";
     m_sDescription = "Parameter: (off / seconds-to-disappear). When not 'off', will show lines / texts showing reachable / unreachable paths when adding new waypoint.";
     m_iAccessLevel = FCommandAccessWaypoint;
 

@@ -73,7 +73,7 @@ public:
     }
     
     // Note that this function is not used for iVisibility == EVisibilityWorld. 
-    virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
+    virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int /*contentsMask*/ )
     {
         int index = pServerEntity->GetRefEHandle().GetEntryIndex();
         if ( index == 0 || index >= MAX_EDICTS ) // 0 is the world's entity.
@@ -169,8 +169,7 @@ TReach CanClimbSlope( const Vector& vSrc, const Vector& vDest )
 // Returns true if can move forward when standing at vGround performing a jump (normal, with crouch o maybe just
 // walking). At return vHit contains new coord which is where player can get after jump.
 //----------------------------------------------------------------------------------------------------------------
-TReach CanPassOrJump( Vector& vGround, Vector& vDirectionInc, const Vector& vMins, const Vector& vMaxs,
-                    const Vector& vJumpMaxs, bool bShowHelp )
+TReach CanPassOrJump( Vector& vGround, Vector& vDirectionInc, const Vector& vMins, const Vector& vMaxs )
 {
     // Try to walk unit.
     Vector vHit = vGround + vDirectionInc;
@@ -373,7 +372,7 @@ TReach CUtil::GetReachableInfoFromTo( const Vector& vSrc, Vector& vDest, bool& b
         Vector vStart = vHit;
 
         // Trace from hit point to the floor.
-        TReach iReach = CanPassOrJump( vHit, vDirection, vMins, vMaxs, vJumpMaxs, bShowHelp );
+        TReach iReach = CanPassOrJump( vHit, vDirection, vMins, vMaxs );
 
         if ( bShowHelp )
             DrawLine( vStart + vOffset, vHit + vOffset, iTextTime, r, g, b );

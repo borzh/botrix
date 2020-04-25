@@ -481,7 +481,7 @@ bool CWaypoints::Load()
         for ( int i = 0; i < iItemsCount; ++i )
         {
             aItems[ i * 2 ] += CPlayers::Size();
-            BLOG_I( "Object id %d: .", aItems[ i * 2 ], CTypeToString::EntityClassFlagsToString( aItems[ i * 2 + 1 ] ).c_str() );
+            BLOG_D( "Object id %d: %s.", aItems[ i * 2 ], CTypeToString::EntityClassFlagsToString( aItems[ i * 2 + 1 ] ).c_str() );
         }
         CItems::SetObjectsFlags( aItems );
 
@@ -1107,7 +1107,7 @@ void CWaypoints::Analyze( edict_t* pClient, bool bShowLines )
     float fAnalyzeDistanceExtra = fAnalyzeDistance * 1.9f; // To include diagonal, almost but not 2 (Pythagoras).
 
     BULOG_I( pClient, "Adding waypoints at spawn / items / ladder positions." );
-    for ( int iType = 0; iType < sizeof( aItemTypes ) / sizeof( aItemTypes[ 0 ] ); ++iType )
+    for ( int iType = 0; iType < (int)( sizeof( aItemTypes ) / sizeof( aItemTypes[ 0 ] ) ); ++iType )
     {
         TItemType iItemType = aItemTypes[ iType ];
 

@@ -478,7 +478,7 @@ void CItems::CheckNewEntity(edict_t* pEdict, bool bLog)
     TItemType iEntityType = GetEntityType(szClassName, pItemClass, 0, EItemTypeKnownTotal);
     if ( iEntityType == EItemTypeOther )
     {
-        fast_edict_index_t t = { EItemTypeOther, m_aOthers.size() };
+        fast_edict_index_t t = { EItemTypeOther, (unsigned short)m_aOthers.size() };
         m_aEdictsIndexes[ iEntIndex ] = t;
         m_aOthers.push_back(pEdict);
     }
@@ -628,7 +628,7 @@ TItemIndex CItems::AddItem( TItemType iEntityType, edict_t* pEdict, CItemClass* 
 		iWaypoint = CWaypoints::GetNearestWaypoint( vItemOrigin, NULL, true, CItem::iMaxDistToWaypoint );
 
     TItemIndex iIndex = NewEntityIndex( iEntityType );
-    fast_edict_index_t t = { iEntityType, iIndex };
+    fast_edict_index_t t = { iEntityType, (unsigned short)iIndex };
     m_aEdictsIndexes[ pEdict->m_EdictIndex ] = t;
 
     CItem cNewEntity(pEdict, iFlags, fPickupDistanceSqr, pItemClass, vItemOrigin, iWaypoint);
@@ -658,7 +658,7 @@ void CItems::AddObject( edict_t* pEdict, const CItemClass* pObjectClass, IServer
     fMaxsRadiusSqr *= fMaxsRadiusSqr;
     
     TItemIndex iIndex = NewEntityIndex( EItemTypeObject );
-    fast_edict_index_t t = { EItemTypeObject, iIndex };
+    fast_edict_index_t t = { EItemTypeObject, (unsigned short)iIndex };
     m_aEdictsIndexes[pEdict->m_EdictIndex] = t;
 
     TItemFlags iFlags = pObjectClass->iFlags;

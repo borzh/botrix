@@ -85,11 +85,11 @@ void CPlayer::PreThink()
     if ( m_pPlayerInfo->IsDead() ) // CBasePlayer::IsDead() returns true only when player became dead,  but when
         m_bAlive = false;          // player is respawnable (but still dead) it returns false.
 
-	if ( m_bAlive )
-	{
-		if ( m_bProtected && m_fEndProtectionTime >= 0 && CBotrixPlugin::fTime >= m_fEndProtectionTime)
-			m_bProtected = false;
-	}
+    if ( m_bAlive )
+    {
+        if ( m_bProtected && m_fEndProtectionTime >= 0 && CBotrixPlugin::fTime >= m_fEndProtectionTime )
+            m_bProtected = false;
+    }
 
 #if DRAW_PLAYER_HULL
     static const float fDrawTime = 0.1f;

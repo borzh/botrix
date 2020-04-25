@@ -77,7 +77,7 @@ bool CMod::LoadDefaults( TModId iModId )
     m_aFrameEvents.clear();
     m_aFrameEvents.reserve(8);
 
-    float defaults[ EModVarTotal ] {
+    float defaults[ EModVarTotal ] = {
         /*max_health = */100,
         /*max_armor = */100,
 

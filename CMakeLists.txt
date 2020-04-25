@@ -64,7 +64,8 @@ elseif(UNIX)
     # While linking libpthread.a into a shared library is theoretically possible, it is a really bad idea. 
     # The reason is that libpthread is part of glibc, and all parts of glibc must match exactly, or you'll 
     # see strange and un-explainable crashes.
-#    set( STATIC_OS_LIBS /usr/lib32/libpthread.a /usr/lib32/libm.a /usr/lib32/libc.a )
+#    set( OS_LINK_LIBS /usr/lib32/libpthread.a /usr/lib32/libm.a /usr/lib32/libc.a )
+    set( OS_LINK_LIBS -static-libgcc -static-libstdc++ )
     set( SOURCE_SDK_2013_LINK_PATH_SUFFIX "/linux32" )
     set( STEAMAPP_DIR "$ENV{HOME}/.steam/steam/SteamApps" )
     set( STEAMCMD_DIR "$ENV{HOME}/steamcmd" )
@@ -137,13 +138,10 @@ set( SOURCE_SDK_2013_LINK_PATH "${SOURCE_SDK_2013_PATH}/mp/src/lib/public${SOURC
 set( PROJECT_LINK_LIBS ${OS_LINK_FLAGS} ${OS_LINK_LIBS}
     ${SOURCE_SDK_2013_LINK_PATH}/mathlib.a
     ${SOURCE_SDK_2013_LINK_PATH}/tier1.a
-    ${STATIC_OS_LIBS}
     tier0
     vstdlib
     dl                   # tier1.a needs that
     good
-    -static-libgcc
-    -static-libstdc++
 )
 
 # Link Botrix plugin library.

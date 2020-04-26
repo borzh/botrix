@@ -57,8 +57,8 @@ Here is the help you get typing "botrix" command:
         [health]: when the player has at least protection health amount,
           bots won't attack him
           Parameters: <off/health-amount>. Off or 0 to disable.
-        [spawn-time]: when the player has at least protection health
-          amount, bots won't attack him
+        [spawn-time]: when the player has at least protection health amount,
+          bots won't attack him
           Parameters: <off/time-in-seconds>. Off or 0 to disable.
       [quota]: set bots+players quota.
         You can use 'n-m' to have m bots per n players. Set to 0 to
@@ -86,25 +86,60 @@ Here is the help you get typing "botrix" command:
           marked as melee or ranged
     [event]: display events on console ('off' - disable, 'on' - enable)
     [log]: set console log level (none, trace, debug, info, warning, error).
+    [waypoint]
+      [analyze]
+        [amount]: amount of waypoints to analyze per frame
+          Parameter: number of waypoints to analyze per frame. Can be fractional.
+        [distance]: default distance between waypoints when analyzing the map
+        [map-change]: force analyze waypoints on map change
+          Parameter: maximum number of waypoints to start analyze on map change.
+          'off' or -1 to disable.
+      [save]: auto save waypoints on map change
+        Parameter: (on / off). Warning: bots can modify map waypoint
+        (botrix config waypoint unreachable).
+      [unreachable]: bots can erase paths between waypoints
+        Parameter: (off / number of failed tries). If a bot can't reach path's
+        destination waypoint X times, that path will be deleted.
   [item]
     [draw]: defines which items to draw
       Can be 'none' / 'all' / 'next' or mix of:
-      health armor weapon ammo button door object other
+      health armor weapon ammo button door ladder object spawn other
     [drawtype]: defines how to draw items
       Can be 'none' / 'all' / 'next' or mix of: name box waypoint
+    [mark]: add object flags (object only)
+      Parameters: <object-id-not-index> (flags). 'flags' can be mix of:
+      use respawnable explosive heavy box
     [reload]: reload all items (will recalculate nearest waypoints)
   [waypoint]
     [addtype]: add type to waypoint
       Can be mix of: stop camper sniper weapon ammo health armor
-      health-charger armor-charger button see-button
+      health-charger armor-charger button see-button use elevator ladder
+    [analyze]
+      [toggle]: start / stop analyzing waypoints for current map
+        This is a time consuming operation, so be patient.
+      [create]: create given waypoint during map analyze
+        Parameter: (on / off / clear) (current / destination / waypoint id).
+        'clear' will remove all positions to create waypoints.
+      [debug]: show collision lines for given waypoint during map analyze
+        Parameter: (on / off / clear) (current / destination / waypoint id).
+        'clear' will remove all debug waypoints.
+      [omit]: omit given waypoint next time analyze runs
+        Parameter: (on / off / clear) (current / destination / waypoint id).
+        Sometimes analyze adds waypoints at invalid places. This command
+        will disable analyze for a given waypoint. 'clear' will remove all
+        omited waypoints.
+      [trace]: ray trace moveable entities (such as objects) during map analyze
+        Parameter: (on / off). When 'off', ray tracing won't hit any moveable
+        entities (such as objects), so waypoints will be placed 'inside' those
+        entities. But when it is 'on', there may be troubles with analyze.
     [area]
       [remove]: delete waypoint area
       [rename]: rename waypoint area
       [set]: set waypoint area
       [show]: print all waypoint areas
     [argument]: set waypoint argument
-      Parameters: (waypoint) (key) (value), where key can be
-      angle1 / angle2 / weapon / ammo / health /
+      Parameters: (waypoint) (key) (value), where key can be:
+      angle1 / angle2 / button / door / elevator.
     [autocreate]: automatically create new waypoints ('off' - disable,
       'on' - enable)
       Waypoint will be added when player goes too far from current one.
@@ -128,21 +163,25 @@ Here is the help you get typing "botrix" command:
       'current' one
       Can be 'none' / 'all' / 'next' or mix of: beam line
   [path]
-    [autocreate]: enable auto path creation for new waypoints
-      ('off' - disable, 'on' - enable)
+    [autocreate]: enable auto path creation for new waypoints ('off' - disable,
+      'on' - enable)
       If disabled, only path from 'destination' to new waypoint will be added
     [addtype]: add path type (from 'current' waypoint to 'destination').
       Can be mix of: crouch jump break sprint ladder stop damage
-      flashlight door totem
+      flashlight door elevator totem
     [argument]: set path arguments
-      First parameter is time to wait before action, and second
-      is action duration.
+      For door/elevator path the parameters are: <door/elevator> <button>
+      (-1 = invalid). Otherwise: <action-time> <action-duration> in deciseconds,
+      i.e. 5 = half second.
     [create]: create path (from 'current' waypoint to 'destination')
+    [debug]: time to show lines that indicate path creation / problems
+      Parameter: (off / seconds-to-disappear). When not 'off', will show
+      lines / texts showing reachable / unreachable paths when adding new waypoint.
     [distance]: set distance to add default paths & auto add waypoints
     [drawtype]: defines how to draw path
       Can be 'none' / 'all' / 'next' or mix of: beam line
-    [info]: display path info on console (from 'current' waypoint
-      to 'destination')
+    [info]: display path info on console (from 'current' waypoint to
+      'destination')
     [remove]: remove given path (or from 'current' waypoint to 'destination')
     [removetype]: remove path type (from 'current' waypoint to 'destination')
   [version]: display plugin version

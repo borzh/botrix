@@ -442,7 +442,7 @@ namespace good
         {
             if (iSize >= m_iSize)
             {
-                reserve(iSize);
+                increment(iSize - m_iSize);
                 for ( size_type i=m_iSize; i<iSize; ++i )
                     m_cAlloc.construct(&m_pBuffer[i], elem);
             }

@@ -1517,6 +1517,8 @@ TCommandResult CWaypointInfoCommand::Execute( CClient* pClient, int argc, const 
         return ECommandError;
     }
 
+    BULOG_I( pClient->GetEdict(), "Total waypoints: %d, %s analyzing.", CWaypoints::Size(), CWaypoints::IsAnalyzing() ? "still" : "not" );
+
 	for ( int arg = 0; arg < ( argc > 0 ? argc : 1 ); ++arg )
 	{
 		TWaypointId id = GetWaypointId( arg, argc, argv, pClient, pClient->iCurrentWaypoint );
@@ -1528,11 +1530,10 @@ TCommandResult CWaypointInfoCommand::Execute( CClient* pClient, int argc, const 
 			BULOG_I( pClient->GetEdict(), "Origin: %.0f %.0f %.0f", w.vOrigin.x, w.vOrigin.y, w.vOrigin.z );
 		}
 		else
-		{
-			BULOG_W( pClient->GetEdict(), "Error, invalid waypoint (try to move closer to some waypoint)." );
-			return ECommandError;
-		}
+			BULOG_W( pClient->GetEdict(), "Error, invalid waypoint %s (try to move closer to some waypoint).", argc > 0 ? argv[arg] : "current" );
 	}
+    BULOG_I( pClient->GetEdict(), "Total waypoints: %d, %s analyzing.", CWaypoints::Size(), CWaypoints::IsAnalyzing() ? "still" : "not" );
+
 	return ECommandPerformed;
 }
 
@@ -4199,7 +4200,7 @@ TCommandResult CConfigWaypointAnalyzeDistance::Execute( CClient* pClient, int ar
 
         CWaypoint::iAnalyzeDistance = iDistance;
     }
-    BULOG_I( pEdict, "Analyze distance: %d (-1 = disabled).", CWaypoint::iAnalyzeDistance );
+    BULOG_I( pEdict, "Default distance between waypoints for map analysis: %d.", CWaypoint::iAnalyzeDistance );
     return ECommandPerformed;
 }
 

@@ -187,8 +187,8 @@ if exist "C:\steamcmd\steamapps\common\Half-Life 2 Deathmatch Dedicated Server\h
     copy /Y "$(OutDir)botrix.dll" "C:\steamcmd\steamapps\common\Half-Life 2 Deathmatch Dedicated Server\hl2mp\addons\"
     copy /Y "$(OutDir)botrix.pdb" "C:\steamcmd\steamapps\common\Half-Life 2 Deathmatch Dedicated Server\hl2mp\addons\"
 )
-if exist "C:\Steam\SteamApps\common\team fortress 2\tf\" (
-    echo Copy to "C:\Steam\SteamApps\common\team fortress 2\tf\"
+if exist "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\" (
+    echo Copy to "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\"
     xcopy /Y /E "$(ProjectDir)runtime\*"  "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\"
     copy /Y "$(OutDir)botrix.dll" "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\addons\"
     copy /Y "$(OutDir)botrix.pdb" "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\addons"
@@ -365,30 +365,36 @@ if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
     </Link>
     <PostBuildEvent>
       <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+    echo Copy to "..\source-sdk-2013\mp\game\mod_hl2mp"
     xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
     copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
     copy /Y "$(OutDir)botrix.pdb" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
 )
-if exist "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\" (
-    xcopy /Y /E "$(ProjectDir)runtime\*" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\"
-    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
-    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
+if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\" (
+    echo Copy to "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*" "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
 )
-if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\" (
-    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\"
-    copy /Y "$(OutDir)botrix.dll" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons\"
-    copy /Y "$(OutDir)botrix.pdb" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons"
+if exist "C:\steamcmd\steamapps\common\Half-Life 2 Deathmatch Dedicated Server\hl2mp\" (
+    echo Copy to "C:\steamcmd\steamapps\common\Half-Life 2 Deathmatch Dedicated Server\hl2mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "C:\steamcmd\steamapps\common\Half-Life 2 Deathmatch Dedicated Server\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\steamcmd\steamapps\common\Half-Life 2 Deathmatch Dedicated Server\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\steamcmd\steamapps\common\Half-Life 2 Deathmatch Dedicated Server\hl2mp\addons\"
 )
-if exist "D:\Steam\SteamApps\common\team fortress 2\tf\" (
-    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\Steam\SteamApps\common\team fortress 2\tf\"
-    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\team fortress 2\tf\addons\"
-    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\team fortress 2\tf\addons"
+if exist "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\" (
+    echo Copy to "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\"
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\"
+    copy /Y "$(OutDir)botrix.dll" "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\addons"
 )
-if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
-    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\"
-    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons\"
-    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons"
-)</Command>
+if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
+    echo Copy to "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons"
+)
+</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying dll to sourcemods.</Message>
@@ -460,30 +466,36 @@ if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
     </Link>
     <PostBuildEvent>
       <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+    echo Copy to "..\source-sdk-2013\mp\game\mod_hl2mp"
     xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
     copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
     copy /Y "$(OutDir)botrix.pdb" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
 )
-if exist "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\" (
-    xcopy /Y /E "$(ProjectDir)runtime\*" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\"
-    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
-    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
+if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\" (
+    echo Copy to "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*" "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\"
 )
-if exist "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\" (
-    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\"
-    copy /Y "$(OutDir)botrix.dll" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons\"
-    copy /Y "$(OutDir)botrix.pdb" "D:\DedicatedServer\Half-Life 2 Deathmatch\hl2mp\addons"
+if exist "C:\steamcmd\steamapps\common\Half-Life 2 Deathmatch Dedicated Server\hl2mp\" (
+    echo Copy to "C:\steamcmd\steamapps\common\Half-Life 2 Deathmatch Dedicated Server\hl2mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "C:\steamcmd\steamapps\common\Half-Life 2 Deathmatch Dedicated Server\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\steamcmd\steamapps\common\Half-Life 2 Deathmatch Dedicated Server\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\steamcmd\steamapps\common\Half-Life 2 Deathmatch Dedicated Server\hl2mp\addons\"
 )
-if exist "D:\Steam\SteamApps\common\team fortress 2\tf\" (
-    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\Steam\SteamApps\common\team fortress 2\tf\"
-    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\team fortress 2\tf\addons\"
-    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\team fortress 2\tf\addons"
+if exist "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\" (
+    echo Copy to "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\"
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\"
+    copy /Y "$(OutDir)botrix.dll" "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\addons"
 )
-if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
-    xcopy /Y /E "$(ProjectDir)runtime\*"  "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\"
-    copy /Y "$(OutDir)botrix.dll" "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons\"
-    copy /Y "$(OutDir)botrix.pdb" "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons"
-)</Command>
+if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
+    echo Copy to "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*"  "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\addons"
+)
+</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying dll to sourcemods.</Message>

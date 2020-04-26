@@ -38,16 +38,16 @@ namespace good
 
     public:
         /// Graph type that will be used to find path.
-        typedef graph<Vertex, Edge, NodesContainer, ArcsContainer, Alloc> graph_t; ///< Type for graph.
-        typedef typename graph_t::node_t node_t;                                   ///< Type for graph node.
+        typedef graph<Vertex, Edge, NodesContainer, ArcsContainer, Alloc> graph_t;  ///< Type for graph.
+        typedef typename graph_t::node_t node_t;                                    ///< Type for graph node.
 
-        typedef typename graph_t::node_it node_it;                                 ///< Type for node iterator.
-        typedef typename graph_t::const_node_it const_node_it;                     ///< Type for const node iterator.
+        typedef typename graph_t::node_it node_it;                                  ///< Type for node iterator.
+        typedef typename graph_t::const_node_it const_node_it;                      ///< Type for const node iterator.
 
-        typedef typename graph_t::arc_it arc_it;                                   ///< Type for arc iterator.
-        typedef typename graph_t::const_arc_it const_arc_it;                       ///< Type for const arc iterator.
+        typedef typename graph_t::arc_it arc_it;                                    ///< Type for arc iterator.
+        typedef typename graph_t::const_arc_it const_arc_it;                        ///< Type for const arc iterator.
 
-        typedef typename graph_t::node_id node_id;                                 ///< Index of graph node in nodes array.
+        typedef typename graph_t::node_id node_id;                                  ///< Index of graph node in nodes array.
 
         typedef good::vector<node_id, Alloc> path_t;                                ///< Type for path of nodes.
 
@@ -68,7 +68,7 @@ namespace good
         };
 
         typedef typename Alloc::template rebind<astar_node_t>::other alloc_anode_t; ///< Type for allocator for A* node.
-        typedef good::vector< astar_node_t, alloc_anode_t > anode_container_t;       ///< Type for container of A* nodes.
+        typedef good::vector< astar_node_t, alloc_anode_t > anode_container_t;      ///< Type for container of A* nodes.
 
         typedef typename anode_container_t::iterator anode_it;                      ///< Type for A* node iterator.
         typedef typename anode_container_t::const_iterator const_anode_it;          ///< Type for A* node const iterator.
@@ -85,23 +85,25 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Set graph for searches.
         //--------------------------------------------------------------------------------------------------------
-        void set_graph( const graph_t& rGraph )
+        void set_graph( const graph_t& rGraph, int iReserveSize = 0 )
         {
             m_cANodes.clear();
+            if ( iReserveSize > rGraph.size() )
+                m_cANodes.reserve( iReserveSize );
             m_cANodes.resize( rGraph.size() );
             m_pGraph = &rGraph;
         }
 
         //--------------------------------------------------------------------------------------------------------
         /// Start searching path from nFrom to nTo. Return true if search finishes (either success or failure).
-        /**
-         * If iMaxNodes parameter is not 0, then search will check only iMaxNodes nodes, exiting function.
-         * You will need to call manually step() function to resume search.
-         */
+        ///
+        /// If iMaxNodes parameter is not 0, then search will check only iMaxNodes nodes, exiting function.
+        /// You will need to call manually step() function to resume search.
         //--------------------------------------------------------------------------------------------------------
         void setup_search( node_id nFrom, node_id nTo, CanUse const& cCanUse, int iMaxNodes = 0 )
         {
             _clean();
+            m_cANodes.resize( m_pGraph->size() );
 
             int size = (int)m_pGraph->size();
             for (node_id id = 0; id < size; ++id)
@@ -109,7 +111,7 @@ namespace good
                     m_cANodes[id].visited = 1; // Force nodes that can't use to visited.
 
             m_nTarget = nTo;
-            m_iMaxNodes = iMaxNodes ? iMaxNodes : MAX_INT32;
+            m_iMaxNodes = iMaxNodes > 0 ? iMaxNodes : MAX_INT32;
 
             anode_it aFrom = m_cANodes.begin() + nFrom;
 
@@ -126,6 +128,19 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         bool step()
         {
+            if ( m_pGraph->size() > m_cANodes.size() )
+            {
+                if ( m_cANodes.capacity() >= m_pGraph->size() )
+                    m_cANodes.resize( m_pGraph->size() );
+                else
+                {
+                    // We can't resize m_cANodes as this will realloc to new memory (and m_pQueue become invalid,
+                    // as it contains pointers to m_cANodes). We will just return false, as if there is no path.
+                    m_pQueue.clear();
+                    return true;
+                }
+            }
+
             for (m_iCurrLoop = 0; !m_pQueue.empty() && (m_iCurrLoop < m_iMaxNodes); ++m_iCurrLoop)
             {
                 anode_it current = m_pQueue.top();
@@ -249,7 +264,7 @@ namespace good
         typedef priority_queue< anode_it, anode_less, alloc_anode_it_t > queue_t;  // Type for queue of pointer to nodes.
 
         Heuristic m_hFunc;                     // Heuristic function (approx. distance from node to node).
-        EdgeLength m_cArcLength;                // Function to get arc length.
+        EdgeLength m_cArcLength;               // Function to get arc length.
 
         anode_container_t m_cANodes;           // Container of nodes.
         const graph_t* m_pGraph;               // Search graph.

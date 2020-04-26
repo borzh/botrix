@@ -4,12 +4,11 @@ Changelog
 -----
 * New features:
     - Command that auto generates waypoints. It analyzes the map very neatly, creating waypoints for bots. This command 
-      should be used as first step in creating waypoints for the map. Analyze feature can also be executed automatically 
-	  on map change (when the waypoints amount is low).
+      should be used as first step in creating waypoints for the map.
       WARNING: for good bots performance you should edit waypoints anyway.
     - Analyze feature can also be executed automatically on map change (when the waypoints amount is low). Auto save 
-	  waypoints is also available.
-    - Bot now can erase unreachable paths between waypoints (that can be added by analyze command).
+      waypoints is also available.
+    - Bot now can erase unreachable paths between waypoints (which could be added by the analyze command).
     - Next console commands are added:
         + botrix waypoint analyze toggle: start / stop analyzing waypoints for current map
         + botrix waypoint analyze create: create given waypoint during map analyze
@@ -27,7 +26,6 @@ Changelog
 
         + botrix config waypoint save: auto save waypoints on map change
         + botrix config waypoint unreachable: bots can erase path between waypoints after X failed tries
-
 * Mod vars (such as player's speed / width / height / jump height, etc.) are read from config.ini. This can be helpful
   for other MODs based on Source engine to adapt Botrix's bots.
 * Some fixes for bot logic.

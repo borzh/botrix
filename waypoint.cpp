@@ -52,7 +52,7 @@ int CWaypoint::iWaypointsMaxCountToAnalyzeMap = 64;
 #if defined(DEBUG) || defined(_DEBUG)
 float CWaypoint::fAnalyzeWaypointsPerFrame = 1;
 #else
-float CWaypoint::fAnalyzeWaypointsPerFrame = 0.05;
+float CWaypoint::fAnalyzeWaypointsPerFrame = 0.25f;
 #endif
 
 bool CWaypoint::bSaveOnMapChange = false;
@@ -604,6 +604,8 @@ TWaypointId CWaypoints::Add( const Vector& vOrigin, TWaypointFlags iFlags, int i
     // TWaypointId id = m_cGraph.add_node(w) - m_cGraph.begin();
     CWaypoints::WaypointNodeIt it( m_cGraph.add_node(w) );
     TWaypointId id = it - m_cGraph.begin();
+
+    it->neighbours.reserve( 8 );
 
     AddLocation(id, vOrigin);
     bValidVisibilityTable = false;

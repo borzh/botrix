@@ -175,6 +175,8 @@ namespace good
             if ( this->m_iStatic )
             {
                 GoodAssert( m_iCapacity >= iOtherSize+1 );
+                if ( m_iCapacity <= iOtherSize )
+                    iOtherSize = m_iCapacity-1; // For trailing 0.
             }
             else
             {

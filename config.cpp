@@ -369,6 +369,11 @@ void CConfiguration::ProcessGeneralSection( good::ini_file::const_iterator it )
     }
     else
     {
+        if ( sbBuffer.capacity() <= kv->value.size() )
+        {
+            BLOG_W( "File \"%s\", section [%s]:", m_iniFile.name.c_str(), it->name.c_str() );
+            BLOG_W( "  bot_names value is too long (max %d characters), truncating.", iMainBufferSize );
+        }
         sbBuffer = kv->value;
         good::escape(sbBuffer);
         good::split((good::string)sbBuffer, CMod::aBotNames, ',', true);

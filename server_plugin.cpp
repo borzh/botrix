@@ -46,7 +46,7 @@
 #include "tier0/memdbgon.h"
 
 
-#define BUFFER_LOG_SIZE 2048
+#define BUFFER_LOG_SIZE (8*1024)
 
 char szMainBufferArray[BUFFER_LOG_SIZE];
 char szLogBufferArray[BUFFER_LOG_SIZE];  // Static buffers for different string purposes.

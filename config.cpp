@@ -39,14 +39,14 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
     // Process general section.
     good::ini_file::const_iterator it = m_iniFile.find("General");
     if ( it == m_iniFile.end() )
-        BLOG_E( "File %s, missing [General] section.", m_iniFile.name.c_str() );
+        BLOG_E( "File \"%s\", missing [General] section.", m_iniFile.name.c_str() );
     else
         ProcessGeneralSection(it);
 
     TModId iModId = SearchMod( sGameDir, sModDir );
     if ( iModId == EModId_Invalid )
     {
-        BLOG_E( "File %s:", m_iniFile.name.c_str() );
+        BLOG_E( "File \"%s\":", m_iniFile.name.c_str() );
         BLOG_E( "  There is no mod that matches current game (%s) & mod (%s) folders.", sGameDir.c_str(), sModDir.c_str() );
         BLOG_E( "  Using default mod 'HalfLife2Deathmatch'." );
         CMod::sModName = "HalfLife2Deathmatch";
@@ -64,7 +64,7 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
     sbBuffer << ".mod";
     it = m_iniFile.find( sbBuffer );
     if ( it == m_iniFile.end() )
-        BLOG_E( "File %s, missing [%s.mod] section.", m_iniFile.name.c_str(), CMod::sModName.c_str() );
+        BLOG_E( "File \"%s\", missing [%s.mod] section.", m_iniFile.name.c_str(), CMod::sModName.c_str() );
     else
         ProcessModSection(it);
 
@@ -75,7 +75,7 @@ TModId CConfiguration::Load( const good::string& sGameDir, const good::string& s
     sbBuffer << ".weapons";
     it = m_iniFile.find( sbBuffer );
     if ( it == m_iniFile.end() )
-        BLOG_E( "File %s, missing [%s.weapons] section.", m_iniFile.name.c_str(), CMod::sModName.c_str() );
+        BLOG_E( "File \"%s\", missing [%s.weapons] section.", m_iniFile.name.c_str(), CMod::sModName.c_str() );
     else
         LoadWeapons(it);
 

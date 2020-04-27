@@ -172,7 +172,7 @@ bool CBotrixPlugin::Load( CreateInterfaceFn pInterfaceFactory, CreateInterfaceFn
     good::log::set_prefix("[Botrix] ");
 
 #ifndef DONT_USE_VALVE_FUNCTIONS
-    LOAD_GAME_SERVER_INTERFACE(pPlayerInfoManager,IPlayerInfoManager,INTERFACEVERSION_PLAYERINFOMANAGER);
+    LOAD_GAME_SERVER_INTERFACE(pPlayerInfoManager, IPlayerInfoManager, INTERFACEVERSION_PLAYERINFOMANAGER);
 
     //pGlobalVars = pPlayerInfoManager->GetGlobalVars();
 

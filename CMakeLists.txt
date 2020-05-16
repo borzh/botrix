@@ -25,7 +25,7 @@ cmake_minimum_required( VERSION 2.6 )
 set( SHARED_COMPILE_FLAGS "-Wall -Wextra -Wno-format-security" ) # -std=c++11
 
 #if( UNIX AND NOT APPLE )
-    set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m32 -march=pentium4" )
+    set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m32 -march=pentium4" ) # -std=c++11
 #endif()
 
 set( SHARED_LINKER_FLAGS  "-fvisibility=hidden -fpermissive -fno-rtti -fno-exceptions" )
@@ -44,6 +44,7 @@ if( CMAKE_BUILD_TYPE MATCHES "Debug" )
 elseif( CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo" )
     message( "Flags: ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
 else()
+    message( "Build type: Release" )
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE}" )
     message( "Flags: ${CMAKE_CXX_FLAGS}" )
 endif()
@@ -60,14 +61,19 @@ if(APPLE)
     set( STEAMCMD_DIR "$ENV{HOME}/steamcmd" )
 elseif(UNIX)
     set( OS_COMPILE_FLAGS -DCOMPILER_GCC -DGNUC=1 -DPOSIX=1 -DLINUX=1 -D_LINUX=1 )
-    set( OS_LINK_FLAGS -Wno-free-nonheap-object -rdynamic -Wl,--no-undefined -Wl,--as-needed )
+    set( OS_LINK_FLAGS -Wno-free-nonheap-object -rdynamic -Wl,--no-undefined -Wl,--as-needed -static-libgcc -static-libstdc++ )
     # While linking libpthread.a into a shared library is theoretically possible, it is a really bad idea. 
     # The reason is that libpthread is part of glibc, and all parts of glibc must match exactly, or you'll 
     # see strange and un-explainable crashes.
-#    set( OS_LINK_LIBS /usr/lib32/libpthread.a /usr/lib32/libm.a /usr/lib32/libc.a )
-    set( OS_LINK_LIBS -static-libgcc -static-libstdc++ )
+    #set( OS_LINK_LIBS /usr/lib32/libpthread.a /usr/lib32/libm.a /usr/lib32/libc.a )
+    # The order of included libraries is important! mathlib.a depends on libm.a, so libm.a should be after mathlib.a!
+    set( OS_LINK_LIBS 
+    	"${CMAKE_CURRENT_SOURCE_DIR}/libs/linux32/mathlib.a"  # only for AngleVectors / VectorAngles!
+    	"${CMAKE_CURRENT_SOURCE_DIR}/libs/linux32/tier1.a"
+    	"${CMAKE_CURRENT_SOURCE_DIR}/libs/linux32/libm.a"
+    )
     set( SOURCE_SDK_2013_LINK_PATH_SUFFIX "/linux32" )
-    set( STEAMAPP_DIR "$ENV{HOME}/.steam/steam/SteamApps" )
+    set( STEAMAPP_DIR "$ENV{HOME}/.steam/steam/steamapps" )
     set( STEAMCMD_DIR "$ENV{HOME}/steamcmd" )
 else()
 endif()
@@ -134,20 +140,21 @@ include_directories(
 set( CMAKE_SKIP_BUILD_RPATH true )
 
 # Link libraries.
-set( SOURCE_SDK_2013_LINK_PATH "${SOURCE_SDK_2013_PATH}/mp/src/lib/public${SOURCE_SDK_2013_LINK_PATH_SUFFIX}" )
-set( PROJECT_LINK_LIBS ${OS_LINK_FLAGS} ${OS_LINK_LIBS}
-    ${SOURCE_SDK_2013_LINK_PATH}/mathlib.a
-    ${SOURCE_SDK_2013_LINK_PATH}/tier1.a
-    tier0
-    vstdlib
-    dl                   # tier1.a needs that
+set( PROJECT_LINK_LIBS
+    #vstdlib             # looks like no need for that!
+    #m
     good
+    ${OS_LINK_LIBS}
+    tier0
+    dl                   # tier1.a needs that (dlopen etc.)
 )
 
 # Link Botrix plugin library.
-link_directories( ${SOURCE_SDK_2013_LINK_PATH} )
+#set( SOURCE_SDK_2013_LINK_PATH "${SOURCE_SDK_2013_PATH}/mp/src/lib/public${SOURCE_SDK_2013_LINK_PATH_SUFFIX}" )
+#link_directories( ${SOURCE_SDK_2013_LINK_PATH} )
+link_directories( "${CMAKE_CURRENT_SOURCE_DIR}/libs/linux32" )
 add_library( ${PROJECT_NAME} SHARED ${PROJECT_SOURCES} )
-target_link_libraries( ${PROJECT_NAME} ${PROJECT_LINK_LIBS} )
+target_link_libraries( ${PROJECT_NAME} ${OS_LINK_FLAGS} ${PROJECT_LINK_LIBS} )
 
 # Post-build: copy runtime files and botrix plugin to source-sdk-2013.
 set( BOTRIX_LIB_PATH $<TARGET_FILE:${PROJECT_NAME}> )

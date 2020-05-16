@@ -11,8 +11,10 @@ Botrix.VC.VC.opendb
 Botrix.VC.db
 *.pdb
 *.dll
-*.so
-*.dylib
+botrix.so
+libbotrix.so
+botrix.dylib
+libbotrix.dylib
 
 # linux files
 build

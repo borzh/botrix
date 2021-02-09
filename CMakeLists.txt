@@ -86,9 +86,9 @@ elseif( UNIX)
     #set( OS_LINK_LIBS /usr/lib32/libpthread.a /usr/lib32/libm.a /usr/lib32/libc.a )
     # The order of included libraries is important! mathlib.a depends on libm.a, so libm.a should be after mathlib.a!
     set( OS_LINK_LIBS
-        mathlib.a # only for AngleVectors / VectorAngles!
-        tier1.a
-        libm.a
+        "${SOURCE_SDK_LINK_PATH}/mathlib.a" # only for AngleVectors / VectorAngles!
+        "${SOURCE_SDK_LINK_PATH}/tier1.a"
+        "${SOURCE_SDK_LINK_PATH}/libm.a"
     )
     set( STEAMAPP_DIR "$ENV{HOME}/.steam/steam/steamapps" )
     set( STEAMCMD_DIR "$ENV{HOME}/steamcmd" )

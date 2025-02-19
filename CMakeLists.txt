@@ -3,7 +3,7 @@ set( CMAKE_OSX_SYSROOT /Applications/Xcode.app/Contents/Developer/Platforms/MacO
 
 project( botrix )
 
-cmake_minimum_required( VERSION 2.9 )
+cmake_minimum_required( VERSION 3.10 )
 
 # Build type.
 # CMAKE_BUILD_TYPE gets created as what's called a cache variable on an initial configure. Don't set it here.
@@ -27,7 +27,8 @@ set( SHARED_COMPILE_FLAGS "-Wall -Wextra -Wno-format-security" ) # -std=c++11
 if( APPLE )
     set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -arch i386" )
 elseif( UNIX )
-    set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m32 -march=pentium4" )
+    #set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m32 -march=pentium4" )
+    set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m64 -march=nocona" ) # valve does the same with 64-bit linux builds
 endif()
 
 set( SHARED_LINKER_FLAGS  "-fvisibility=hidden -fpermissive -fno-rtti -fno-exceptions" )
@@ -74,11 +75,17 @@ if( APPLE )
 
 elseif( UNIX)
 
+    # NOTE: Valve now lets to build tier1 all by yourself
+    # Including my own built tier1.a
+
     set( OS_COMPILE_FLAGS -DCOMPILER_GCC -DGNUC=1 -DPOSIX=1 -DLINUX=1 -D_LINUX=1 )
     set( OS_LINK_FLAGS -Wno-free-nonheap-object -rdynamic -Wl,--no-undefined -Wl,--as-needed -static-libgcc -static-libstdc++ )
 
     # Don't use ${SOURCE_SDK_LINK_PATH}, because those are newer ones. We need to use the earlier versions of the libs to have 20 players!
-    set( SOURCE_SDK_LINK_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libs/linux32" )
+    #set( SOURCE_SDK_LINK_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libs/linux32" )
+    set( SOURCE_SDK_LINK_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libs/linux64" )
+
+    set(CMAKE_SHARED_LIBRARY_PREFIX "") # botrix distributes w/o lib prefix
 
     # While linking libpthread.a into a shared library is theoretically possible, it is a really bad idea.
     # The reason is that libpthread is part of glibc, and all parts of glibc must match exactly, or you'll
@@ -87,8 +94,8 @@ elseif( UNIX)
     # The order of included libraries is important! mathlib.a depends on libm.a, so libm.a should be after mathlib.a!
     set( OS_LINK_LIBS
         "${SOURCE_SDK_LINK_PATH}/mathlib.a" # only for AngleVectors / VectorAngles!
-        "${SOURCE_SDK_LINK_PATH}/tier1.a"
-        "${SOURCE_SDK_LINK_PATH}/libm.a"
+     #   "${SOURCE_SDK_LINK_PATH}/tier1.a" # do we need it?
+    #    "${SOURCE_SDK_LINK_PATH}/libm.a" #
     )
     set( STEAMAPP_DIR "$ENV{HOME}/.steam/steam/steamapps" )
     set( STEAMCMD_DIR "$ENV{HOME}/steamcmd" )
@@ -135,18 +142,18 @@ file( GLOB PROJECT_SOURCES
 include_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}"
     "${CMAKE_CURRENT_SOURCE_DIR}/good/include"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/public"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/engine"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/tier0"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/tier1"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/game/server"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/mathlib"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/vstdlib"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/server"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/server/hl2"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/server/hl2mp"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/shared"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/"
+    SYSTEM "${SOURCE_SDK_PATH}/src/public"
+    SYSTEM "${SOURCE_SDK_PATH}/src/public/engine"
+    SYSTEM "${SOURCE_SDK_PATH}/src/public/tier0"
+    SYSTEM "${SOURCE_SDK_PATH}/src/public/tier1"
+    SYSTEM "${SOURCE_SDK_PATH}/src/public/game/server"
+    SYSTEM "${SOURCE_SDK_PATH}/src/public/mathlib"
+    SYSTEM "${SOURCE_SDK_PATH}/src/public/vstdlib"
+    SYSTEM "${SOURCE_SDK_PATH}/src/game/server"
+    SYSTEM "${SOURCE_SDK_PATH}/src/game/server/hl2"
+    SYSTEM "${SOURCE_SDK_PATH}/src/game/server/hl2mp"
+    SYSTEM "${SOURCE_SDK_PATH}/src/game/shared"
+    SYSTEM "${SOURCE_SDK_PATH}/src/"
 )
 
 # Don't use full path dependencies in generated library.

@@ -28,7 +28,7 @@ if( APPLE )
     set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -arch i386" )
 elseif( UNIX )
     #set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m32 -march=pentium4" )
-    set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m64 -march=nocona" ) # valve does the same with 64-bit linux builds
+    set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m64 -march=x86-64-v2 -fPIC" ) # ld errors without x86-64-v2 and PIC
 endif()
 
 set( SHARED_LINKER_FLAGS  "-fvisibility=hidden -fpermissive -fno-rtti -fno-exceptions" )
@@ -94,8 +94,8 @@ elseif( UNIX)
     # The order of included libraries is important! mathlib.a depends on libm.a, so libm.a should be after mathlib.a!
     set( OS_LINK_LIBS
         "${SOURCE_SDK_LINK_PATH}/mathlib.a" # only for AngleVectors / VectorAngles!
-     #   "${SOURCE_SDK_LINK_PATH}/tier1.a" # do we need it?
-    #    "${SOURCE_SDK_LINK_PATH}/libm.a" #
+        "${SOURCE_SDK_LINK_PATH}/tier1.a"
+    #    "${SOURCE_SDK_LINK_PATH}/libm.a" # not needed
     )
     set( STEAMAPP_DIR "$ENV{HOME}/.steam/steam/steamapps" )
     set( STEAMCMD_DIR "$ENV{HOME}/steamcmd" )
@@ -179,7 +179,7 @@ target_link_libraries( ${PROJECT_NAME} ${OS_LINK_FLAGS} ${PROJECT_LINK_LIBS} )
 set( BOTRIX_LIB_PATH $<TARGET_FILE:${PROJECT_NAME}> )
 set( RUNTIME_PATH "${CMAKE_CURRENT_SOURCE_DIR}/runtime" )
 set( INSTALL_PATHS
-    "${SOURCE_SDK_PATH}/mp/game/mod_hl2mp"
+    "${SOURCE_SDK_PATH}/game/mod_hl2mp"
     "${STEAMCMD_DIR}/hl2dm/hl2mp"
     "${STEAMCMD_DIR}/tf2/tf"
     "${STEAMAPP_DIR}/common/Half-Life 2 Deathmatch/hl2mp"

@@ -16,7 +16,7 @@ Steps to compile
 
 - Windows compilation:
 
-        Microsoft Visual Studio 2010 with Service Pack 1 (at least).
+        Microsoft Visual Studio 2019 (at least).
         Download Git.
         git clone git@github.com:ValveSoftware/source-sdk-2013.git
         git clone git@github.com:borzh/botrix.git

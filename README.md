@@ -40,7 +40,7 @@ Steps to compile
 - Linux compilation:
 
         sudo apt-get install git build-essential gcc-multilib g++-multilib cmake
-        # Probably you will also need ia32-libs or lib32z1
+        # If you're building a legacy 32-bit version, you will also need ia32-libs or lib32z1
         git clone git@github.com:borzh/botrix.git
         mkdir botrix/build
         cd botrix/build

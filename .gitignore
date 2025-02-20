@@ -16,6 +16,7 @@ libbotrix.so
 botrix.dylib
 libbotrix.dylib
 winbuild
+.vs
 
 # linux files
 build

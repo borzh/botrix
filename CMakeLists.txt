@@ -34,7 +34,7 @@ elseif( UNIX )
  if(LEGACY_32BIT)   
     set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m32 -march=pentium4" )
  else()
-    set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m64 -march=x86-64-v2 -fPIC" ) # ld errors without x86-64-v2 and PIC
+    set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m64 -march=nocona -fPIC" ) # this is what valve does in linux builds
  endif()
 endif()
 
@@ -166,8 +166,7 @@ if(NOT LEGACY_32BIT)
     	SYSTEM "${SOURCE_SDK_PATH}/src/game/server/hl2"
     	SYSTEM "${SOURCE_SDK_PATH}/src/game/server/hl2mp"
     	SYSTEM "${SOURCE_SDK_PATH}/src/game/shared"
-    	SYSTEM "${SOURCE_SDK_PATH}/src/"
-	)
+    	SYSTEM "${SOURCE_SDK_PATH}/src/")
 else()
 include_directories(
     	"${CMAKE_CURRENT_SOURCE_DIR}"
@@ -183,7 +182,7 @@ include_directories(
     	SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/server/hl2"
     	SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/server/hl2mp"
     	SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/shared"
-    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/"
+    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/")
 endif()
 
 # Don't use full path dependencies in generated library.

@@ -60,15 +60,14 @@ Steps to compile
         make
 
 - Linux compilation (Legacy Source 2013):
-  
-        ```
+        
         sudo apt-get install git build-essential cmake gcc-multilib g++-multilib
         it clone git@github.com:borzh/botrix.git
         mkdir botrix/build
         cd botrix/build
         cmake -DLEGACY_32BIT=1 ..
         make
-        ```  
+          
         
 - After compile:
 

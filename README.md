@@ -24,14 +24,16 @@ Steps to compile
         Launch "Botrix_x64.sln"
 
 - Windows compilation (Old SDK 2013 version):
-        ```
+  
+        
         Microsoft Visual Studio 2013.
         Download Git.
         git clone git@github.com:ValveSoftware/source-sdk-2013.git
         git clone git@github.com:borzh/botrix.git
         cd botrix
         Launch "Botrix.sln"
-        ```
+        
+  
 - OSX compilation:
 
         macOS 10.15 Catalina and later (no need for macOS 10.14 Mojave and earlier):

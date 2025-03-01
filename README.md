@@ -72,6 +72,5 @@ Steps to compile
 - After compile:
 
         Download botrix.zip from home page, unzip it to game directory (hl2mp/tf).
-        Enter to build directory. In linux rename libbotrix.so to botrix.so.
         Move botrix.so (botrix.dll) to hl2mp/addons, replacing old files.
 

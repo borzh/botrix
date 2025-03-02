@@ -3,7 +3,7 @@ set( CMAKE_OSX_SYSROOT /Applications/Xcode.app/Contents/Developer/Platforms/MacO
 
 project( botrix )
 
-cmake_minimum_required( VERSION 2.9 )
+cmake_minimum_required( VERSION 3.10 )
 
 # Build type.
 # CMAKE_BUILD_TYPE gets created as what's called a cache variable on an initial configure. Don't set it here.
@@ -23,11 +23,19 @@ cmake_minimum_required( VERSION 2.9 )
 # -rdynamic: instructs the linker to add all symbols, not only used ones, to the dynamic symbol table. Needed to debug.
 # -fvisibility=hidden: Default symbols visibility is hidden.
 
+# Option to use legacy 32-bit binaries
+# Usage: cmake -DLEGACY_32BIT=1
+option(LEGACY_32BIT "Use old version of Source SDK 2013" OFF)
+
 set( SHARED_COMPILE_FLAGS "-Wall -Wextra -Wno-format-security" ) # -std=c++11
 if( APPLE )
     set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -arch i386" )
 elseif( UNIX )
+ if(LEGACY_32BIT)   
     set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m32 -march=pentium4" )
+ else()
+    set( SHARED_COMPILE_FLAGS "${SHARED_COMPILE_FLAGS} -m64 -march=nocona -fPIC" ) # this is what valve does in linux builds
+ endif()
 endif()
 
 set( SHARED_LINKER_FLAGS  "-fvisibility=hidden -fpermissive -fno-rtti -fno-exceptions" )
@@ -73,23 +81,34 @@ if( APPLE )
     set( STEAMCMD_DIR "$ENV{HOME}/steamcmd" )
 
 elseif( UNIX)
-
     set( OS_COMPILE_FLAGS -DCOMPILER_GCC -DGNUC=1 -DPOSIX=1 -DLINUX=1 -D_LINUX=1 )
     set( OS_LINK_FLAGS -Wno-free-nonheap-object -rdynamic -Wl,--no-undefined -Wl,--as-needed -static-libgcc -static-libstdc++ )
 
     # Don't use ${SOURCE_SDK_LINK_PATH}, because those are newer ones. We need to use the earlier versions of the libs to have 20 players!
-    set( SOURCE_SDK_LINK_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libs/linux32" )
+    if(LEGACY_32BIT)
+    	set( SOURCE_SDK_LINK_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libs/linux32" )
+    else()
+    	set( SOURCE_SDK_LINK_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libs/linux64" )
+    endif()
+    set(CMAKE_SHARED_LIBRARY_PREFIX "") # botrix distributes w/o lib prefix
 
     # While linking libpthread.a into a shared library is theoretically possible, it is a really bad idea.
     # The reason is that libpthread is part of glibc, and all parts of glibc must match exactly, or you'll
     # see strange and un-explainable crashes.
     #set( OS_LINK_LIBS /usr/lib32/libpthread.a /usr/lib32/libm.a /usr/lib32/libc.a )
     # The order of included libraries is important! mathlib.a depends on libm.a, so libm.a should be after mathlib.a!
-    set( OS_LINK_LIBS
-        "${SOURCE_SDK_LINK_PATH}/mathlib.a" # only for AngleVectors / VectorAngles!
-        "${SOURCE_SDK_LINK_PATH}/tier1.a"
-        "${SOURCE_SDK_LINK_PATH}/libm.a"
-    )
+    # NOTE: 64-bit mathlib does not depends on libm.a
+
+    if(LEGACY_32BIT)
+    	set( OS_LINK_LIBS
+    	    "${SOURCE_SDK_LINK_PATH}/mathlib.a" # only for AngleVectors / VectorAngles!
+       	    "${SOURCE_SDK_LINK_PATH}/tier1.a"
+            "${SOURCE_SDK_LINK_PATH}/libm.a")
+    else()
+	set( OS_LINK_LIBS
+    	    "${SOURCE_SDK_LINK_PATH}/mathlib.a" # only for AngleVectors / VectorAngles!
+       	    "${SOURCE_SDK_LINK_PATH}/tier1.a")
+    endif()
     set( STEAMAPP_DIR "$ENV{HOME}/.steam/steam/steamapps" )
     set( STEAMCMD_DIR "$ENV{HOME}/steamcmd" )
 
@@ -132,22 +151,39 @@ file( GLOB PROJECT_SOURCES
 )
 
 # SYSTEM is used to not show warnings/errors for included files.
+if(NOT LEGACY_32BIT)
+	include_directories(
+    	"${CMAKE_CURRENT_SOURCE_DIR}"
+    	"${CMAKE_CURRENT_SOURCE_DIR}/good/include"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/public"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/public/engine"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/public/tier0"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/public/tier1"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/public/game/server"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/public/mathlib"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/public/vstdlib"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/game/server"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/game/server/hl2"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/game/server/hl2mp"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/game/shared"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/")
+else()
 include_directories(
-    "${CMAKE_CURRENT_SOURCE_DIR}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/good/include"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/public"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/engine"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/tier0"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/tier1"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/game/server"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/mathlib"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/vstdlib"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/server"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/server/hl2"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/server/hl2mp"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/shared"
-    SYSTEM "${SOURCE_SDK_PATH}/mp/src/"
-)
+    	"${CMAKE_CURRENT_SOURCE_DIR}"
+    	"${CMAKE_CURRENT_SOURCE_DIR}/good/include"
+    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/public"
+    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/engine"
+    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/tier0"
+    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/tier1"
+    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/game/server"
+    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/mathlib"
+    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/vstdlib"
+    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/server"
+    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/server/hl2"
+    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/server/hl2mp"
+    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/shared"
+    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/")
+endif()
 
 # Don't use full path dependencies in generated library.
 set( CMAKE_SKIP_BUILD_RPATH true )
@@ -172,7 +208,7 @@ target_link_libraries( ${PROJECT_NAME} ${OS_LINK_FLAGS} ${PROJECT_LINK_LIBS} )
 set( BOTRIX_LIB_PATH $<TARGET_FILE:${PROJECT_NAME}> )
 set( RUNTIME_PATH "${CMAKE_CURRENT_SOURCE_DIR}/runtime" )
 set( INSTALL_PATHS
-    "${SOURCE_SDK_PATH}/mp/game/mod_hl2mp"
+    "${SOURCE_SDK_PATH}/game/mod_hl2mp"
     "${STEAMCMD_DIR}/hl2dm/hl2mp"
     "${STEAMCMD_DIR}/tf2/tf"
     "${STEAMAPP_DIR}/common/Half-Life 2 Deathmatch/hl2mp"

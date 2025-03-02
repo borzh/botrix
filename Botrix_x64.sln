@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.35706.149
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Botrix", "Botrix_x64.vcxproj", "{B6572CBE-7C7F-4FFF-94DE-AFBBBAB11C64}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug-2006|x64 = Debug-2006|x64
+		Release|x64 = Release|x64
+		Release-2006|x64 = Release-2006|x64
+		Release-Beta|x64 = Release-Beta|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B6572CBE-7C7F-4FFF-94DE-AFBBBAB11C64}.Debug|x64.ActiveCfg = Debug|x64
+		{B6572CBE-7C7F-4FFF-94DE-AFBBBAB11C64}.Debug|x64.Build.0 = Debug|x64
+		{B6572CBE-7C7F-4FFF-94DE-AFBBBAB11C64}.Debug-2006|x64.ActiveCfg = Debug-2006|x64
+		{B6572CBE-7C7F-4FFF-94DE-AFBBBAB11C64}.Debug-2006|x64.Build.0 = Debug-2006|x64
+		{B6572CBE-7C7F-4FFF-94DE-AFBBBAB11C64}.Release|x64.ActiveCfg = Release|x64
+		{B6572CBE-7C7F-4FFF-94DE-AFBBBAB11C64}.Release|x64.Build.0 = Release|x64
+		{B6572CBE-7C7F-4FFF-94DE-AFBBBAB11C64}.Release-2006|x64.ActiveCfg = Release-2006|x64
+		{B6572CBE-7C7F-4FFF-94DE-AFBBBAB11C64}.Release-2006|x64.Build.0 = Release-2006|x64
+		{B6572CBE-7C7F-4FFF-94DE-AFBBBAB11C64}.Release-Beta|x64.ActiveCfg = Release-Beta|x64
+		{B6572CBE-7C7F-4FFF-94DE-AFBBBAB11C64}.Release-Beta|x64.Build.0 = Release-Beta|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6F25F80B-BB06-485E-9B5B-21C691487117}
+	EndGlobalSection
+EndGlobal

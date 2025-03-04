@@ -5,9 +5,13 @@ Credits
 
 * Plugin's grandfather is Botman's bot template (aka HPB_bot). Thanks grandpa!
 
+* HL2MP 20th Anniversary Update is brought to you by armaturo (https://github.com/armaturo)
+  Thanks a lot for your contribution!
+
 * Plugin is working on Team Fortress 2 because of HappoKala345 (aka AcidFish)
   request. It also works with VSH plugin, for which manual weapon handling was
   added.
+
   Many of HappoKala's ideas were used, thanks a lot for waypoints creation, TF2
   weapons configuration for bots and testing!
 

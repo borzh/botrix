@@ -1,6 +1,8 @@
 set( CMAKE_OSX_DEPLOYMENT_TARGET 10.13 )
 set( CMAKE_OSX_SYSROOT /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk )
 
+set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
+
 project( botrix )
 
 cmake_minimum_required( VERSION 3.10 )

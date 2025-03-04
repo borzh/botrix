@@ -24,7 +24,6 @@ Steps to compile
         Launch "Botrix_x64.sln"
 
 - Windows compilation (Old SDK 2013 version):
-  
         
         Microsoft Visual Studio 2013.
         Download Git.
@@ -32,7 +31,6 @@ Steps to compile
         git clone git@github.com:borzh/botrix.git
         cd botrix
         Launch "Botrix.sln"
-        
   
 - OSX compilation:
 
@@ -62,7 +60,7 @@ Steps to compile
 - Linux compilation (Legacy Source 2013):
         
         sudo apt-get install git build-essential cmake gcc-multilib g++-multilib
-        it clone git@github.com:borzh/botrix.git
+        git clone git@github.com:borzh/botrix.git
         mkdir botrix/build
         cd botrix/build
         cmake -DLEGACY_32BIT=1 ..

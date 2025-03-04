@@ -1,5 +1,11 @@
 Changelog
 =========
+
+1.0.1-update
+-----
+HL2MP 20th Anniversary Update is brought to you by armaturo (https://github.com/armaturo)
+Thanks a lot for your contribution!
+
 1.0.1
 -----
 * New features:

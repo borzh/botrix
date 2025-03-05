@@ -134,7 +134,7 @@ namespace good
          * @param szFmt format string.
          * @return size of characters written.
          */
-        static int format( char* szOutput, int iOutputSize, const char* szFmt, ... )
+        static size_t format( char* szOutput, size_t iOutputSize, const char* szFmt, ... )
             FORMAT_FUNCTION(3, 4);
 
         /**
@@ -142,7 +142,7 @@ namespace good
          * @param iLevel level of message.
          * @param szFmt format string.
          */
-        static int printf( TLogLevel iLevel, const char* szFmt, ... )
+        static size_t printf( TLogLevel iLevel, const char* szFmt, ... )
             FORMAT_FUNCTION(2, 3);
 
         /**
@@ -163,7 +163,7 @@ namespace good
          * @param argptr va_list pointer.
          * @return size of characters written.
          */
-        static int format_va_list( char* szOutput, int iOutputSize, const char* szFmt, va_list argptr );
+        static size_t format_va_list( char* szOutput, size_t iOutputSize, const char* szFmt, va_list argptr );
 
         /**
          * @brief Format prefix string in @p szOutput.
@@ -171,7 +171,7 @@ namespace good
          * @param iOutputSize size of output string.
          * @return  size of characters written.
          */
-        static int format_prefix( char* szOutput, int iOutputSize );
+        static size_t format_prefix( char* szOutput, size_t iOutputSize );
 
     protected:
 

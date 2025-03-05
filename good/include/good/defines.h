@@ -217,11 +217,13 @@ typedef char TChar;
 #ifndef BreakDebugger
     #if defined(DEBUG) || defined(_DEBUG)
         #ifdef _WIN32
-            /// Break in debugger.
-            #define BreakDebugger()          __asm { int 3 }
+            #if defined(_M_X64)
+                #define BreakDebugger()      __debugbreak()
+            #else
+                #define BreakDebugger()      __asm { int 3 }
+            #endif
         #else
             #include <signal.h>
-            /// Break in debugger.
             #define BreakDebugger()          raise(SIGTRAP)
         #endif
     #else
@@ -229,22 +231,23 @@ typedef char TChar;
     #endif
 #endif
 
+#define BreakDebuggerIf(cond)    do { if ( (cond) ) BreakDebugger(); } while (false)
 
-#ifndef BreakDebuggerIf
-    #if defined(DEBUG) || defined(_DEBUG)
-        #ifdef _WIN32
-            /// Break in debugger if condition.
-            #define BreakDebuggerIf(cond)    do { if ( (cond) ) __asm { int 3 }; } while (false)
-        #else
-            #include <signal.h>
-            /// Break in debugger.
-            #define BreakDebuggerIf(cond)    do { if ( (cond) ) raise(SIGTRAP); } while (false)
-        #endif
-    #else
-        /// No debugger break.
-        #define BreakDebuggerIf(cond)        void(0)
-    #endif
-#endif
+//#ifndef BreakDebuggerIf
+//    #if defined(DEBUG) || defined(_DEBUG)
+//        #ifdef _WIN32
+//            /// Break in debugger if condition.
+//            #define BreakDebuggerIf(cond)    do { if ( (cond) ) BreakDebugger(); } while (false)
+//        #else
+//            #include <signal.h>
+//            /// Break in debugger.
+//            #define BreakDebuggerIf(cond)    do { if ( (cond) ) raise(SIGTRAP); } while (false)
+//        #endif
+//    #else
+//        /// No debugger break.
+//        #define BreakDebuggerIf(cond)        void(0)
+//    #endif
+//#endif
 
 
 #ifndef ReleasePrint

@@ -45,12 +45,12 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Get file size. Returns FILE_OPERATION_FAILED if file doesn't exists.
         //--------------------------------------------------------------------------------------------------------
-        static long file_size( const TChar* szFileName );
+        static size_t file_size( const TChar* szFileName );
 
         //--------------------------------------------------------------------------------------------------------
         /// Read bytes from position iPos of the file in given buffer. Return false if file doesn't exists.
         //--------------------------------------------------------------------------------------------------------
-        static long file_to_memory( const TChar* szFileName, void* pBuffer, long iBufferSize, long iPos = 0 );
+        static size_t file_to_memory( const TChar* szFileName, void* pBuffer, size_t iBufferSize, long iPos = 0 );
 
         //--------------------------------------------------------------------------------------------------------
         /// Make folders for a file if they don't exist.

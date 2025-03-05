@@ -21,7 +21,7 @@
 #include "igameevents.h"
 
 
-#define PLUGIN_VERSION "1.0.1"
+#define PLUGIN_VERSION "1.0.1-AnniversaryUpdate"
 
 class IVEngineServer;
 class IFileSystem;

@@ -42,7 +42,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Default constructor with optional capacity parameter.
         //--------------------------------------------------------------------------------------------------------
-        base_string_buffer( int iCapacity = DEFAULT_STRING_BUFFER_ALLOC )
+        base_string_buffer( size_type iCapacity = DEFAULT_STRING_BUFFER_ALLOC )
         {
             GoodAssert( iCapacity >= 0 );
 #ifdef DEBUG_STRING_PRINT
@@ -98,7 +98,7 @@ namespace good
 #ifdef DEBUG_STRING_PRINT
             printf( "base_string_buffer copy constructor, str: %s\n", sOther.c_str() );
 #endif
-            int len = sOther.length();
+            size_t len = sOther.length();
             Init( MAX2(len+1, DEFAULT_STRING_BUFFER_ALLOC) );
             copy_contents( sOther.c_str(), len );
             this->m_pBuffer[len] = 0;
@@ -167,10 +167,10 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Copy other string contents into buffer.
         //--------------------------------------------------------------------------------------------------------
-        void assign( const Char* szOther, int iOtherSize = base_class::npos )
+        void assign( const Char* szOther, size_type iOtherSize = base_class::npos )
         {
             if ( iOtherSize == base_class::npos )
-                iOtherSize = strlen(szOther);
+                iOtherSize = (size_type)strlen(szOther);
 
             if ( this->m_iStatic )
             {
@@ -210,10 +210,10 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Append string to buffer.
         //--------------------------------------------------------------------------------------------------------
-        base_string_buffer& append( const Char* szStr, int len = base_class::npos )
+        base_string_buffer& append( const Char* szStr, size_type len = base_class::npos )
         {
             if ( len == base_class::npos )
-                len = strlen(szStr);
+                len = (size_type)strlen(szStr);
             increment( len );
             copy_contents( szStr, len, this->m_iSize );
             this->m_pBuffer[ this->m_iSize ] = 0;
@@ -266,7 +266,7 @@ namespace good
         /** Check if reserve is needed and reallocate internal buffer.
          * Note that buffer never shrinks. */
         //--------------------------------------------------------------------------------------------------------
-        void reserve( int iCapacity )
+        void reserve(size_type iCapacity )
         {
             GoodAssert( iCapacity > 0 );
             if ( this->m_pBuffer && (this->m_iCapacity >= iCapacity) )
@@ -289,7 +289,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         // malloc() buffer of size iAlloc.
         //--------------------------------------------------------------------------------------------------------
-        void Init( int iCapacity )
+        void Init(size_type iCapacity )
         {
             if ( iCapacity > 0 )
             {
@@ -306,7 +306,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         // Copy string to already allocated buffer at pos. Don't include trailing 0. Increment size.
         //--------------------------------------------------------------------------------------------------------
-        void copy_contents( const Char* szOther, int iOtherLen, int pos = 0 )
+        void copy_contents( const Char* szOther, size_type iOtherLen, size_type pos = 0 )
         {
             GoodAssert( iOtherLen >= 0 && pos >= 0 );
             GoodAssert( m_iCapacity >= pos + iOtherLen + 1 );
@@ -317,9 +317,9 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Increment buffer size.
         //--------------------------------------------------------------------------------------------------------
-        void increment( int iBySize )
+        void increment(size_type iBySize )
         {
-            int desired = this->m_iSize + iBySize + 1; // Trailing 0.
+            size_type desired = this->m_iSize + iBySize + 1; // Trailing 0.
             if ( desired > m_iCapacity )
             {
                 GoodAssert( !this->m_iStatic );
@@ -348,7 +348,7 @@ namespace good
         }
 
     protected:
-        int m_iCapacity; // Size of allocated buffer.
+        size_type m_iCapacity; // Size of allocated buffer.
     };
 
 

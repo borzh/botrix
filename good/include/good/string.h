@@ -95,7 +95,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Constructor by 0-terminating string. Make sure that iSize reflects string size properly or is npos.
         //--------------------------------------------------------------------------------------------------------
-        base_string( const Char* szStr, bool bCopy = false, bool bDealloc = false, int iSize = npos ): m_iStatic(true)
+        base_string( const Char* szStr, bool bCopy = false, bool bDealloc = false, size_type iSize = npos ): m_iStatic(true)
         {
 #ifdef DEBUG_STRING_PRINT
             DebugPrint( "base_string constructor: %s, copy %d, dealloc %d\n", szStr, bCopy, bDealloc );
@@ -145,7 +145,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Const array subscript.
         //--------------------------------------------------------------------------------------------------------
-        const Char& operator[] ( int iIndex ) const
+        const Char& operator[] ( size_type iIndex ) const
         {
             GoodAssert( (0 <= iIndex) && (iIndex < m_iSize) );
             return m_pBuffer[iIndex];
@@ -154,7 +154,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Array subscript.
         //--------------------------------------------------------------------------------------------------------
-        Char& operator[] ( int iIndex )
+        Char& operator[] ( size_type iIndex )
         {
             GoodAssert( (0 <= iIndex) && (iIndex <= m_iSize) );
             return m_pBuffer[iIndex];
@@ -163,10 +163,10 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Assign this string to another one. Note that by default this will move content, not copy it.
         //--------------------------------------------------------------------------------------------------------
-        base_string& assign( const Char* s, int iSize = npos, bool bCopy = false )
+        base_string& assign( const Char* s, size_type iSize = npos, bool bCopy = false )
         {
             if ( iSize == npos )
-                iSize = strlen(s);
+                iSize = (size_type)strlen(s);
 
             if ( bCopy )
             {
@@ -205,7 +205,7 @@ namespace good
             {
                 ((base_string&)other).m_pBuffer = (char*)"";
                 ((base_string&)other).m_iSize = 0;
-                ((base_string&)other).m_iStatic = 1;
+                ((base_string&)other).m_iStatic = -1;
             }
             return *this;
         }
@@ -297,7 +297,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Erase iCount characters from buffer at requiered position iPos.
         //--------------------------------------------------------------------------------------------------------
-        base_string& erase( int iPos = 0, int iCount = npos )
+        base_string& erase( size_type iPos = 0, size_type iCount = npos )
         {
             if (iCount == npos)
                 iCount = length() - iPos;
@@ -314,7 +314,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         base_string duplicate() const
         {
-            int len = m_iSize;
+            size_type len = m_iSize;
             Char* buffer = m_cAlloc.allocate(len+1);
             strncpy( buffer, m_pBuffer, (len + 1) * sizeof(Char) );
             return base_string( buffer, false, true, len );
@@ -323,7 +323,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Find first occurrence of string str in this string.
         //--------------------------------------------------------------------------------------------------------
-        int find( const base_string& str, int iFrom = 0 ) const
+        size_type find( const base_string& str, size_type iFrom = 0 ) const
         {
             GoodAssert( iFrom <= m_iSize );
             if ( m_iSize - iFrom < str.m_iSize )
@@ -331,7 +331,7 @@ namespace good
 
             Char* result = strstr( &m_pBuffer[iFrom], str.c_str() );
             if (result)
-                return (int)( result - m_pBuffer );
+                return (size_type)( result - m_pBuffer );
             else
                 return npos;
         }
@@ -339,12 +339,12 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Find first occurrence of Char c in this string.
         //--------------------------------------------------------------------------------------------------------
-        int find( Char c, int iFrom = 0 ) const
+        size_type find( Char c, size_type iFrom = 0 ) const
         {
             GoodAssert( iFrom <= m_iSize );
-            Char* result = strchr( &m_pBuffer[iFrom], (int)c );
+            Char* result = strchr( &m_pBuffer[iFrom], (size_type)c );
             if (result)
-                return (int)( result - m_pBuffer );
+                return (size_type)( result - m_pBuffer );
             else
                 return npos;
         }
@@ -352,13 +352,13 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         /// Find last occurrence of Char c in this string.
         //--------------------------------------------------------------------------------------------------------
-        int rfind( Char c, int iFrom = npos ) const
+        size_type rfind( Char c, size_type iFrom = npos ) const
         {
             if ( iFrom >= m_iSize )
                 iFrom = m_iSize - 1;
             for ( Char* pCurr = m_pBuffer + iFrom; pCurr >= m_pBuffer; --pCurr )
                 if ( *pCurr == c )
-                    return pCurr - m_pBuffer;
+                    return (size_type)(pCurr - m_pBuffer);
             return npos;
         }
 
@@ -368,9 +368,9 @@ namespace good
         /// Get substring from position iFrom and size iSize.
         /** If bAlloc is false then it will modify current string inserting \0 character at iFrom + iSize + 1. */
         //--------------------------------------------------------------------------------------------------------
-        base_string substr( int iFrom, int iSize = npos, bool bAlloc = true ) const
+        base_string substr( size_type iFrom, size_type iSize = npos, bool bAlloc = true ) const
         {
-            int maxSize = m_iSize - iFrom;
+            size_type maxSize = m_iSize - iFrom;
             if ( iSize + iFrom > length() )
                 iSize = maxSize;
 
@@ -396,7 +396,7 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         static base_string concatenate( const base_string& s1, const base_string& s2 )
         {
-            int len3 = s1.m_iSize + s2.m_iSize;
+            size_type len3 = s1.m_iSize + s2.m_iSize;
             Char* buffer = alloc_t().allocate(len3 + 1);
             if (s1.size() > 0)
                 strncpy( buffer, s1.c_str(), s1.m_iSize * sizeof(Char) );
@@ -439,9 +439,9 @@ namespace good
         //--------------------------------------------------------------------------------------------------------
         // Return base_string = this + szRight.
         //--------------------------------------------------------------------------------------------------------
-        base_string concat_with( const Char* szRight, int iRightSize ) const
+        base_string concat_with( const Char* szRight, size_type iRightSize ) const
         {
-            int len = m_iSize;
+            size_type len = m_iSize;
             Char* buffer = m_cAlloc.allocate(len + iRightSize + 1);
             strncpy( buffer, m_pBuffer, len * sizeof(Char) );
             strncpy( &buffer[m_iSize], szRight, (iRightSize+1) * sizeof(Char) );
@@ -451,10 +451,10 @@ namespace good
     protected:
         typedef typename Alloc::template rebind<Char>::other alloc_t; ///< Allocator object for Char.
 
-        alloc_t m_cAlloc; ///< Allocator for Char.
-        Char* m_pBuffer;  ///< Buffer. It contains an extra int before string (at position -1) which is a reference counter.
-        int m_iSize:31;   ///< String size.
-        int m_iStatic:1;  ///< If true, then base_string must NOT be deallocated.
+        alloc_t m_cAlloc;       ///< Allocator for Char.
+        Char* m_pBuffer;        ///< Buffer. It contains an extra int before string (at position -1) which is a reference counter.
+        size_type m_iSize:31;   ///< String size.
+        size_type m_iStatic:1;  ///< If true, then base_string must NOT be deallocated.
     };
 
 

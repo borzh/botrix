@@ -19,14 +19,14 @@ namespace good
 {
 
 //----------------------------------------------------------------------------------------------------------------
-long file::file_size(const char* szFileName)
+size_t file::file_size(const char* szFileName)
 {
     FILE* f = fopen(szFileName, "r");
 
     if (f)
     {
         fseek(f, 0, SEEK_END);
-        long result = ftell(f);
+        size_t result = ftell(f);
         fclose(f);
         return result;
     }
@@ -36,14 +36,14 @@ long file::file_size(const char* szFileName)
 
 
 //----------------------------------------------------------------------------------------------------------------
-long file::file_to_memory(const char* szFileName, void* pBuffer, long iBufferSize, long iPos)
+size_t file::file_to_memory(const char* szFileName, void* pBuffer, size_t iBufferSize, long iPos)
 {
     FILE* f = fopen(szFileName, "rb");
 
     if (f)
     {
         fseek(f, iPos, SEEK_SET);
-        long readen = fread(pBuffer, 1, iBufferSize, f);
+        size_t readen = fread(pBuffer, 1, iBufferSize, f);
         fclose(f);
         return readen;
     }

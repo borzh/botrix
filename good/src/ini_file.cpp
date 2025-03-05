@@ -93,7 +93,7 @@ namespace good
     TIniFileError ini_file::load()
     {
         // Read entire file into memory.
-        long fsize = file::file_size(name.c_str());
+        size_t fsize = file::file_size(name.c_str());
 
         if (fsize == FILE_OPERATION_FAILED)
             return IniFileNotFound;
@@ -108,7 +108,7 @@ namespace good
         if ( !buf )
             return IniFileTooBig;
 
-        long read = good::file::file_to_memory(name.c_str(), buf, fsize);
+        size_t read = good::file::file_to_memory(name.c_str(), buf, fsize);
         if ( fsize != read )
             return IniFileTooBig;
         buf[fsize] = 0;

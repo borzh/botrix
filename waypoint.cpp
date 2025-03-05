@@ -325,7 +325,7 @@ bool CWaypoints::Load()
     }
 
     struct waypoint_header header;
-    int iRead = fread(&header, 1, sizeof(struct waypoint_header), f);
+    size_t iRead = fread(&header, 1, sizeof(struct waypoint_header), f);
     BASSERT(iRead == sizeof(struct waypoint_header), Clear();fclose(f);return false);
 
     if (*((int*)&WAYPOINT_FILE_HEADER_ID[0]) != header.szFileType)

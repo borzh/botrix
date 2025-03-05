@@ -509,7 +509,7 @@ void CItems::CheckNewEntity(edict_t* pEdict, bool bLog)
                 if ( CWaypoint::IsValid(iWaypoint) && bLog)
                     BLOG_W("  Nearest waypoint %d.", iWaypoint);
             }
-            else if ( bLog && iEntityType == EItemTypeDoor && !CWaypoint::IsValid((TWaypointId)cItem.pArguments) )
+            else if ( bLog && iEntityType == EItemTypeDoor && !CWaypoint::IsValid((TWaypointId)((intptr_t)cItem.pArguments)) )
                 BLOG_W("Door %d doesn't have 2 waypoints near.", iIndex);
         }
 
@@ -570,7 +570,7 @@ void CItems::AutoWaypointPathFlagsForEntity( TItemType iEntityType, TItemIndex i
             cOmitWaypoints.set(iWaypoint);
             iWaypoint = CWaypoints::GetNearestWaypoint( cEntity.vOrigin, &cOmitWaypoints, true, CItem::iMaxDistToWaypoint );
         }
-        cEntity.pArguments = (void*)iWaypoint;
+        cEntity.pArguments = (void*)(intptr_t)iWaypoint;
 
         // Set door for paths between these two waypoints.
         if ( iWaypoint != EWaypointIdInvalid )
@@ -628,7 +628,7 @@ TItemIndex CItems::AddItem( TItemType iEntityType, edict_t* pEdict, CItemClass* 
 		iWaypoint = CWaypoints::GetNearestWaypoint( vItemOrigin, NULL, true, CItem::iMaxDistToWaypoint );
 
     TItemIndex iIndex = NewEntityIndex( iEntityType );
-    fast_edict_index_t t = { iEntityType, (unsigned short)iIndex };
+    fast_edict_index_t t = { (unsigned short)iEntityType, (unsigned short)iIndex };
     m_aEdictsIndexes[ pEdict->m_EdictIndex ] = t;
 
     CItem cNewEntity(pEdict, iFlags, fPickupDistanceSqr, pItemClass, vItemOrigin, iWaypoint);
@@ -695,7 +695,7 @@ int CItems::IsDoorClosed( TItemIndex iDoor )
 {
     BASSERT( 0 <= iDoor && iDoor < m_aItems[EItemTypeDoor].size(), return false );
 	const CItem& cDoor = m_aItems[EItemTypeDoor][iDoor];
-	TWaypointId w1 = cDoor.iWaypoint, w2 = (TWaypointId)cDoor.pArguments;
+	TWaypointId w1 = cDoor.iWaypoint, w2 = (TWaypointId)(intptr_t)cDoor.pArguments;
 
 	if ( !CWaypoints::IsValid( w1 ) || !CWaypoints::IsValid( w2 ) ) // Door should have two waypoints from each side.
 		return -1;
@@ -790,8 +790,8 @@ void CItems::Draw( CClient* pClient )
                         CUtil::DrawLine(CWaypoints::Get(pEntity->iWaypoint).vOrigin, vOrigin, 1.0f, 0xFF, 0xFF, 0);
 
                     // Draw second waypoint for door, yellow.
-                    if ( (iEntityType == EItemTypeDoor) && CWaypoint::IsValid( (TWaypointId)pEntity->pArguments ) )
-                        CUtil::DrawLine(CWaypoints::Get((TWaypointId)pEntity->pArguments).vOrigin, vOrigin, 1.0f, 0xFF, 0xFF, 0);
+                    if ( (iEntityType == EItemTypeDoor) && CWaypoint::IsValid( (TWaypointId)(intptr_t)pEntity->pArguments ) )
+                        CUtil::DrawLine(CWaypoints::Get((TWaypointId)(intptr_t)pEntity->pArguments).vOrigin, vOrigin, 1.0f, 0xFF, 0xFF, 0);
                 }
             }
         }

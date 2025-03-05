@@ -24,7 +24,7 @@ good::vector<good::log::log_field_t> log::m_aLogFields(8);
 
 //----------------------------------------------------------------------------------------------------------------
 char szLogMessage[GOOD_LOG_MAX_MSG_SIZE];
-int iStartSize = 0;
+size_t iStartSize = 0;
 
 
 //----------------------------------------------------------------------------------------------------------------
@@ -112,7 +112,7 @@ bool log::set_prefix( const char* szPrefix )
 #ifdef GOOD_MULTI_THREAD
     good::lock cLock(m_cMutex);
 #endif
-    int iSize = strnlen(szPrefix, GOOD_LOG_MAX_MSG_SIZE-1);
+    size_t iSize = strnlen(szPrefix, GOOD_LOG_MAX_MSG_SIZE-1);
     strncpy(szLogMessage, szPrefix, iSize);
     szLogMessage[iSize] = 0;
     iStartSize = iSize;
@@ -144,11 +144,11 @@ void log::stop_log_to_file()
 
 
 //----------------------------------------------------------------------------------------------------------------
-int log::format( char* szOutput, int iOutputSize, const char* szFmt, ... )
+size_t log::format( char* szOutput, size_t iOutputSize, const char* szFmt, ... )
 {
     va_list argptr;
     va_start(argptr, szFmt);
-    int iResult = format_va_list(szOutput, iOutputSize, szFmt, argptr);
+    size_t iResult = format_va_list(szOutput, iOutputSize, szFmt, argptr);
     va_end(argptr);
 
     return iResult;
@@ -156,7 +156,7 @@ int log::format( char* szOutput, int iOutputSize, const char* szFmt, ... )
 
 
 //----------------------------------------------------------------------------------------------------------------
-int log::printf( TLogLevel iLevel, const char* szFmt, ... )
+size_t log::printf( TLogLevel iLevel, const char* szFmt, ... )
 {
     bool bLog = (iLevel >= iLogLevel);
     bool bFile = m_fLog && (iFileLogLevel >= iStdErrLevel);
@@ -166,7 +166,7 @@ int log::printf( TLogLevel iLevel, const char* szFmt, ... )
 
     va_list argptr;
     va_start(argptr, szFmt);
-    int iResult = format_va_list(szLogMessage, GOOD_LOG_MAX_MSG_SIZE, szFmt, argptr);
+    size_t iResult = format_va_list(szLogMessage, GOOD_LOG_MAX_MSG_SIZE, szFmt, argptr);
     va_end(argptr);
 
     if ( iResult )
@@ -226,12 +226,12 @@ void log::print( TLogLevel iLevel, const char* szFinal )
 
 
 //----------------------------------------------------------------------------------------------------------------
-int log::format_va_list( char* szOutput, int iOutputSize, const char* szFmt, va_list argptr )
+size_t log::format_va_list( char* szOutput, size_t iOutputSize, const char* szFmt, va_list argptr )
 {
     --iOutputSize; // Save 1 position for trailing 0.
     if ( szOutput != szLogMessage )
     {
-        int iSize = MAX2(iOutputSize, iStartSize);
+        size_t iSize = MAX2(iOutputSize, iStartSize);
         strncpy(szOutput, szLogMessage, iSize);
     }
 
@@ -244,7 +244,7 @@ int log::format_va_list( char* szOutput, int iOutputSize, const char* szFmt, va_
         return iOutputSize;
     }
 
-    int iTotal = vsnprintf(&szOutput[iStartSize], iOutputSize-iStartSize, szFmt, argptr);
+    size_t iTotal = vsnprintf(&szOutput[iStartSize], iOutputSize-iStartSize, szFmt, argptr);
 
     iTotal += iStartSize;
     if ( iTotal > iOutputSize )

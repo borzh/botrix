@@ -14,22 +14,31 @@ Plugin's demo videos on YouTube:
 Steps to compile
 ----------------
 
-- Windows compilation (New SDK 2013 version):
+- Windows compilation (New SDK 2013 version / x64):
 
-        Microsoft Visual Studio 2019.
+        I updated to Microsoft Visual Studio 2019.
         Download Git.
         git clone git@github.com:ValveSoftware/source-sdk-2013.git
         git clone git@github.com:borzh/botrix.git
         cd botrix
-        Launch "Botrix_x64.sln"
+        Launch "Botrix.sln"
 
-- Windows compilation (Old SDK 2013 version):
-        
+- Windows compilation (Old SDK 2013 version, 32-bit / x86):
+
         Microsoft Visual Studio 2013.
         Download Git.
         git clone git@github.com:ValveSoftware/source-sdk-2013.git
         git clone git@github.com:borzh/botrix.git
-        cd botrix
+
+        IMPORTANT: the 32-bit (x86) build needs an OLD revision of the SDK,
+        as they dropped all 32-bit Windows libraries, so a fresh clone can no
+        longer link an x86 build.
+        Check out the last revision that still ships the 32-bit libs:
+
+        cd source-sdk-2013
+        git checkout 0d8dceea4310fde5706b3ce1c70609d72a38efdf
+
+        cd ../botrix
         Launch "Botrix.sln"
   
 - OSX compilation:

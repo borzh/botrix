@@ -124,7 +124,7 @@ namespace good
 
         iterator currentSection = m_lSections.end();
 
-        for ( long pos = 0; pos < fsize; ++pos )
+        for ( size_t pos = 0; pos < fsize; ++pos )
         {
             //----------------------------------------------------------------------------
             // Fast skip comments.

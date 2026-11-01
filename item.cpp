@@ -20,8 +20,16 @@
 #include "tier0/memdbgon.h"
 
 
+// On the Windows 64-bit (Anniversary Update) engine, GetKeyValue("effects"/"health")
+// has a side effect: it writes CNetworkVar m_fEffects without NetworkStateChanged,
+// corrupting entity replication (ENTITY_CHANGE_NONE but 'm_fEffects' changed -> visual
+// glitches). There we read via direct GetEffects()/GetHealth() instead.
+// For every other arch/platform (Win32, Linux, Mac) keep the original GetKeyValue path
+// until each one is verified separately.
 #ifndef BOTRIX_SOURCE_ENGINE_2006
-#define BOTRIX_ENTITY_USE_KEY_VALUE
+    #if !defined(_WIN64)
+        #define BOTRIX_ENTITY_USE_KEY_VALUE
+    #endif
 #endif
 
 

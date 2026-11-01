@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug-2006|Win32">
@@ -153,6 +153,13 @@
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <!-- Name used when copying the built plugin into runtime\addons (vendored in repo). -->
+  <PropertyGroup Condition="'$(Platform)'=='Win32'">
+    <BotrixRuntimeName>botrix32.dll</BotrixRuntimeName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)'=='x64'">
+    <BotrixRuntimeName>botrix.dll</BotrixRuntimeName>
+  </PropertyGroup>
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</OutDir>
@@ -221,7 +228,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\src;$(ProjectDir)\..\source-sdk-2013\src\public;$(ProjectDir)\..\source-sdk-2013\src\public\engine;$(ProjectDir)\..\source-sdk-2013\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\src\game\server;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_ENGINE_2013;BOTRIX_BOT_AIM_ERROR;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
@@ -245,10 +252,10 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)botrix.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\src\lib\public;$(ProjectDir)\..\source-sdk-2013\src\lib\common;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;$(ProjectDir)\libs\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)botrix.pdb</ProgramDatabaseFile>
@@ -265,7 +272,15 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+      <Command>echo Copy built plugin into runtime\addons as $(BotrixRuntimeName)
+copy /Y "$(OutDir)botrix.dll" "$(ProjectDir)runtime\addons\$(BotrixRuntimeName)"
+if exist "C:\hl2dmserver\hl2mp\" (
+    echo Copy to "C:\hl2dmserver\hl2mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*" "C:\hl2dmserver\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\hl2dmserver\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\hl2dmserver\hl2mp\addons\"
+)
+if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
     echo Copy to "..\source-sdk-2013\mp\game\mod_hl2mp"
     xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
     copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
@@ -320,7 +335,7 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\src;$(ProjectDir)\..\source-sdk-2013\src\public;$(ProjectDir)\..\source-sdk-2013\src\public\engine;$(ProjectDir)\..\source-sdk-2013\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\src\game\server;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\src;$(ProjectDir)\..\source-sdk-2013\src\public;$(ProjectDir)\..\source-sdk-2013\src\public\engine;$(ProjectDir)\..\source-sdk-2013\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\src\game\server;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BOTRIX_NO_COMMAND_COMPLETION;COMPILER_MSVC;COMPILER_MSVC64;BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_ENGINE_2013;BOTRIX_BOT_AIM_ERROR;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
@@ -344,10 +359,10 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)botrix.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\src\lib\public\x64;$(ProjectDir)\libs\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\src\lib\public;$(ProjectDir)\..\source-sdk-2013\src\lib\common;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;$(ProjectDir)\libs\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public\x64;$(ProjectDir)\libs\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)botrix.pdb</ProgramDatabaseFile>
@@ -363,7 +378,15 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+      <Command>echo Copy built plugin into runtime\addons as $(BotrixRuntimeName)
+copy /Y "$(OutDir)botrix.dll" "$(ProjectDir)runtime\addons\$(BotrixRuntimeName)"
+if exist "C:\hl2dmserver\hl2mp\" (
+    echo Copy to "C:\hl2dmserver\hl2mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*" "C:\hl2dmserver\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\hl2dmserver\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\hl2dmserver\hl2mp\addons\"
+)
+if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
     echo Copy to "..\source-sdk-2013\mp\game\mod_hl2mp"
     xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
     copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
@@ -419,7 +442,7 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2006;$(ProjectDir)\..\source-sdk-2006\dlls;$(ProjectDir)\..\source-sdk-2006\dlls\hl2_dll;$(ProjectDir)\..\source-sdk-2006\public;$(ProjectDir)\..\source-sdk-2006\public\engine;$(ProjectDir)\..\source-sdk-2006\public\tier0;$(ProjectDir)\..\source-sdk-2006\public\tier1;$(ProjectDir)\..\source-sdk-2006\public\dlls;$(ProjectDir)\..\source-sdk-2006\public\mathlib;$(ProjectDir)\..\source-sdk-2006\public\vstdlib;$(ProjectDir)\..\source-sdk-2006\game_shared;$(ProjectDir)\..\source-sdk-2006\cl_dll;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\src;$(ProjectDir)\..\source-sdk-2013\src\public;$(ProjectDir)\..\source-sdk-2013\src\public\engine;$(ProjectDir)\..\source-sdk-2013\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\src\game\server;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir)\..\source-sdk-2006;$(ProjectDir)\..\source-sdk-2006\dlls;$(ProjectDir)\..\source-sdk-2006\dlls\hl2_dll;$(ProjectDir)\..\source-sdk-2006\public;$(ProjectDir)\..\source-sdk-2006\public\engine;$(ProjectDir)\..\source-sdk-2006\public\tier0;$(ProjectDir)\..\source-sdk-2006\public\tier1;$(ProjectDir)\..\source-sdk-2006\public\dlls;$(ProjectDir)\..\source-sdk-2006\public\mathlib;$(ProjectDir)\..\source-sdk-2006\public\vstdlib;$(ProjectDir)\..\source-sdk-2006\game_shared;$(ProjectDir)\..\source-sdk-2006\cl_dll;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_ENGINE_2006;BOTRIX_BOT_AIM_ERROR;BOTRIX_NO_COMMAND_COMPLETION;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
@@ -446,7 +469,7 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
       <AdditionalDependencies>tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;steam_api.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)botrix.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\src\lib\public;$(ProjectDir)\..\source-sdk-2013\src\lib\common;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;$(ProjectDir)\libs\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)botrix.pdb</ProgramDatabaseFile>
@@ -463,7 +486,15 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+      <Command>echo Copy built plugin into runtime\addons as $(BotrixRuntimeName)
+copy /Y "$(OutDir)botrix.dll" "$(ProjectDir)runtime\addons\$(BotrixRuntimeName)"
+if exist "C:\hl2dmserver\hl2mp\" (
+    echo Copy to "C:\hl2dmserver\hl2mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*" "C:\hl2dmserver\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\hl2dmserver\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\hl2dmserver\hl2mp\addons\"
+)
+if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
     xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
     copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
     copy /Y "$(OutDir)botrix.pdb" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
@@ -512,7 +543,7 @@ if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2006;$(ProjectDir)\..\source-sdk-2006\dlls;$(ProjectDir)\..\source-sdk-2006\dlls\hl2_dll;$(ProjectDir)\..\source-sdk-2006\public;$(ProjectDir)\..\source-sdk-2006\public\engine;$(ProjectDir)\..\source-sdk-2006\public\tier0;$(ProjectDir)\..\source-sdk-2006\public\tier1;$(ProjectDir)\..\source-sdk-2006\public\dlls;$(ProjectDir)\..\source-sdk-2006\public\mathlib;$(ProjectDir)\..\source-sdk-2006\public\vstdlib;$(ProjectDir)\..\source-sdk-2006\game_shared;$(ProjectDir)\..\source-sdk-2006\cl_dll;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\src;$(ProjectDir)\..\source-sdk-2013\src\public;$(ProjectDir)\..\source-sdk-2013\src\public\engine;$(ProjectDir)\..\source-sdk-2013\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\src\game\server;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir)\..\source-sdk-2006;$(ProjectDir)\..\source-sdk-2006\dlls;$(ProjectDir)\..\source-sdk-2006\dlls\hl2_dll;$(ProjectDir)\..\source-sdk-2006\public;$(ProjectDir)\..\source-sdk-2006\public\engine;$(ProjectDir)\..\source-sdk-2006\public\tier0;$(ProjectDir)\..\source-sdk-2006\public\tier1;$(ProjectDir)\..\source-sdk-2006\public\dlls;$(ProjectDir)\..\source-sdk-2006\public\mathlib;$(ProjectDir)\..\source-sdk-2006\public\vstdlib;$(ProjectDir)\..\source-sdk-2006\game_shared;$(ProjectDir)\..\source-sdk-2006\cl_dll;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>COMPILER_MSVC;COMPILER_MSVC64;BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_ENGINE_2006;BOTRIX_BOT_AIM_ERROR;BOTRIX_NO_COMMAND_COMPLETION;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
@@ -536,10 +567,10 @@ if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;steam_api.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tier0.lib;tier1.lib;mathlib.lib;vstdlib.lib;steam_api.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)botrix.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\src\lib\public\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\src\lib\public;$(ProjectDir)\..\source-sdk-2013\src\lib\common;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;$(ProjectDir)\libs\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)botrix.pdb</ProgramDatabaseFile>
@@ -555,7 +586,15 @@ if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+      <Command>echo Copy built plugin into runtime\addons as $(BotrixRuntimeName)
+copy /Y "$(OutDir)botrix.dll" "$(ProjectDir)runtime\addons\$(BotrixRuntimeName)"
+if exist "C:\hl2dmserver\hl2mp\" (
+    echo Copy to "C:\hl2dmserver\hl2mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*" "C:\hl2dmserver\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\hl2dmserver\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\hl2dmserver\hl2mp\addons\"
+)
+if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
     xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
     copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
     copy /Y "$(OutDir)botrix.pdb" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
@@ -606,7 +645,7 @@ if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\src;$(ProjectDir)\..\source-sdk-2013\src\public;$(ProjectDir)\..\source-sdk-2013\src\public\engine;$(ProjectDir)\..\source-sdk-2013\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\src\game\server;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_ENGINE_2013;BOTRIX_BOT_AIM_ERROR;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -629,10 +668,10 @@ if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)botrix.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\src\lib\public;$(ProjectDir)\..\source-sdk-2013\src\lib\common;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;$(ProjectDir)\libs\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMTD;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(IntDir)/$(TargetName).pdb</ProgramDatabaseFile>
@@ -650,7 +689,15 @@ if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
       <AdditionalOptions> /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+      <Command>echo Copy built plugin into runtime\addons as $(BotrixRuntimeName)
+copy /Y "$(OutDir)botrix.dll" "$(ProjectDir)runtime\addons\$(BotrixRuntimeName)"
+if exist "C:\hl2dmserver\hl2mp\" (
+    echo Copy to "C:\hl2dmserver\hl2mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*" "C:\hl2dmserver\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\hl2dmserver\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\hl2dmserver\hl2mp\addons\"
+)
+if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
     echo Copy to "..\source-sdk-2013\mp\game\mod_hl2mp"
     xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
     copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
@@ -706,7 +753,7 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\src;$(ProjectDir)\..\source-sdk-2013\src\public;$(ProjectDir)\..\source-sdk-2013\src\public\engine;$(ProjectDir)\..\source-sdk-2013\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\src\game\server;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\src;$(ProjectDir)\..\source-sdk-2013\src\public;$(ProjectDir)\..\source-sdk-2013\src\public\engine;$(ProjectDir)\..\source-sdk-2013\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\src\game\server;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>COMPILER_MSVC;COMPILER_MSVC64;BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_ENGINE_2013;BOTRIX_BOT_AIM_ERROR;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -729,10 +776,10 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;mathlib.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)botrix.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\src\lib\public\x64;$(ProjectDir)\libs\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\src\lib\public;$(ProjectDir)\..\source-sdk-2013\src\lib\common;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;$(ProjectDir)\libs\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public\x64;$(ProjectDir)\libs\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMTD;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(IntDir)/$(TargetName).pdb</ProgramDatabaseFile>
@@ -749,7 +796,15 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
       <AdditionalOptions> /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+      <Command>echo Copy built plugin into runtime\addons as $(BotrixRuntimeName)
+copy /Y "$(OutDir)botrix.dll" "$(ProjectDir)runtime\addons\$(BotrixRuntimeName)"
+if exist "C:\hl2dmserver\hl2mp\" (
+    echo Copy to "C:\hl2dmserver\hl2mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*" "C:\hl2dmserver\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\hl2dmserver\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\hl2dmserver\hl2mp\addons\"
+)
+if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
     echo Copy to "..\source-sdk-2013\mp\game\mod_hl2mp"
     xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
     copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
@@ -806,7 +861,7 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\src;$(ProjectDir)\..\source-sdk-2013\src\public;$(ProjectDir)\..\source-sdk-2013\src\public\engine;$(ProjectDir)\..\source-sdk-2013\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\src\game\server;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BETA_VERSION;BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_ENGINE_2013;BOTRIX_BOT_AIM_ERROR;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -829,10 +884,10 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)botrix.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\src\lib\public;$(ProjectDir)\..\source-sdk-2013\src\lib\common;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;$(ProjectDir)\libs\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMTD;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(IntDir)/$(TargetName).pdb</ProgramDatabaseFile>
@@ -850,7 +905,15 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
       <AdditionalOptions> /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+      <Command>echo Copy built plugin into runtime\addons as $(BotrixRuntimeName)
+copy /Y "$(OutDir)botrix.dll" "$(ProjectDir)runtime\addons\$(BotrixRuntimeName)"
+if exist "C:\hl2dmserver\hl2mp\" (
+    echo Copy to "C:\hl2dmserver\hl2mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*" "C:\hl2dmserver\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\hl2dmserver\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\hl2dmserver\hl2mp\addons\"
+)
+if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
     echo Copy to "..\source-sdk-2013\mp\game\mod_hl2mp"
     xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
     copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
@@ -906,7 +969,7 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\src;$(ProjectDir)\..\source-sdk-2013\src\public;$(ProjectDir)\..\source-sdk-2013\src\public\engine;$(ProjectDir)\..\source-sdk-2013\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\src\game\server;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\src;$(ProjectDir)\..\source-sdk-2013\src\public;$(ProjectDir)\..\source-sdk-2013\src\public\engine;$(ProjectDir)\..\source-sdk-2013\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\src\game\server;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BETA_VERSION;COMPILER_MSVC;COMPILER_MSVC64;BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_ENGINE_2013;BOTRIX_BOT_AIM_ERROR;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -929,10 +992,10 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;mathlib.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)botrix.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\src\lib\public\x64;$(ProjectDir)\libs\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\src\lib\public;$(ProjectDir)\..\source-sdk-2013\src\lib\common;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;$(ProjectDir)\libs\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public\x64;$(ProjectDir)\libs\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMTD;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(IntDir)/$(TargetName).pdb</ProgramDatabaseFile>
@@ -949,7 +1012,15 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
       <AdditionalOptions> /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+      <Command>echo Copy built plugin into runtime\addons as $(BotrixRuntimeName)
+copy /Y "$(OutDir)botrix.dll" "$(ProjectDir)runtime\addons\$(BotrixRuntimeName)"
+if exist "C:\hl2dmserver\hl2mp\" (
+    echo Copy to "C:\hl2dmserver\hl2mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*" "C:\hl2dmserver\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\hl2dmserver\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\hl2dmserver\hl2mp\addons\"
+)
+if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
     echo Copy to "..\source-sdk-2013\mp\game\mod_hl2mp"
     xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
     copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
@@ -1006,7 +1077,7 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\src;$(ProjectDir)\..\source-sdk-2013\src\public;$(ProjectDir)\..\source-sdk-2013\src\public\engine;$(ProjectDir)\..\source-sdk-2013\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\src\game\server;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_ENGINE_2006;BOTRIX_BOT_AIM_ERROR;BOTRIX_NO_COMMAND_COMPLETION;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -1029,10 +1100,10 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)botrix.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\src\lib\public;$(ProjectDir)\..\source-sdk-2013\src\lib\common;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;$(ProjectDir)\libs\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMTD;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(IntDir)/$(TargetName).pdb</ProgramDatabaseFile>
@@ -1050,7 +1121,15 @@ if exist "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 1 Source Death
       <AdditionalOptions> /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+      <Command>echo Copy built plugin into runtime\addons as $(BotrixRuntimeName)
+copy /Y "$(OutDir)botrix.dll" "$(ProjectDir)runtime\addons\$(BotrixRuntimeName)"
+if exist "C:\hl2dmserver\hl2mp\" (
+    echo Copy to "C:\hl2dmserver\hl2mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*" "C:\hl2dmserver\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\hl2dmserver\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\hl2dmserver\hl2mp\addons\"
+)
+if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
     xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
     copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
     copy /Y "$(OutDir)botrix.pdb" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
@@ -1100,7 +1179,7 @@ if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\source-sdk-2013\src;$(ProjectDir)\..\source-sdk-2013\src\public;$(ProjectDir)\..\source-sdk-2013\src\public\engine;$(ProjectDir)\..\source-sdk-2013\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\src\game\server;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir)\..\source-sdk-2013\mp\src;$(ProjectDir)\..\source-sdk-2013\mp\src\public;$(ProjectDir)\..\source-sdk-2013\mp\src\public\engine;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier0;$(ProjectDir)\..\source-sdk-2013\mp\src\public\tier1;$(ProjectDir)\..\source-sdk-2013\mp\src\public\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\public\mathlib;$(ProjectDir)\..\source-sdk-2013\mp\src\public\vstdlib;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2;$(ProjectDir)\..\source-sdk-2013\mp\src\game\server\hl2mp;$(ProjectDir)\..\source-sdk-2013\mp\src\game\shared;$(ProjectDir);$(ProjectDir)\good\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>COMPILER_MSVC;COMPILER_MSVC64;BOTRIX_TF2;BOTRIX_HL2DM;BOTRIX_SOURCE_ENGINE_2006;BOTRIX_BOT_AIM_ERROR;BOTRIX_NO_COMMAND_COMPLETION;GOOD_INI_ONE_KV_SEPARATOR;GOOD_INI_ONE_COMMENT_CHAR;GOOD_LOG_FLUSH;GOOD_LOG_USE_ENDL;VECTOR;GAME_DLL;HL2_DLL;HL2_MP;HL2_EPISODIC;MP_SDK;VPC;WIN32;_HAS_ITERATOR_DEBUGGING=0;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -1123,10 +1202,10 @@ if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;tier2.lib;tier3.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;tier0.lib;tier1.lib;mathlib.lib;vstdlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)botrix.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\..\source-sdk-2013\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\src\lib\public;$(ProjectDir)\..\source-sdk-2013\src\lib\common;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;$(ProjectDir)\libs\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\public\x64;$(ProjectDir)\..\source-sdk-2013\mp\src\lib\common;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC;LIBCD;LIBCMTD;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(IntDir)/$(TargetName).pdb</ProgramDatabaseFile>
@@ -1143,7 +1222,15 @@ if exist "D:\Steam\SteamApps\common\Half-Life 1 Source Deathmatch\hl1mp\" (
       <AdditionalOptions> /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
+      <Command>echo Copy built plugin into runtime\addons as $(BotrixRuntimeName)
+copy /Y "$(OutDir)botrix.dll" "$(ProjectDir)runtime\addons\$(BotrixRuntimeName)"
+if exist "C:\hl2dmserver\hl2mp\" (
+    echo Copy to "C:\hl2dmserver\hl2mp\"
+    xcopy /Y /E "$(ProjectDir)runtime\*" "C:\hl2dmserver\hl2mp\"
+    copy /Y "$(OutDir)botrix.dll" "C:\hl2dmserver\hl2mp\addons\"
+    copy /Y "$(OutDir)botrix.pdb" "C:\hl2dmserver\hl2mp\addons\"
+)
+if exist "..\source-sdk-2013\mp\game\mod_hl2mp" (
     xcopy /Y /E "$(ProjectDir)runtime\*" ..\source-sdk-2013\mp\game\mod_hl2mp\
     copy /Y "$(OutDir)botrix.dll" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"
     copy /Y "$(OutDir)botrix.pdb" "..\source-sdk-2013\mp\game\mod_hl2mp\addons"

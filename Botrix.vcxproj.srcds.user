@@ -1,19 +1,29 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Dedicated server (srcds) debug profiles.
+       Win32 -> 32-bit srcds.exe ; x64 -> srcds_win64.exe (copied from the client install). -->
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommand>D:\DedicatedServer\Half-Life 2 Deathmatch\srcds.exe</LocalDebuggerCommand>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>-insecure -allowdebug -game hl2mp -autoupdate -console dm_underpass -maxplayers 24</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommand>C:\hl2dmserver\srcds.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommandArguments>-game hl2mp -console -insecure -allowdebug +map dm_underpass +maxplayers 16 +sv_lan 1</LocalDebuggerCommandArguments>
+    <LocalDebuggerWorkingDirectory>C:\hl2dmserver</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerWorkingDirectory>D:\DedicatedServer\Half-Life 2 Deathmatch</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommand>D:\DedicatedServer\Half-Life 2 Deathmatch\srcds.exe</LocalDebuggerCommand>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommandArguments>-insecure -allowdebug -game hl2mp -autoupdate -console dm_underpass -maxplayers 24</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommand>C:\hl2dmserver\srcds.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommandArguments>-game hl2mp -console -insecure -allowdebug +map dm_underpass +maxplayers 16 +sv_lan 1</LocalDebuggerCommandArguments>
+    <LocalDebuggerWorkingDirectory>C:\hl2dmserver</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerWorkingDirectory>D:\DedicatedServer\Half-Life 2 Deathmatch</LocalDebuggerWorkingDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LocalDebuggerCommand>C:\hl2dmserver\srcds_win64.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommandArguments>-game hl2mp -console -insecure -allowdebug +map dm_underpass +maxplayers 16 +sv_lan 1</LocalDebuggerCommandArguments>
+    <LocalDebuggerWorkingDirectory>C:\hl2dmserver</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerCommand>C:\hl2dmserver\srcds_win64.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommandArguments>-game hl2mp -console -insecure -allowdebug +map dm_underpass +maxplayers 16 +sv_lan 1</LocalDebuggerCommandArguments>
+    <LocalDebuggerWorkingDirectory>C:\hl2dmserver</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

@@ -58,6 +58,9 @@ elseif( CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo" )
 else()
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE}" )
     message( "Release flags: ${CMAKE_CXX_FLAGS}" )
+    # Strip all symbols from the shared library at link time for release
+    # builds. Keeps symbols for Debug / RelWithDebInfo / Coverage builds.
+    set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-s" )
 endif()
 
 # Source code.
@@ -170,21 +173,25 @@ if(NOT LEGACY_32BIT)
     	SYSTEM "${SOURCE_SDK_PATH}/src/game/shared"
     	SYSTEM "${SOURCE_SDK_PATH}/src/")
 else()
+# NOTE: The legacy 32-bit branch historically expected the old SDK layout
+# under "mp/src/...". The current source-sdk-2013 checkout places headers
+# under "src/..." (same as the 64-bit branch), so point the include dirs
+# there. Linking still uses the 32-bit libs in libs/linux32.
 include_directories(
     	"${CMAKE_CURRENT_SOURCE_DIR}"
     	"${CMAKE_CURRENT_SOURCE_DIR}/good/include"
-    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/public"
-    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/engine"
-    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/tier0"
-    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/tier1"
-    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/game/server"
-    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/mathlib"
-    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/public/vstdlib"
-    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/server"
-    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/server/hl2"
-    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/server/hl2mp"
-    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/game/shared"
-    	SYSTEM "${SOURCE_SDK_PATH}/mp/src/")
+    	SYSTEM "${SOURCE_SDK_PATH}/src/public"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/public/engine"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/public/tier0"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/public/tier1"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/public/game/server"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/public/mathlib"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/public/vstdlib"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/game/server"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/game/server/hl2"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/game/server/hl2mp"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/game/shared"
+    	SYSTEM "${SOURCE_SDK_PATH}/src/")
 endif()
 
 # Don't use full path dependencies in generated library.

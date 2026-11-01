@@ -20,6 +20,7 @@ winbuild
 
 # linux files
 build
+build32
 good/build
 CMakeLists.txt.user
 good/CMakeLists.txt.user
